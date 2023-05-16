@@ -12,6 +12,7 @@ export default class PlayerPostion {
   }
 
   draw() {
+    this.ECB.draw();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'blue';
     ctx.beginPath();
@@ -28,10 +29,13 @@ export default class PlayerPostion {
     ctx.lineTo(this.position.x, this.position.y - 10);
     ctx.stroke();
     ctx.closePath();
-    this.ECB.draw();
   }
 
-  update() {
+  update(p: Position | null = null) {
+    if (p !== null) {
+      this.position = p;
+    }
+
     this.ECB.updatePosition(this.position);
   }
 }

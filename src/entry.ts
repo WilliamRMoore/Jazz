@@ -3,8 +3,8 @@ import ECB from './classes/ECB';
 import PlayerPosition from './classes/PlayerPosition';
 
 export function run() {
-  canvas.width = 1080;
-  canvas.height = 1920;
+  canvas.width = 1920;
+  canvas.height = 1080;
   animate();
 }
 
@@ -15,16 +15,19 @@ const ecb = new ECB({
   right: { x: 150, y: 150 },
 });
 
-const pp = new PlayerPosition(ecb, { x: 500, y: 200 });
+let t = 500;
+
+const pp = new PlayerPosition(ecb, { x: t, y: 200 });
 
 function animate() {
   window.requestAnimationFrame(animate);
   ctx.clearRect(0, 0, 1920, 1080);
 
   tick();
+  t++;
   pp.draw();
 }
 
 function tick() {
-  pp.update();
+  pp.update({ x: t, y: 200 });
 }
