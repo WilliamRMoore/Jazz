@@ -1,12 +1,23 @@
 import { ctx, canvas } from './Globals/globals';
 import ECB from './classes/ECB';
 import PlayerPosition from './classes/PlayerPosition';
+import Stage from './classes/Stage';
+import { Position } from './interfaces/interfaces';
 
 export function run() {
   canvas.width = 1920;
   canvas.height = 1080;
   animate();
 }
+
+let stagepoints = [
+  { x: 200, y: 300 },
+  { x: 400, y: 300 },
+  { x: 400, y: 325 },
+  { x: 200, y: 325 },
+] as Position[];
+
+const stage = new Stage(stagepoints);
 
 const ecb = new ECB({
   top: { x: 100, y: 100 },
@@ -26,6 +37,8 @@ function animate() {
   tick();
   t++;
   pp.draw();
+
+  stage.draw();
 }
 
 function tick() {

@@ -54,7 +54,6 @@ export default class ECB {
   }
 
   updatePosition(position: Position) {
-    debugger;
     let los = this.LeftOffset();
     let tos = this.topOffset();
     let ros = this.rightOffset();
