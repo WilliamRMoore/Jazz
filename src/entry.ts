@@ -1,8 +1,7 @@
 import { ctx, canvas } from './Globals/globals';
-import ECB from './classes/ECB';
-import PlayerPosition from './classes/PlayerPosition';
 import Stage from './classes/Stage';
 import { Position } from './interfaces/interfaces';
+import { Create } from './classes/Player';
 
 export function run() {
   canvas.width = 1920;
@@ -18,29 +17,39 @@ let stagepoints = [
 ] as Position[];
 
 const stage = new Stage(stagepoints);
-
-const ecb = new ECB({
+debugger;
+let pb = Create();
+pb.atPosition({ x: 200, y: 200 }).withECB({
   top: { x: 100, y: 100 },
   left: { x: 50, y: 150 },
   bottom: { x: 100, y: 200 },
   right: { x: 150, y: 150 },
 });
 
-let t = 500;
+let P1 = pb.build();
 
-const pp = new PlayerPosition(ecb, { x: t, y: 200 });
+let t = 500;
 
 function animate() {
   window.requestAnimationFrame(animate);
   ctx.clearRect(0, 0, 1920, 1080);
 
   tick();
-  t++;
-  pp.draw();
+  t += 2;
+  P1.draw();
 
   stage.draw();
 }
 
 function tick() {
-  pp.update({ x: t, y: 200 });
+  //Get Input
+  //Implement input...
+
+  //Update Position
+  P1.updatePosition({ x: t, y: 200 });
+
+  //Check for Collisions
+  //Implements SAT...
+
+  //Push calculation results in frame buffer
 }

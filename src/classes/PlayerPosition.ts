@@ -3,16 +3,16 @@ import { ctx } from '../Globals/globals';
 import ECB from './ECB';
 
 export default class PlayerPostion {
-  ECB: ECB;
+  //ECB: ECB;
   position: Position;
 
-  constructor(ecb: ECB, position: Position) {
-    this.ECB = ecb;
+  constructor(position: Position) {
+    //this.ECB = ecb;
     this.position = position;
   }
 
   draw() {
-    this.ECB.draw();
+    //this.ECB.draw();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'blue';
     ctx.beginPath();
@@ -36,6 +36,6 @@ export default class PlayerPostion {
       this.position = p;
     }
 
-    this.ECB.updatePosition(this.position);
+    //this.ECB.updatePosition(this.position);
   }
 }

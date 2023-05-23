@@ -1,12 +1,5 @@
-import { Position } from '../interfaces/interfaces';
+import { Position, ECBPoints } from '../interfaces/interfaces';
 import { ctx } from '../Globals/globals';
-
-interface ECBPoints {
-  top: Position;
-  right: Position;
-  bottom: Position;
-  left: Position;
-}
 
 export default class ECB {
   points: ECBPoints;
