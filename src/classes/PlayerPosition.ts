@@ -1,18 +1,15 @@
-import { Position } from '../interfaces/interfaces';
+import { Position } from './Position';
 import { ctx } from '../Globals/globals';
 import ECB from './ECB';
 
-export default class PlayerPostion {
-  //ECB: ECB;
+export default class PlayerPosition {
   position: Position;
 
   constructor(position: Position) {
-    //this.ECB = ecb;
     this.position = position;
   }
 
   draw() {
-    //this.ECB.draw();
     ctx.lineWidth = 1;
     ctx.strokeStyle = 'blue';
     ctx.beginPath();
@@ -35,7 +32,5 @@ export default class PlayerPostion {
     if (p !== null) {
       this.position = p;
     }
-
-    //this.ECB.updatePosition(this.position);
   }
 }

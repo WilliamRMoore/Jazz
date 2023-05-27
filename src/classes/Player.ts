@@ -1,10 +1,16 @@
-import { ECBPoints, Position } from '../interfaces/interfaces';
-import ECB from './ECB';
+import ECB, { ECBOffsets } from './ECB';
 import PlayerPosition from './PlayerPosition';
+import { Position } from './Position';
+import { Velocity, allocateVelocty } from './Velocity';
 
 export class Player {
   playerPosition: PlayerPosition;
+  playerVelocity: Velocity;
   ECB: ECB;
+
+  constructor() {
+    this.playerVelocity = allocateVelocty();
+  }
 
   draw() {
     this.ECB.draw();
@@ -15,6 +21,8 @@ export class Player {
     this.playerPosition.update(position);
     this.ECB.updatePosition(position);
   }
+
+  update() {}
 }
 
 export function Create(): IPlayerBuilder {
@@ -36,8 +44,8 @@ class PlayerBuilderImplementation implements IPlayerBuilder {
     return this;
   }
 
-  withECB(ecbp: ECBPoints) {
-    this.player.ECB = new ECB(ecbp);
+  withECBOffsets(ecbOffsets: ECBOffsets) {
+    this.player.ECB = new ECB(ecbOffsets);
     return this;
   }
 }
@@ -47,7 +55,7 @@ interface ISpecifyPosition {
 }
 
 interface ISpecifyECB {
-  withECB(ecbp: ECBPoints): IPlayerBuilder;
+  withECBOffsets(ecbOff: ECBOffsets): IPlayerBuilder;
 }
 
 interface IBuildPlayer {

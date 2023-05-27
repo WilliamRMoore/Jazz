@@ -1,7 +1,4 @@
-export interface Position {
-  x: number;
-  y: number;
-}
+import { Position } from '../classes/Position';
 
 export interface IDrawable {
   draw(): void;

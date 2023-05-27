@@ -1,12 +1,27 @@
-import { Position, ECBPoints } from '../interfaces/interfaces';
+import { ECBPoints } from '../interfaces/interfaces';
 import { ctx } from '../Globals/globals';
+import { Position } from './Position';
+
+export type ECBOffsets = {
+  top: { xOffset: number; yOffset: number };
+  right: { xOffset: number; yOffset: number };
+  bottom: { xOffset: number; yOffset: number };
+  left: { xOffset: number; yOffset: number };
+};
 
 export default class ECB {
+  offsets: ECBOffsets;
   points: ECBPoints;
   color: string;
 
-  constructor(ecbp: ECBPoints) {
-    this.points = ecbp;
+  constructor(ecbOffsets: ECBOffsets) {
+    this.offsets = ecbOffsets;
+    this.points = {
+      top: { x: 0, y: 0 },
+      bottom: { x: 0, y: 0 },
+      right: { x: 0, y: 0 },
+      left: { x: 0, y: 0 },
+    };
     this.color = 'orange';
   }
 
@@ -25,41 +40,17 @@ export default class ECB {
     this.draw();
   }
 
-  private topOffset() {
-    let offsetX = Math.abs(this.points.top.x - this.points.bottom.x);
-    let offsety = Math.abs(this.points.top.y - this.points.bottom.y);
-
-    return { offsetX, offsety };
-  }
-
-  private LeftOffset() {
-    let offsetX = Math.abs(this.points.left.x - this.points.bottom.x);
-    let offsety = Math.abs(this.points.left.y - this.points.bottom.y);
-
-    return { offsetX, offsety };
-  }
-
-  private rightOffset() {
-    let offsetX = Math.abs(this.points.right.x - this.points.bottom.x);
-    let offsety = Math.abs(this.points.right.y - this.points.bottom.y);
-
-    return { offsetX, offsety };
-  }
-
   updatePosition(position: Position) {
-    let los = this.LeftOffset();
-    let tos = this.topOffset();
-    let ros = this.rightOffset();
-    this.points.top.x = position.x - tos.offsetX;
-    this.points.top.y = position.y - tos.offsety;
+    this.points.top.x = position.x + this.offsets.top.xOffset;
+    this.points.top.y = position.y + this.offsets.top.yOffset;
 
-    this.points.left.x = position.x - los.offsetX;
-    this.points.left.y = position.y - los.offsety;
+    this.points.right.x = position.x + this.offsets.right.xOffset;
+    this.points.right.y = position.y + this.offsets.right.yOffset;
 
-    this.points.right.x = position.x + ros.offsetX;
-    this.points.right.y = position.y - ros.offsety;
+    this.points.bottom.x = position.x + this.offsets.bottom.xOffset;
+    this.points.bottom.y = position.y + this.offsets.bottom.yOffset;
 
-    this.points.bottom.x = position.x;
-    this.points.bottom.y = position.y;
+    this.points.left.x = position.x + this.offsets.left.xOffset;
+    this.points.left.y = position.y + this.offsets.left.yOffset;
   }
 }

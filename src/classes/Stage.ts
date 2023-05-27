@@ -1,6 +1,6 @@
 import { ctx } from '../Globals/globals';
-import { IDrawable, Position } from '../interfaces/interfaces';
-
+import { IDrawable } from '../interfaces/interfaces';
+import { Position } from '../classes/Position';
 export default class Stage implements IDrawable {
   points: Position[];
   length: number;
