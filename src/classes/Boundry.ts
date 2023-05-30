@@ -1,4 +1,4 @@
-import { Position } from '../interfaces/interfaces';
+import { Position } from '../classes/Position';
 import { ctx } from '../Globals/globals';
 
 abstract class Boundry {
