@@ -3,13 +3,17 @@ import Stage from './classes/Stage';
 import { Position, PositionAllocator } from './classes/Position';
 import { Create, Player } from './classes/Player';
 import { allocateVelocty } from './classes/Velocity';
+import * as vm from './Physics/VecMath';
+import * as vec from './classes/FlatVec';
 
 const pa = new PositionAllocator();
 
 export function run() {
   canvas.width = 1920;
   canvas.height = 1080;
-  animate();
+  //animate();
+
+  test();
 }
 
 let stagepoints = [
@@ -113,3 +117,23 @@ window.addEventListener('keyup', (e) => {
       keys.s.pressed = false;
   }
 });
+
+let testVec = vec.VectorAllocator(50, 80);
+let nVec = vm.Normalize(testVec);
+
+function test() {
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'white';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(testVec.X, testVec.Y);
+  ctx.stroke();
+  ctx.closePath();
+
+  ctx.strokeStyle = 'blue';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(nVec.X * 10, nVec.Y * 10);
+  ctx.stroke();
+  ctx.closePath();
+}
