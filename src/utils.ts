@@ -9,3 +9,11 @@ function HashCode(obj: any) {
   }
   return hash;
 }
+
+export function getRandomInt(max: number) {
+  return Math.floor(Math.random() * max);
+}
+
+export function randomNumber(min: number, max: number) {
+  return Math.round(Math.random() * (max - min) + min);
+}

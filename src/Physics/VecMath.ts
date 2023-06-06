@@ -1,4 +1,4 @@
-import { FlatVec, VectorAllocator } from '../classes/FlatVec';
+import { FlatVec, VectorAllocator } from './FlatVec';
 
 export const Length = (v: FlatVec) => {
   return Math.sqrt(v.X * v.X + v.Y * v.Y); // Y is upsidedown in Canvas, REMEMBER THAT!

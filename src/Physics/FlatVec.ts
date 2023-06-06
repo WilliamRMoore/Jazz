@@ -7,7 +7,7 @@ export class FlatVec {
     this.Y = y;
   }
 
-  equal(other: FlatVec) {
+  Equals(other: FlatVec) {
     return this.X == other.X && this.Y == other.Y;
   }
 }
@@ -16,11 +16,15 @@ export const VectorAdder = (v1: FlatVec, v2: FlatVec) => {
   return VectorAllocator(v1.X + v2.X, v1.Y + v2.Y);
 };
 
+export const VectorSubtractor = (v1: FlatVec, v2: FlatVec) => {
+  return VectorAllocator(v1.X - v2.X, v1.Y - v2.Y);
+};
+
 export const VectorMultiplier = (v: FlatVec, s: number) => {
   return VectorAllocator(v.X * s, v.Y * s);
 };
 
-export const VecotrNegator = (v: FlatVec) => {
+export const VectorNegator = (v: FlatVec) => {
   return VectorAllocator(-v.X, -v.Y);
 };
 

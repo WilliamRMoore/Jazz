@@ -4,7 +4,8 @@ import { Position, PositionAllocator } from './classes/Position';
 import { Create, Player } from './classes/Player';
 import { allocateVelocty } from './classes/Velocity';
 import * as vm from './Physics/VecMath';
-import * as vec from './classes/FlatVec';
+import * as vec from './Physics/FlatVec';
+import { Run } from './Physics/Test';
 
 const pa = new PositionAllocator();
 
@@ -13,7 +14,9 @@ export function run() {
   canvas.height = 1080;
   //animate();
 
-  test();
+  //test();
+
+  Run();
 }
 
 let stagepoints = [
@@ -86,54 +89,38 @@ function tick() {
 
   P1.update();
 }
-window.addEventListener('keydown', (e) => {
-  switch (e.key) {
-    case 'd':
-      keys.d.pressed = true;
-      break;
-    case 'a':
-      keys.a.pressed = true;
-      break;
-    case 'w':
-      keys.w.pressed = true;
-      break;
-    case 's':
-      keys.s.pressed = true;
-  }
-});
+// window.addEventListener('keydown', (e) => {
+//   switch (e.key) {
+//     case 'd':
+//       keys.d.pressed = true;
+//       break;
+//     case 'a':
+//       keys.a.pressed = true;
+//       break;
+//     case 'w':
+//       keys.w.pressed = true;
+//       break;
+//     case 's':
+//       keys.s.pressed = true;
+//   }
+// });
 
-window.addEventListener('keyup', (e) => {
-  switch (e.key) {
-    case 'd':
-      keys.d.pressed = false;
-      break;
-    case 'a':
-      keys.a.pressed = false;
-      break;
-    case 'w':
-      keys.w.pressed = false;
-      break;
-    case 's':
-      keys.s.pressed = false;
-  }
-});
+// window.addEventListener('keyup', (e) => {
+//   switch (e.key) {
+//     case 'd':
+//       keys.d.pressed = false;
+//       break;
+//     case 'a':
+//       keys.a.pressed = false;
+//       break;
+//     case 'w':
+//       keys.w.pressed = false;
+//       break;
+//     case 's':
+//       keys.s.pressed = false;
+//   }
+// });
 
-let testVec = vec.VectorAllocator(50, 80);
-let nVec = vm.Normalize(testVec);
+//function test() {}
 
-function test() {
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'white';
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(testVec.X, testVec.Y);
-  ctx.stroke();
-  ctx.closePath();
-
-  ctx.strokeStyle = 'blue';
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(nVec.X * 10, nVec.Y * 10);
-  ctx.stroke();
-  ctx.closePath();
-}
+// Run();
