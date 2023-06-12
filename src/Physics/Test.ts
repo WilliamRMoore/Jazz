@@ -7,6 +7,8 @@ import { VectorAllocator, VectorMultiplier, VectorNegator } from './FlatVec';
 import { keys } from '../input/SimpleInput';
 import { IntersectCircle, IntersectsPolygons } from './Collisions';
 
+let col = false;
+
 let bodyList = [] as (Circle | Box)[];
 
 export function R() {
@@ -31,8 +33,7 @@ function Test() {
   }
 
   RotateBoxes();
-  let col = false;
-  col = TestForPolygonCollisions();
+  TestForPolygonCollisions();
   bodyList.forEach((x) => {
     if (x instanceof Circle) {
       let p = x.GetPos();
@@ -106,7 +107,7 @@ function init() {
   Test();
 }
 
-function TestAndResolveCircleCollisions() {
+function TestAndResolveCirscleCollisions() {
   for (let index = 0; index < bodyList.length - 1; index++) {
     const body1 = bodyList[index] as Circle;
     for (let index2 = index + 1; index2 < bodyList.length; index2++) {
@@ -129,6 +130,7 @@ function TestAndResolveCircleCollisions() {
 }
 
 function TestForPolygonCollisions() {
+  col = false;
   for (let i = 0; i < bodyList.length; i++) {
     const p1 = bodyList[i] as Box;
     for (let j = i + 1; j < bodyList.length; j++) {
@@ -144,7 +146,8 @@ function TestForPolygonCollisions() {
           VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
         );
         p2.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
-        return true;
+        //dsareturn true;
+        col = true;
       }
     }
   }
