@@ -1,3 +1,4 @@
+import FlatTransform from './FlatTransform';
 export class FlatVec {
   X: number;
   Y: number;
@@ -34,4 +35,11 @@ export const VectorDivider = (v: FlatVec, s: number) => {
 
 export const VectorAllocator = (x: number = 0, y: number = 0) => {
   return new FlatVec(x, y);
+};
+
+export const Transform = (v: FlatVec, transform: FlatTransform) => {
+  return VectorAllocator(
+    transform.Cos * v.X - transform.Sin * v.Y + transform.PositionX,
+    transform.Sin * v.X + transform.Cos * v.Y + transform.PositionY
+  );
 };

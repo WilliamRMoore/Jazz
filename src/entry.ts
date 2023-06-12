@@ -5,18 +5,19 @@ import { Create, Player } from './classes/Player';
 import { allocateVelocty } from './classes/Velocity';
 import * as vm from './Physics/VecMath';
 import * as vec from './Physics/FlatVec';
-import { Run } from './Physics/Test';
+import { R } from './Physics/Test';
 
 const pa = new PositionAllocator();
 
 export function run() {
+  debugger;
   canvas.width = 1920;
   canvas.height = 1080;
   //animate();
 
   //test();
 
-  Run();
+  R();
 }
 
 let stagepoints = [
