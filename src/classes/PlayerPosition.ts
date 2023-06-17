@@ -1,6 +1,7 @@
 import { Position } from './Position';
 import { ctx } from '../Globals/globals';
 import ECB from './ECB';
+import { Velocity } from './Velocity';
 
 export default class PlayerPosition {
   position: Position;
@@ -32,5 +33,10 @@ export default class PlayerPosition {
     if (p !== null) {
       this.position = p;
     }
+  }
+
+  addVelocity(velocity: Velocity) {
+    this.position.x += velocity.vx;
+    this.position.y += velocity.vy;
   }
 }

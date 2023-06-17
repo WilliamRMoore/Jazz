@@ -22,7 +22,16 @@ export class Player {
     this.ECB.updatePosition(position);
   }
 
-  update() {}
+  updateVelocity(velocity: Velocity) {
+    this.playerVelocity = velocity;
+  }
+
+  update() {
+    // this.playerPosition.position.x += this.playerVelocity.vx;
+    // this.playerPosition.position.y += this.playerVelocity.vy;
+    this.playerPosition.addVelocity(this.playerVelocity);
+    this.ECB.updatePosition(this.playerPosition.position);
+  }
 }
 
 export function Create(): IPlayerBuilder {

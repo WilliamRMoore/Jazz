@@ -16,7 +16,7 @@ export default class Stage implements IDrawable {
   }
 
   draw(): void {
-    debugger;
+    // debugger;
     ctx.beginPath();
     ctx.moveTo(this.points[0].x, this.points[0].y);
     for (let index = 1; index < this.length; index++) {

@@ -1,14 +1,23 @@
 import { ctx, canvas } from './Globals/globals';
 import Stage from './classes/Stage';
 import { Position, PositionAllocator } from './classes/Position';
-import { Create } from './classes/Player';
+import { Create, Player } from './classes/Player';
+import { allocateVelocty } from './classes/Velocity';
+import * as vm from './Physics/VecMath';
+import * as vec from './Physics/FlatVec';
+import { R } from './Physics/Test';
 
 const pa = new PositionAllocator();
 
 export function run() {
+  debugger;
   canvas.width = 1920;
   canvas.height = 1080;
-  animate();
+  //animate();
+
+  //test();
+
+  R();
 }
 
 let stagepoints = [
@@ -50,6 +59,12 @@ const keys = {
   a: {
     pressed: false,
   },
+  s: {
+    pressed: false,
+  },
+  w: {
+    pressed: false,
+  },
 };
 
 function tick() {
@@ -60,31 +75,53 @@ function tick() {
   //Check for Collisions
   //Implements SAT...
   //Push calculation results in frame buffer
-}
-window.addEventListener('keydown', (e) => {
-  switch (e.key) {
-    case 'd':
-      keys.d.pressed = true;
-      break;
-    case 'a':
-      keys.a.pressed = true;
-      break;
-    case 'w':
-      P1.playerVelocity.vy = -10;
-      break;
-  }
-});
 
-window.addEventListener('keyup', (e) => {
-  switch (e.key) {
-    case 'd':
-      keys.d.pressed = false;
-      break;
-    case 'a':
-      keys.a.pressed = false;
-      break;
-    case 'w':
-      //player.velocity.y = -15;
-      break;
+  if (keys.d.pressed) {
+    P1.updateVelocity(allocateVelocty(2, 0));
+  } else if (keys.a.pressed) {
+    P1.updateVelocity(allocateVelocty(-2, 0));
+  } else if (keys.w.pressed) {
+    P1.updateVelocity(allocateVelocty(0, -2));
+  } else if (keys.s.pressed) {
+    P1.updateVelocity(allocateVelocty(0, 2));
+  } else {
+    P1.updateVelocity(allocateVelocty());
   }
-});
+
+  P1.update();
+}
+// window.addEventListener('keydown', (e) => {
+//   switch (e.key) {
+//     case 'd':
+//       keys.d.pressed = true;
+//       break;
+//     case 'a':
+//       keys.a.pressed = true;
+//       break;
+//     case 'w':
+//       keys.w.pressed = true;
+//       break;
+//     case 's':
+//       keys.s.pressed = true;
+//   }
+// });
+
+// window.addEventListener('keyup', (e) => {
+//   switch (e.key) {
+//     case 'd':
+//       keys.d.pressed = false;
+//       break;
+//     case 'a':
+//       keys.a.pressed = false;
+//       break;
+//     case 'w':
+//       keys.w.pressed = false;
+//       break;
+//     case 's':
+//       keys.s.pressed = false;
+//   }
+// });
+
+//function test() {}
+
+// Run();
