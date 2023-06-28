@@ -1,15 +1,14 @@
+import { FlatVec, VectorAdder, VectorAllocator } from '../Physics/FlatVec';
 import ECB, { ECBOffsets } from './ECB';
 import PlayerPosition from './PlayerPosition';
-import { Position } from './Position';
-import { Velocity, allocateVelocty } from './Velocity';
 
 export class Player {
   playerPosition: PlayerPosition;
-  playerVelocity: Velocity;
+  playerVelocity: FlatVec;
   ECB: ECB;
 
   constructor() {
-    this.playerVelocity = allocateVelocty();
+    this.playerVelocity = VectorAllocator();
   }
 
   draw() {
@@ -17,20 +16,14 @@ export class Player {
     this.playerPosition.draw();
   }
 
-  updatePosition(position: Position) {
-    this.playerPosition.update(position);
-    this.ECB.updatePosition(position);
+  Move(v: FlatVec) {
+    this.playerPosition.update(VectorAdder(this.playerPosition.position, v));
+    this.ECB.Move(this.playerPosition.position);
   }
 
-  updateVelocity(velocity: Velocity) {
-    this.playerVelocity = velocity;
-  }
-
-  update() {
-    // this.playerPosition.position.x += this.playerVelocity.vx;
-    // this.playerPosition.position.y += this.playerVelocity.vy;
-    this.playerPosition.addVelocity(this.playerVelocity);
-    this.ECB.updatePosition(this.playerPosition.position);
+  MoveTo(p: FlatVec) {
+    this.playerPosition.update(p);
+    this.ECB.Move(p);
   }
 }
 
@@ -48,19 +41,20 @@ class PlayerBuilderImplementation implements IPlayerBuilder {
     return this.player;
   }
 
-  atPosition(position: Position): ISpecifyECB {
+  atPosition(position: FlatVec): ISpecifyECB {
     this.player.playerPosition = new PlayerPosition(position);
     return this;
   }
 
   withECBOffsets(ecbOffsets: ECBOffsets) {
     this.player.ECB = new ECB(ecbOffsets);
+    this.player.ECB.Move(this.player.playerPosition.position);
     return this;
   }
 }
 
 interface ISpecifyPosition {
-  atPosition(position: Position): ISpecifyECB;
+  atPosition(position: FlatVec): ISpecifyECB;
 }
 
 interface ISpecifyECB {

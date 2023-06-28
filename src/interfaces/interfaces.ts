@@ -1,12 +1,12 @@
-import { Position } from '../classes/Position';
+import { FlatVec } from '../Physics/FlatVec';
 
 export interface IDrawable {
   draw(): void;
 }
 
 export interface ECBPoints {
-  top: Position;
-  right: Position;
-  bottom: Position;
-  left: Position;
+  top: FlatVec;
+  right: FlatVec;
+  bottom: FlatVec;
+  left: FlatVec;
 }

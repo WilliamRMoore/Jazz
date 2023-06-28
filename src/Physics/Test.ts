@@ -2,10 +2,14 @@ import { ShapeType } from './FlatBody';
 import { Circle } from './Circle';
 import { Box } from './Box';
 import * as g from '../Globals/globals';
-import { randomNumber } from '../utils';
+import { getRandomInt, randomNumber } from '../utils';
 import { VectorAllocator, VectorMultiplier, VectorNegator } from './FlatVec';
 import { keys } from '../input/SimpleInput';
-import { IntersectCircle, IntersectsPolygons } from './Collisions';
+import {
+  IntersectCircle,
+  IntersectCirclePolygon,
+  IntersectsPolygons,
+} from './Collisions';
 
 let col = false;
 
@@ -33,7 +37,8 @@ function Test() {
   }
 
   RotateBoxes();
-  TestForPolygonCollisions();
+  //TestForPolygonCollisions();
+  TestCirclPolygonCollisions();
   bodyList.forEach((x) => {
     if (x instanceof Circle) {
       let p = x.GetPos();
@@ -86,7 +91,7 @@ function init() {
   let bodyCount = 10;
 
   for (let i = 0; i < bodyCount; i++) {
-    let type = ShapeType.Box;
+    let type = getRandomInt(2) == 1 ? ShapeType.Box : ShapeType.Circle;
 
     let body: Circle | Box | null = null;
 
@@ -130,7 +135,6 @@ function TestAndResolveCirscleCollisions() {
 }
 
 function TestForPolygonCollisions() {
-  col = false;
   for (let i = 0; i < bodyList.length; i++) {
     const p1 = bodyList[i] as Box;
     for (let j = i + 1; j < bodyList.length; j++) {
@@ -147,17 +151,51 @@ function TestForPolygonCollisions() {
         );
         p2.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
         //dsareturn true;
-        col = true;
       }
     }
   }
-  return false;
+}
+
+function TestCirclPolygonCollisions() {
+  for (let i = 0; i < bodyList.length; i++) {
+    const b1 = bodyList[i];
+    for (let j = 0; j < bodyList.length; j++) {
+      const b2 = bodyList[j];
+      if (b1 instanceof Box && b2 instanceof Circle) {
+        let colRes = IntersectCirclePolygon(
+          b2.GetPos(),
+          b2.Radius,
+          b1.GetTransformVerticies()
+        );
+        if (colRes.collision) {
+          b1.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
+          b2.Move(
+            VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
+          );
+        }
+      } else if (b1 instanceof Circle && b2 instanceof Box) {
+        let colRes = IntersectCirclePolygon(
+          b1.GetPos(),
+          b1.Radius,
+          b2.GetTransformVerticies()
+        );
+        if (colRes.collision) {
+          b1.Move(
+            VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
+          );
+          b2.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
+        }
+      }
+    }
+  }
 }
 
 let r = 1 / 60;
 function RotateBoxes() {
   for (let i = 0; i < bodyList.length; i++) {
-    const b = bodyList[i] as Box;
-    b.Rotate((Math.PI / 2) * r);
+    const b = bodyList[i];
+    if (b instanceof Box) {
+      b.Rotate((Math.PI / 2) * r);
+    }
   }
 }

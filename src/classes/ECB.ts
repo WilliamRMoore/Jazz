@@ -1,6 +1,6 @@
 import { ECBPoints } from '../interfaces/interfaces';
 import { ctx } from '../Globals/globals';
-import { Position } from './Position';
+import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
 
 export type ECBOffsets = {
   top: { xOffset: number; yOffset: number };
@@ -17,20 +17,31 @@ export default class ECB {
   constructor(ecbOffsets: ECBOffsets) {
     this.offsets = ecbOffsets;
     this.points = {
-      top: { x: 0, y: 0 },
-      bottom: { x: 0, y: 0 },
-      right: { x: 0, y: 0 },
-      left: { x: 0, y: 0 },
+      top: VectorAllocator(0, 0),
+      bottom: VectorAllocator(0, 0),
+      right: VectorAllocator(0, 0),
+      left: VectorAllocator(0, 0),
     };
     this.color = 'orange';
   }
 
+  GetVerticies() {
+    const verts = new Array<FlatVec>(4);
+
+    verts[0] = this.points.top;
+    verts[1] = this.points.right;
+    verts[2] = this.points.bottom;
+    verts[3] = this.points.left;
+
+    return verts;
+  }
+
   draw() {
     ctx.beginPath();
-    ctx.moveTo(this.points.top.x, this.points.top.y);
-    ctx.lineTo(this.points.left.x, this.points.left.y);
-    ctx.lineTo(this.points.bottom.x, this.points.bottom.y);
-    ctx.lineTo(this.points.right.x, this.points.right.y);
+    ctx.moveTo(this.points.top.X, this.points.top.Y);
+    ctx.lineTo(this.points.left.X, this.points.left.Y);
+    ctx.lineTo(this.points.bottom.X, this.points.bottom.Y);
+    ctx.lineTo(this.points.right.X, this.points.right.Y);
     ctx.closePath();
     ctx.fillStyle = this.color;
     ctx.fill();
@@ -40,17 +51,17 @@ export default class ECB {
     this.draw();
   }
 
-  updatePosition(position: Position) {
-    this.points.top.x = position.x + this.offsets.top.xOffset;
-    this.points.top.y = position.y + this.offsets.top.yOffset;
+  Move(position: FlatVec) {
+    this.points.top.X = position.X + this.offsets.top.xOffset;
+    this.points.top.Y = position.Y + this.offsets.top.yOffset;
 
-    this.points.right.x = position.x + this.offsets.right.xOffset;
-    this.points.right.y = position.y + this.offsets.right.yOffset;
+    this.points.right.X = position.X + this.offsets.right.xOffset;
+    this.points.right.Y = position.Y + this.offsets.right.yOffset;
 
-    this.points.bottom.x = position.x + this.offsets.bottom.xOffset;
-    this.points.bottom.y = position.y + this.offsets.bottom.yOffset;
+    this.points.bottom.X = position.X + this.offsets.bottom.xOffset;
+    this.points.bottom.Y = position.Y + this.offsets.bottom.yOffset;
 
-    this.points.left.x = position.x + this.offsets.left.xOffset;
-    this.points.left.y = position.y + this.offsets.left.yOffset;
+    this.points.left.X = position.X + this.offsets.left.xOffset;
+    this.points.left.Y = position.Y + this.offsets.left.yOffset;
   }
 }
