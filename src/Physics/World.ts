@@ -17,7 +17,7 @@ export function init() {
   const playerBuilder = Create();
 
   const p1 = playerBuilder
-    .atPosition(VectorAllocator(200, 550))
+    .atPosition(VectorAllocator(600, 400))
     .withECBOffsets({
       top: { xOffset: 0, yOffset: -100 },
       right: { xOffset: 50, yOffset: -50 },
@@ -28,12 +28,6 @@ export function init() {
 
   addPlayer(p1);
 
-  // stage = new Stage([
-  //   new FlatVec(600, 500),
-  //   new FlatVec(600, 900),
-  //   new FlatVec(100, 900),
-  //   new FlatVec(100, 500),
-  // ]);
   stage = new Stage([
     new FlatVec(500, 500), // top left
     new FlatVec(1000, 500), // top right
@@ -48,22 +42,23 @@ function addPlayer(player: Player) {
 
 export function tick() {
   Input();
+  UpdatePlayers();
   TestForStageCollisions();
   ExecuteDrawCall();
 }
 
 function Input() {
   if (keys.d.pressed) {
-    PLAYERS[0].Move(VectorAllocator(2, 0));
+    PLAYERS[0].AddVelocity(VectorAllocator(2, 0));
   }
   if (keys.a.pressed) {
-    PLAYERS[0].Move(VectorAllocator(-2, 0));
+    PLAYERS[0].AddVelocity(VectorAllocator(-2, 0));
   }
   if (keys.w.pressed) {
-    PLAYERS[0].Move(VectorAllocator(0, -2));
+    PLAYERS[0].AddVelocity(VectorAllocator(0, -50));
   }
   if (keys.s.pressed) {
-    PLAYERS[0].Move(VectorAllocator(0, 2));
+    PLAYERS[0].AddVelocity(VectorAllocator(0, 2));
   }
 }
 
@@ -90,6 +85,20 @@ function TestForStageCollisions() {
     PLAYERS[0].Move(
       VectorMultiplier(VectorNegator(result.normal!), result.depth)
     );
+    PLAYERS[0].Ground = true;
+  }
+
+  if (!result.collision) {
+    PLAYERS[0].Ground = false;
+  }
+}
+
+function UpdatePlayers() {
+  for (let i = 0; i < PLAYERS.length; i++) {
+    const p = PLAYERS[i];
+    if (p) {
+      p.Update();
+    }
   }
 }
 
