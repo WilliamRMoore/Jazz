@@ -1,4 +1,4 @@
-import { Create, Player } from '../classes/Player';
+import { Create, Player } from '../classes/Character/Player';
 import Stage from '../classes/Stage';
 import {
   FlatVec,
@@ -8,7 +8,6 @@ import {
 } from './FlatVec';
 import { keys } from '../input/SimpleInput';
 import { IntersectsPolygons } from './Collisions';
-import { Console } from 'console';
 
 const PLAYERS = new Array(4) as Player[];
 let stage: Stage;

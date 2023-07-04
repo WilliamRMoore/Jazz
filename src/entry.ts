@@ -1,13 +1,6 @@
 import { ctx, canvas } from './Globals/globals';
-import Stage from './classes/Stage';
-import { Position, PositionAllocator } from './classes/Position';
-import { Create, Player } from './classes/Player';
-import { allocateVelocty } from './classes/Velocity';
-import * as vm from './Physics/VecMath';
-import * as vec from './Physics/FlatVec';
 import { R } from './Physics/Test';
 import { init, tick } from './Physics/World';
-const pa = new PositionAllocator();
 
 export function run() {
   canvas.width = 1920;

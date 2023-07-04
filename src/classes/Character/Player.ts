@@ -1,5 +1,5 @@
-import { ctx, gravity } from '../Globals/globals';
-import { FlatVec, VectorAdder, VectorAllocator } from '../Physics/FlatVec';
+import { ctx, gravity } from '../../Globals/globals';
+import { FlatVec, VectorAdder, VectorAllocator } from '../../Physics/FlatVec';
 import ECB, { ECBOffsets } from './ECB';
 
 export class Player {
@@ -104,8 +104,6 @@ export class Player {
   }
 
   Update() {
-    // this.playerPosition.X += this.playerVelocity.X;
-    // this.playerPosition.Y += this.playerVelocity.Y;
     this.ApplyVelocity();
     this.ApplyVelocityDecay();
     this.ApplyGravity();
@@ -123,9 +121,6 @@ export class Player {
     if (this.playerVelocity.Y >= this.MaxYVelocity) {
       this.playerVelocity.Y = this.MaxYVelocity;
     }
-    // this.playerVelocity.Y < this.MaxYVelocity
-    //   ? (this.playerVelocity.Y += gravity)
-    //   : (this.playerVelocity.Y = this.MaxYVelocity);
   }
 }
 
