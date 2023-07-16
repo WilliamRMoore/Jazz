@@ -8,6 +8,7 @@ import {
 } from './FlatVec';
 import { keys } from '../input/SimpleInput';
 import { IntersectsPolygons } from './Collisions';
+import { pollInput } from '../input/GamePadInput';
 
 const PLAYERS = new Array(4) as Player[];
 let stage: Stage;
@@ -59,6 +60,13 @@ function Input() {
   if (keys.s.pressed) {
     PLAYERS[0].AddVelocity(VectorAllocator(0, 2));
   }
+
+  // let r = pollInput();
+
+  // if (r != null && r.Action == 'dash') {
+  //   PLAYERS[0].Run();
+  // }
+  //console.log(r);
 }
 
 function TestForStageCollisions() {
@@ -80,7 +88,7 @@ function TestForStageCollisions() {
     stage.GetVerticies()
   );
   if (result.collision) {
-    console.log(result);
+    //console.log(result);
     PLAYERS[0].Move(
       VectorMultiplier(VectorNegator(result.normal!), result.depth)
     );
@@ -96,7 +104,7 @@ function UpdatePlayers() {
   for (let i = 0; i < PLAYERS.length; i++) {
     const p = PLAYERS[i];
     if (p) {
-      p.Update();
+      p.Update(1);
     }
   }
 }

@@ -1,6 +1,7 @@
 import { ctx, gravity } from '../../Globals/globals';
 import { FlatVec, VectorAdder, VectorAllocator } from '../../Physics/FlatVec';
 import ECB, { ECBOffsets } from './ECB';
+import StateMachine from './StateMachine';
 
 export class Player {
   Ground: boolean = false;
@@ -12,6 +13,7 @@ export class Player {
   playerPosition: FlatVec;
   playerVelocity: FlatVec;
   ECB: ECB;
+  StateMachine = new StateMachine(this);
 
   constructor() {
     this.playerVelocity = VectorAllocator();
@@ -20,6 +22,17 @@ export class Player {
     this.MinXVelocity = -6;
     this.MinYVelocity = -20;
     this.VelocityDecay = 0.2;
+
+    this.StateMachine.addState('idle', {
+      onEnter: this.onIdleEnter,
+      onUpdate: this.onIdleUpdate,
+    }).addState('run', {
+      onEnter: this.onRunEnter,
+      onUpdate: this.onRunUpdate,
+      onExit: this.onRunExit,
+    });
+
+    this.StateMachine.setState('idle');
   }
 
   draw() {
@@ -80,7 +93,6 @@ export class Player {
   }
 
   ApplyVelocityDecay() {
-    debugger;
     if (this.playerVelocity.X > 0) {
       this.playerVelocity.X -= this.VelocityDecay;
     }
@@ -103,11 +115,12 @@ export class Player {
     this.playerPosition.Y += this.playerVelocity.Y;
   }
 
-  Update() {
-    this.ApplyVelocity();
-    this.ApplyVelocityDecay();
-    this.ApplyGravity();
-    this.ECB.Move(this.playerPosition);
+  Update(frame: number) {
+    // this.ApplyVelocity();
+    // this.ApplyVelocityDecay();
+    // this.ApplyGravity();
+    // this.ECB.Move(this.playerPosition);
+    this.StateMachine.update(frame);
   }
 
   ApplyGravity() {
@@ -122,6 +135,33 @@ export class Player {
       this.playerVelocity.Y = this.MaxYVelocity;
     }
   }
+
+  private onIdleEnter() {
+    console.log('in idle');
+  }
+
+  private onIdleUpdate(frame: number) {
+    this.ApplyVelocity();
+    this.ApplyVelocityDecay();
+    this.ApplyGravity();
+    this.ECB.Move(this.playerPosition);
+  }
+
+  private onRunEnter() {
+    console.log('Entering run');
+  }
+
+  private onRunUpdate() {}
+
+  private onRunExit() {}
+
+  private onJumpEnter() {}
+
+  private onJumpUpdate(frame: number) {}
+
+  private onJumpExit() {}
+
+  public Run() {}
 }
 
 export function Create(): IPlayerBuilder {

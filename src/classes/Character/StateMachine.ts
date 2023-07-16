@@ -112,17 +112,17 @@ export default class StateMachine {
   forceState(name: string) {
     // unknown state name
     if (!this.states.has(name)) {
-      console.warn('Unknown State');
+      //console.warn('Unknown State');
     }
     // current state name
     if (this.currentState?.name === name) {
       return;
     }
-    console.log(
-      `[StateMachine (${this.id})] change from ${
-        this.currentState?.name ?? 'none'
-      } to ${name}`
-    );
+    // console.log(
+    //   `[StateMachine (${this.id})] change from ${
+    //     this.currentState?.name ?? 'none'
+    //   } to ${name}`
+    // );
     if (this.currentState && this.currentState.onExit) {
       this.currentState.onExit();
     }
