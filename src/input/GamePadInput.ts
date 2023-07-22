@@ -16,6 +16,26 @@ export class GamePadInput {
   dpDown: boolean = false;
   dpRight: boolean = false;
   dpLeft: boolean = false;
+
+  Clear() {
+    this.LXAxis = 0;
+    this.LYAxis = 0;
+    this.RXAxis = 0;
+    this.RYAxis = 0;
+
+    this.action = false;
+    this.special = false;
+    this.jump = false;
+    this.lb = false;
+    this.rb = false;
+    this.lt = false;
+    this.rt = false;
+
+    this.dpUp = false;
+    this.dpDown = false;
+    this.dpLeft = false;
+    this.dpRight = false;
+  }
 }
 
 export class InputAction {
@@ -28,22 +48,32 @@ export class InputAction {
 
 export const inputHistory: Array<InputAction> = [];
 
-//const currentInput : GamePadInput;
+const currentInput = new GamePadInput();
 
 export function listenForGamePadInput() {
   setInterval(pollInput, 3);
 }
 
-export function pollInput() {
+function pollInput() {
   const localPlayer = navigator.getGamepads()[0];
   if (localPlayer && localPlayer.connected) {
-    inputHistory.push(transcribeInput(readInput(localPlayer)));
-    return inputHistory[inputHistory.length - 1];
+    readInput(localPlayer);
   }
 }
 
+export function GetInput() {
+  let input = transcribeInput(currentInput);
+  inputHistory.push(input);
+  return input;
+}
+
+export function GetInputForFrame(n: number) {
+  return inputHistory[n];
+}
+
 function readInput(gamePad: Gamepad) {
-  const input = new GamePadInput();
+  //const input = new GamePadInput();
+  currentInput.Clear();
   let lx = setDeadzone(gamePad.axes[0]);
   let ly = setDeadzone(gamePad.axes[1]);
   let rx = setDeadzone(gamePad.axes[2]);
@@ -61,25 +91,23 @@ function readInput(gamePad: Gamepad) {
     ry *= -1;
   }
 
-  input.LXAxis = lx;
-  input.LYAxis = ly;
-  input.RXAxis = rx;
-  input.RYAxis = ry;
+  currentInput.LXAxis = lx;
+  currentInput.LYAxis = ly;
+  currentInput.RXAxis = rx;
+  currentInput.RYAxis = ry;
 
-  input.action = gamePad.buttons[0].pressed;
-  input.special = gamePad.buttons[2].pressed;
-  input.jump = gamePad.buttons[1].pressed || gamePad.buttons[3].pressed;
-  input.lb = gamePad.buttons[4].pressed;
-  input.rb = gamePad.buttons[5].pressed;
-  input.lt = gamePad.buttons[6].pressed;
-  input.rt = gamePad.buttons[7].pressed;
+  currentInput.action = gamePad.buttons[0].pressed;
+  currentInput.special = gamePad.buttons[2].pressed;
+  currentInput.jump = gamePad.buttons[1].pressed || gamePad.buttons[3].pressed;
+  currentInput.lb = gamePad.buttons[4].pressed;
+  currentInput.rb = gamePad.buttons[5].pressed;
+  currentInput.lt = gamePad.buttons[6].pressed;
+  currentInput.rt = gamePad.buttons[7].pressed;
 
-  input.dpUp = gamePad.buttons[12].pressed;
-  input.dpDown = gamePad.buttons[13].pressed;
-  input.dpLeft = gamePad.buttons[14].pressed;
-  input.dpRight = gamePad.buttons[15].pressed;
-
-  return input;
+  currentInput.dpUp = gamePad.buttons[12].pressed;
+  currentInput.dpDown = gamePad.buttons[13].pressed;
+  currentInput.dpLeft = gamePad.buttons[14].pressed;
+  currentInput.dpRight = gamePad.buttons[15].pressed;
 }
 
 function transcribeInput(input: GamePadInput) {
@@ -174,7 +202,7 @@ function transcribeInput(input: GamePadInput) {
   }
 
   if (Math.abs(input.LXAxis) > 0) {
-    inputAction.Action = Actions.dash;
+    inputAction.Action = Actions.run;
     return inputAction;
   }
 
@@ -218,7 +246,7 @@ interface IActions {
   sideAttcak: string;
   attack: string;
   idle: string;
-  dash: string;
+  run: string;
   jump: string;
   grab: string;
   guard: string;
@@ -234,7 +262,7 @@ const Actions: IActions = {
   sideAttcak: 'side_attack',
   attack: 'attack',
   idle: 'idle',
-  dash: 'dash;',
+  run: 'run',
   jump: 'jump',
   grab: 'grab',
   guard: 'guard',

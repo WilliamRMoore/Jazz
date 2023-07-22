@@ -8,7 +8,9 @@ import {
 } from './FlatVec';
 import { keys } from '../input/SimpleInput';
 import { IntersectsPolygons } from './Collisions';
-import { pollInput } from '../input/GamePadInput';
+import { GetInput, listenForGamePadInput } from '../input/GamePadInput';
+
+let frame = 0;
 
 const PLAYERS = new Array(4) as Player[];
 let stage: Stage;
@@ -34,6 +36,8 @@ export function init() {
     new FlatVec(1000, 520), // bottom right
     new FlatVec(500, 520), // bottom left
   ]);
+
+  listenForGamePadInput();
 }
 
 function addPlayer(player: Player) {
@@ -45,6 +49,7 @@ export function tick() {
   UpdatePlayers();
   TestForStageCollisions();
   ExecuteDrawCall();
+  frame += 1;
 }
 
 function Input() {
@@ -61,6 +66,8 @@ function Input() {
     PLAYERS[0].AddVelocity(VectorAllocator(0, 2));
   }
 
+  let input = GetInput();
+  //console.log(input);
   // let r = pollInput();
 
   // if (r != null && r.Action == 'dash') {
@@ -104,7 +111,7 @@ function UpdatePlayers() {
   for (let i = 0; i < PLAYERS.length; i++) {
     const p = PLAYERS[i];
     if (p) {
-      p.Update(1);
+      p.Update(frame);
     }
   }
 }

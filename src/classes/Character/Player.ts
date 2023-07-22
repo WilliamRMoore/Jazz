@@ -1,5 +1,6 @@
 import { ctx, gravity } from '../../Globals/globals';
 import { FlatVec, VectorAdder, VectorAllocator } from '../../Physics/FlatVec';
+import { GetInputForFrame } from '../../input/GamePadInput';
 import ECB, { ECBOffsets } from './ECB';
 import StateMachine from './StateMachine';
 
@@ -14,6 +15,8 @@ export class Player {
   playerVelocity: FlatVec;
   ECB: ECB;
   StateMachine = new StateMachine(this);
+  JumpVelocity: number;
+  currentStateFrame: number = 0;
 
   constructor() {
     this.playerVelocity = VectorAllocator();
@@ -22,15 +25,22 @@ export class Player {
     this.MinXVelocity = -6;
     this.MinYVelocity = -20;
     this.VelocityDecay = 0.2;
+    this.JumpVelocity = 12;
 
     this.StateMachine.addState('idle', {
       onEnter: this.onIdleEnter,
       onUpdate: this.onIdleUpdate,
-    }).addState('run', {
-      onEnter: this.onRunEnter,
-      onUpdate: this.onRunUpdate,
-      onExit: this.onRunExit,
-    });
+    })
+      .addState('run', {
+        onEnter: this.onRunEnter,
+        onUpdate: this.onRunUpdate,
+        onExit: this.onRunExit,
+      })
+      .addState('jump', {
+        onEnter: this.onJumpEnter,
+        onUpdate: this.onJumpUpdate,
+        onExit: this.onJumpExit,
+      });
 
     this.StateMachine.setState('idle');
   }
@@ -116,10 +126,13 @@ export class Player {
   }
 
   Update(frame: number) {
-    // this.ApplyVelocity();
-    // this.ApplyVelocityDecay();
-    // this.ApplyGravity();
-    // this.ECB.Move(this.playerPosition);
+    if (GetInputForFrame(frame).Action == 'run') {
+      this.StateMachine.setState('run');
+    } else if (GetInputForFrame(frame).Action == 'jump') {
+      this.StateMachine.setState('jump');
+    } else {
+      this.StateMachine.setState('idle');
+    }
     this.StateMachine.update(frame);
   }
 
@@ -137,6 +150,7 @@ export class Player {
   }
 
   private onIdleEnter() {
+    this.currentStateFrame = 0;
     console.log('in idle');
   }
 
@@ -145,23 +159,60 @@ export class Player {
     this.ApplyVelocityDecay();
     this.ApplyGravity();
     this.ECB.Move(this.playerPosition);
+
+    this.currentStateFrame += 1;
+
+    console.log(`In Idle for ${this.currentStateFrame}`);
   }
 
   private onRunEnter() {
+    this.currentStateFrame = 0;
     console.log('Entering run');
   }
 
-  private onRunUpdate() {}
+  private onRunUpdate(frame: number) {
+    const input = GetInputForFrame(frame);
+    this.AddVelocity(VectorAllocator(input.LXAxsis, input.LYAxsis));
+    this.ApplyVelocity();
+    this.ApplyVelocityDecay();
+    this.ApplyGravity();
+    this.ECB.Move(this.playerPosition);
+    this.currentStateFrame += 1;
+  }
 
-  private onRunExit() {}
+  private onRunExit() {
+    console.log('Exiting Run state');
+  }
 
-  private onJumpEnter() {}
+  private onJumpEnter() {
+    this.currentStateFrame = 0;
+    console.log('Entering Jump State');
+    this.Ground = false;
+  }
 
-  private onJumpUpdate(frame: number) {}
+  private onJumpUpdate(frame: number) {
+    const input = GetInputForFrame(frame);
+    const prevInput = GetInputForFrame(frame - 1);
+    if (input.Action == 'jump' && prevInput.Action != 'jump') {
+      this.AddVelocity(VectorAllocator(input.LXAxsis, -this.JumpVelocity));
+    } else {
+      this.AddVelocity(VectorAllocator(input.LXAxsis, 0));
+    }
 
-  private onJumpExit() {}
+    this.ApplyVelocity();
+    this.ApplyVelocityDecay();
+    this.ApplyGravity();
+    this.ECB.Move(this.playerPosition);
+    this.currentStateFrame += 1;
+  }
 
-  public Run() {}
+  private onJumpExit() {
+    console.log('Exiting Jump State');
+  }
+
+  // public Run() {
+  //   this.StateMachine.setState('run');
+  // }
 }
 
 export function Create(): IPlayerBuilder {
