@@ -14,6 +14,9 @@ peer.on('connection', (c) => {
   c.on('open', () => {
     c.send('hello');
   });
+  c.on('error', (e) => {
+    console.log(e);
+  });
 });
 
 let connection = {} as DataConnection;
