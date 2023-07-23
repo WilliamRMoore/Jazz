@@ -15,7 +15,7 @@ let col = false;
 
 let bodyList = [] as (Circle | Box)[];
 
-export function R() {
+export function Run() {
   init();
 }
 

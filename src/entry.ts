@@ -1,13 +1,15 @@
 import { ctx, canvas } from './Globals/globals';
-import { R } from './Physics/Test';
+import { Run } from './Physics/Test';
 import { init, tick } from './Physics/World';
+import { Run as PeerRun } from './Tests/PeerJsTest';
 
 export function run() {
   canvas.width = 1920;
   canvas.height = 1080;
-  init();
-  animate();
+  // init();
+  // animate();
   //R();
+  PeerRun();
 }
 
 function animate() {
