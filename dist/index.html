@@ -10,11 +10,20 @@
     <body>
         <canvas style="background: gray;"></canvas>
         <br>
-        <label style="color: white;">My peer ID</label>
-        <div id="mypeerid" style="color: white;"></div>
+        <div id="hostorconnect">
+            <button id="hostgame">Host Game</button>
+            <button id="connectgame">Connect To Game</button>
+        </div>
         <br>
-        <label style="color: white;">Input Peer ID</label>
-        <input id="peerid" type="text">
-        <button id="connectToPeer">Connect</button>
+        <div id="connectcontrols" style="display: none;">
+            <label style="color: white;">Input Peer ID</label>
+            <input id="peerid" type="text">
+            <button id="connectToPeer">Connect</button>
+        </div>
+        <div id="hostcontrols" style="display: none;">
+            <label style="color: white;">My peer ID</label>
+            <div id="mypeerid" style="color: white;"></div>
+        </div>
+
     </body>
 </html>

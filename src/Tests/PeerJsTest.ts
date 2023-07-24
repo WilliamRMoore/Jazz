@@ -7,24 +7,41 @@ peer.on('open', (id) => {
   document.getElementById('mypeerid')!.innerHTML = `<p>${id}</p>`;
 });
 
-peer.on('connection', (c) => {
-  c.on('data', (d) => {
-    console.log(d);
-  });
-  c.on('open', () => {
-    c.send('hello');
-  });
-  c.on('error', (e) => {
-    console.log(e);
+let connection = {} as DataConnection;
+
+document.getElementById('hostgame').addEventListener('click', () => {
+  document.getElementById('hostcontrols').style.display = 'block';
+  document.getElementById('hostorconnect').style.display = 'none';
+  peer.on('connection', (c) => {
+    console.log('connection open');
+    c.on('open', () => {
+      c.send('hello from host');
+    });
+    c.on('data', (d) => {
+      console.log(d);
+    });
+    c.on('error', (e) => {
+      console.log(e);
+    });
+    connection = c;
+    tick();
   });
 });
 
-let connection = {} as DataConnection;
-
-document.getElementById('connectToPeer').addEventListener('click', () => {
-  debugger;
-  let peerId = (document.getElementById('peerid') as HTMLInputElement).value;
-  connection = peer.connect(peerId);
+document.getElementById('connectgame').addEventListener('click', () => {
+  document.getElementById('connectcontrols').style.display = 'block';
+  document.getElementById('hostorconnect').style.display = 'none';
+  document.getElementById('connectToPeer').addEventListener('click', () => {
+    let peerId = (document.getElementById('peerid') as HTMLInputElement).value;
+    connection = peer.connect(peerId);
+    connection.on('open', () => {
+      connection.send('hello from client');
+    });
+    connection.on('data', (d) => {
+      console.log(d);
+    });
+    tick();
+  });
 });
 
 let frame = 0;
@@ -46,16 +63,15 @@ function tick() {
   window.requestAnimationFrame(tick);
 
   if (keys.d.pressed) {
-    connection.send({ action: 'd', Frame: frame });
-  }
-  if (keys.a.pressed) {
+    connection.send('d');
+  } else if (keys.a.pressed) {
     connection.send('a');
-  }
-  if (keys.w.pressed) {
+  } else if (keys.w.pressed) {
     connection.send('w');
-  }
-  if (keys.s.pressed) {
+  } else if (keys.s.pressed) {
     connection.send('s');
+  } else {
+    connection.send('no input');
   }
 
   frame++;
