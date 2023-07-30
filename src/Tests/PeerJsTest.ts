@@ -1,48 +1,59 @@
 import { DataConnection, Peer } from 'peerjs';
 import { keys } from '../input/SimpleInput';
 
+let remoteInputBuffer = Array<KeyInput>();
 const peer = new Peer();
 
 peer.on('open', (id) => {
   document.getElementById('mypeerid')!.innerHTML = `<p>${id}</p>`;
 });
 
-let connection = {} as DataConnection;
-
 document.getElementById('hostgame').addEventListener('click', () => {
   document.getElementById('hostcontrols').style.display = 'block';
   document.getElementById('hostorconnect').style.display = 'none';
-  peer.on('connection', (c) => {
-    console.log('connection open');
-    c.on('open', () => {
-      c.send('hello from host');
-    });
-    c.on('data', (d) => {
-      console.log(d);
-    });
-    c.on('error', (e) => {
-      console.log(e);
-    });
-    connection = c;
-    tick();
-  });
+  BeginHost(peer);
 });
 
 document.getElementById('connectgame').addEventListener('click', () => {
   document.getElementById('connectcontrols').style.display = 'block';
   document.getElementById('hostorconnect').style.display = 'none';
   document.getElementById('connectToPeer').addEventListener('click', () => {
-    let peerId = (document.getElementById('peerid') as HTMLInputElement).value;
-    connection = peer.connect(peerId);
-    connection.on('open', () => {
-      connection.send('hello from client');
-    });
-    connection.on('data', (d) => {
-      console.log(d);
-    });
-    tick();
+    let connectionId = (document.getElementById('peerid') as HTMLInputElement)
+      .value;
+    SetUpDataSendLoop(ConnectToRemotePeer(connectionId, peer));
   });
 });
+
+function BeginHost(localPeer: Peer) {
+  localPeer.on('connection', (c) => {
+    c.on('open', () => {
+      c.send('Hello from Host');
+    });
+
+    c.on('data', (remoteData) => {
+      console.log(remoteData);
+    });
+    SetUpDataSendLoop(c);
+  });
+}
+
+function ConnectToRemotePeer(
+  remotePeerId: string,
+  localPeer: Peer
+): DataConnection {
+  let connection = localPeer.connect(remotePeerId);
+
+  connection.on('open', () => {
+    connection.send('Hello Frome Client.');
+  });
+
+  connection.on('data', (remoteData) => {
+    //let remoteInput = remoteData as KeyInput
+    console.log(remoteData);
+  });
+
+  return connection;
+}
 
 let frame = 0;
 
@@ -59,31 +70,45 @@ function Init() {
   //tick();
 }
 
-function tick() {
-  window.requestAnimationFrame(tick);
+type KeyInput = {
+  action: string;
+  inputFrame: number;
+};
 
+function GetKey(inputFrame: number): KeyInput {
   if (keys.d.pressed) {
-    connection.send('d');
+    return { action: 'd', inputFrame };
   } else if (keys.a.pressed) {
-    connection.send('a');
+    return { action: 'a', inputFrame };
   } else if (keys.w.pressed) {
-    connection.send('w');
+    return { action: 'w', inputFrame };
   } else if (keys.s.pressed) {
-    connection.send('s');
+    return { action: 's', inputFrame };
   } else {
-    connection.send('no input');
+    return { action: 'n/a', inputFrame };
   }
-
-  frame++;
 }
 
-function PeerInput() {
-  peer.on('connection', (conn) => {
-    conn.on('data', (data) => {
-      console.log(data);
-    });
-    conn.on('open', () => {
-      conn.send('Hello!');
-    });
-  });
+function SendDataToPeer(c: DataConnection, keyInput: any) {
+  c.send(keyInput);
+}
+
+const FPS = 2;
+let now = {} as number;
+let then = Date.now();
+const interval = 1000 / FPS;
+let delta = {} as number;
+
+function SetUpDataSendLoop(c: DataConnection) {
+  window.requestAnimationFrame(() => SetUpDataSendLoop(c));
+
+  now = Date.now();
+  delta = now - then;
+
+  if (delta > interval) {
+    let localInput = GetKey(frame);
+    SendDataToPeer(c, localInput);
+    frame++;
+    then = now - (delta % interval);
+  }
 }
