@@ -70,6 +70,7 @@ function Init() {}
 type KeyInput = {
   action: string;
   inputFrame: number;
+  timeStamp: number;
 };
 
 type FrameInput = {
@@ -80,16 +81,18 @@ type FrameInput = {
 function GetKey(inputFrame: number): KeyInput {
   let localInput = {} as KeyInput;
 
+  let time = Date.now();
+
   if (keys.d.pressed) {
-    localInput = { action: 'd', inputFrame };
+    localInput = { action: 'd', inputFrame, timeStamp: time };
   } else if (keys.a.pressed) {
-    localInput = { action: 'a', inputFrame };
+    localInput = { action: 'a', inputFrame, timeStamp: time };
   } else if (keys.w.pressed) {
-    localInput = { action: 'w', inputFrame };
+    localInput = { action: 'w', inputFrame, timeStamp: time };
   } else if (keys.s.pressed) {
-    localInput = { action: 's', inputFrame };
+    localInput = { action: 's', inputFrame, timeStamp: time };
   } else {
-    localInput = { action: 'n/a', inputFrame };
+    localInput = { action: 'n/a', inputFrame, timeStamp: time };
   }
 
   localInputBuffer[localInput.inputFrame] = localInput;
@@ -124,6 +127,7 @@ function SetUpDataSendLoop(c: DataConnection) {
 }
 
 function AddRemoteInput(input: KeyInput) {
+  input.timeStamp = Date.now();
   let checkFrame = remoteInputBuffer[input.inputFrame];
 
   if (checkFrame === undefined) {
