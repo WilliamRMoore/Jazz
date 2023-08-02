@@ -67,13 +67,13 @@ export function Run() {
 
 function Init() {}
 
-type KeyInput = {
+export type KeyInput = {
   action: string;
   inputFrame: number;
   timeStamp: number;
 };
 
-type FrameInput = {
+export type FrameInput = {
   guessed: boolean;
   keyInput: KeyInput;
 };
