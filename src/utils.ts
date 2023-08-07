@@ -1,4 +1,4 @@
-function HashCode(obj: any) {
+export function HashCode(obj: any) {
   const j = JSON.stringify(obj);
 
   var hash = 0;

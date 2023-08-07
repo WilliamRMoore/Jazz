@@ -50,10 +50,10 @@ export class InputStorageManager<Type> {
     return this.guessedInputStore[frame];
   }
 
-  public RetreiveFirstInvalidInputFrameNumber(
+  public ReturnFirstWrongGuess(
     lowerBound: number,
     upperBound: number
-  ) {
+  ): number | null {
     for (let i = lowerBound; i <= upperBound; i++) {
       const guessed = this.guessedInputStore[i];
       const real = this.remoteInputStore[i];
@@ -66,7 +66,6 @@ export class InputStorageManager<Type> {
         return i - 1;
       }
     }
-
     return null;
   }
 }

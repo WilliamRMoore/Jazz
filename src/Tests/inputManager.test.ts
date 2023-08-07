@@ -26,12 +26,12 @@ test('Update Guessed Calls', () => {
 
 test('Retreive Invalid Input Frame Number', () => {
   SUT = setUpIPForInvalidFrameDetection(SUT);
-  expect(SUT.RetreiveFirstInvalidInputFrameNumber(0, 99)).toBe(49);
+  expect(SUT.ReturnFirstWrongGuess(0, 99)).toBe(49);
 });
 
 test('Retreive Invalid Input Frame Number null', () => {
   SUT = setUpIPForInvalidFrameDetection(SUT);
-  expect(SUT.RetreiveFirstInvalidInputFrameNumber(60, 99)).toBe(null);
+  expect(SUT.ReturnFirstWrongGuess(60, 99)).toBe(null);
 });
 
 test('Throws Exception when trying to ovewrite Local input', () => {

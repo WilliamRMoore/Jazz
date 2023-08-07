@@ -1,35 +1,60 @@
 import { InputStorageManager } from '../input/InputStorageManager';
+import { FrameStorageManager } from './FrameStorageManager';
 
 export class FrameComparisonManager<Type> {
+  private readonly MAX_ROLLBACK_FRAMES = 60;
+  private readonly FRAME_ADVANTAGE_LIMIT = 3;
   private readonly InputStorageManager: InputStorageManager<Type>;
-  private PreviousSyncFrame: number = 0;
+  private readonly FrameStorageManager: FrameStorageManager;
 
-  constructor(inputStorageManager: InputStorageManager<Type>) {
+  constructor(
+    inputStorageManager: InputStorageManager<Type>,
+    frameStorageManager: FrameStorageManager
+  ) {
     this.InputStorageManager = inputStorageManager;
+    this.FrameStorageManager = frameStorageManager;
   }
 
-  GetNextSyncFrame(localFrame: number, remoteFrame: number): number {
-    let finalFrame = remoteFrame > localFrame ? localFrame : remoteFrame;
-    let syncFrame =
-      this.InputStorageManager.RetreiveFirstInvalidInputFrameNumber(
-        this.PreviousSyncFrame,
-        finalFrame
-      );
+  UpdateNextSyncFrame() {
+    let finalFrame =
+      this.FrameStorageManager.RemoteFrame > this.FrameStorageManager.LocalFrame
+        ? this.FrameStorageManager.LocalFrame
+        : this.FrameStorageManager.RemoteFrame;
+
+    let syncFrame = this.InputStorageManager.ReturnFirstWrongGuess(
+      this.FrameStorageManager.GetSyncFrames().PreviousSyncFrame,
+      finalFrame
+    );
+
     if (syncFrame == null) {
-      this.PreviousSyncFrame = finalFrame;
-      return finalFrame;
+      this.FrameStorageManager.SetCurrentSyncFrame(finalFrame);
+      return;
     }
-    this.PreviousSyncFrame = syncFrame;
-    return syncFrame;
+
+    this.FrameStorageManager.SetCurrentSyncFrame(syncFrame);
   }
 
-  ShouldRollBack(localFrame: number, remoteFrame: number): boolean {
-    if (
-      localFrame > this.PreviousSyncFrame &&
-      remoteFrame > this.PreviousSyncFrame
-    ) {
-      return true;
-    }
-    return false;
+  GetPreviousSyncFrame(): number {
+    return this.FrameStorageManager.GetSyncFrames().PreviousSyncFrame;
+  }
+
+  GetCurrentSyncFrame(): number {
+    return this.FrameStorageManager.GetSyncFrames().CurrentSyncFrame;
+  }
+
+  IsWithinFrameAdvatnage(): boolean {
+    let localFrameAdvantage = this.GetLocalFrameAdvantage();
+    let frameAdvantageDifference =
+      localFrameAdvantage - this.FrameStorageManager.RemoteFrameAdvantage;
+    return (
+      localFrameAdvantage < this.MAX_ROLLBACK_FRAMES &&
+      frameAdvantageDifference <= this.FRAME_ADVANTAGE_LIMIT
+    );
+  }
+
+  GetLocalFrameAdvantage(): number {
+    return (
+      this.FrameStorageManager.LocalFrame - this.FrameStorageManager.RemoteFrame
+    );
   }
 }
