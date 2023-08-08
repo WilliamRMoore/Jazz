@@ -4,6 +4,16 @@ import { InputStorageManager } from '../input/InputStorageManager';
 import { FrameComparisonManager } from '../network/FrameComparisonManager';
 import { FrameStorageManager } from '../network/FrameStorageManager';
 import { RollBackManager } from '../network/rollBackManager';
+import {
+  ConfigureConnectionsFactory,
+  ConnectionConfiguratorOLD,
+} from '../network/Host';
+
+export type KeyInput = {
+  action: string;
+  inputFrame: number;
+  frameAdvantage: number;
+};
 
 let ISM = new InputStorageManager<KeyInput>((g, r) => {
   if (g == undefined || r == undefined) {
@@ -22,6 +32,44 @@ let con: DataConnection;
 
 const peer = new Peer();
 
+function testConfigHandler(c: DataConnection) {
+  ConnectionConfiguratorOLD(
+    c,
+    (c) => {
+      SetUpDataSendLoop();
+    },
+    (rd) => {
+      //console.log(rd);
+      let remoteInput = rd as KeyInput;
+      ISM.StoreRemoteInput(remoteInput, remoteInput.inputFrame);
+      FSM.RemoteFrame = remoteInput.inputFrame;
+      FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
+      console.log(ISM.GetRemoteInputForFrame(remoteInput.inputFrame));
+    }
+  );
+}
+
+//let r = ConfigureConnectionsFactory(c, onOpen, onData)
+
+// let cf = ConfigureConnectionsFactory(
+//   (c: DataConnection) => {
+//     SetUpDataSendLoop();
+//   },
+//   (rd: unknown) => {
+//     let remoteInput = rd as KeyInput;
+//     ISM.StoreRemoteInput(remoteInput, remoteInput.inputFrame);
+//     FSM.RemoteFrame = remoteInput.inputFrame;
+//     FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
+//     console.log(remoteInput);
+//   }
+// );
+
+peer.on('connection', (c) => {
+  testConfigHandler(c);
+  //cf(c);
+  con = c;
+});
+
 peer.on('open', (id) => {
   document.getElementById('mypeerid')!.innerHTML = `<p>${id}</p>`;
 });
@@ -29,59 +77,21 @@ peer.on('open', (id) => {
 document.getElementById('hostgame').addEventListener('click', () => {
   document.getElementById('hostcontrols').style.display = 'block';
   document.getElementById('hostorconnect').style.display = 'none';
-  BeginHost(peer);
 });
 
 document.getElementById('connectgame').addEventListener('click', () => {
   document.getElementById('connectcontrols').style.display = 'block';
   document.getElementById('hostorconnect').style.display = 'none';
+
   document.getElementById('connectToPeer').addEventListener('click', () => {
     let connectionId = (document.getElementById('peerid') as HTMLInputElement)
       .value;
-    con = ConnectToRemotePeer(connectionId, peer);
-    //SetUpDataSendLoop();
+    let c = peer.connect(connectionId);
+    testConfigHandler(c);
+    //cf(c);
+    con = c;
   });
 });
-
-function BeginHost(localPeer: Peer) {
-  localPeer.on('connection', (c) => {
-    // console.log(FSM.LocalFrame);
-    c.on('open', () => {
-      console.log('Remote Connected');
-      console.log(FSM.LocalFrame);
-    });
-    c.on('data', (remoteData) => {
-      console.log(remoteData);
-      // let rd = remoteData as KeyInput;
-      // ISM.StoreRemoteInput(rd, rd.inputFrame);
-      // FSM.RemoteFrame = rd.inputFrame;
-      // FSM.RemoteFrameAdvantage = rd.frameAdvantage;
-    });
-    con = c;
-    //SetUpDataSendLoop();
-  });
-}
-
-function ConnectToRemotePeer(
-  remotePeerId: string,
-  localPeer: Peer
-): DataConnection {
-  let connection = localPeer.connect(remotePeerId);
-
-  connection.on('open', () => {
-    console.log('Connected to host');
-    console.log(FSM.LocalFrame);
-  });
-  connection.on('data', (remoteData) => {
-    let rd = remoteData as KeyInput;
-    console.log(remoteData);
-    // ISM.StoreRemoteInput(rd, rd.inputFrame);
-    // FSM.RemoteFrame = rd.inputFrame;
-    // FSM.RemoteFrameAdvantage = rd.frameAdvantage;
-  });
-
-  return connection;
-}
 
 let frame = 0;
 
@@ -90,12 +100,6 @@ export function Run() {
 }
 
 function Init() {}
-
-export type KeyInput = {
-  action: string;
-  inputFrame: number;
-  frameAdvantage: number;
-};
 
 function GetKey(inputFrame: number): KeyInput {
   let localInput = {} as KeyInput;
@@ -135,10 +139,6 @@ function GetKey(inputFrame: number): KeyInput {
   return localInput;
 }
 
-// function SendDataToPeer(c: DataConnection, keyInput: any) {
-//   c.send(keyInput);
-// }
-
 const FPS = 60;
 let now = {} as number;
 let then = Date.now();
@@ -154,6 +154,10 @@ function SetUpDataSendLoop() {
   if (delta > interval) {
     FCM.UpdateNextSyncFrame();
 
+    // if (RBM.ShouldRollBack()) {
+    //   console.log('rollingback');
+    // }
+
     if (FCM.IsWithinFrameAdvatnage()) {
       frame++;
       FSM.LocalFrame = frame;
@@ -161,7 +165,7 @@ function SetUpDataSendLoop() {
       ISM.StoreLocalInput(localInput, frame);
       con.send(localInput);
       let remoteInput = GetCurrentRemoteInput(frame);
-      console.log(remoteInput);
+      //console.log(remoteInput);
       then = now - (delta % interval);
     } else {
       console.log('stalling');
