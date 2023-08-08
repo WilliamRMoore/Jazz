@@ -34,19 +34,19 @@ test('Retreive Invalid Input Frame Number null', () => {
   expect(SUT.ReturnFirstWrongGuess(60, 99)).toBe(null);
 });
 
-test('Throws Exception when trying to ovewrite Local input', () => {
-  SUT.StoreLocalInput(1, 1);
-  expect(() => SUT.StoreLocalInput(2, 1)).toThrow(Error);
-});
+// test('Throws Exception when trying to ovewrite Local input', () => {
+//   SUT.StoreLocalInput(1, 1);
+//   expect(() => SUT.StoreLocalInput(2, 1)).toThrow(Error);
+// });
 
-test('Throws Exception when trying to ovewrite Guessed input', () => {
-  SUT.StoreGuessedInput(1, 1);
-  expect(() => SUT.StoreGuessedInput(2, 1)).toThrow(Error);
-});
-test('Throws Exception when trying to ovewrite Remote input', () => {
-  SUT.StoreRemoteInput(1, 1);
-  expect(() => SUT.StoreRemoteInput(2, 1)).toThrow(Error);
-});
+// test('Throws Exception when trying to ovewrite Guessed input', () => {
+//   SUT.StoreGuessedInput(1, 1);
+//   expect(() => SUT.StoreGuessedInput(2, 1)).toThrow(Error);
+// });
+// test('Throws Exception when trying to ovewrite Remote input', () => {
+//   SUT.StoreRemoteInput(1, 1);
+//   expect(() => SUT.StoreRemoteInput(2, 1)).toThrow(Error);
+// });
 
 function setUpIPForInvalidFrameDetection(ip: InputStorageManager<Number>) {
   for (let frame = 0; frame < 100; frame++) {

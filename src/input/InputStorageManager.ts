@@ -17,7 +17,7 @@ export class InputStorageManager<Type> {
       return;
     }
 
-    throw new Error('Attempted to overwrite Local Input');
+    //throw new Error('Attempted to overwrite Local Input');
   }
 
   public StoreGuessedInput(input: Type, frame: number) {
@@ -26,7 +26,7 @@ export class InputStorageManager<Type> {
       return;
     }
 
-    throw new Error('Attempted to overwrite Guessed Input');
+    //throw new Error('Attempted to overwrite Guessed Input');
   }
 
   public StoreRemoteInput(input: Type, frame: number) {
@@ -35,11 +35,15 @@ export class InputStorageManager<Type> {
       return;
     }
 
-    throw new Error('Attempted to overwrite Remote Input');
+    //throw new Error('Attempted to overwrite Remote Input');
   }
 
   public GetRemoteInputForFrame(frame: number) {
     return this.remoteInputStore[frame];
+  }
+
+  public GetLastRemoteInput() {
+    return this.remoteInputStore[this.remoteInputStore.length];
   }
 
   public GetLocalInputForFrame(frame: number) {

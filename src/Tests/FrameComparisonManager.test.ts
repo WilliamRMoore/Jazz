@@ -46,3 +46,23 @@ test('GetCurrentSyncFrame ', () => {
 
   expect(SUT.GetCurrentSyncFrame()).toBe(10);
 });
+
+test('Frame Advantage To Be 6', () => {
+  FSM.LocalFrame = 10;
+  FSM.RemoteFrame = 7;
+  FSM.RemoteFrameAdvantage = -3;
+
+  SUT.UpdateNextSyncFrame();
+
+  expect(SUT.GetFrameAdvantageDifference()).toBe(6);
+});
+
+test('Frame Advantage To Be -6', () => {
+  FSM.LocalFrame = 7;
+  FSM.RemoteFrame = 10;
+  FSM.RemoteFrameAdvantage = 3;
+
+  SUT.UpdateNextSyncFrame();
+
+  expect(SUT.GetFrameAdvantageDifference()).toBe(-6);
+});

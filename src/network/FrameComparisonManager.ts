@@ -2,7 +2,7 @@ import { InputStorageManager } from '../input/InputStorageManager';
 import { FrameStorageManager } from './FrameStorageManager';
 
 export class FrameComparisonManager<Type> {
-  private readonly MAX_ROLLBACK_FRAMES = 60;
+  // private readonly MAX_ROLLBACK_FRAMES = 60;
   private readonly FRAME_ADVANTAGE_LIMIT = 3;
   private readonly InputStorageManager: InputStorageManager<Type>;
   private readonly FrameStorageManager: FrameStorageManager;
@@ -47,8 +47,15 @@ export class FrameComparisonManager<Type> {
     let frameAdvantageDifference =
       localFrameAdvantage - this.FrameStorageManager.RemoteFrameAdvantage;
     return (
-      localFrameAdvantage < this.MAX_ROLLBACK_FRAMES &&
+      //localFrameAdvantage < this.MAX_ROLLBACK_FRAMES &&
       frameAdvantageDifference <= this.FRAME_ADVANTAGE_LIMIT
+    );
+  }
+
+  GetFrameAdvantageDifference() {
+    return (
+      this.GetLocalFrameAdvantage() -
+      this.FrameStorageManager.RemoteFrameAdvantage
     );
   }
 
