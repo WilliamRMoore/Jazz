@@ -1,22 +1,5 @@
 import { DataConnection } from 'peerjs';
 
-// export function CreatePeer(
-//   onConnectionHandler: ConnectionHandler,
-//   dataHandler: DataHandler
-// ) {
-//   let localPeer = new Peer();
-//   localPeer.on('connection', (c) => {
-//     c.on('open', () => {
-//       console.log('Connected!');
-//       onConnectionHandler(c);
-//     });
-//     c.on('data', (remoteData) => {
-//       dataHandler(remoteData);
-//     });
-//   });
-
-//   return localPeer;
-// }
 let confOnOpen: ConnectionHandler;
 let confOnData: DataHandler;
 

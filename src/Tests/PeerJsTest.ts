@@ -32,41 +32,21 @@ let con: DataConnection;
 
 const peer = new Peer();
 
-function testConfigHandler(c: DataConnection) {
-  ConnectionConfiguratorOLD(
-    c,
-    (c) => {
-      SetUpDataSendLoop();
-    },
-    (rd) => {
-      //console.log(rd);
-      let remoteInput = rd as KeyInput;
-      ISM.StoreRemoteInput(remoteInput, remoteInput.inputFrame);
-      FSM.RemoteFrame = remoteInput.inputFrame;
-      FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
-      console.log(ISM.GetRemoteInputForFrame(remoteInput.inputFrame));
-    }
-  );
-}
-
-//let r = ConfigureConnectionsFactory(c, onOpen, onData)
-
-// let cf = ConfigureConnectionsFactory(
-//   (c: DataConnection) => {
-//     SetUpDataSendLoop();
-//   },
-//   (rd: unknown) => {
-//     let remoteInput = rd as KeyInput;
-//     ISM.StoreRemoteInput(remoteInput, remoteInput.inputFrame);
-//     FSM.RemoteFrame = remoteInput.inputFrame;
-//     FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
-//     console.log(remoteInput);
-//   }
-// );
+let connectionConfigurator = ConfigureConnectionsFactory(
+  (c: DataConnection) => {
+    SetUpDataSendLoop();
+  },
+  (rd: unknown) => {
+    let remoteInput = rd as KeyInput;
+    ISM.StoreRemoteInput(remoteInput, remoteInput.inputFrame);
+    FSM.RemoteFrame = remoteInput.inputFrame;
+    FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
+    console.log(remoteInput);
+  }
+);
 
 peer.on('connection', (c) => {
-  testConfigHandler(c);
-  //cf(c);
+  connectionConfigurator(c);
   con = c;
 });
 
@@ -87,8 +67,7 @@ document.getElementById('connectgame').addEventListener('click', () => {
     let connectionId = (document.getElementById('peerid') as HTMLInputElement)
       .value;
     let c = peer.connect(connectionId);
-    testConfigHandler(c);
-    //cf(c);
+    connectionConfigurator(c);
     con = c;
   });
 });
