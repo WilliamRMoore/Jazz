@@ -53,3 +53,31 @@ test('Should Roll Back return false', () => {
 
   expect(SUT.ShouldRollBack()).toBe(false);
 });
+
+test('Should roll Back returns true, then false', () => {
+  for (let i = 0; i <= 10; i++) {
+    if (i == 5) {
+      FSM.LocalFrame = i;
+      FSM.RemoteFrame = i;
+
+      ISM.StoreGuessedInput(i + 3, FSM.RemoteFrame);
+      ISM.StoreLocalInput(i + 1, FSM.LocalFrame);
+      ISM.StoreRemoteInput(i + 2, FSM.RemoteFrame);
+    } else {
+      FSM.LocalFrame = i;
+      FSM.RemoteFrame = i;
+
+      ISM.StoreLocalInput(i + 1, FSM.LocalFrame);
+      ISM.StoreRemoteInput(i + 2, FSM.RemoteFrame);
+    }
+  }
+
+  FCM.UpdateNextSyncFrame();
+  expect(SUT.ShouldRollBack()).toBe(true);
+
+  ISM.OverWriteGuessedInput(ISM.GetRemoteInputForFrame(5), 5);
+
+  FCM.UpdateNextSyncFrame();
+
+  expect(SUT.ShouldRollBack()).toBeFalsy();
+});

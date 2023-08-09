@@ -3,7 +3,7 @@ import * as Util from '../utils';
 
 test('Random int', () => {
   let res = Util.getRandomInt(10);
-  expect(res).toBeGreaterThan(0);
+  expect(res).toBeGreaterThanOrEqual(0);
   expect(res).toBeLessThan(11);
 });
 

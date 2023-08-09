@@ -30,7 +30,6 @@ export class FrameComparisonManager<Type> {
       this.FrameStorageManager.SetCurrentSyncFrame(finalFrame);
       return;
     }
-
     this.FrameStorageManager.SetCurrentSyncFrame(syncFrame);
   }
 

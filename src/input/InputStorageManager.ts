@@ -29,6 +29,10 @@ export class InputStorageManager<Type> {
     //throw new Error('Attempted to overwrite Guessed Input');
   }
 
+  public OverWriteGuessedInput(input: Type, frame: number) {
+    this.guessedInputStore[frame] = input;
+  }
+
   public StoreRemoteInput(input: Type, frame: number) {
     if (this.remoteInputStore[frame] === undefined) {
       this.remoteInputStore[frame] = input;
