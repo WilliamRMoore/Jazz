@@ -1,6 +1,6 @@
-import { FrameComparisonManager } from '../network/FrameComparisonManager';
-import { InputStorageManager } from '../input/InputStorageManager';
-import { FrameStorageManager } from '../network/FrameStorageManager';
+import { FrameComparisonManager } from '../../network/FrameComparisonManager';
+import { InputStorageManager } from '../../input/InputStorageManager';
+import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { beforeEach, expect, test } from '@jest/globals';
 
 let FSM: FrameStorageManager;

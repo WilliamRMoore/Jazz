@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from '@jest/globals';
-import { InputStorageManager } from '../input/InputStorageManager';
+import { InputStorageManager } from '../../input/InputStorageManager';
 
 let SUT = {} as InputStorageManager<Number>;
 

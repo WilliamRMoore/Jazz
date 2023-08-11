@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import * as Util from '../utils';
+import * as Util from '../../utils';
 
 test('Random int', () => {
   let res = Util.getRandomInt(10);

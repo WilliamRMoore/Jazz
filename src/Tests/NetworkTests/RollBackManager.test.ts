@@ -1,8 +1,8 @@
 import { beforeEach, expect, test } from '@jest/globals';
-import { InputStorageManager } from '../input/InputStorageManager';
-import { FrameComparisonManager } from '../network/FrameComparisonManager';
-import { FrameStorageManager } from '../network/FrameStorageManager';
-import { RollBackManager } from '../network/rollBackManager';
+import { InputStorageManager } from '../../input/InputStorageManager';
+import { FrameComparisonManager } from '../../network/FrameComparisonManager';
+import { FrameStorageManager } from '../../network/FrameStorageManager';
+import { RollBackManager } from '../../network/rollBackManager';
 
 let ISM: InputStorageManager<number>;
 let FCM: FrameComparisonManager<number>;

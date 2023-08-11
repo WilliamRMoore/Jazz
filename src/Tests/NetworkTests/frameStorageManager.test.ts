@@ -1,5 +1,5 @@
 import { beforeEach, expect, test } from '@jest/globals';
-import { FrameStorageManager } from '../network/FrameStorageManager';
+import { FrameStorageManager } from '../../network/FrameStorageManager';
 
 let SUT: FrameStorageManager;
 

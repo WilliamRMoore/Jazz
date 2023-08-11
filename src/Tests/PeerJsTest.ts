@@ -9,6 +9,9 @@ import {
   ConnectionConfiguratorOLD,
 } from '../network/Host';
 
+import * as glob from '../Globals/globals';
+import { FlatVec, VectorAdder, VectorAllocator } from '../Physics/FlatVec';
+
 export type KeyInput = {
   action: string;
   inputFrame: number;
@@ -173,3 +176,49 @@ function GetCurrentRemoteInput(f: number) {
 
   return remoteInput;
 }
+
+let poly1 = new Array<FlatVec>();
+let poly2 = new Array<FlatVec>();
+
+poly1[0] = VectorAllocator(0, 0);
+poly1[1] = VectorAllocator(50, 0);
+poly1[2] = VectorAllocator(50, 50);
+poly1[3] = VectorAllocator(0, 50);
+
+poly2[0] = VectorAllocator(0, 0);
+poly2[1] = VectorAllocator(50, 0);
+poly2[2] = VectorAllocator(50, 50);
+poly2[3] = VectorAllocator(0, 50);
+
+let poly3 = new Array<FlatVec>();
+poly3[0] = VectorAllocator(0, 0);
+poly3[1] = VectorAllocator(50, 0);
+poly3[2] = VectorAllocator(50, 50);
+poly3[3] = VectorAllocator(0, 50);
+
+let start = Move(poly1, VectorAllocator(100, 100));
+let finish = Move(poly2, VectorAllocator(300, 100));
+let p3 = Move(poly3, VectorAllocator(175, 140));
+
+let poly4 = start.concat(finish);
+
+function Move(poly: Array<FlatVec>, pos: FlatVec) {
+  poly[0] = pos;
+
+  for (let i = 1; i < poly.length; i++) {
+    poly[i] = VectorAdder(poly[i], pos);
+  }
+  return poly;
+}
+
+glob.ctx.strokeStyle = 'blue';
+
+glob.ctx.beginPath();
+glob.ctx.moveTo(poly4[0].X, poly4[0].Y);
+
+for (let i = 1; i < poly4.length; i++) {
+  glob.ctx.lineTo(poly4[i].X, poly4[i].Y);
+}
+glob.ctx.closePath();
+glob.ctx.fillStyle = 'red';
+glob.ctx.fill();
