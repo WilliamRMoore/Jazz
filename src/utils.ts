@@ -1,4 +1,4 @@
-function HashCode(obj: any) {
+export function HashCode(obj: any): number {
   const j = JSON.stringify(obj);
 
   var hash = 0;
@@ -10,10 +10,10 @@ function HashCode(obj: any) {
   return hash;
 }
 
-export function getRandomInt(max: number) {
+export function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
 }
 
-export function randomNumber(min: number, max: number) {
+export function randomNumber(min: number, max: number): number {
   return Math.round(Math.random() * (max - min) + min);
 }

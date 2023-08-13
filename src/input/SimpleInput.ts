@@ -13,6 +13,12 @@ export const keys = {
   },
 };
 
+export type KeyInput = {
+  action: string;
+  inputFrame: number;
+  frameAdvantage: number;
+};
+
 window.addEventListener('keydown', (e) => {
   switch (e.key) {
     case 'd':
