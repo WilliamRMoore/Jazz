@@ -1,7 +1,7 @@
 import { FrameComparisonManager } from './FrameComparisonManager';
 import { FrameStorageManager } from './FrameStorageManager';
 
-export class RollBackManager<Type> {
+export class RollBackManager<Type> implements IRollBackManager<Type> {
   private readonly FrameComparisonManager: FrameComparisonManager<Type>;
   private readonly RemoteLocalFrameManager: FrameStorageManager;
 
@@ -24,4 +24,8 @@ export class RollBackManager<Type> {
     }
     return false;
   }
+}
+
+export interface IRollBackManager<Type> {
+  ShouldRollBack(): boolean;
 }

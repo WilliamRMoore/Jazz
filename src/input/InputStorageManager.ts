@@ -1,4 +1,4 @@
-export class InputStorageManager<Type> {
+export class InputStorageManager<Type> implements IInputStorageManager<Type> {
   private readonly localInputStore: Array<Type>;
   private readonly remoteInputStore: Array<Type>;
   private readonly guessedInputStore: Array<Type>;
@@ -16,8 +16,6 @@ export class InputStorageManager<Type> {
       this.localInputStore[frame] = input;
       return;
     }
-
-    //throw new Error('Attempted to overwrite Local Input');
   }
 
   public StoreGuessedInput(input: Type, frame: number) {
@@ -25,8 +23,6 @@ export class InputStorageManager<Type> {
       this.guessedInputStore[frame] = input;
       return;
     }
-
-    //throw new Error('Attempted to overwrite Guessed Input');
   }
 
   public OverWriteGuessedInput(input: Type, frame: number) {
@@ -38,23 +34,21 @@ export class InputStorageManager<Type> {
       this.remoteInputStore[frame] = input;
       return;
     }
-
-    //throw new Error('Attempted to overwrite Remote Input');
   }
 
-  public GetRemoteInputForFrame(frame: number) {
+  public GetRemoteInputForFrame(frame: number): Type {
     return this.remoteInputStore[frame];
   }
 
-  public GetLastRemoteInput() {
+  public GetLastRemoteInput(): Type {
     return this.remoteInputStore[this.remoteInputStore.length];
   }
 
-  public GetLocalInputForFrame(frame: number) {
+  public GetLocalInputForFrame(frame: number): Type {
     return this.localInputStore[frame];
   }
 
-  public GetGuessedInputForFrame(frame: number) {
+  public GetGuessedInputForFrame(frame: number): Type {
     return this.guessedInputStore[frame];
   }
 
@@ -76,4 +70,16 @@ export class InputStorageManager<Type> {
     }
     return null;
   }
+}
+
+export interface IInputStorageManager<Type> {
+  StoreLocalInput(input: Type, frame: number): void;
+  StoreGuessedInput(input: Type, frame: number): void;
+  OverWriteGuessedInput(input: Type, frame: number): void;
+  StoreRemoteInput(input: Type, frame: number): void;
+  GetRemoteInputForFrame(frame: number): Type;
+  GetLastRemoteInput(): Type;
+  GetLocalInputForFrame(frame: number): Type;
+  GetGuessedInputForFrame(frame: number): Type;
+  ReturnFirstWrongGuess(lowerBound: number, upperBound: number): number | null;
 }

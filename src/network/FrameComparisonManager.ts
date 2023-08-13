@@ -1,8 +1,10 @@
 import { InputStorageManager } from '../input/InputStorageManager';
 import { FrameStorageManager } from './FrameStorageManager';
 
-export class FrameComparisonManager<Type> {
-  // private readonly MAX_ROLLBACK_FRAMES = 60;
+export class FrameComparisonManager<Type>
+  implements IFrameComparisonManager<Type>
+{
+  private readonly MAX_ROLLBACK_FRAMES = 60;
   private readonly FRAME_ADVANTAGE_LIMIT = 0;
   private readonly InputStorageManager: InputStorageManager<Type>;
   private readonly FrameStorageManager: FrameStorageManager;
@@ -15,7 +17,7 @@ export class FrameComparisonManager<Type> {
     this.FrameStorageManager = frameStorageManager;
   }
 
-  UpdateNextSyncFrame() {
+  UpdateNextSyncFrame(): void {
     let finalFrame =
       this.FrameStorageManager.RemoteFrame > this.FrameStorageManager.LocalFrame
         ? this.FrameStorageManager.LocalFrame
@@ -46,12 +48,12 @@ export class FrameComparisonManager<Type> {
     let frameAdvantageDifference =
       localFrameAdvantage - this.FrameStorageManager.RemoteFrameAdvantage;
     return (
-      //localFrameAdvantage < this.MAX_ROLLBACK_FRAMES &&
+      localFrameAdvantage < this.MAX_ROLLBACK_FRAMES &&
       frameAdvantageDifference <= this.FRAME_ADVANTAGE_LIMIT
     );
   }
 
-  GetFrameAdvantageDifference() {
+  GetFrameAdvantageDifference(): number {
     return (
       this.GetLocalFrameAdvantage() -
       this.FrameStorageManager.RemoteFrameAdvantage
@@ -63,4 +65,13 @@ export class FrameComparisonManager<Type> {
       this.FrameStorageManager.LocalFrame - this.FrameStorageManager.RemoteFrame
     );
   }
+}
+
+export interface IFrameComparisonManager<Type> {
+  UpdateNextSyncFrame(): void;
+  GetPreviousSyncFrame(): number;
+  GetCurrentSyncFrame(): number;
+  IsWithinFrameAdvatnage(): boolean;
+  GetFrameAdvantageDifference(): number;
+  GetLocalFrameAdvantage(): number;
 }

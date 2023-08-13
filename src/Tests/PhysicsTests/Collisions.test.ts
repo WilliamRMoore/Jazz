@@ -63,7 +63,7 @@ test('Continuous collision detection returns true', () => {
   expect(res.collision).toBe(true);
   //   expect(res.depth).toBe(10);
   //   expect(res.normal?.Y).toBe(1);
-  console.log(res);
+  //console.log(res);
 });
 
 function Move(poly: Array<FlatVec>, pos: FlatVec) {

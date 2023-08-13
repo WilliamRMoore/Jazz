@@ -1,4 +1,4 @@
-export class FrameStorageManager {
+export class FrameStorageManager implements IFrameStorageManager {
   private readonly INTIAL_FRAME = 0;
 
   private syncedFrame = {
@@ -25,6 +25,7 @@ type SyncedFrames = {
   CurrentSyncFrame: number;
 };
 
-const FSM = new FrameStorageManager();
-
-export { FSM };
+export interface IFrameStorageManager {
+  GetSyncFrames(): SyncedFrames;
+  SetCurrentSyncFrame(syncFrame: number): void;
+}
