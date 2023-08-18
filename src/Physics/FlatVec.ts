@@ -17,6 +17,11 @@ export const VectorAdder = (v1: FlatVec, v2: FlatVec) => {
   return VectorAllocator(v1.X + v2.X, v1.Y + v2.Y);
 };
 
+export const VectorAdderMutator = (mutVec: FlatVec, v2: FlatVec) => {
+  mutVec.X += v2.X;
+  mutVec.Y += v2.Y;
+};
+
 export const VectorSubtractor = (v1: FlatVec, v2: FlatVec) => {
   return VectorAllocator(v1.X - v2.X, v1.Y - v2.Y);
 };
