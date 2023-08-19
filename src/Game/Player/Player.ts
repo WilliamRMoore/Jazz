@@ -18,6 +18,7 @@ export class Player {
   JumpVelocity: number;
   NumberOfJumps: number;
   JumpCount: number = 0;
+  FacingRight: boolean;
 
   constructor(
     ecb: ECB,
@@ -27,7 +28,8 @@ export class Player {
     arlVDecay: number,
     playerPosition: FlatVec,
     jumpVelocity: number,
-    numOfJumps: number
+    numOfJumps: number,
+    facingRight: boolean = true
   ) {
     this.ECB = ecb;
     this.MaxXVelocity = maxXV;
@@ -40,6 +42,7 @@ export class Player {
     this.PlayerVelocity = new FlatVec(0, 0);
     this.JumpVelocity = jumpVelocity;
     this.NumberOfJumps = numOfJumps;
+    this.FacingRight = facingRight;
   }
 
   AddVelocity(v: FlatVec) {
