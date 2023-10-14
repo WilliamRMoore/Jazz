@@ -51,7 +51,7 @@ export const inputHistory: Array<InputAction> = [];
 const currentInput = new GamePadInput();
 
 export function listenForGamePadInput() {
-  setInterval(pollInput, 3);
+  setInterval(pollInput, 4);
 }
 
 function pollInput() {

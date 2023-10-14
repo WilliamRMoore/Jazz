@@ -41,7 +41,7 @@ export class InputStorageManager<Type> implements IInputStorageManager<Type> {
   }
 
   public GetLastRemoteInput(): Type {
-    return this.remoteInputStore[this.remoteInputStore.length];
+    return this.remoteInputStore[this.remoteInputStore.length - 1];
   }
 
   public GetLocalInputForFrame(frame: number): Type {
@@ -64,7 +64,7 @@ export class InputStorageManager<Type> implements IInputStorageManager<Type> {
         continue;
       }
 
-      if (this.InvalidGuessedFrameSpec(guessed, real)) {
+      if (real === undefined || this.InvalidGuessedFrameSpec(guessed, real)) {
         return i - 1;
       }
     }

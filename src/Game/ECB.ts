@@ -2,34 +2,14 @@ import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
 
 export class ECB {
   private Position: FlatVec = new FlatVec(0, 0);
-  private Tracks: Map<string, Array<ECBOffsets>>;
   private Points: ECBPoints;
   private Color: string;
-  private CurrentTrack: Array<ECBOffsets>;
-  private CurrentTrackName: string;
-  private CurrentTrackFrame: number;
-  private CurrentECBOffset: ECBOffsets;
   private Verts = new Array<FlatVec>(4);
 
-  constructor(
-    position: FlatVec,
-    tracks: Map<string, Array<ECBOffsets>>,
-    points: ECBPoints,
-    currentTrack: string = 'idle',
-    color = 'orange'
-  ) {
+  constructor(position: FlatVec, points: ECBPoints, color = 'orange') {
     this.Points = points;
     this.MoveToPosition(position.X, position.Y);
-    this.Tracks = tracks;
     this.Color = color;
-    this.CurrentTrackName = currentTrack;
-    this.CurrentTrackFrame = 0;
-    if (this.Tracks.has(this.CurrentTrackName)) {
-      this.CurrentTrack = this.Tracks.get(this.CurrentTrackName)!;
-    } else {
-      throw new Error('TRACK DOES NOT EXIST!');
-    }
-    this.CurrentECBOffset = this.CurrentTrack[this.CurrentTrackFrame];
     this.Verts[0] = new FlatVec(0, 0);
     this.Verts[1] = new FlatVec(0, 0);
     this.Verts[2] = new FlatVec(0, 0);
@@ -37,84 +17,55 @@ export class ECB {
   }
 
   private Transform() {
-    this.Verts[0].X = this.Points.top.X + this.CurrentECBOffset.top.xOffset;
-    this.Verts[0].Y = this.Points.top.Y + this.CurrentECBOffset.top.yOffset;
+    this.Verts[0].X = this.Points.top.X;
+    this.Verts[0].Y = this.Points.top.Y;
 
-    this.Verts[1].X = this.Points.right.X + this.CurrentECBOffset.right.xOffset;
-    this.Verts[1].Y = this.Points.right.Y + this.CurrentECBOffset.right.yOffset;
+    this.Verts[1].X = this.Points.right.X;
+    this.Verts[1].Y = this.Points.right.Y;
 
-    this.Verts[2].X =
-      this.Points.bottom.X + this.CurrentECBOffset.bottom.xOffset;
-    this.Verts[2].Y =
-      this.Points.bottom.Y + this.CurrentECBOffset.bottom.yOffset;
+    this.Verts[2].X = this.Points.bottom.X;
+    this.Verts[2].Y = this.Points.bottom.Y;
 
-    this.Verts[3].X = this.Points.left.X + this.CurrentECBOffset.left.xOffset;
-    this.Verts[3].Y = this.Points.left.Y + this.CurrentECBOffset.left.yOffset;
+    this.Verts[3].X = this.Points.left.X;
+    this.Verts[3].Y = this.Points.left.Y;
   }
 
   public GetVerticies() {
     return this.Verts;
   }
 
-  public ChangeTrack(trackName: string) {
-    if (this.CurrentTrackName !== trackName) {
-      if (this.Tracks.has(trackName)) {
-        this.CurrentTrack = this.Tracks.get(trackName)!;
-        this.CurrentTrackName = trackName;
-        this.CurrentTrackFrame = 0;
-      } else {
-        throw new Error('TRACK DOES NOT EXIST!!!');
-      }
-    }
-  }
   public MoveToPosition(x: number, y: number) {
+    const defTopOffsetX = this.Points.top.X - this.Position.X;
+    const defTopOffsetY = this.Points.top.Y - this.Position.Y;
+
+    const defRightOffsetX = this.Points.right.X - this.Position.X;
+    const defRightOffsetY = this.Points.right.Y - this.Position.Y;
+
+    const defBotOffsetX = this.Points.bottom.X - this.Position.X;
+    const defBotOffsetY = this.Points.bottom.Y - this.Position.Y;
+
+    const defLeftOffsetX = this.Points.left.X - this.Position.X;
+    const defLeftOffsetY = this.Points.left.Y - this.Position.Y;
+
     this.Position.X = x;
     this.Position.Y = y;
 
-    this.Points.top.X += x;
-    this.Points.top.Y += y;
+    this.Points.top.X = defTopOffsetX + x;
+    this.Points.top.Y = defTopOffsetY + y;
 
-    this.Points.right.X += x;
-    this.Points.right.Y += y;
+    this.Points.right.X = defRightOffsetX + x;
+    this.Points.right.Y = defRightOffsetY + y;
 
-    this.Points.bottom.X += x;
-    this.Points.bottom.Y += y;
+    this.Points.bottom.X = defBotOffsetX + x;
+    this.Points.bottom.Y = defBotOffsetY + y;
 
-    this.Points.left.X += x;
-    this.Points.left.Y += y;
+    this.Points.left.X = defLeftOffsetX + x;
+    this.Points.left.Y = defLeftOffsetY + y;
   }
 
   public Update() {
-    this.CurrentTrackFrame =
-      this.CurrentTrackFrame < this.CurrentTrack.length - 1
-        ? this.CurrentTrackFrame + 1
-        : 0;
-    this.CurrentECBOffset = this.CurrentTrack[this.CurrentTrackFrame];
     this.Transform();
   }
-
-  public GetCurrentTrackName(): string {
-    return this.CurrentTrackName;
-  }
-
-  public GetCurrentTrackFrame(): number {
-    return this.CurrentTrackFrame;
-  }
-
-  public GetCurrentOffset(): ECBOffsets {
-    return this.CurrentECBOffset;
-  }
-
-  public GetCurrentTrack(): Array<ECBOffsets> {
-    return this.CurrentTrack;
-  }
-}
-
-export function DefaultECBFactory() {
-  let pos = VectorAllocator(100, 100);
-  let points = MakePoints();
-  let tracks = MakeTracks();
-  return new ECB(pos, tracks, points);
 }
 
 export type ECBOffsets = {

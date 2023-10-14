@@ -6,7 +6,7 @@ import { VectorAllocator } from '../../../Physics/FlatVec';
 export const idle = {
   name: 'idle',
   onEnter: (player) => {
-    player.ECB.ChangeTrack('idle');
+    console.log('Entering idle');
   },
   onUpdate: (stateFrame, player, stateMachine) => {
     player.ApplyVelocity();
@@ -20,21 +20,26 @@ export const idle = {
 export const walk = {
   name: 'walk',
   onEnter: (player) => {
-    player.ECB.ChangeTrack('walk');
+    console.log('Entering walk');
   },
-  onUpdate: (dt, player, stateMachine, ia) => {
-    player.AddVelocity(VectorAllocator(ia!.LXAxsis, 0));
+  onUpdate: (dt, player, ia) => {
+    if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
+      player.AddVelocity(VectorAllocator(ia!.LXAxsis, 0));
+    }
+
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
+    player.ECB.Update();
   },
 } as IState;
 
 export const turnWalk = {
+  frameCount: 5,
   onEnter: (player) => {
-    player.ECB.ChangeTrack('turnWalk');
+    console.log('Entering turn walk');
   },
-  onUpdate: (stateFrame, player, stateMachine) => {
+  onUpdate: (stateFrame, player, ia) => {
     player.AddVelocity(VectorAllocator());
     player.ApplyVelocity();
     player.ApplyGravity();
@@ -55,14 +60,17 @@ export const run = {
   onEnter: (player) => {
     console.log('enter run');
   },
-  onUpdate: (stateFrame, player, stateMachine) => {
-    player.AddVelocity(VectorAllocator(13, 0));
+  onUpdate: (stateFrame, player, ia) => {
+    if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
+      player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 3, 0));
+    }
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
     player.ApplyGravity();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
     player.ECB.Update();
   },
+
   onExit: (p) => {
     console.log('Exiting run');
   },
@@ -77,9 +85,9 @@ export const jumpSquat = {
   stateDefaultTransition: 'jump',
   name: 'jumpSquat',
   onEnter: (player) => {
-    player.ECB.ChangeTrack('jumpSquat');
+    console.log('Entering jump squat');
   },
-  onUpdate: (stateFrame, player, stateMachine) => {
+  onUpdate: (stateFrame, player, ia) => {
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
     player.ApplyGravity();

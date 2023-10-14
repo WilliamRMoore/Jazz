@@ -57,7 +57,7 @@ export class StateMachine {
     if (
       this.currentState &&
       this.currentState.frameCount &&
-      this.currentStateFrame <= this.currentState.frameCount
+      this.currentStateFrame >= this.currentState.frameCount
     ) {
       this.SetState(this.currentState.stateDefaultTransition);
       return;
@@ -67,11 +67,10 @@ export class StateMachine {
       this.currentState.onUpdate(
         this.currentStateFrame,
         this.player,
-        this,
         this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
       );
     }
 
-    this.currentStateFrame += 1;
+    this.currentStateFrame++;
   }
 }

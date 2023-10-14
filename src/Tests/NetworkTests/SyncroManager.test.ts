@@ -63,6 +63,13 @@ test('Frame Advantage to be -2', () => {
   expect(SUT.GetFrameAdvantageDifference()).toBe(-2);
 });
 
+test('Should Rollback true', () => {
+  RollBackConditions(SUT);
+
+  SUT.UpdateNextSynFrame();
+  expect(SUT.ShouldRollBack()).toBeTruthy();
+});
+
 function SetSutForTenFrames(mySUT: SyncroManager<KeyInput>) {
   for (let i = 0; i <= 10; i++) {
     let KeyInput = {
@@ -79,6 +86,38 @@ function SetSutForTenFrames(mySUT: SyncroManager<KeyInput>) {
     mySUT.StoreLocalInput(KeyInput, i);
     mySUT.UpdateNextSynFrame();
   }
+}
+
+function RollBackConditions(mySut: SyncroManager<KeyInput>) {
+  for (let i = 0; i <= 10; i++) {
+    let KeyInput = {
+      action: 'walk',
+      frameAdvantage: 0,
+      inputFrame: i,
+    } as KeyInput;
+
+    if (i != 8) {
+      mySut.SetRemoteFrameNumber(i);
+      mySut.SetRemoteFrameAdvantage(0);
+      mySut.StoreRemoteInput(KeyInput, i);
+      mySut.IsWithinFrameAdvantage();
+      mySut.SetLocalFrameNumber(i);
+      mySut.StoreLocalInput(KeyInput, i);
+      mySut.UpdateNextSynFrame();
+    } else {
+      let remoteInput = mySut.GetOrGuessRemoteInputForFrame(i);
+      mySut.StoreGuessedInput(remoteInput, i);
+      mySut.IsWithinFrameAdvantage();
+      mySut.SetLocalFrameNumber(i);
+      mySut.StoreLocalInput(KeyInput, i);
+      mySut.UpdateNextSynFrame();
+    }
+  }
+
+  mySut.StoreRemoteInput(
+    { action: 'run', frameAdvantage: 0, inputFrame: 8 },
+    8
+  );
 }
 
 function SetSutForTenFramesOutOfAdvantage(mySUT: SyncroManager<KeyInput>) {

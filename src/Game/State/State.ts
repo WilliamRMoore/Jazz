@@ -10,7 +10,6 @@ interface IState {
   onUpdate?: (
     stateFrame: number,
     player: Player,
-    stateMachine: StateMachine,
     inputAction?: InputAction
   ) => void;
   onExit?: (player: Player, inputAction?: InputAction) => void;

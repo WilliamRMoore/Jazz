@@ -71,6 +71,10 @@ export class SyncroManager<Type> {
     this.ISM.StoreLocalInput(localInput, frame);
   }
 
+  public StoreGuessedInput(input: Type, frame: number) {
+    this.ISM.StoreGuessedInput(input, frame);
+  }
+
   public GetRemoteInputForFrame(frame: number): Type {
     return this.ISM.GetRemoteInputForFrame(frame);
   }
