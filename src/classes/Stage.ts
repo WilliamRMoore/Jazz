@@ -1,4 +1,4 @@
-import { ctx } from '../Globals/globals';
+//import { ctx } from '../Globals/globals';
 import { FlatVec } from '../Physics/FlatVec';
 import { IDrawable } from '../interfaces/interfaces';
 //import { Position } from '../classes/Position';
@@ -15,15 +15,15 @@ export default class Stage implements IDrawable {
   }
 
   draw(): void {
-    ctx.beginPath();
-    ctx.moveTo(this.verticies[0].X, this.verticies[0].Y);
-    for (let index = 0; index < this.verticies.length; index++) {
-      const point = this.verticies[index];
-      ctx.lineTo(point.X, point.Y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = this.color;
-    ctx.fill();
+    // ctx.beginPath();
+    // ctx.moveTo(this.verticies[0].X, this.verticies[0].Y);
+    // for (let index = 0; index < this.verticies.length; index++) {
+    //   const point = this.verticies[index];
+    //   ctx.lineTo(point.X, point.Y);
+    // }
+    // ctx.closePath();
+    // ctx.fillStyle = this.color;
+    // ctx.fill();
   }
 
   GetVerticies() {

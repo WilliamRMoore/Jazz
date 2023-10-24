@@ -8,7 +8,7 @@ import {
 } from './FlatVec';
 import { Distance, DotProduct, Length, Normalize } from './VecMath';
 
-type collisionResult = {
+export type collisionResult = {
   collision: boolean;
   normal: FlatVec | null;
   depth: number | null;

@@ -35,32 +35,33 @@ export class ECB {
   }
 
   public MoveToPosition(x: number, y: number) {
-    const defTopOffsetX = this.Points.top.X - this.Position.X;
-    const defTopOffsetY = this.Points.top.Y - this.Position.Y;
+    const defTopOffsetX = 0;
+    //Should always bet neg, HTML canvas COORds, subtracting Y raises height.
+    const defTopOffsetY = -100;
 
-    const defRightOffsetX = this.Points.right.X - this.Position.X;
-    const defRightOffsetY = this.Points.right.Y - this.Position.Y;
+    const defRightOffsetX = 100;
+    const defRightOffsetY = -50;
 
-    const defBotOffsetX = this.Points.bottom.X - this.Position.X;
-    const defBotOffsetY = this.Points.bottom.Y - this.Position.Y;
+    const defBotOffsetX = 0;
+    const defBotOffsetY = 0;
 
-    const defLeftOffsetX = this.Points.left.X - this.Position.X;
-    const defLeftOffsetY = this.Points.left.Y - this.Position.Y;
+    const defLeftOffsetX = -100;
+    const defLeftOffsetY = -50;
 
     this.Position.X = x;
     this.Position.Y = y;
 
     this.Points.top.X = defTopOffsetX + x;
-    this.Points.top.Y = defTopOffsetY + y;
+    this.Points.top.Y = y + defTopOffsetY;
 
     this.Points.right.X = defRightOffsetX + x;
-    this.Points.right.Y = defRightOffsetY + y;
+    this.Points.right.Y = y + defRightOffsetY;
 
     this.Points.bottom.X = defBotOffsetX + x;
     this.Points.bottom.Y = defBotOffsetY + y;
 
     this.Points.left.X = defLeftOffsetX + x;
-    this.Points.left.Y = defLeftOffsetY + y;
+    this.Points.left.Y = y + defLeftOffsetY;
   }
 
   public Update() {

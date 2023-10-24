@@ -23,7 +23,7 @@ export class StageCollisionSystem {
       const player = this.players[index];
       const pverts = player.ECB.GetVerticies();
 
-      const res = IntersectsPolygons(sverts, pverts);
+      const res = IntersectsPolygons(pverts, sverts);
 
       if (res.collision) {
         const move = VectorMultiplier(VectorNegator(res.normal!), res.depth!);
@@ -31,6 +31,11 @@ export class StageCollisionSystem {
         player.PlayerPosition = VectorAdder(player.PlayerPosition, move);
 
         player.Grounded = true;
+        player.ECB.MoveToPosition(
+          player.PlayerPosition.X,
+          player.PlayerPosition.Y
+        );
+        player.ECB.Update();
       }
 
       if (!res.collision) {
