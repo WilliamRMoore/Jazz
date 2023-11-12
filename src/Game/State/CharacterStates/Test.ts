@@ -9,6 +9,7 @@ export const idle = {
     console.log('Entering idle');
   },
   onUpdate: (stateFrame, player, stateMachine) => {
+    debugger;
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
     player.ApplyGravity();
@@ -24,7 +25,13 @@ export const walk = {
   },
   onUpdate: (dt, player, ia) => {
     if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
-      player.AddVelocity(VectorAllocator(ia!.LXAxsis, 0));
+      player.AddVelocity(VectorAllocator(ia!.LXAxsis * 5, 0));
+    }
+    if (Math.abs(player.PlayerVelocity.X) > player.MaxWalkSpeed) {
+      player.PlayerVelocity.X =
+        player.PlayerVelocity.X >= 0
+          ? player.MaxWalkSpeed
+          : -player.MaxWalkSpeed;
     }
 
     player.ApplyVelocity();
@@ -62,7 +69,7 @@ export const run = {
   },
   onUpdate: (stateFrame, player, ia) => {
     if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
-      player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 3, 0));
+      player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 15, 0));
     }
     player.ApplyVelocity();
     player.ApplyVelocityDecay();

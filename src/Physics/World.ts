@@ -37,7 +37,7 @@ export function init() {
     new FlatVec(500, 520), // bottom left
   ]);
 
-  listenForGamePadInput();
+  //listenForGamePadInput();
 }
 
 function addPlayer(player: Player) {
@@ -120,6 +120,6 @@ function ExecuteDrawCall() {
   // for (let i = 0; i < PLAYERS.length; i++) {
   //   PLAYERS[i].draw();
   // }
-  stage.draw();
+  //stage.draw();
   PLAYERS[0].draw();
 }

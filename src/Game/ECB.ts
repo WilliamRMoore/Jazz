@@ -1,3 +1,4 @@
+import { transform } from '@babel/core';
 import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
 
 export class ECB {
@@ -34,18 +35,30 @@ export class ECB {
     return this.Verts;
   }
 
+  public GetPosition() {
+    return this.Position;
+  }
+
+  public GetPoints() {
+    return this.Points;
+  }
+
+  public GetColor() {
+    return this.Color;
+  }
+
   public MoveToPosition(x: number, y: number) {
     const defTopOffsetX = 0;
     //Should always bet neg, HTML canvas COORds, subtracting Y raises height.
     const defTopOffsetY = -100;
 
-    const defRightOffsetX = 100;
+    const defRightOffsetX = 50;
     const defRightOffsetY = -50;
 
     const defBotOffsetX = 0;
     const defBotOffsetY = 0;
 
-    const defLeftOffsetX = -100;
+    const defLeftOffsetX = -50;
     const defLeftOffsetY = -50;
 
     this.Position.X = x;
@@ -67,6 +80,19 @@ export class ECB {
   public Update() {
     this.Transform();
   }
+}
+
+export function DefaultECB() {
+  var points = {
+    top: new FlatVec(0, 50),
+    right: new FlatVec(50, 50),
+    bottom: new FlatVec(0, 0),
+    left: new FlatVec(-50, 50),
+  } as ECBPoints;
+
+  var position = new FlatVec(300, 300);
+
+  return new ECB(position, points);
 }
 
 export type ECBOffsets = {

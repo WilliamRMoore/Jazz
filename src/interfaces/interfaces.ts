@@ -1,7 +1,7 @@
 import { FlatVec } from '../Physics/FlatVec';
 
 export interface IDrawable {
-  draw(): void;
+  draw(ctx: CanvasRenderingContext2D): void;
 }
 
 export interface ECBPoints {

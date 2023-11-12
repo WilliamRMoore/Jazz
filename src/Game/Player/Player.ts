@@ -1,10 +1,11 @@
 //import { gravity } from '../../Globals/globals';
 import { FlatVec } from '../../Physics/FlatVec';
+import { IDrawable } from '../../interfaces/interfaces';
 import { ECB } from '../ECB';
 
 let gravity = 0.5;
 
-export class Player {
+export class Player implements IDrawable {
   Grounded: boolean = false;
   MaxXVelocity: number;
   MinXVelocity: number;
@@ -49,6 +50,8 @@ export class Player {
     this.FacingRight = facingRight;
     this.MaxWalkSpeed = maxWalkSpeed;
     this.MaxRunSpeed = maxRunSpeed;
+    this.ECB.MoveToPosition(this.PlayerPosition.X, this.PlayerPosition.Y);
+    this.ECB.Update();
   }
 
   AddVelocity(v: FlatVec) {
@@ -79,6 +82,7 @@ export class Player {
   }
 
   ApplyVelocityDecay() {
+    debugger;
     if (this.Grounded) {
       if (this.PlayerVelocity.X > 0) {
         this.PlayerVelocity.X -= this.GroundVelocityDecay;
@@ -86,32 +90,41 @@ export class Player {
       if (this.PlayerVelocity.X < 0) {
         this.PlayerVelocity.X += this.GroundVelocityDecay;
       }
-      if (this.PlayerVelocity.Y > 0) {
-        this.PlayerVelocity.Y -= this.GroundVelocityDecay;
-      }
-      if (this.PlayerVelocity.Y < 0) {
-        this.PlayerVelocity.Y += this.GroundVelocityDecay;
-      }
-      if (Math.abs(this.PlayerVelocity.X) < 0.5) {
+      if (Math.abs(this.PlayerVelocity.X) < 3) {
         this.PlayerVelocity.X = 0;
       }
+      // if (this.PlayerVelocity.X > 0) {
+      //   this.PlayerVelocity.X -= this.GroundVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.X < 0) {
+      //   this.PlayerVelocity.X += this.GroundVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.Y > 0) {
+      //   this.PlayerVelocity.Y -= this.GroundVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.Y < 0) {
+      //   this.PlayerVelocity.Y += this.GroundVelocityDecay;
+      // }
+      // if (Math.abs(this.PlayerVelocity.X) < 0.5) {
+      //   this.PlayerVelocity.X = 0;
+      // }
     }
     if (!this.Grounded) {
-      if (this.PlayerVelocity.X > 0) {
-        this.PlayerVelocity.X -= this.ArialVelocityDecay;
-      }
-      if (this.PlayerVelocity.X < 0) {
-        this.PlayerVelocity.X += this.ArialVelocityDecay;
-      }
-      if (this.PlayerVelocity.Y > 0) {
-        this.PlayerVelocity.Y -= this.ArialVelocityDecay;
-      }
-      if (this.PlayerVelocity.Y < 0) {
-        this.PlayerVelocity.Y += this.ArialVelocityDecay;
-      }
-      if (Math.abs(this.PlayerVelocity.X) < 0.5) {
-        this.PlayerVelocity.X = 0;
-      }
+      // if (this.PlayerVelocity.X > 0) {
+      //   this.PlayerVelocity.X -= this.ArialVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.X < 0) {
+      //   this.PlayerVelocity.X += this.ArialVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.Y > 0) {
+      //   this.PlayerVelocity.Y -= this.ArialVelocityDecay;
+      // }
+      // if (this.PlayerVelocity.Y < 0) {
+      //   this.PlayerVelocity.Y += this.ArialVelocityDecay;
+      // }
+      // if (Math.abs(this.PlayerVelocity.X) < 0.5) {
+      //   this.PlayerVelocity.X = 0;
+      // }
     }
   }
 
@@ -131,5 +144,39 @@ export class Player {
     if (this.PlayerVelocity.Y >= this.MaxYVelocity) {
       this.PlayerVelocity.Y = this.MaxYVelocity;
     }
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    const px = this.PlayerPosition.X;
+    const py = this.PlayerPosition.Y;
+    const ecb = this.ECB.GetVerticies();
+    const ecbColor = this.ECB.GetColor();
+
+    ctx.beginPath();
+    ctx.moveTo(ecb[0].X, ecb[0].Y);
+    ctx.lineTo(ecb[1].X, ecb[1].Y);
+    ctx.lineTo(ecb[2].X, ecb[2].Y);
+    ctx.lineTo(ecb[3].X, ecb[3].Y);
+    ctx.closePath();
+    ctx.fillStyle = ecbColor;
+    ctx.fill();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'blue';
+
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + 10, py);
+    ctx.stroke();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - 10, py);
+    ctx.stroke();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px, py + 10);
+    ctx.stroke();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px, py - 10);
+    ctx.stroke();
+    ctx.closePath();
   }
 }

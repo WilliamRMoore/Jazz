@@ -1,6 +1,6 @@
 import { ctx, gravity } from '../../Globals/globals';
 import { FlatVec, VectorAdder, VectorAllocator } from '../../Physics/FlatVec';
-import { GetInputForFrame } from '../../input/GamePadInput';
+//import { GetInputForFrame } from '../../input/GamePadInput';
 import ECB, { ECBOffsets } from './ECB';
 import StateMachine from './StateMachine';
 
@@ -126,14 +126,14 @@ export class Player {
   }
 
   Update(frame: number) {
-    if (GetInputForFrame(frame).Action == 'run') {
-      this.StateMachine.setState('run');
-    } else if (GetInputForFrame(frame).Action == 'jump') {
-      this.StateMachine.setState('jump');
-    } else {
-      this.StateMachine.setState('idle');
-    }
-    this.StateMachine.update(frame);
+    // if (GetInputForFrame(frame).Action == 'run') {
+    //   this.StateMachine.setState('run');
+    // } else if (GetInputForFrame(frame).Action == 'jump') {
+    //   this.StateMachine.setState('jump');
+    // } else {
+    //   this.StateMachine.setState('idle');
+    // }
+    // this.StateMachine.update(frame);
   }
 
   ApplyGravity() {
@@ -171,13 +171,13 @@ export class Player {
   }
 
   private onRunUpdate(frame: number) {
-    const input = GetInputForFrame(frame);
-    this.AddVelocity(VectorAllocator(input.LXAxsis, input.LYAxsis));
-    this.ApplyVelocity();
-    this.ApplyVelocityDecay();
-    this.ApplyGravity();
-    this.ECB.Move(this.playerPosition);
-    this.currentStateFrame += 1;
+    // const input = GetInputForFrame(frame);
+    // this.AddVelocity(VectorAllocator(input.LXAxsis, input.LYAxsis));
+    // this.ApplyVelocity();
+    // this.ApplyVelocityDecay();
+    // this.ApplyGravity();
+    // this.ECB.Move(this.playerPosition);
+    // this.currentStateFrame += 1;
   }
 
   private onRunExit() {
@@ -191,19 +191,18 @@ export class Player {
   }
 
   private onJumpUpdate(frame: number) {
-    const input = GetInputForFrame(frame);
-    const prevInput = GetInputForFrame(frame - 1);
-    if (input.Action == 'jump' && prevInput.Action != 'jump') {
-      this.AddVelocity(VectorAllocator(input.LXAxsis, -this.JumpVelocity));
-    } else {
-      this.AddVelocity(VectorAllocator(input.LXAxsis, 0));
-    }
-
-    this.ApplyVelocity();
-    this.ApplyVelocityDecay();
-    this.ApplyGravity();
-    this.ECB.Move(this.playerPosition);
-    this.currentStateFrame += 1;
+    // const input = GetInputForFrame(frame);
+    // const prevInput = GetInputForFrame(frame - 1);
+    // if (input.Action == 'jump' && prevInput.Action != 'jump') {
+    //   this.AddVelocity(VectorAllocator(input.LXAxsis, -this.JumpVelocity));
+    // } else {
+    //   this.AddVelocity(VectorAllocator(input.LXAxsis, 0));
+    // }
+    // this.ApplyVelocity();
+    // this.ApplyVelocityDecay();
+    // this.ApplyGravity();
+    // this.ECB.Move(this.playerPosition);
+    // this.currentStateFrame += 1;
   }
 
   private onJumpExit() {

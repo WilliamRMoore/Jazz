@@ -46,33 +46,25 @@ export class InputAction {
   RYAxsis: number = 0;
 }
 
-export const inputHistory: Array<InputAction> = [];
-
 const currentInput = new GamePadInput();
 
 export function listenForGamePadInput() {
-  setInterval(pollInput, 4);
+  setInterval(() => pollInput(), 4);
 }
 
 function pollInput() {
-  const localPlayer = navigator.getGamepads()[0];
-  if (localPlayer && localPlayer.connected) {
-    readInput(localPlayer);
+  const gp = navigator.getGamepads()[0];
+  if (gp && gp.connected) {
+    readInput(gp);
   }
 }
 
 export function GetInput() {
   let input = transcribeInput(currentInput);
-  inputHistory.push(input);
   return input;
 }
 
-export function GetInputForFrame(n: number) {
-  return inputHistory[n];
-}
-
 function readInput(gamePad: Gamepad) {
-  //const input = new GamePadInput();
   currentInput.Clear();
   let lx = setDeadzone(gamePad.axes[0]);
   let ly = setDeadzone(gamePad.axes[1]);
@@ -267,3 +259,15 @@ const Actions: IActions = {
   grab: 'grab',
   guard: 'guard',
 };
+
+const InvalidGuessSpec = (guessed: InputAction, real: InputAction) => {
+  return guessed.Action == real.Action &&
+    guessed.LXAxsis == real.LXAxsis &&
+    guessed.LYAxsis == real.LYAxsis &&
+    guessed.RXAxis == real.RXAxis &&
+    guessed.RYAxsis == real.RYAxsis
+    ? false
+    : true;
+};
+
+export { InvalidGuessSpec };
