@@ -12,7 +12,7 @@ export const idle = {
     debugger;
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
-    player.ApplyGravity();
+    //player.ApplyGravity();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
     player.ECB.Update();
   },
@@ -49,7 +49,7 @@ export const turnWalk = {
   onUpdate: (stateFrame, player, ia) => {
     player.AddVelocity(VectorAllocator());
     player.ApplyVelocity();
-    player.ApplyGravity();
+    //player.ApplyGravity();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
     player.ECB.Update();
   },
@@ -73,7 +73,7 @@ export const run = {
     }
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
-    player.ApplyGravity();
+    //player.ApplyGravity();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
     player.ECB.Update();
   },
@@ -97,7 +97,7 @@ export const jumpSquat = {
   onUpdate: (stateFrame, player, ia) => {
     player.ApplyVelocity();
     player.ApplyVelocityDecay();
-    player.ApplyGravity();
+    //player.ApplyGravity();
     player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
     player.ECB.Update();
   },

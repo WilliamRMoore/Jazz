@@ -133,18 +133,18 @@ export class Player implements IDrawable {
     this.PlayerPosition.Y += this.PlayerVelocity.Y;
   }
 
-  ApplyGravity() {
-    if (this.Grounded) {
-      this.PlayerVelocity.Y = 0;
-      return;
-    }
+  // ApplyGravity() {
+  //   if (this.Grounded) {
+  //     this.PlayerVelocity.Y = 0;
+  //     return;
+  //   }
 
-    this.PlayerVelocity.Y += gravity;
+  //   this.PlayerVelocity.Y += gravity;
 
-    if (this.PlayerVelocity.Y >= this.MaxYVelocity) {
-      this.PlayerVelocity.Y = this.MaxYVelocity;
-    }
-  }
+  //   if (this.PlayerVelocity.Y >= this.MaxYVelocity) {
+  //     this.PlayerVelocity.Y = this.MaxYVelocity;
+  //   }
+  // }
 
   draw(ctx: CanvasRenderingContext2D): void {
     const px = this.PlayerPosition.X;

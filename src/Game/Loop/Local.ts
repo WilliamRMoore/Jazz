@@ -1,4 +1,5 @@
 import { InputStorageManager } from '../../input/InputStorageManager';
+import { PlayerGravitySystem } from '../Gravity/PlayerGravitySystem';
 import {
   GetInput,
   InputAction,
@@ -54,7 +55,7 @@ const stage = new Stage(stageVecs);
 const playersArr = new Array<Player>();
 playersArr.push(P1);
 const SCS = new StageCollisionSystem(playersArr, stage);
-
+const PGS = new PlayerGravitySystem(playersArr, 0.5);
 const FPS = 60;
 let now = {} as number;
 let then = Date.now();
@@ -91,6 +92,7 @@ function Logic() {
     SM.SetState('idle');
   }
   SM.Update();
+  PGS.ApplyGravity();
   SCS.handle();
 }
 
