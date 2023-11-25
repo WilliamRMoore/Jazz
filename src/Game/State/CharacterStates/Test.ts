@@ -1,4 +1,4 @@
-import { Player } from '../../Player/Player';
+import { AddClampedXImpulseToPlayer, Player } from '../../Player/Player';
 import { InputAction } from '../../../input/GamePadInput';
 import IState from '../State';
 import { VectorAllocator } from '../../../Physics/FlatVec';
@@ -8,13 +8,23 @@ export const idle = {
   onEnter: (player) => {
     console.log('Entering idle');
   },
-  onUpdate: (stateFrame, player, stateMachine) => {
-    debugger;
-    player.ApplyVelocity();
-    player.ApplyVelocityDecay();
-    //player.ApplyGravity();
-    player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
-    player.ECB.Update();
+  onUpdate: (stateFrame, player, stateMachine) => {},
+} as IState;
+
+export const neutralFall = {
+  name: 'neutralFall',
+  onEnter: (player) => {
+    console.log('entering Fall');
+  },
+  onUpdate: (stateFrame, player, ia) => {
+    // if (Math.abs(player.PlayerVelocity.X) < 18) {
+    //   player.AddVelocity(VectorAllocator(ia!.LXAxsis * 5, 0));
+    // }
+    AddClampedXImpulseToPlayer(
+      player,
+      player.AirSpeedInpulseLimit,
+      ia.LXAxsis * 5
+    );
   },
 } as IState;
 
@@ -24,20 +34,13 @@ export const walk = {
     console.log('Entering walk');
   },
   onUpdate: (dt, player, ia) => {
-    if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
-      player.AddVelocity(VectorAllocator(ia!.LXAxsis * 5, 0));
+    if (ia.LXAxsis > 0) {
+      player.FacingRight = true;
     }
-    if (Math.abs(player.PlayerVelocity.X) > player.MaxWalkSpeed) {
-      player.PlayerVelocity.X =
-        player.PlayerVelocity.X >= 0
-          ? player.MaxWalkSpeed
-          : -player.MaxWalkSpeed;
+    if (ia.LXAxsis < 0) {
+      player.FacingRight = false;
     }
-
-    player.ApplyVelocity();
-    player.ApplyVelocityDecay();
-    player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
-    player.ECB.Update();
+    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxsis * 5);
   },
 } as IState;
 
@@ -46,13 +49,7 @@ export const turnWalk = {
   onEnter: (player) => {
     console.log('Entering turn walk');
   },
-  onUpdate: (stateFrame, player, ia) => {
-    player.AddVelocity(VectorAllocator());
-    player.ApplyVelocity();
-    //player.ApplyGravity();
-    player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
-    player.ECB.Update();
-  },
+  onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {
     player.FacingRight = !player.FacingRight;
   },
@@ -71,11 +68,6 @@ export const run = {
     if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
       player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 15, 0));
     }
-    player.ApplyVelocity();
-    player.ApplyVelocityDecay();
-    //player.ApplyGravity();
-    player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
-    player.ECB.Update();
   },
 
   onExit: (p) => {
@@ -88,23 +80,28 @@ export const turnRun = {} as IState;
 export const stopRun = {} as IState;
 
 export const jumpSquat = {
-  frameCount: 3,
+  frameCount: 30,
   stateDefaultTransition: 'jump',
   name: 'jumpSquat',
   onEnter: (player) => {
     console.log('Entering jump squat');
   },
-  onUpdate: (stateFrame, player, ia) => {
-    player.ApplyVelocity();
-    player.ApplyVelocityDecay();
-    //player.ApplyGravity();
-    player.ECB.MoveToPosition(player.PlayerPosition.X, player.PlayerPosition.Y);
-    player.ECB.Update();
-  },
+  onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {},
 } as IState;
 
-export const jump = {} as IState;
+export const jump = {
+  stateDefaultTransition: 'neutralFall',
+  frameCount: 10,
+  name: 'jump',
+  onEnter(player, inputAction) {
+    console.log('Entering Jump State');
+    player.Grounded = false;
+    player.PlayerVelocity.Y = 0;
+    player.AddVelocity(VectorAllocator(inputAction.LXAxsis * 4, -15));
+  },
+  onUpdate: (stateFrame, p, ia) => {},
+} as IState;
 
 export const land = {} as IState;
 

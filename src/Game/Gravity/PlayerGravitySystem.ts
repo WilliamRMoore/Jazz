@@ -1,4 +1,4 @@
-import { Player } from '../Player/Player';
+import { AddClampedYImpulseToPlayer, Player } from '../Player/Player';
 
 export class PlayerGravitySystem {
   private Players: Array<Player>;
@@ -19,7 +19,8 @@ export class PlayerGravitySystem {
         return;
       }
 
-      p.PlayerVelocity.Y += this.Gravity;
+      //p.PlayerVelocity.Y += this.Gravity;
+      AddClampedYImpulseToPlayer(p, p.FallSpeed, this.Gravity);
 
       if (p.PlayerVelocity.Y >= p.MaxYVelocity) {
         p.PlayerVelocity.Y = p.MaxXVelocity;

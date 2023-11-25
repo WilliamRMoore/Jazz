@@ -1,11 +1,8 @@
 //import { gravity } from '../../Globals/globals';
-import { FlatVec } from '../../Physics/FlatVec';
-import { IDrawable } from '../../interfaces/interfaces';
+import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
 import { ECB } from '../ECB';
 
-let gravity = 0.5;
-
-export class Player implements IDrawable {
+export class Player {
   Grounded: boolean = false;
   MaxXVelocity: number;
   MinXVelocity: number;
@@ -13,15 +10,20 @@ export class Player implements IDrawable {
   MinYVelocity: number;
   GroundVelocityDecay: number;
   ArialVelocityDecay: number;
+  PreviousPlayerPosition: FlatVec;
   PlayerPosition: FlatVec;
   PlayerVelocity: FlatVec;
   ECB: ECB;
+  LedgeDetector: LedgeDetector;
   JumpVelocity: number;
   NumberOfJumps: number;
   JumpCount: number = 0;
   FacingRight: boolean;
   MaxWalkSpeed: number;
   MaxRunSpeed: number;
+  AirSpeedInpulseLimit: number;
+  FastFallSpeed: number;
+  FallSpeed: number;
 
   constructor(
     ecb: ECB,
@@ -34,7 +36,10 @@ export class Player implements IDrawable {
     numOfJumps: number,
     facingRight: boolean = true,
     maxWalkSpeed: number,
-    maxRunSpeed: number
+    maxRunSpeed: number,
+    airSpeedInpulseLimit: number = 10,
+    fastFallSpeed: number = 15,
+    fallSpeed: number = -1
   ) {
     this.ECB = ecb;
     this.MaxXVelocity = maxXV;
@@ -43,6 +48,10 @@ export class Player implements IDrawable {
     this.MinYVelocity = -maxYV;
     this.GroundVelocityDecay = grndVDecay;
     this.ArialVelocityDecay = arlVDecay;
+    this.PreviousPlayerPosition = new FlatVec(
+      playerPosition.X,
+      playerPosition.Y
+    );
     this.PlayerPosition = playerPosition;
     this.PlayerVelocity = new FlatVec(0, 0);
     this.JumpVelocity = jumpVelocity;
@@ -50,6 +59,15 @@ export class Player implements IDrawable {
     this.FacingRight = facingRight;
     this.MaxWalkSpeed = maxWalkSpeed;
     this.MaxRunSpeed = maxRunSpeed;
+    this.AirSpeedInpulseLimit = airSpeedInpulseLimit;
+    this.FastFallSpeed = fastFallSpeed;
+    this.FallSpeed = fallSpeed < 1 ? this.AirSpeedInpulseLimit : fallSpeed;
+    this.LedgeDetector = new LedgeDetector(
+      playerPosition.X,
+      playerPosition.Y - 50,
+      30,
+      70
+    );
     this.ECB.MoveToPosition(this.PlayerPosition.X, this.PlayerPosition.Y);
     this.ECB.Update();
   }
@@ -80,103 +98,116 @@ export class Player implements IDrawable {
           : (this.PlayerVelocity.Y = this.MinYVelocity);
     }
   }
+}
 
-  ApplyVelocityDecay() {
-    debugger;
-    if (this.Grounded) {
-      if (this.PlayerVelocity.X > 0) {
-        this.PlayerVelocity.X -= this.GroundVelocityDecay;
-      }
-      if (this.PlayerVelocity.X < 0) {
-        this.PlayerVelocity.X += this.GroundVelocityDecay;
-      }
-      if (Math.abs(this.PlayerVelocity.X) < 3) {
-        this.PlayerVelocity.X = 0;
-      }
-      // if (this.PlayerVelocity.X > 0) {
-      //   this.PlayerVelocity.X -= this.GroundVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.X < 0) {
-      //   this.PlayerVelocity.X += this.GroundVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.Y > 0) {
-      //   this.PlayerVelocity.Y -= this.GroundVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.Y < 0) {
-      //   this.PlayerVelocity.Y += this.GroundVelocityDecay;
-      // }
-      // if (Math.abs(this.PlayerVelocity.X) < 0.5) {
-      //   this.PlayerVelocity.X = 0;
-      // }
-    }
-    if (!this.Grounded) {
-      // if (this.PlayerVelocity.X > 0) {
-      //   this.PlayerVelocity.X -= this.ArialVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.X < 0) {
-      //   this.PlayerVelocity.X += this.ArialVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.Y > 0) {
-      //   this.PlayerVelocity.Y -= this.ArialVelocityDecay;
-      // }
-      // if (this.PlayerVelocity.Y < 0) {
-      //   this.PlayerVelocity.Y += this.ArialVelocityDecay;
-      // }
-      // if (Math.abs(this.PlayerVelocity.X) < 0.5) {
-      //   this.PlayerVelocity.X = 0;
-      // }
-    }
+type LedgeDetectorBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+class LedgeDetector {
+  YOffset: number;
+  Front: LedgeDetectorBox;
+  constructor(
+    x: number,
+    y: number,
+    height: number,
+    width: number,
+    yOffset: number = -130
+  ) {
+    this.Front = { x, y, width, height } as LedgeDetectorBox;
+    this.YOffset = yOffset;
   }
 
-  ApplyVelocity() {
-    this.PlayerPosition.X += this.PlayerVelocity.X;
-    this.PlayerPosition.Y += this.PlayerVelocity.Y;
+  MoveTo(x: number, y: number) {
+    this.Front.x = x;
+    this.Front.y = y + this.YOffset;
   }
 
-  // ApplyGravity() {
-  //   if (this.Grounded) {
-  //     this.PlayerVelocity.Y = 0;
-  //     return;
-  //   }
+  GetVerticies() {
+    const vertArr = new Array<FlatVec>();
+    vertArr.push(VectorAllocator(this.Front.x, this.Front.y));
+    vertArr.push(
+      VectorAllocator(this.Front.x + this.Front.width, this.Front.y)
+    );
+    vertArr.push(
+      VectorAllocator(
+        this.Front.x + this.Front.width,
+        this.Front.y + this.Front.height
+      )
+    );
+    vertArr.push(
+      VectorAllocator(this.Front.x, this.Front.y + this.Front.height)
+    );
 
-  //   this.PlayerVelocity.Y += gravity;
+    vertArr.push(
+      VectorAllocator(this.Front.x - this.Front.width, this.Front.y)
+    );
+    vertArr.push(VectorAllocator(this.Front.x, this.Front.y));
+    vertArr.push(
+      VectorAllocator(this.Front.x, this.Front.y + this.Front.height)
+    );
+    vertArr.push(
+      VectorAllocator(
+        this.Front.x - this.Front.width,
+        this.Front.y + this.Front.height
+      )
+    );
 
-  //   if (this.PlayerVelocity.Y >= this.MaxYVelocity) {
-  //     this.PlayerVelocity.Y = this.MaxYVelocity;
-  //   }
-  // }
+    return vertArr;
+  }
+}
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    const px = this.PlayerPosition.X;
-    const py = this.PlayerPosition.Y;
-    const ecb = this.ECB.GetVerticies();
-    const ecbColor = this.ECB.GetColor();
+export function AddClampedXImpulseToPlayer(
+  player: Player,
+  clamp: number,
+  x: number
+) {
+  const upperBound = Math.abs(clamp);
+  const lowerBound = -Math.abs(clamp);
+  const pvx = player.PlayerVelocity.X;
 
-    ctx.beginPath();
-    ctx.moveTo(ecb[0].X, ecb[0].Y);
-    ctx.lineTo(ecb[1].X, ecb[1].Y);
-    ctx.lineTo(ecb[2].X, ecb[2].Y);
-    ctx.lineTo(ecb[3].X, ecb[3].Y);
-    ctx.closePath();
-    ctx.fillStyle = ecbColor;
-    ctx.fill();
+  if (x > 0 && pvx < upperBound) {
+    let test = pvx + x;
+    if (test < upperBound) {
+      player.PlayerVelocity.X += x;
+    }
+    if (test > upperBound) {
+      player.PlayerVelocity.X += upperBound - pvx;
+    }
+    return;
+  }
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'blue';
+  if (x < 0 && pvx > lowerBound) {
+    let test = pvx + x;
+    if (test > lowerBound) {
+      player.PlayerVelocity.X += x;
+    }
+    if (test < lowerBound) {
+      player.PlayerVelocity.X += lowerBound - pvx;
+    }
+    return;
+  }
+}
 
-    ctx.beginPath();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px + 10, py);
-    ctx.stroke();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px - 10, py);
-    ctx.stroke();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px, py + 10);
-    ctx.stroke();
-    ctx.moveTo(px, py);
-    ctx.lineTo(px, py - 10);
-    ctx.stroke();
-    ctx.closePath();
+export function AddClampedYImpulseToPlayer(
+  player: Player,
+  clamp: number,
+  y: number
+) {
+  const upperBound = Math.abs(clamp);
+  const lowerBound = -Math.abs(clamp);
+  const pvy = player.PlayerVelocity.Y;
+
+  // going down
+  if (y > 0 && pvy < upperBound) {
+    let test = pvy + y;
+    if (test < upperBound) {
+      player.PlayerVelocity.Y += y;
+    }
+    if (test > upperBound) {
+      player.PlayerVelocity.Y += upperBound - pvy;
+    }
   }
 }

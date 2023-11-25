@@ -1,4 +1,5 @@
 import { InputStorageManager } from '../../input/InputStorageManager';
+import { PlayerVelocitySystem } from '../Velocity/PlayerVelocitySystem';
 import { PlayerGravitySystem } from '../Gravity/PlayerGravitySystem';
 import {
   GetInput,
@@ -20,23 +21,27 @@ import {
   turnWalk,
   run,
   jumpSquat,
+  jump,
+  neutralFall,
 } from '../../Game/State/CharacterStates/Test';
+import { DrawSystem } from '../Draw/DrawSystem';
 
 const ECB = DefaultECB();
 const P1 = new Player(
   ECB,
   1000,
   1000,
-  1,
-  1,
-  new FlatVec(100, 100),
+  0.8,
+  0.8,
+  new FlatVec(400, 100),
   20,
   2,
   true,
   10,
-  100
+  100,
+  18
 );
-
+P1.Grounded = false;
 const ISM = new InputStorageManager<InputAction>(InvalidGuessSpec);
 const FSM = new FrameStorageManager();
 const SM = new StateMachine(P1, ISM, FSM);
@@ -56,6 +61,9 @@ const playersArr = new Array<Player>();
 playersArr.push(P1);
 const SCS = new StageCollisionSystem(playersArr, stage);
 const PGS = new PlayerGravitySystem(playersArr, 0.5);
+const DS = new DrawSystem(playersArr, stage, ctx);
+const PVS = new PlayerVelocitySystem(playersArr);
+
 const FPS = 60;
 let now = {} as number;
 let then = Date.now();
@@ -86,22 +94,58 @@ function Logic() {
   ISM.StoreLocalInput(input, frame);
 
   if (input.Action == 'run') {
-    console.log('walk');
-    SM.SetState('walk');
+    if (P1.Grounded) {
+      SM.SetState('walk');
+    }
+    if (!P1.Grounded) {
+      SM.SetState('neutralFall');
+    }
+  } else if (input.Action == 'jump') {
+    SM.SetState('jump');
   } else {
-    SM.SetState('idle');
+    if (P1.Grounded) {
+      SM.SetState('idle');
+    } else {
+      SM.SetState('neutralFall');
+    }
   }
+
   SM.Update();
   PGS.ApplyGravity();
+  PVS.UpdateVelocity();
+  UpdateECBs();
   SCS.handle();
+  UpdatePlayersPreviousPosition();
 }
 
 function draw() {
-  stage.draw(ctx);
-  P1.draw(ctx);
+  DS.Draw();
+}
+
+function UpdateECBs() {
+  const length = playersArr.length;
+
+  for (let i = 0; i < length; i++) {
+    const p = playersArr[i];
+    p.ECB.MoveToPosition(p.PlayerPosition.X, p.PlayerPosition.Y);
+    p.ECB.Update();
+    p.LedgeDetector.MoveTo(p.PlayerPosition.X, p.PlayerPosition.Y);
+  }
+}
+
+function UpdatePlayersPreviousPosition() {
+  const length = playersArr.length;
+
+  for (let i = 0; i < length; i++) {
+    const p = playersArr[i];
+    p.PreviousPlayerPosition.X = p.PlayerPosition.X;
+    p.PreviousPlayerPosition.Y = p.PlayerPosition.Y;
+  }
 }
 
 function SetUpStateMachine(sm: StateMachine) {
   sm.AddState('idle', idle);
   sm.AddState('walk', walk);
+  sm.AddState('jump', jump);
+  sm.AddState('neutralFall', neutralFall);
 }

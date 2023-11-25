@@ -1,57 +1,69 @@
-// class ECS {
-//   private Components = new Map<string, unknown>();
-//   private Entities = new Map<number, EntityToComponent>();
-//   private entityGeneratorIndex = 0;
+export class ECS {
+  private Entites = new Map<number, entity>();
+  private ComponentsSingltons = new Map<string, unknown>();
+  private ComponentFactories = new Map<string, unknown>();
+  private nextEntityID = 0;
 
-//   public CreateEntity() {
-//     let id = this.GenerateId(this.entityGeneratorIndex);
-//     this.entityGeneratorIndex++;
-//     return id;
-//   }
+  public CreateEntiity() {
+    const id = this.nextEntityID;
+    const e = { ID: id, Components: new Map<string, unknown>() } as entity;
+    this.nextEntityID++;
+    this.Entites.set(id, e);
 
-//   public AddComponent(cName: string, comp: unknown) {
-//     this.Components.set(cName, comp);
-//   }
+    return id;
+  }
 
-//   public RegisterEntityToComponent(eId: number, cName: string) {
+  public RegisterSingletonComponent(cName: string, component: unknown) {
+    this.ComponentsSingltons.set(cName, component);
+  }
 
-//     if (this.Entities.has(eId) && this.Components.has(cName)) {
+  public RegisterComponentFactory(cName: string, factory: () => unknown) {
+    this.ComponentFactories.set(cName, factory);
+  }
 
-//       const etc = this.Entities.get(eId)!;
-//       etc.Components.push(this.Components.get(cName));
-//       return;
-//     }
+  public AddSingltonComponentToEntityID(id: number, cName: string) {
+    const e = this.Entites.get(id);
+    const comp = this.ComponentsSingltons.get(cName);
+    e!.Components.set(cName, comp!);
+  }
 
-//     const etc = {
-//       ID: eId,
-//       Components: new Array<string>(),
-//     } as EntityToComponent;
+  public AddComponentToEntityID(id: number, cName: string) {
+    const e = this.Entites.get(id);
+    const comp = (this.ComponentFactories.get(cName) as () => unknown)();
+    e?.Components.set(cName, comp);
+  }
 
-//     etc.Components.push(this.Components.get(cName));
+  public QueryECS(cName: string) {
+    let res = new Map<number, entity>();
 
-//     this.Entities.set(eId, etc);
-//     return;
-//   }
+    this.Entites.forEach((value, key) => {
+      if (value.Components.has(cName)) {
+        res.set(key, value);
+      }
+    });
 
-//   public GetEntitiesWithComponents(eId: number, components: Array<string>) {
-//     const etc = this.EntitiesToComponents.get(eId);
-//   }
+    return res;
+  }
+}
 
-//   public GetEntityWithAllComponents() {}
+export type component = {
+  x: number;
+  y: number;
+};
 
-//   private GenerateId(seed: number) {
-//     this.entities.push(seed);
-//     return seed;
-//   }
-// }
+export type position = {
+  x: number;
+  y: number;
+};
 
-// function run() {
-//   let ecs = new ECS();
+export type velocity = {
+  xv: number;
+  yv: number;
+};
 
-//   let newEntityID = ecs.CreateEntity();
-// }
+export type entity = {
+  ID: number;
+  Components: Map<string, unknown>;
+};
 
-// type EntityToComponent = {
-//   ID: Number;
-//   Components: Array<unknown>;
-// };
+class MixInECS {}

@@ -44,7 +44,10 @@ export class StateMachine {
     this.currentState = this.states.get(name)!;
 
     if (this.currentState.onEnter) {
-      this.currentState.onEnter(this.player);
+      this.currentState.onEnter(
+        this.player,
+        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
+      );
     }
 
     this.currentStateFrame = 0;
@@ -71,6 +74,11 @@ export class StateMachine {
       );
     }
 
+    // this.player.ECB.MoveToPosition(
+    //   this.player.PlayerPosition.X,
+    //   this.player.PlayerPosition.Y
+    // );
+    // this.player.ECB.Update();
     this.currentStateFrame++;
   }
 }
