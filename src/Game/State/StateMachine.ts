@@ -26,6 +26,31 @@ export class StateMachine {
     this.states.set(name, config);
   }
 
+  public ForceState(name: string) {
+    if (!this.states.has(name)) {
+      return;
+    }
+
+    if (this.currentState?.name === name) {
+      return;
+    }
+
+    if (this.currentState && this.currentState.onExit) {
+      this.currentState.onExit(this.player);
+    }
+
+    this.currentState = this.states.get(name)!;
+
+    if (this.currentState.onEnter) {
+      this.currentState.onEnter(
+        this.player,
+        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
+      );
+    }
+
+    this.currentStateFrame = 0;
+  }
+
   public SetState(name: string) {
     if (!this.states.has(name)) {
       // do something
@@ -74,11 +99,6 @@ export class StateMachine {
       );
     }
 
-    // this.player.ECB.MoveToPosition(
-    //   this.player.PlayerPosition.X,
-    //   this.player.PlayerPosition.Y
-    // );
-    // this.player.ECB.Update();
     this.currentStateFrame++;
   }
 }

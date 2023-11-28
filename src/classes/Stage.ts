@@ -1,7 +1,8 @@
-import { FlatVec } from '../Physics/FlatVec';
+import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
 import { IDrawable } from '../interfaces/interfaces';
 export default class Stage implements IDrawable {
   verticies: FlatVec[];
+  ledgeVerts: { left: FlatVec[]; right: FlatVec[] };
   color: string;
 
   constructor(verticies: FlatVec[], color: string = 'green') {
@@ -10,6 +11,7 @@ export default class Stage implements IDrawable {
     }
     this.verticies = verticies;
     this.color = color;
+    this.CalcLedges();
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -26,5 +28,28 @@ export default class Stage implements IDrawable {
 
   GetVerticies() {
     return this.verticies;
+  }
+
+  GetLedges() {
+    return this.ledgeVerts;
+  }
+
+  private CalcLedges() {
+    let rightPoint = this.verticies[1];
+    let leftPoint = this.verticies[0];
+
+    let rightLedge = new Array<FlatVec>();
+    rightLedge.push(VectorAllocator(rightPoint.X - 60, rightPoint.Y));
+    rightLedge.push(VectorAllocator(rightPoint.X, rightPoint.Y));
+    rightLedge.push(VectorAllocator(rightPoint.X, rightPoint.Y + 20));
+    rightLedge.push(VectorAllocator(rightPoint.X - 60, rightPoint.Y + 20));
+
+    let leftLedge = new Array<FlatVec>();
+    leftLedge.push(VectorAllocator(leftPoint.X, leftPoint.Y));
+    leftLedge.push(VectorAllocator(leftPoint.X + 60, leftPoint.Y));
+    leftLedge.push(VectorAllocator(leftPoint.X + 60, leftPoint.Y + 20));
+    leftLedge.push(VectorAllocator(leftPoint.X, leftPoint.Y + 20));
+
+    this.ledgeVerts = { left: leftLedge, right: rightLedge };
   }
 }

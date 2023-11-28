@@ -135,7 +135,20 @@ export const wallTechRight = {} as IState;
 
 export const ledgeTitor = {} as IState;
 
-export const ledgeGrab = {} as IState;
+export const ledgeGrab = {
+  name: 'ledgeGrab',
+  onEnter(player, inputAction) {
+    player.LedgeGrab = true;
+    player.PlayerVelocity.X = 0;
+    player.PlayerVelocity.Y = 0;
+  },
+  onUpdate(stateFrame, player, inputAction) {
+    //player.PlayerVelocity.Y = 0;
+  },
+  onExit(player, inputAction) {
+    player.LedgeGrab = false;
+  },
+} as IState;
 
 export const neutralAttack = {} as IState;
 

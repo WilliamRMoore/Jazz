@@ -1,4 +1,5 @@
 import { AddClampedYImpulseToPlayer, Player } from '../Player/Player';
+//import { ledgeGrab } from '../State/CharacterStates/Test';
 
 export class PlayerVelocitySystem {
   private readonly Players: Array<Player>;
@@ -14,6 +15,7 @@ export class PlayerVelocitySystem {
       const p = this.Players[i];
 
       let grounded = p.Grounded;
+      let ledgeGrab = p.LedgeGrab;
       let pvx = p.PlayerVelocity.X;
       let pvy = p.PlayerVelocity.Y;
       let fallSpeed = p.FallSpeed;
@@ -25,7 +27,7 @@ export class PlayerVelocitySystem {
       p.PlayerPosition.Y += pvy;
 
       //ApplyVelocityDecay
-      if (grounded) {
+      if (grounded || ledgeGrab) {
         if (pvx > 0) {
           pvx -= pgvd;
         }
@@ -35,7 +37,7 @@ export class PlayerVelocitySystem {
       }
 
       //AddClampedYImpulseToPlayer(p, fallSpeed, pvy);
-      if (!grounded) {
+      if (!grounded && !ledgeGrab) {
         if (pvx > 0) {
           pvx -= pavd;
         }

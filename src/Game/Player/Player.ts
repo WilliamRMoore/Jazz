@@ -4,6 +4,7 @@ import { ECB } from '../ECB';
 
 export class Player {
   Grounded: boolean = false;
+  LedgeGrab: boolean = false;
   MaxXVelocity: number;
   MinXVelocity: number;
   MaxYVelocity: number;
@@ -123,6 +124,43 @@ class LedgeDetector {
   MoveTo(x: number, y: number) {
     this.Front.x = x;
     this.Front.y = y + this.YOffset;
+  }
+
+  GetRightSideDetector() {
+    const vertArr = new Array<FlatVec>();
+    vertArr.push(VectorAllocator(this.Front.x, this.Front.y));
+    vertArr.push(
+      VectorAllocator(this.Front.x + this.Front.width, this.Front.y)
+    );
+    vertArr.push(
+      VectorAllocator(
+        this.Front.x + this.Front.width,
+        this.Front.y + this.Front.height
+      )
+    );
+    vertArr.push(
+      VectorAllocator(this.Front.x, this.Front.y + this.Front.height)
+    );
+    return vertArr;
+  }
+
+  GetLeftSideDetector() {
+    const vertArr = new Array<FlatVec>();
+    vertArr.push(
+      VectorAllocator(this.Front.x - this.Front.width, this.Front.y)
+    );
+    vertArr.push(VectorAllocator(this.Front.x, this.Front.y));
+    vertArr.push(
+      VectorAllocator(this.Front.x, this.Front.y + this.Front.height)
+    );
+    vertArr.push(
+      VectorAllocator(
+        this.Front.x - this.Front.width,
+        this.Front.y + this.Front.height
+      )
+    );
+
+    return vertArr;
   }
 
   GetVerticies() {

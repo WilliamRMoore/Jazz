@@ -14,10 +14,12 @@ import { DefaultECB } from '../ECB';
 import { FlatVec } from '../../Physics/FlatVec';
 import Stage from '../../classes/Stage';
 import { StageCollisionSystem } from '../Collision/StageCollisionSystem';
+import { LedgeDetectionSystem } from '../Collision/LedgeDetectionSystem';
 import { ctx } from '../../Globals/globals';
 import {
   idle,
   walk,
+  ledgeGrab,
   turnWalk,
   run,
   jumpSquat,
@@ -75,6 +77,8 @@ listenForGamePadInput();
 
 SetUpStateMachine(SM);
 
+const LDS = new LedgeDetectionSystem(playersArr, stage, SM);
+
 export function GameLoop() {
   window.requestAnimationFrame(() => GameLoop());
   ctx.clearRect(0, 0, 1920, 1080);
@@ -93,26 +97,34 @@ function Logic() {
   const input = GetInput();
   ISM.StoreLocalInput(input, frame);
 
-  if (input.Action == 'run') {
-    if (P1.Grounded) {
-      SM.SetState('walk');
-    }
-    if (!P1.Grounded) {
-      SM.SetState('neutralFall');
-    }
-  } else if (input.Action == 'jump') {
-    SM.SetState('jump');
-  } else {
-    if (P1.Grounded) {
-      SM.SetState('idle');
+  if (!P1.LedgeGrab) {
+    if (input.Action == 'run') {
+      if (P1.Grounded) {
+        SM.SetState('walk');
+      }
+      if (!P1.Grounded) {
+        SM.SetState('neutralFall');
+      }
+    } else if (input.Action == 'jump') {
+      SM.SetState('jump');
     } else {
-      SM.SetState('neutralFall');
+      if (P1.Grounded) {
+        SM.SetState('idle');
+      } else {
+        SM.SetState('neutralFall');
+      }
     }
   }
 
+  if (input.Action == 'jump') {
+    SM.SetState('jump');
+  }
+
   SM.Update();
+  debugger;
   PGS.ApplyGravity();
   PVS.UpdateVelocity();
+  LDS.CheckForLedge();
   UpdateECBs();
   SCS.handle();
   UpdatePlayersPreviousPosition();
@@ -148,4 +160,5 @@ function SetUpStateMachine(sm: StateMachine) {
   sm.AddState('walk', walk);
   sm.AddState('jump', jump);
   sm.AddState('neutralFall', neutralFall);
+  sm.AddState(ledgeGrab.name, ledgeGrab);
 }

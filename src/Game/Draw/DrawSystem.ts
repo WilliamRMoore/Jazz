@@ -18,6 +18,7 @@ export class DrawSystem {
 
   public Draw(): void {
     this.DrawStage();
+    this.DrawLedges();
     this.DrawPlayer();
   }
 
@@ -121,6 +122,27 @@ export class DrawSystem {
     }
     this.CTX.closePath();
     this.CTX.fillStyle = color;
+    this.CTX.fill();
+  }
+
+  private DrawLedges() {
+    const { left, right } = this.Stage.GetLedges();
+
+    this.CTX.fillStyle = 'yellow';
+    this.CTX.beginPath();
+    this.CTX.moveTo(left[0].X, left[0].Y);
+    this.CTX.lineTo(left[1].X, left[1].Y);
+    this.CTX.lineTo(left[2].X, left[2].Y);
+    this.CTX.lineTo(left[3].X, left[3].Y);
+    this.CTX.closePath();
+    this.CTX.fill();
+
+    this.CTX.beginPath();
+    this.CTX.moveTo(right[0].X, right[0].Y);
+    this.CTX.lineTo(right[1].X, right[1].Y);
+    this.CTX.lineTo(right[2].X, right[2].Y);
+    this.CTX.lineTo(right[3].X, right[3].Y);
+    this.CTX.closePath();
     this.CTX.fill();
   }
 }

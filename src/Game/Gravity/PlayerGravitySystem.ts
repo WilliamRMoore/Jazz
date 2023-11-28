@@ -14,7 +14,7 @@ export class PlayerGravitySystem {
     for (let i = 0; i < length; i++) {
       const p = this.Players[i];
 
-      if (p.Grounded) {
+      if (p.Grounded || p.LedgeGrab) {
         p.PlayerVelocity.Y = 0;
         return;
       }

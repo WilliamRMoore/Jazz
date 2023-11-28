@@ -40,6 +40,9 @@ export class StageCollisionSystem {
           );
         }
 
+        //A collision resolution call back should be passed here instead of the hard coded logic.
+        // Need to update all of the bounding boxes to the player postion,
+        // since it was modified by our collision resolution.
         player.PlayerPosition = VectorAdder(player.PlayerPosition, move);
 
         player.ECB.MoveToPosition(
@@ -47,6 +50,11 @@ export class StageCollisionSystem {
           player.PlayerPosition.Y
         );
         player.ECB.Update();
+        player.LedgeDetector.MoveTo(
+          player.PlayerPosition.X,
+          player.PlayerPosition.Y
+        );
+
         this.lastFrameCollision = true;
       }
 
