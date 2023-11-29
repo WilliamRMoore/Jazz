@@ -106,7 +106,12 @@ function Logic() {
         SM.SetState('neutralFall');
       }
     } else if (input.Action == 'jump') {
-      SM.SetState('jump');
+      //debugger;
+      P1.CurrentStateMachineState == 'jump'
+        ? SM.SetState('jump')
+        : P1.Grounded
+        ? SM.SetState('jumpSquat')
+        : SM.SetState('jump');
     } else {
       if (P1.Grounded) {
         SM.SetState('idle');
@@ -114,14 +119,13 @@ function Logic() {
         SM.SetState('neutralFall');
       }
     }
-  }
-
-  if (input.Action == 'jump') {
-    SM.SetState('jump');
+  } else {
+    if (input.Action == 'jump') {
+      SM.SetState('jump');
+    }
   }
 
   SM.Update();
-  debugger;
   PGS.ApplyGravity();
   PVS.UpdateVelocity();
   LDS.CheckForLedge();
@@ -161,4 +165,5 @@ function SetUpStateMachine(sm: StateMachine) {
   sm.AddState('jump', jump);
   sm.AddState('neutralFall', neutralFall);
   sm.AddState(ledgeGrab.name, ledgeGrab);
+  sm.AddState(jumpSquat.name, jumpSquat);
 }

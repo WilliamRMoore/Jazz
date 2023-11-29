@@ -47,7 +47,7 @@ export class StateMachine {
         this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
       );
     }
-
+    this.player.CurrentStateMachineState = this.currentState.name;
     this.currentStateFrame = 0;
   }
 
@@ -61,12 +61,20 @@ export class StateMachine {
       return;
     }
 
+    if (
+      this.currentState?.tranisitions &&
+      !this.currentState.tranisitions.includes(name)
+    ) {
+      return;
+    }
+
     //TODO: check for tranisitions
 
     if (this.currentState && this.currentState.onExit) {
       this.currentState.onExit(this.player);
     }
     this.currentState = this.states.get(name)!;
+    this.player.CurrentStateMachineState = this.currentState.name;
 
     if (this.currentState.onEnter) {
       this.currentState.onEnter(
@@ -87,6 +95,7 @@ export class StateMachine {
       this.currentState.frameCount &&
       this.currentStateFrame >= this.currentState.frameCount
     ) {
+      debugger;
       this.SetState(this.currentState.stateDefaultTransition);
       return;
     }

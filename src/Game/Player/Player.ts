@@ -25,6 +25,7 @@ export class Player {
   AirSpeedInpulseLimit: number;
   FastFallSpeed: number;
   FallSpeed: number;
+  CurrentStateMachineState: string = '';
 
   constructor(
     ecb: ECB,

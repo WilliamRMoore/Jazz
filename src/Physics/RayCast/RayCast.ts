@@ -81,17 +81,6 @@ export class Ray {
 
     return false;
   }
-
-  //   private GetEnd(): FlatVec {
-  //     return VectorAllocator(this.GetEndX(), this.GetEndY());
-  //   }
-
-  //   private GetEndX(): number {
-  //     return this.Position.X + Math.cos(this.Direction.X) * this.Length;
-  //   }
-  //   private GetEndY(): number {
-  //     return this.Position.Y + Math.sin(this.Direction.Y) * this.Length;
-  //   }
 }
 
 export function LineSegmentIntersection(

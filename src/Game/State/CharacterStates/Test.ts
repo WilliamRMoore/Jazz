@@ -80,8 +80,9 @@ export const turnRun = {} as IState;
 export const stopRun = {} as IState;
 
 export const jumpSquat = {
-  frameCount: 30,
+  frameCount: 3,
   stateDefaultTransition: 'jump',
+  tranisitions: ['jump'],
   name: 'jumpSquat',
   onEnter: (player) => {
     console.log('Entering jump squat');
