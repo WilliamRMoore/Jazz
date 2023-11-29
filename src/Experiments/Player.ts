@@ -1,5 +1,5 @@
-import { ctx, gravity } from '../../Globals/globals';
-import { FlatVec, VectorAdder, VectorAllocator } from '../../Physics/FlatVec';
+import { ctx, gravity } from '../Globals/globals';
+import { FlatVec, VectorAdder, VectorAllocator } from '../Physics/FlatVec';
 //import { GetInputForFrame } from '../../input/GamePadInput';
 import ECB, { ECBOffsets } from './ECB';
 import StateMachine from './StateMachine';

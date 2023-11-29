@@ -1,5 +1,5 @@
-import { ctx } from '../../Globals/globals';
-import { FlatVec } from '../../Physics/FlatVec';
+import { ctx } from '../Globals/globals';
+import { FlatVec } from '../Physics/FlatVec';
 
 export default class PlayerPosition {
   position: FlatVec;

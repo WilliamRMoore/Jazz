@@ -1,6 +1,6 @@
-import { ECBPoints } from '../../interfaces/interfaces';
-import { ctx } from '../../Globals/globals';
-import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
+import { ECBPoints } from '../interfaces/interfaces';
+import { ctx } from '../Globals/globals';
+import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
 
 export type ECBOffsets = {
   top: { xOffset: number; yOffset: number };

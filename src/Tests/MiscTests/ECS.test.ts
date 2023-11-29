@@ -1,4 +1,10 @@
-import { ECS, component, entity, position, velocity } from '../../experiment';
+import {
+  ECS,
+  component,
+  entity,
+  position,
+  velocity,
+} from '../../Experiments/experiment';
 import { beforeEach, test } from '@jest/globals';
 let ecs: ECS;
 

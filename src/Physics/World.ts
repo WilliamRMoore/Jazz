@@ -1,4 +1,4 @@
-import { Create, Player } from '../classes/Character/Player';
+import { Create, Player } from '../Experiments/Player';
 import Stage from '../classes/Stage';
 import {
   FlatVec,
