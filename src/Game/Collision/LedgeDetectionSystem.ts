@@ -19,6 +19,7 @@ export class LedgeDetectionSystem {
 
     for (let i = 0; i < length; i++) {
       const p = this.Players[i];
+      const ecbPoints = p.ECB.GetPoints();
 
       if (!p.Grounded && p.PlayerVelocity.Y > 0) {
         if (p.FacingRight) {
@@ -27,10 +28,11 @@ export class LedgeDetectionSystem {
             left
           );
           if (result.collision) {
-            console.log('Ledge Detected');
             this.SM.ForceState('ledgeGrab');
-            p.PlayerPosition.X = left[0].X;
-            p.PlayerPosition.Y = left[0].Y + 100;
+            p.UpdatePlayerPosition(
+              left[0].X,
+              left[0].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)
+            );
           }
         }
 
@@ -40,10 +42,11 @@ export class LedgeDetectionSystem {
             right
           );
           if (result.collision) {
-            console.log('Ledge Detected');
             this.SM.ForceState('ledgeGrab');
-            p.PlayerPosition.X = right[1].X;
-            p.PlayerPosition.Y = right[1].Y + 100;
+            p.UpdatePlayerPosition(
+              right[1].X,
+              right[1].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)
+            );
           }
         }
       }

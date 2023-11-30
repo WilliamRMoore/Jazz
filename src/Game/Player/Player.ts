@@ -100,6 +100,22 @@ export class Player {
           : (this.PlayerVelocity.Y = this.MinYVelocity);
     }
   }
+
+  UpdatePlayerPosition(x: number, y: number) {
+    this.PlayerPosition.X = x;
+    this.PlayerPosition.Y = y;
+    this.ECB.MoveToPosition(x, y);
+    this.ECB.Update();
+    this.LedgeDetector.MoveTo(x, y);
+  }
+
+  AddToPlayersPosition(vx: number, vy: number) {
+    this.PlayerPosition.X += vx;
+    this.PlayerPosition.Y += vy;
+    this.ECB.MoveToPosition(this.PlayerPosition.X, this.PlayerPosition.Y);
+    this.ECB.Update();
+    this.LedgeDetector.MoveTo(this.PlayerPosition.X, this.PlayerPosition.Y);
+  }
 }
 
 type LedgeDetectorBox = {

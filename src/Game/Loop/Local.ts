@@ -35,7 +35,7 @@ const P1 = new Player(
   1000,
   0.8,
   0.8,
-  new FlatVec(400, 100),
+  new FlatVec(600, 100),
   20,
   2,
   true,
@@ -51,10 +51,10 @@ const SM = new StateMachine(P1, ISM, FSM);
 let stageVecs = new Array<FlatVec>();
 
 stageVecs.push(
-  new FlatVec(300, 500),
-  new FlatVec(1000, 500),
-  new FlatVec(1000, 600),
-  new FlatVec(300, 600)
+  new FlatVec(510, 600),
+  new FlatVec(1410, 600),
+  new FlatVec(1410, 700),
+  new FlatVec(510, 700)
 );
 
 const stage = new Stage(stageVecs);
@@ -129,7 +129,6 @@ function Logic() {
   PGS.ApplyGravity();
   PVS.UpdateVelocity();
   LDS.CheckForLedge();
-  UpdateECBs();
   SCS.handle();
   UpdatePlayersPreviousPosition();
 }

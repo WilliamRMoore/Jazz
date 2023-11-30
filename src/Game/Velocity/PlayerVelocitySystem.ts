@@ -1,3 +1,4 @@
+import { VectorAllocator } from '../../Physics/FlatVec';
 import { AddClampedYImpulseToPlayer, Player } from '../Player/Player';
 //import { ledgeGrab } from '../State/CharacterStates/Test';
 
@@ -23,8 +24,9 @@ export class PlayerVelocitySystem {
       let pavd = p.ArialVelocityDecay;
 
       //Update Velocty
-      p.PlayerPosition.X += pvx;
-      p.PlayerPosition.Y += pvy;
+      // p.PlayerPosition.X += pvx;
+      // p.PlayerPosition.Y += pvy;
+      p.AddToPlayersPosition(pvx, pvy);
 
       //ApplyVelocityDecay
       if (grounded || ledgeGrab) {
@@ -55,6 +57,9 @@ export class PlayerVelocitySystem {
       if (Math.abs(pvx) < 3) {
         pvx = 0;
       }
+
+      pvx = Math.abs(pvx) > p.MaxXVelocity ? p.MaxXVelocity : pvx;
+      pvy = Math.abs(pvy) > p.MaxYVelocity ? p.MaxYVelocity : pvy;
 
       p.PlayerVelocity.X = pvx;
       p.PlayerVelocity.Y = pvy;

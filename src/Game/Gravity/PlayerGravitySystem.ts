@@ -19,7 +19,6 @@ export class PlayerGravitySystem {
         return;
       }
 
-      //p.PlayerVelocity.Y += this.Gravity;
       AddClampedYImpulseToPlayer(p, p.FallSpeed, this.Gravity);
 
       if (p.PlayerVelocity.Y >= p.MaxYVelocity) {

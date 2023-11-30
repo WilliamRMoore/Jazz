@@ -4,14 +4,17 @@ import { IntersectsPolygons } from '../../Physics/Collisions';
 import {
   FlatVec,
   VectorAdder,
+  VectorAllocator,
   VectorMultiplier,
   VectorNegator,
 } from '../../Physics/FlatVec';
 import { LineSegmentIntersection } from '../../Physics/RayCast/RayCast';
+
 export class StageCollisionSystem {
   private readonly players: Array<Player>;
   private readonly stage: Stage;
-  private lastFrameCollision: boolean = false;
+  private GroundCorrection: number = 0.01;
+  private GroundDetectDepth: number = -0.02;
 
   constructor(players: Array<Player>, stage: Stage) {
     this.players = players;
@@ -26,40 +29,29 @@ export class StageCollisionSystem {
       const pverts = player.ECB.GetVerticies();
 
       const res = IntersectsPolygons(pverts, sverts);
+
       if (res.collision) {
         const move = VectorMultiplier(VectorNegator(res.normal!), res.depth!);
-        move.Y += 0.5;
+        move.Y += this.GroundCorrection;
 
-        //check to see if current position and previous position intersect the ground
-        if (!this.lastFrameCollision) {
-          player.Grounded = this.checkGround(
-            player.PreviousPlayerPosition,
-            player.PlayerPosition,
-            sverts[0],
-            sverts[1]
-          );
-        }
+        let resolution = VectorAdder(player.PlayerPosition, move);
 
-        //A collision resolution call back should be passed here instead of the hard coded logic.
-        // Need to update all of the bounding boxes to the player postion,
-        // since it was modified by our collision resolution.
-        player.PlayerPosition = VectorAdder(player.PlayerPosition, move);
+        player.UpdatePlayerPosition(resolution.X, resolution.Y);
 
-        player.ECB.MoveToPosition(
-          player.PlayerPosition.X,
-          player.PlayerPosition.Y
-        );
-        player.ECB.Update();
-        player.LedgeDetector.MoveTo(
-          player.PlayerPosition.X,
-          player.PlayerPosition.Y
+        let ecbTestPoint = VectorAllocator(
+          player.ECB.GetPoints().bottom.X,
+          player.ECB.GetPoints().bottom.Y + this.GroundDetectDepth
         );
 
-        this.lastFrameCollision = true;
+        player.Grounded = this.checkGround(
+          ecbTestPoint,
+          player.ECB.GetPoints().bottom,
+          sverts[0],
+          sverts[1]
+        );
       }
 
       if (!res.collision) {
-        this.lastFrameCollision = false;
         player.Grounded = false;
       }
     }
