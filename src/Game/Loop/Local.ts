@@ -53,8 +53,8 @@ let stageVecs = new Array<FlatVec>();
 stageVecs.push(
   new FlatVec(510, 600),
   new FlatVec(1410, 600),
-  new FlatVec(1410, 700),
-  new FlatVec(510, 700)
+  new FlatVec(1410, 620),
+  new FlatVec(510, 620)
 );
 
 const stage = new Stage(stageVecs);

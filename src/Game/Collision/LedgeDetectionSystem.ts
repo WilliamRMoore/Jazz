@@ -23,11 +23,15 @@ export class LedgeDetectionSystem {
 
       if (!p.Grounded && p.PlayerVelocity.Y > 0) {
         if (p.FacingRight) {
-          let result = IntersectsPolygons(
+          let rightResult = IntersectsPolygons(
             p.LedgeDetector.GetRightSideDetector(),
             left
           );
-          if (result.collision) {
+          let leftResult = IntersectsPolygons(
+            p.LedgeDetector.GetLeftSideDetector(),
+            left
+          );
+          if (rightResult.collision && !leftResult.collision) {
             this.SM.ForceState('ledgeGrab');
             p.UpdatePlayerPosition(
               left[0].X,
@@ -37,11 +41,16 @@ export class LedgeDetectionSystem {
         }
 
         if (!p.FacingRight) {
-          let result = IntersectsPolygons(
+          let leftResult = IntersectsPolygons(
             p.LedgeDetector.GetLeftSideDetector(),
             right
           );
-          if (result.collision) {
+          let rightResult = IntersectsPolygons(
+            p.LedgeDetector.GetRightSideDetector(),
+            right
+          );
+
+          if (leftResult.collision && !rightResult.collision) {
             this.SM.ForceState('ledgeGrab');
             p.UpdatePlayerPosition(
               right[1].X,
