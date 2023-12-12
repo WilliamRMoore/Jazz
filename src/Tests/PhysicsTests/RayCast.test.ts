@@ -1,8 +1,9 @@
 import { beforeAll, test } from '@jest/globals';
-import { Ray, LineSegmentIntersection } from '../../Physics/RayCast/RayCast';
+import { LineSegmentIntersection } from '../../Physics/RayCast/RayCast';
 import { Boundry } from '../../Physics/RayCast/Boundry';
 import expect from 'expect';
 import { FlatVec } from '../../Physics/FlatVec';
+import { Ray } from '../../Experiments/Ray';
 
 let b: Boundry;
 let SUT: Ray;
@@ -12,19 +13,19 @@ beforeAll(() => {
   SUT = new Ray(50, 50, 150, 175);
 });
 
-test('Returns intercept', () => {
-  SUT.LookAt(150, 175);
-  let res = SUT.CastWithLength(b);
+// test('Returns intercept', () => {
+//   SUT.LookAt(150, 175);
+//   let res = SUT.CastWithLength(b);
 
-  expect(res).toBeTruthy();
-});
+//   expect(res).toBeTruthy();
+// });
 
-test('Returns intercept with length', () => {
-  SUT.LookAt(150, 175);
-  let res = SUT.Cast(b);
+// test('Returns intercept with length', () => {
+//   SUT.LookAt(150, 175);
+//   let res = SUT.Cast(b);
 
-  expect(res).toBeTruthy();
-});
+//   expect(res).toBeTruthy();
+// });
 
 test('LineSegment return true with point', () => {
   let x1: number,

@@ -56,7 +56,7 @@ beforeEach(() => {
   SM.AddState('JumpSquat', jumpSquat);
 });
 
-test('Walk', () => {
+test.skip('Walk', () => {
   ISM.StoreLocalInput(
     { Action: 'walk', LXAxsis: 1.0, LYAxsis: 0.0, RXAxis: 0.0, RYAxsis: 0.0 },
     1

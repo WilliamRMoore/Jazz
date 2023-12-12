@@ -64,5 +64,5 @@ test('Player1 After Stage Collision', () => {
 
   SCS.handle();
 
-  console.log(player1);
+  //console.log(player1);
 });
