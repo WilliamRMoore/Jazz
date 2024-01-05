@@ -118,13 +118,14 @@ export class Player {
   }
 }
 
-type LedgeDetectorBox = {
+export type LedgeDetectorBox = {
   x: number;
   y: number;
   width: number;
   height: number;
 };
-class LedgeDetector {
+
+export class LedgeDetector {
   YOffset: number;
   Front: LedgeDetectorBox;
   constructor(
@@ -158,6 +159,7 @@ class LedgeDetector {
     vertArr.push(
       VectorAllocator(this.Front.x, this.Front.y + this.Front.height)
     );
+
     return vertArr;
   }
 

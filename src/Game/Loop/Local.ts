@@ -27,6 +27,7 @@ import {
   neutralFall,
 } from '../../Game/State/CharacterStates/Test';
 import { DrawSystem } from '../Draw/DrawSystem';
+import { PlayerStateHistoryManager } from '../GameState/PlayerStateHistoryManager';
 
 const ECB = DefaultECB();
 const P1 = new Player(
@@ -79,6 +80,8 @@ SetUpStateMachine(SM);
 
 const LDS = new LedgeDetectionSystem(playersArr, stage, SM);
 
+const PSHM = new PlayerStateHistoryManager(playersArr, FSM);
+
 export function GameLoop() {
   window.requestAnimationFrame(() => GameLoop());
   ctx.clearRect(0, 0, 1920, 1080);
@@ -130,7 +133,8 @@ function Logic() {
   PVS.UpdateVelocity();
   LDS.CheckForLedge();
   SCS.handle();
-  UpdatePlayersPreviousPosition();
+  PSHM.RecordStateSnapShot();
+  //UpdatePlayersPreviousPosition();
 }
 
 function draw() {

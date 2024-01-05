@@ -1,3 +1,8 @@
+import { ECB } from './Game/ECB';
+import { LedgeDetector, LedgeDetectorBox, Player } from './Game/Player/Player';
+import { FlatVec, VectorAllocator } from './Physics/FlatVec';
+import { ECBPoints } from './interfaces/interfaces';
+
 export function HashCode(obj: any): number {
   const j = JSON.stringify(obj);
 
@@ -12,6 +17,10 @@ export function HashCode(obj: any): number {
 
 export function getRandomInt(max: number): number {
   return Math.floor(Math.random() * max);
+}
+
+export function clamp(val: number, min: number, max: number): number {
+  return Math.min(Math.max(val, min), max);
 }
 
 export function randomNumber(min: number, max: number): number {

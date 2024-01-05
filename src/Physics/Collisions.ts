@@ -245,6 +245,68 @@ function FindClosestPointOnPolygon(center: FlatVec, verticies: FlatVec[]) {
   return result;
 }
 
+function distToSegmentSquared(
+  lineStart: FlatVec,
+  lineEnd: FlatVec,
+  point: FlatVec
+) {
+  let l2 = Distance(lineStart, lineEnd);
+
+  if (l2 == 0) {
+    return Distance(point, lineStart);
+  }
+
+  let t =
+    ((point.X - lineStart.X) * (lineEnd.X - lineStart.X) +
+      (point.Y - lineStart.Y) * (lineEnd.Y - lineStart.Y)) /
+    l2;
+  t = Math.max(0, Math.min(1, t));
+  return Distance(
+    point,
+    VectorAllocator(
+      lineStart.X + t * (lineEnd.X - lineStart.X),
+      lineStart.Y + t * (lineEnd.Y - lineStart.Y)
+    )
+  );
+}
+
+function distanceToSegment(ls: FlatVec, le: FlatVec, point: FlatVec) {
+  return Math.sqrt(distToSegmentSquared(ls, le, point));
+}
+
+function capsuleCollisionDetection(
+  start1: FlatVec,
+  end1: FlatVec,
+  start2: FlatVec,
+  end2: FlatVec,
+  r1: number,
+  r2: number
+) {}
+
+function ClosestPTSegmentSegment(
+  s1: FlatVec,
+  e1: FlatVec,
+  s2: FlatVec,
+  e2: FlatVec
+) {
+  let d1 = VectorSubtractor(e1, s1);
+  let d2 = VectorSubtractor(e2, s2);
+  let r = VectorSubtractor(s1, s2);
+  let a = DotProduct(d1, d1);
+  let e = DotProduct(d2, d2);
+  let f = DotProduct(d2, r);
+
+  if (a <= Number.EPSILON && e <= Number.EPSILON) {
+    let s = 0.0,
+      t = 0.0;
+    let dp = DotProduct(VectorSubtractor(s1, s2), VectorSubtractor(s1, s2));
+
+    return { s, t, dp };
+  }
+  if (a <= Number.EPSILON) {
+  }
+}
+
 function collisionResultAllocator(
   collision: boolean,
   normal: FlatVec | null,

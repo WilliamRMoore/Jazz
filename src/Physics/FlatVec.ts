@@ -7,10 +7,6 @@ export class FlatVec {
     this.X = x;
     this.Y = y;
   }
-
-  Equals(other: FlatVec) {
-    return this.X == other.X && this.Y == other.Y;
-  }
 }
 
 export const VectorAdder = (v1: FlatVec, v2: FlatVec) => {

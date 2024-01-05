@@ -1,6 +1,5 @@
 import { VectorAllocator } from '../../Physics/FlatVec';
 import { AddClampedYImpulseToPlayer, Player } from '../Player/Player';
-//import { ledgeGrab } from '../State/CharacterStates/Test';
 
 export class PlayerVelocitySystem {
   private readonly Players: Array<Player>;
