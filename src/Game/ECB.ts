@@ -1,5 +1,5 @@
-import { transform } from '@babel/core';
 import { FlatVec, VectorAllocator } from '../Physics/FlatVec';
+import { ECBData } from './GameState/Clone';
 
 export class ECB {
   private Position: FlatVec = new FlatVec(0, 0);
@@ -45,6 +45,44 @@ export class ECB {
 
   public GetColor() {
     return this.Color;
+  }
+
+  public SetECBState(ECBData: ECBData): void {
+    this.SetPositionState(ECBData.position);
+    this.SetPointsState(ECBData.points);
+    this.SetColorState(ECBData.color);
+    this.SetVertsState(ECBData.verts);
+  }
+
+  private SetPositionState(pos: FlatVec): void {
+    this.Position.X = pos.X;
+    this.Position.Y = pos.Y;
+  }
+
+  private SetPointsState(ECBPoints: ECBPoints): void {
+    this.Points.top.X = ECBPoints.top.X;
+    this.Points.top.Y = ECBPoints.top.Y;
+    this.Points.right.X = ECBPoints.right.X;
+    this.Points.right.Y = ECBPoints.right.Y;
+    this.Points.bottom.X = ECBPoints.bottom.X;
+    this.Points.bottom.Y = ECBPoints.bottom.Y;
+    this.Points.left.X = ECBPoints.left.X;
+    this.Points.left.Y = ECBPoints.left.Y;
+  }
+
+  private SetColorState(color: string) {
+    this.Color = color;
+  }
+
+  private SetVertsState(verts: Array<FlatVec>) {
+    this.Verts[0].X = verts[0].X;
+    this.Verts[0].Y = verts[0].Y;
+    this.Verts[1].X = verts[1].X;
+    this.Verts[1].Y = verts[1].Y;
+    this.Verts[2].X = verts[2].X;
+    this.Verts[2].Y = verts[2].Y;
+    this.Verts[3].X = verts[3].X;
+    this.Verts[3].Y = verts[3].Y;
   }
 
   public MoveToPosition(x: number, y: number) {

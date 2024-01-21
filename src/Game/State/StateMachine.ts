@@ -7,7 +7,7 @@ import IState from './State';
 export class StateMachine {
   private states = new Map<string, IState>();
   private currentState?: IState;
-  private currentStateFrame: 0;
+  private currentStateFrame: number = 0;
   private player: Player;
   private ISM: InputStorageManager<InputAction>;
   private FSM: FrameStorageManager;
@@ -26,7 +26,7 @@ export class StateMachine {
     this.states.set(name, config);
   }
 
-  public ForceState(name: string) {
+  public ForceState(name: string, frame: number = 0) {
     if (!this.states.has(name)) {
       return;
     }
@@ -48,7 +48,7 @@ export class StateMachine {
       );
     }
     this.player.CurrentStateMachineState = this.currentState.name;
-    this.currentStateFrame = 0;
+    this.currentStateFrame = frame;
   }
 
   public SetState(name: string) {
@@ -109,5 +109,6 @@ export class StateMachine {
     }
 
     this.currentStateFrame++;
+    this.player.CurrentStateMachineStateFrame = this.currentStateFrame;
   }
 }

@@ -28,6 +28,9 @@ import {
 } from '../../Game/State/CharacterStates/Test';
 import { DrawSystem } from '../Draw/DrawSystem';
 import { PlayerStateHistoryManager } from '../GameState/PlayerStateHistoryManager';
+import { AddDebug, debugComs } from '../../input/DebugInput';
+
+AddDebug();
 
 const ECB = DefaultECB();
 const P1 = new Player(
@@ -61,7 +64,11 @@ stageVecs.push(
 const stage = new Stage(stageVecs);
 
 const playersArr = new Array<Player>();
+const smArray = new Array<StateMachine>();
+smArray.push(SM);
+
 playersArr.push(P1);
+
 const SCS = new StageCollisionSystem(playersArr, stage);
 const PGS = new PlayerGravitySystem(playersArr, 0.5);
 const DS = new DrawSystem(playersArr, stage, ctx);
@@ -80,7 +87,10 @@ SetUpStateMachine(SM);
 
 const LDS = new LedgeDetectionSystem(playersArr, stage, SM);
 
-const PSHM = new PlayerStateHistoryManager(playersArr, FSM);
+const PSHM = new PlayerStateHistoryManager(playersArr, smArray, FSM);
+
+let pauseLoop = false;
+let advanceLoop = false;
 
 export function GameLoop() {
   window.requestAnimationFrame(() => GameLoop());
@@ -89,9 +99,19 @@ export function GameLoop() {
   delta = now - then;
 
   if (delta > interval) {
-    Logic();
+    ListenForDebug();
+
+    if (!pauseLoop) {
+      Logic();
+      frame++;
+    } else if (pauseLoop == true && advanceLoop == true) {
+      Logic();
+      frame++;
+      advanceLoop = false;
+    }
+
     draw();
-    frame++;
+    // advanceLoop = true;
   }
 }
 
@@ -133,8 +153,8 @@ function Logic() {
   PVS.UpdateVelocity();
   LDS.CheckForLedge();
   SCS.handle();
+  UpdatePlayersPreviousPosition();
   PSHM.RecordStateSnapShot();
-  //UpdatePlayersPreviousPosition();
 }
 
 function draw() {
@@ -159,6 +179,26 @@ function UpdatePlayersPreviousPosition() {
     const p = playersArr[i];
     p.PreviousPlayerPosition.X = p.PlayerPosition.X;
     p.PreviousPlayerPosition.Y = p.PlayerPosition.Y;
+  }
+}
+
+let playerStateFrame = 0;
+function ListenForDebug() {
+  if (debugComs.SetStateFrame.trigger == true) {
+    playerStateFrame = frame;
+    debugger;
+  }
+  if (debugComs.SetState.trigger == true) {
+    debugger;
+    PSHM.SetPlayerStateToFrame(playerStateFrame);
+  }
+  if (debugComs.PauseLoop.trigger) {
+    pauseLoop = !pauseLoop;
+    debugComs.PauseLoop.trigger = false;
+  }
+  if (pauseLoop && debugComs.AdvanceLoop.trigger) {
+    advanceLoop = true;
+    debugComs.AdvanceLoop.trigger = false;
   }
 }
 

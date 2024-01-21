@@ -62,10 +62,12 @@ export function clonePlayerData(source: Player) {
     LedgeGrab: source.LedgeGrab,
     PreviousePlayerPosition: cloneFlatVec(source.PreviousPlayerPosition),
     PlayerPosition: cloneFlatVec(source.PlayerPosition),
+    PlayerVelocity: cloneFlatVec(source.PlayerVelocity),
     ECBData: cloneECBData(source.ECB),
     LedgeDetectorData: cloneLedgeDetectorData(source.LedgeDetector),
     FacingRight: source.FacingRight,
     CurrentStateMachineState: String(source.CurrentStateMachineState),
+    CurrentStateMachineStateFrame: source.CurrentStateMachineStateFrame,
   } as PlayerData;
 }
 
@@ -79,6 +81,7 @@ export type PlayerData = {
   LedgeDetectorData: LedgeDetectorData;
   FacingRight: boolean;
   CurrentStateMachineState: string;
+  CurrentStateMachineStateFrame: number;
 };
 
 export type LedgeDetectorData = {

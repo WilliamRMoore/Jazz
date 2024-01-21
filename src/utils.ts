@@ -1,8 +1,3 @@
-import { ECB } from './Game/ECB';
-import { LedgeDetector, LedgeDetectorBox, Player } from './Game/Player/Player';
-import { FlatVec, VectorAllocator } from './Physics/FlatVec';
-import { ECBPoints } from './interfaces/interfaces';
-
 export function HashCode(obj: any): number {
   const j = JSON.stringify(obj);
 

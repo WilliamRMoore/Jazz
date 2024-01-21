@@ -1,6 +1,11 @@
 //import { gravity } from '../../Globals/globals';
 import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
 import { ECB } from '../ECB';
+import {
+  LedgeDetectorBoxData,
+  LedgeDetectorData,
+  PlayerData,
+} from '../GameState/Clone';
 
 export class Player {
   Grounded: boolean = false;
@@ -26,6 +31,7 @@ export class Player {
   FastFallSpeed: number;
   FallSpeed: number;
   CurrentStateMachineState: string = '';
+  CurrentStateMachineStateFrame: number = 0;
 
   constructor(
     ecb: ECB,
@@ -116,6 +122,26 @@ export class Player {
     this.ECB.Update();
     this.LedgeDetector.MoveTo(this.PlayerPosition.X, this.PlayerPosition.Y);
   }
+
+  SetPlayerState(pd: PlayerData) {
+    this.Grounded = pd.Grounded;
+    this.LedgeGrab = pd.LedgeGrab;
+    this.FacingRight = pd.FacingRight;
+    this.CurrentStateMachineState = pd.CurrentStateMachineState;
+    this.CurrentStateMachineStateFrame = pd.CurrentStateMachineStateFrame;
+
+    this.PreviousPlayerPosition.X = pd.PreviousePlayerPosition.X;
+    this.PreviousPlayerPosition.Y = pd.PreviousePlayerPosition.Y;
+
+    this.PlayerPosition.X = pd.PlayerPosition.X;
+    this.PlayerPosition.Y = pd.PlayerPosition.Y;
+
+    this.PlayerVelocity.X = pd.PlayerVelocity.X;
+    this.PlayerVelocity.Y = pd.PlayerVelocity.Y;
+
+    this.ECB.SetECBState(pd.ECBData);
+    this.LedgeDetector.SetLedgeDetectorData(pd.LedgeDetectorData);
+  }
 }
 
 export type LedgeDetectorBox = {
@@ -128,6 +154,7 @@ export type LedgeDetectorBox = {
 export class LedgeDetector {
   YOffset: number;
   Front: LedgeDetectorBox;
+
   constructor(
     x: number,
     y: number,
@@ -213,6 +240,18 @@ export class LedgeDetector {
     );
 
     return vertArr;
+  }
+
+  SetLedgeDetectorData(data: LedgeDetectorData) {
+    this.YOffset = data.YOffset;
+    this.SetLedgeDetectorBoxData(data.Front);
+  }
+
+  private SetLedgeDetectorBoxData(data: LedgeDetectorBoxData) {
+    this.Front.x = data.x;
+    this.Front.y = data.y;
+    this.Front.height = data.height;
+    this.Front.width = data.width;
   }
 }
 
