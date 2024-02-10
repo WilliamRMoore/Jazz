@@ -95,7 +95,6 @@ export class StateMachine {
       this.currentState.frameCount &&
       this.currentStateFrame >= this.currentState.frameCount
     ) {
-      debugger;
       this.SetState(this.currentState.stateDefaultTransition);
       return;
     }

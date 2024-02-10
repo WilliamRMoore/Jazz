@@ -36,6 +36,14 @@ export class StageCollisionSystem {
 
         let resolution = VectorAdder(player.PlayerPosition, move);
 
+        if (Math.abs(res.normal.X) > 0 && res.normal.Y > 0) {
+          //When we fall on a top right or top left corner, we don't want to make a Y axis correction
+          const fix = move.X <= 0 ? move.Y : -move.Y;
+          move.X += fix;
+          move.Y = 0;
+          resolution = VectorAdder(player.PlayerPosition, move);
+        }
+
         player.UpdatePlayerPosition(resolution.X, resolution.Y);
 
         let ecbTestPoint = VectorAllocator(
