@@ -14,11 +14,10 @@ export class RollBackManager<Type> implements IRollBackManager<Type> {
   }
 
   ShouldRollBack(): boolean {
+    const csf = this.FrameComparisonManager.GetCurrentSyncFrame();
     if (
-      this.RemoteLocalFrameManager.LocalFrame >
-        this.FrameComparisonManager.GetCurrentSyncFrame() &&
-      this.RemoteLocalFrameManager.RemoteFrame >
-        this.FrameComparisonManager.GetCurrentSyncFrame()
+      this.RemoteLocalFrameManager.LocalFrame > csf &&
+      this.RemoteLocalFrameManager.RemoteFrame > csf
     ) {
       return true;
     }

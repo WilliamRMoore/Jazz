@@ -109,9 +109,7 @@ export function GameLoop() {
       frame++;
       advanceLoop = false;
     }
-
     draw();
-    // advanceLoop = true;
   }
 }
 
