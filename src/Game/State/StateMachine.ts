@@ -73,6 +73,7 @@ export class StateMachine {
     if (this.currentState && this.currentState.onExit) {
       this.currentState.onExit(this.player);
     }
+
     this.currentState = this.states.get(name)!;
     this.player.CurrentStateMachineState = this.currentState.name;
 
