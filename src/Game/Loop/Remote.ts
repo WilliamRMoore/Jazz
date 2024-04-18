@@ -59,14 +59,16 @@ let host = false;
 let LOOPCONTEXT: loopCtx;
 
 export function initLoop() {
+  console.log('Twice?');
   debugger;
   //AddDebug();
   const P1 = initPlayer(new FlatVec(600, 100));
   const P2 = initPlayer(new FlatVec(800, 100));
   const ISM = initISM();
   const FSM = initFSM();
-  const P1SM = initSM(P1, ISM, FSM);
-  const P2SM = initSM(P1, ISM, FSM);
+  const SyncMan = initSynchroManager(FSM, ISM);
+  const P1SM = initSM(P1, SyncMan);
+  const P2SM = initSM(P2, SyncMan);
   setupSM(P1SM);
   setupSM(P2SM);
 
@@ -85,7 +87,6 @@ export function initLoop() {
   const DS = initDS(playersArr, stage, ctx);
   const LDS = initLDS(playersArr, stage, SMArray);
   const PSHM = initPSHM(playersArr, SMArray, FSM);
-  const SyncMan = initSynchroManager(FSM, ISM);
 
   listenForGamePadInput();
 
@@ -105,7 +106,7 @@ export function initLoop() {
 
   let connectionConfigurator = ConfigureConnectionsFactory(
     (c: DataConnection) => {
-      LOOP(LOOPCONTEXT);
+      LOOP(LOOPCONTEXT); // <- entry
     },
     (rd: unknown) => {
       let remoteInput = rd as InputActionPacket<InputAction>;
@@ -128,6 +129,8 @@ export function initLoop() {
     document.getElementById('hostcontrols')!.style.display = 'block';
     document.getElementById('hostorconnect')!.style.display = 'none';
     host = true;
+    P1SM.IsRemote(false);
+    P2SM.IsRemote(true);
   });
 
   document.getElementById('connectgame')!.addEventListener('click', () => {
@@ -136,6 +139,8 @@ export function initLoop() {
 
     document.getElementById('connectToPeer')!.addEventListener('click', () => {
       host = false;
+      P1SM.IsRemote(true);
+      P2SM.IsRemote(false);
       let connectionId = (document.getElementById('peerid') as HTMLInputElement)
         .value;
       let c = peer.connect(connectionId);
@@ -160,9 +165,10 @@ function LOOP(lctx: loopCtx) {
   delta = now - then;
   ctx.clearRect(0, 0, 1920, 1080);
   if (delta > interval) {
+    debugger;
     Logic(lctx);
 
-    //draw
+    lctx.DS.Draw();
   }
 }
 
@@ -252,10 +258,10 @@ function initFSM() {
 
 function initSM(
   p: Player,
-  ism: InputStorageManager<InputActionPacket<InputAction>>,
-  fsm: FrameStorageManager
+  //ism: InputStorageManager<InputActionPacket<InputAction>>,
+  syncMan: SyncroManager<InputActionPacket<InputAction>>
 ) {
-  return new StateMachine(p, ism, fsm);
+  return new StateMachine(p, syncMan);
 }
 
 function initSCS(playersArr: Array<Player>, stage: Stage) {
@@ -307,13 +313,11 @@ function Logic(lctx: loopCtx) {
   lctx.SyncMan.UpdateNextSynFrame();
 
   if (lctx.SyncMan.ShouldRollBack()) {
-    debugger;
     console.log(lctx.SyncMan.GetCurrentSyncFrame());
+    rollBack(lctx);
   }
 
   if (lctx.SyncMan.IsWithinFrameAdvantage()) {
-    frame++;
-
     lctx.SyncMan.SetLocalFrameNumber(frame);
     const localInput = GetInput();
     const localInputPacket = {
@@ -339,7 +343,6 @@ function Logic(lctx: loopCtx) {
     } else {
       handleRemoteInput(lctx.playersArr[0], remoteInput.input, lctx.SMArray[0]);
     }
-
     UpdateSM(lctx.SMArray);
     lctx.PGS.ApplyGravity();
     lctx.PVS.UpdateVelocity();
@@ -347,6 +350,7 @@ function Logic(lctx: loopCtx) {
     lctx.SCS.handle();
     updatePlayersPreviousePosition(lctx.playersArr);
     lctx.PSHM.RecordStateSnapShot();
+    frame++;
   } else {
     console.log('stalling');
   }
@@ -412,5 +416,40 @@ function updatePlayersPreviousePosition(playersArr: Array<Player>) {
     const p = playersArr[i];
     p.PreviousPlayerPosition.X = p.PlayerPosition.X;
     p.PreviousPlayerPosition.Y = p.PlayerPosition.Y;
+  }
+}
+
+function rollBack(lctx: loopCtx) {
+  debugger;
+  let syncFrame = lctx.SyncMan.GetCurrentSyncFrame();
+  let currentFrame = lctx.SyncMan.GetLocalFrameNumber();
+  lctx.FSM.LocalFrame = syncFrame;
+  lctx.PSHM.SetPlayerStateToFrame(syncFrame);
+
+  for (let i = syncFrame; i < currentFrame; i++) {
+    lctx.SyncMan.UpdateNextSynFrame();
+    lctx.FSM.LocalFrame = i;
+
+    let localInput = lctx.SyncMan.GetLocalInput(i);
+    let remoteInput = lctx.SyncMan.GetOrGuessRemoteInputForFrame(i);
+
+    if (host) {
+      handleLocalInput(lctx.playersArr[0], localInput.input, lctx.SMArray[0]);
+    } else {
+      handleLocalInput(lctx.playersArr[1], localInput.input, lctx.SMArray[1]);
+    }
+
+    if (host) {
+      handleRemoteInput(lctx.playersArr[1], remoteInput.input, lctx.SMArray[1]);
+    } else {
+      handleRemoteInput(lctx.playersArr[0], remoteInput.input, lctx.SMArray[0]);
+    }
+    UpdateSM(lctx.SMArray);
+    lctx.PGS.ApplyGravity();
+    lctx.PVS.UpdateVelocity();
+    lctx.LDS.CheckForLedge();
+    lctx.SCS.handle();
+    updatePlayersPreviousePosition(lctx.playersArr);
+    lctx.PSHM.RecordStateSnapShot();
   }
 }

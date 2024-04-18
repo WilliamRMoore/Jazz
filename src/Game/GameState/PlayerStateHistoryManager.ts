@@ -45,12 +45,14 @@ export class PlayerStateHistoryManager {
     for (let i = 0; i < upperBound; i++) {
       const p = this.Players[i];
       const pd = this.GetStateSnapShot(frame, i);
-      p.SetPlayerState(pd);
-      const sm = this.StateMachines[i];
-      sm.ForceState(
-        p.CurrentStateMachineState,
-        p.CurrentStateMachineStateFrame
-      );
+      if (pd) {
+        p.SetPlayerState(pd);
+        const sm = this.StateMachines[i];
+        sm.ForceState(
+          p.CurrentStateMachineState,
+          p.CurrentStateMachineStateFrame
+        );
+      }
     }
   }
 }

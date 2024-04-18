@@ -43,12 +43,22 @@ export type InputActionPacket<T> = {
   frame: number;
   frameAdvantage: number;
 };
-export class InputAction {
-  Action: string = '';
-  LXAxsis: number = 0;
-  LYAxsis: number = 0;
-  RXAxis: number = 0;
-  RYAxsis: number = 0;
+export type InputAction = {
+  Action: string;
+  LXAxsis: number;
+  LYAxsis: number;
+  RXAxis: number;
+  RYAxsis: number;
+};
+
+export function NewInputAction() {
+  return {
+    Action: '',
+    LXAxsis: 0,
+    LYAxsis: 0,
+    RXAxis: 0,
+    RYAxsis: 0,
+  } as InputAction;
 }
 
 const currentInput = new GamePadInput();
@@ -113,7 +123,7 @@ function transcribeInput(input: GamePadInput) {
   const LYAxis = input.LYAxis;
   const RXAxis = input.RXAxis;
   const RYAxis = input.RYAxis;
-  const inputAction = new InputAction();
+  const inputAction = NewInputAction();
 
   inputAction.LXAxsis = LXAxis;
   inputAction.LYAxsis = LYAxis;

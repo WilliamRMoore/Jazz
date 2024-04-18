@@ -1,6 +1,7 @@
 import { InputAction, InputActionPacket } from '../../input/GamePadInput';
 import { InputStorageManager } from '../../input/InputStorageManager';
 import { FrameStorageManager } from '../../network/FrameStorageManager';
+import { SyncroManager } from '../../network/SyncroManager';
 import { Player } from '../Player/Player';
 import IState from './State';
 
@@ -9,21 +10,31 @@ export class StateMachine {
   private currentState?: IState;
   private currentStateFrame: number = 0;
   private player: Player;
-  private ISM: InputStorageManager<InputActionPacket<InputAction>>;
-  private FSM: FrameStorageManager;
+  private Remote: boolean;
+  private SyncMan: SyncroManager<InputActionPacket<InputAction>>;
+  // private ISM: InputStorageManager<InputActionPacket<InputAction>>;
+  // private FSM: FrameStorageManager;
 
   constructor(
     player: Player,
-    ism: InputStorageManager<InputActionPacket<InputAction>>,
-    fsm: FrameStorageManager
+    // ism: InputStorageManager<InputActionPacket<InputAction>>,
+    // fsm: FrameStorageManager,
+    syncMan: SyncroManager<InputActionPacket<InputAction>>,
+    remote: boolean = false
   ) {
     this.player = player;
-    this.ISM = ism;
-    this.FSM = fsm;
+    // this.ISM = ism;
+    // this.FSM = fsm;
+    this.SyncMan = syncMan;
+    this.Remote = remote;
   }
 
   public AddState(name: string, config: IState) {
     this.states.set(name, config);
+  }
+
+  public IsRemote(isHost: boolean) {
+    this.Remote = isHost;
   }
 
   public ForceState(name: string, frame: number = 0) {
@@ -44,7 +55,8 @@ export class StateMachine {
     if (this.currentState.onEnter) {
       this.currentState.onEnter(
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        this.GetInput()
       );
     }
     this.player.CurrentStateMachineState = this.currentState.name;
@@ -80,7 +92,8 @@ export class StateMachine {
     if (this.currentState.onEnter) {
       this.currentState.onEnter(
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        this.GetInput()
       );
     }
 
@@ -104,11 +117,23 @@ export class StateMachine {
       this.currentState.onUpdate(
         this.currentStateFrame,
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
+        this.GetInput()
       );
     }
 
     this.currentStateFrame++;
     this.player.CurrentStateMachineStateFrame = this.currentStateFrame;
+  }
+
+  private GetInput(): InputAction {
+    if (!this.Remote) {
+      return this.SyncMan.GetLocalInput(this.SyncMan.GetLocalFrameNumber())
+        .input;
+    }
+
+    return this.SyncMan.GetOrGuessRemoteInputForFrame(
+      this.SyncMan.GetLocalFrameNumber()
+    ).input;
   }
 }

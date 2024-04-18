@@ -16,7 +16,7 @@ export class PlayerGravitySystem {
 
       if (p.Grounded || p.LedgeGrab) {
         p.PlayerVelocity.Y = 0;
-        return;
+        continue;
       }
 
       AddClampedYImpulseToPlayer(p, p.FallSpeed, this.Gravity);

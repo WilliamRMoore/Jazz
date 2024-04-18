@@ -65,7 +65,7 @@ export class InputStorageManager<Type> implements IInputStorageManager<Type> {
       }
 
       if (real === undefined || this.InvalidGuessedFrameSpec(guessed, real)) {
-        return i - 1;
+        return i - 1 < 0 ? 0 : i - 1;
       }
     }
     return null;
