@@ -38,6 +38,11 @@ export class GamePadInput {
   }
 }
 
+export type InputActionPacket<T> = {
+  input: T;
+  frame: number;
+  frameAdvantage: number;
+};
 export class InputAction {
   Action: string = '';
   LXAxsis: number = 0;
@@ -260,12 +265,15 @@ const Actions: IActions = {
   guard: 'guard',
 };
 
-const InvalidGuessSpec = (guessed: InputAction, real: InputAction) => {
-  return guessed.Action == real.Action &&
-    guessed.LXAxsis == real.LXAxsis &&
-    guessed.LYAxsis == real.LYAxsis &&
-    guessed.RXAxis == real.RXAxis &&
-    guessed.RYAxsis == real.RYAxsis
+const InvalidGuessSpec = (
+  guessed: InputActionPacket<InputAction>,
+  real: InputActionPacket<InputAction>
+) => {
+  return guessed.input.Action == real.input.Action &&
+    guessed.input.LXAxsis == real.input.LXAxsis &&
+    guessed.input.LYAxsis == real.input.LYAxsis &&
+    guessed.input.RXAxis == real.input.RXAxis &&
+    guessed.input.RYAxsis == real.input.RYAxsis
     ? false
     : true;
 };

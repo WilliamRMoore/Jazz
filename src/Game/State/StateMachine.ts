@@ -1,4 +1,4 @@
-import { InputAction } from '../../input/GamePadInput';
+import { InputAction, InputActionPacket } from '../../input/GamePadInput';
 import { InputStorageManager } from '../../input/InputStorageManager';
 import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { Player } from '../Player/Player';
@@ -9,12 +9,12 @@ export class StateMachine {
   private currentState?: IState;
   private currentStateFrame: number = 0;
   private player: Player;
-  private ISM: InputStorageManager<InputAction>;
+  private ISM: InputStorageManager<InputActionPacket<InputAction>>;
   private FSM: FrameStorageManager;
 
   constructor(
     player: Player,
-    ism: InputStorageManager<InputAction>,
+    ism: InputStorageManager<InputActionPacket<InputAction>>,
     fsm: FrameStorageManager
   ) {
     this.player = player;
@@ -44,7 +44,7 @@ export class StateMachine {
     if (this.currentState.onEnter) {
       this.currentState.onEnter(
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
+        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
       );
     }
     this.player.CurrentStateMachineState = this.currentState.name;
@@ -80,7 +80,7 @@ export class StateMachine {
     if (this.currentState.onEnter) {
       this.currentState.onEnter(
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
+        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
       );
     }
 
@@ -104,7 +104,7 @@ export class StateMachine {
       this.currentState.onUpdate(
         this.currentStateFrame,
         this.player,
-        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame)
+        this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
       );
     }
 

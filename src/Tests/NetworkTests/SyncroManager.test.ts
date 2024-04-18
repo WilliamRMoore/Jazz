@@ -68,6 +68,8 @@ test('Should Rollback true', () => {
 
   SUT.UpdateNextSynFrame();
   expect(SUT.ShouldRollBack()).toBeTruthy();
+  expect(SUT.GetCurrentSyncFrame()).toBe(7);
+  RollBack(SUT, 10);
 });
 
 function SetSutForTenFrames(mySUT: SyncroManager<KeyInput>) {
@@ -97,6 +99,9 @@ function RollBackConditions(mySut: SyncroManager<KeyInput>) {
     } as KeyInput;
 
     if (i != 8) {
+      if (i == 7) {
+        KeyInput.action = 'punch';
+      }
       mySut.SetRemoteFrameNumber(i);
       mySut.SetRemoteFrameAdvantage(0);
       mySut.StoreRemoteInput(KeyInput, i);
@@ -137,4 +142,26 @@ function SetSutForTenFramesOutOfAdvantage(mySUT: SyncroManager<KeyInput>) {
       mySUT.StoreRemoteInput(KeyInput, i);
     }
   }
+}
+
+function RollBack(mySUT: SyncroManager<KeyInput>, currentFrame: number) {
+  const syncFrame = mySUT.GetCurrentSyncFrame();
+  //GET STATE FOR CURRENT SYNC FRAME
+  // State.GetStateForFrame(syncFrame) <-- start here
+
+  for (let i = syncFrame + 1; i <= currentFrame; i++) {
+    const localInput = mySUT.GetLocalInput(i);
+    let remoteInput = mySUT.GetRemoteInputForFrame(i);
+    let remoteGuess = mySUT.GetGuessedInputForFrame(i);
+    //Run simulation
+
+    if (
+      (remoteGuess != null || remoteGuess != undefined) &&
+      remoteInput.action !== remoteGuess.action
+    ) {
+      mySUT.OverWriteGuessedInputForFrame(remoteInput, i);
+    }
+  }
+
+  mySUT.UpdateNextSynFrame();
 }

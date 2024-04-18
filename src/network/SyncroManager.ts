@@ -27,6 +27,14 @@ export class SyncroManager<Type> {
     this.DefaultInputFactory = defaultInputFactory;
   }
 
+  public GetLocalInput(frame: number) {
+    return this.ISM.GetLocalInputForFrame(frame);
+  }
+
+  public GetLocalFrameNumber(): number {
+    return this.FSM.LocalFrame;
+  }
+
   public SetRemoteFrameNumber(frame: number) {
     this.FSM.RemoteFrame = frame;
   }
@@ -49,6 +57,10 @@ export class SyncroManager<Type> {
 
   public GetFrameAdvantageDifference(): number {
     return this.FCM.GetFrameAdvantageDifference();
+  }
+
+  public GetLocalFrameAdvantage(): number {
+    return this.FCM.GetLocalFrameAdvantage();
   }
 
   public GetCurrentSyncFrame(): number {
@@ -98,6 +110,14 @@ export class SyncroManager<Type> {
     }
 
     return remoteInput;
+  }
+
+  public GetGuessedInputForFrame(frame: number) {
+    return this.ISM.GetGuessedInputForFrame(frame);
+  }
+
+  public OverWriteGuessedInputForFrame(input: Type, frame: number) {
+    this.ISM.OverWriteGuessedInput(input, frame);
   }
 
   public ShouldRollBack() {

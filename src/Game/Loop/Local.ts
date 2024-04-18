@@ -4,6 +4,7 @@ import { PlayerGravitySystem } from '../Gravity/PlayerGravitySystem';
 import {
   GetInput,
   InputAction,
+  InputActionPacket,
   InvalidGuessSpec,
   listenForGamePadInput,
 } from '../../input/GamePadInput';
@@ -48,7 +49,9 @@ const P1 = new Player(
   18
 );
 P1.Grounded = false;
-const ISM = new InputStorageManager<InputAction>(InvalidGuessSpec);
+const ISM = new InputStorageManager<InputActionPacket<InputAction>>(
+  InvalidGuessSpec
+);
 const FSM = new FrameStorageManager();
 const SM = new StateMachine(P1, ISM, FSM);
 
@@ -85,7 +88,7 @@ listenForGamePadInput();
 
 SetUpStateMachine(SM);
 
-const LDS = new LedgeDetectionSystem(playersArr, stage, SM);
+const LDS = new LedgeDetectionSystem(playersArr, stage, smArray);
 
 const PSHM = new PlayerStateHistoryManager(playersArr, smArray, FSM);
 
@@ -116,7 +119,12 @@ export function GameLoop() {
 function Logic() {
   FSM.LocalFrame = frame;
   const input = GetInput();
-  ISM.StoreLocalInput(input, frame);
+  const packet = {
+    input: input,
+    frame,
+    frameAdvantage: 0,
+  } as InputActionPacket<InputAction>;
+  ISM.StoreLocalInput(packet, frame);
 
   if (!P1.LedgeGrab) {
     if (input.Action == 'run') {

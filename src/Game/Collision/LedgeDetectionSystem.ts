@@ -5,12 +5,16 @@ import { StateMachine } from '../State/StateMachine';
 export class LedgeDetectionSystem {
   Players: Array<Player>;
   Stage: Stage;
-  SM: StateMachine;
+  SMArray: Array<StateMachine>;
 
-  constructor(players: Array<Player>, stage: Stage, sm: StateMachine) {
+  constructor(
+    players: Array<Player>,
+    stage: Stage,
+    smArr: Array<StateMachine>
+  ) {
     this.Players = players;
     this.Stage = stage;
-    this.SM = sm;
+    this.SMArray = smArr;
   }
 
   public CheckForLedge() {
@@ -32,7 +36,7 @@ export class LedgeDetectionSystem {
             left
           );
           if (rightResult.collision && !leftResult.collision) {
-            this.SM.ForceState('ledgeGrab');
+            this.SMArray[i].ForceState('ledgeGrab');
             p.UpdatePlayerPosition(
               left[0].X,
               left[0].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)
@@ -51,7 +55,7 @@ export class LedgeDetectionSystem {
           );
 
           if (leftResult.collision && !rightResult.collision) {
-            this.SM.ForceState('ledgeGrab');
+            this.SMArray[i].ForceState('ledgeGrab');
             p.UpdatePlayerPosition(
               right[1].X,
               right[1].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)

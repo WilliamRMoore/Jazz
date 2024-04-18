@@ -4,6 +4,7 @@ import { Run } from './Physics/Test';
 import { init, tick } from './Physics/World';
 import { Run as PeerRun } from './Tests/PeerJsTest';
 import { GameLoop } from './Game/Loop/Local';
+import { initLoop } from './Game/Loop/Remote';
 
 export function run() {
   canvas.width = 1920;
@@ -12,7 +13,8 @@ export function run() {
   //animate();
   //R();
   //PeerRun();
-  GameLoop();
+  //GameLoop();
+  initLoop();
 }
 
 function animate() {

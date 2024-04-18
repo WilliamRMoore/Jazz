@@ -4,7 +4,7 @@ import { ECB, ECBPoints } from '../../Game/ECB';
 import { InputStorageManager } from '../../input/InputStorageManager';
 import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { beforeAll, beforeEach, expect, test } from '@jest/globals';
-import { InputAction } from '../../input/GamePadInput';
+import { InputAction, InputActionPacket } from '../../input/GamePadInput';
 import { FlatVec } from '../../Physics/FlatVec';
 import {
   idle,
@@ -16,7 +16,7 @@ import {
 
 let p: Player;
 let FSM: FrameStorageManager;
-let ISM: InputStorageManager<InputAction>;
+let ISM: InputStorageManager<InputActionPacket<InputAction>>;
 let SM: StateMachine;
 let ecb: ECB;
 
@@ -37,12 +37,12 @@ beforeEach(() => {
 
   FSM = new FrameStorageManager();
 
-  ISM = new InputStorageManager<InputAction>((i1, i2) => {
-    return i1.Action == i2.Action &&
-      i1.LXAxsis == i2.LXAxsis &&
-      i1.LYAxsis == i2.LYAxsis &&
-      i1.RXAxis == i2.RXAxis &&
-      i1.RYAxsis == i2.RYAxsis
+  ISM = new InputStorageManager<InputActionPacket<InputAction>>((i1, i2) => {
+    return i1.input.Action == i2.input.Action &&
+      i1.input.LXAxsis == i2.input.LXAxsis &&
+      i1.input.LYAxsis == i2.input.LYAxsis &&
+      i1.input.RXAxis == i2.input.RXAxis &&
+      i1.input.RYAxsis == i2.input.RYAxsis
       ? false
       : true;
   });
@@ -58,11 +58,15 @@ beforeEach(() => {
 
 test.skip('Walk', () => {
   ISM.StoreLocalInput(
-    { Action: 'walk', LXAxsis: 1.0, LYAxsis: 0.0, RXAxis: 0.0, RYAxsis: 0.0 },
+    {
+      input: { Action: 'walk', RXAxis: 0, RYAxsis: 0, LYAxsis: 0, LXAxsis: 0 },
+      frame: 1,
+      frameAdvantage: 0,
+    },
     1
   );
   FSM.LocalFrame = 1;
-  SM.SetState(ISM.GetLocalInputForFrame(1).Action);
+  SM.SetState(ISM.GetLocalInputForFrame(1).input.Action);
   SM.Update();
 
   expect(SM.GetCurrentState()?.name).toBe('walk');
@@ -72,7 +76,17 @@ test.skip('Walk', () => {
 
 test('Walk to Run', () => {
   ISM.StoreLocalInput(
-    { Action: 'walk', LXAxsis: 1.0, LYAxsis: 0.0, RXAxis: 0.0, RYAxsis: 0.0 },
+    {
+      input: {
+        Action: 'walk',
+        LXAxsis: 1.0,
+        LYAxsis: 0.0,
+        RXAxis: 0.0,
+        RYAxsis: 0.0,
+      },
+      frame: 1,
+      frameAdvantage: 0,
+    },
     1
   );
 
@@ -82,7 +96,17 @@ test('Walk to Run', () => {
   SM.Update();
 
   ISM.StoreLocalInput(
-    { Action: 'run', LXAxsis: 4.0, LYAxsis: 0.0, RXAxis: 0.0, RYAxsis: 0.0 },
+    {
+      input: {
+        Action: 'run',
+        LXAxsis: 4.0,
+        LYAxsis: 0.0,
+        RXAxis: 0.0,
+        RYAxsis: 0.0,
+      },
+      frame: 2,
+      frameAdvantage: 0,
+    },
     2
   );
 
@@ -92,7 +116,17 @@ test('Walk to Run', () => {
   SM.Update();
 
   ISM.StoreLocalInput(
-    { Action: 'run', LXAxsis: 4.0, LYAxsis: 0.0, RXAxis: 0.0, RYAxsis: 0.0 },
+    {
+      input: {
+        Action: 'run',
+        LXAxsis: 4.0,
+        LYAxsis: 0.0,
+        RXAxis: 0.0,
+        RYAxsis: 0.0,
+      },
+      frame: 3,
+      frameAdvantage: 0,
+    },
     3
   );
 
