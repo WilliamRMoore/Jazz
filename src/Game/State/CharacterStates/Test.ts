@@ -84,9 +84,7 @@ export const jumpSquat = {
   stateDefaultTransition: 'jump',
   tranisitions: ['jump'],
   name: 'jumpSquat',
-  onEnter: (player) => {
-    //console.log('Entering jump squat');
-  },
+  onEnter: (player) => {},
   onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {},
 } as IState;
@@ -96,18 +94,11 @@ export const jump = {
   frameCount: 10,
   name: 'jump',
   onEnter(player) {
-    //console.log('Entering Jump State');
     player.Grounded = false;
     player.PlayerVelocity.Y = 0;
     player.AddVelocity(VectorAllocator(0, -15));
   },
-  onUpdate: (stateFrame, p, ia) => {
-    // if (stateFrame == 0) {
-    //   p.Grounded = false;
-    //   p.PlayerVelocity.Y = 0;
-    //   p.AddVelocity(VectorAllocator(0, -15));
-    // }
-  },
+  onUpdate: (stateFrame, p, ia) => {},
 } as IState;
 
 export const land = {} as IState;

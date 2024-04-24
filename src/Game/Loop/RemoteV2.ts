@@ -1,6 +1,5 @@
 import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { InitISM, InputStorageManager } from '../../input/InputStorageManager';
-import { FrameComparisonManager } from '../../network/FrameComparisonManager';
 import { SyncroManager, initSynchroManager } from '../../network/SyncroManager';
 import {
   GetInput,
@@ -13,34 +12,17 @@ import {
 import { DataConnection, Peer } from 'peerjs';
 import LoopExec from './LoopExecuter';
 import { FlatVec } from '../../Physics/FlatVec';
-import {
-  ConfigureConnectionsFactory,
-  ConnectionConfiguratorOLD,
-} from '../../network/Host';
+import { ConfigureConnectionsFactory } from '../../network/Host';
 import { ctx } from '../../Globals/globals';
 import { PlayerVelocitySystem } from '../Velocity/PlayerVelocitySystem';
 import { PlayerGravitySystem } from '../Gravity/PlayerGravitySystem';
-import { RollBackManager } from '../../network/rollBackManager';
-import { AddDebug, debugComs } from '../../input/DebugInput';
 import { StageCollisionSystem } from '../Collision/StageCollisionSystem';
 import { LedgeDetectionSystem } from '../Collision/LedgeDetectionSystem';
 import { InitSM, StateMachine } from '../State/StateMachine';
 import { DrawSystem } from '../Draw/DrawSystem';
-import { DefaultECB } from '../ECB';
 import { InitPlayer, Player } from '../Player/Player';
 import { PlayerStateHistoryManager } from '../GameState/PlayerStateHistoryManager';
-import Stage, { InitStage } from '../../classes/Stage';
-import {
-  idle,
-  walk,
-  ledgeGrab,
-  turnWalk,
-  run,
-  jumpSquat,
-  jump,
-  neutralFall,
-} from '../../Game/State/CharacterStates/Test';
-import { HashCode } from '../../utils';
+import { InitStage } from '../../classes/Stage';
 
 type loopCtx = {
   IsHost: boolean;
@@ -135,7 +117,7 @@ export function initLoop() {
 function initControl(lctx: loopCtx, loop: () => void) {
   let connectionConfigurator = ConfigureConnectionsFactory(
     (c: DataConnection) => {
-      //LOOP(LOOPCONTEXT); // <- entry
+      // <- entry
       loop();
     },
     (rd: unknown) => {
@@ -159,9 +141,6 @@ function initControl(lctx: loopCtx, loop: () => void) {
     document.getElementById('hostcontrols')!.style.display = 'block';
     document.getElementById('hostorconnect')!.style.display = 'none';
     lctx.IsHost = true;
-    // host = true;
-    // P1SM.SetIsRemote(false);
-    // P2SM.SetIsRemote(true);
   });
 
   document.getElementById('connectgame')!.addEventListener('click', () => {
@@ -170,9 +149,6 @@ function initControl(lctx: loopCtx, loop: () => void) {
 
     document.getElementById('connectToPeer')!.addEventListener('click', () => {
       lctx.IsHost = false;
-      //   host = false;
-      //   P1SM.SetIsRemote(true);
-      //   P2SM.SetIsRemote(false);
       let connectionId = (document.getElementById('peerid') as HTMLInputElement)
         .value;
       let c = peer.connect(connectionId);
@@ -226,7 +202,6 @@ function Logic(lctx: loopCtx) {
     updatePlayersPreviousePosition(lctx.playersArr);
     lctx.PSHM.RecordStateSnapShot(frameNumber);
 
-    //localInputPacket.hash = HashCode({p1: lctx.})
     con.send(localInputPacket);
 
     lctx.SyncMan.IncrementLocalFrameNumber();
@@ -269,56 +244,6 @@ function rollBack(from: number, to: number, lctx: loopCtx) {
     from++;
   }
 }
-
-// function GetRemoteInputForRollBack(frame: number, lctx: loopCtx) {
-//   let remoteInput = lctx.ISM.GetRemoteInputForFrame(frame);
-
-//   if (remoteInput != undefined || remoteInput != null) {
-//     //we have a real input, we need to overwrite the guess.
-//     lctx.ISM.OverWriteGuessedInput(remoteInput, frame);
-//     return remoteInput;
-//   } else {
-//     return (remoteInput = lctx.ISM.GetGuessedInputForFrame(frame));
-//   }
-// }
-
-// function GetRemoteInputForFrame(
-//   frame: number,
-//   lctx: loopCtx
-// ): InputActionPacket<InputAction> {
-//   let remoteInput = lctx.ISM.GetRemoteInputForFrame(frame);
-
-//   if (!(remoteInput == null || remoteInput == undefined)) {
-//     return remoteInput;
-//   }
-
-//   let guess = lctx.ISM.GetLastRemoteInput();
-
-//   if (guess != null || guess != undefined) {
-//     let copy = {
-//       input: guess.input,
-//       frame,
-//       frameAdvantage: guess.frameAdvantage,
-//     } as InputActionPacket<InputAction>;
-
-//     lctx.ISM.StoreGuessedInput(copy, frame);
-//     return copy;
-//   } else {
-//     let def = {
-//       input: {
-//         Action: 'idle',
-//         RXAxis: 0,
-//         RYAxsis: 0,
-//         LXAxsis: 0,
-//         LYAxsis: 0,
-//       },
-//       frame,
-//       frameAdvantage: 0,
-//     } as InputActionPacket<InputAction>;
-//     lctx.ISM.StoreGuessedInput(def, frame);
-//     return def;
-//   }
-// }
 
 function getLocalPlayer(lctx: loopCtx) {
   if (lctx.IsHost) {
