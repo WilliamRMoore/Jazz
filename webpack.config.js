@@ -19,6 +19,7 @@ const config = {
   plugins: [
     new HtmlWebpackPlugin({
       template: "./dist/index.html",
+      scriptLoading: 'blocking'
     }),
 
     // Add your plugins here
