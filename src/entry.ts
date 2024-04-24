@@ -1,29 +1,12 @@
 import { ctx, canvas } from './Globals/globals';
 import { FlatVec, VectorAllocator, VectorAdder } from './Physics/FlatVec';
-import { Run } from './Physics/Test';
-import { init, tick } from './Physics/World';
-import { Run as PeerRun } from './Tests/PeerJsTest';
-//import { GameLoop } from './Game/Loop/Local';
-//import { initLoop } from './Game/Loop/Remote';
 import { initLoop } from './Game/Loop/RemoteV2';
 
 export function run() {
   canvas.width = 1920;
   canvas.height = 1080;
-  // init();
-  //animate();
-  //R();
-  //PeerRun();
-  //GameLoop();
-  //initLoop();
-  initLoop();
-}
 
-function animate() {
-  window.requestAnimationFrame(animate);
-  ctx.clearRect(0, 0, 1920, 1080);
-  testaroo();
-  //tick();
+  initLoop();
 }
 
 function testaroo() {

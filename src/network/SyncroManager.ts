@@ -36,36 +36,12 @@ export class SyncroManager<Type> {
     this.DefaultInputFactory = defaultInputFactory;
   }
 
-  public GetLocalInput(frame: number) {
-    return this.ISM.GetLocalInputForFrame(frame);
-  }
-
   public GetLocalFrameNumber(): number {
     return this.FSM.LocalFrame;
   }
 
-  public SetRemoteFrameNumber(frame: number) {
-    this.FSM.RemoteFrame = frame;
-  }
-
-  public SetRemoteFrameAdvantage(frameAdv: number) {
-    this.FSM.RemoteFrameAdvantage = frameAdv;
-  }
-
-  public SetLocalFrameNumber(frame: number) {
-    this.FSM.LocalFrame = frame;
-  }
-
   public IncrementLocalFrameNumber() {
     this.FSM.LocalFrame++;
-  }
-
-  public GetSyncFrames() {
-    return this.FSM.GetSyncFrames();
-  }
-
-  public SetCurrentSyncFrames(syncFrame: number) {
-    this.FSM.SetCurrentSyncFrame(syncFrame);
   }
 
   public GetFrameAdvantageDifference(): number {
@@ -82,26 +58,6 @@ export class SyncroManager<Type> {
 
   public UpdateNextSyncFrame() {
     this.FCM.UpdateNextSyncFrame();
-  }
-
-  public IsWithinFrameAdvantage(): boolean {
-    return this.FCM.IsWithinFrameAdvatnage();
-  }
-
-  public StoreRemoteInput(remoteInput: Type, frame: number) {
-    this.ISM.StoreRemoteInput(remoteInput, frame);
-  }
-
-  public StoreLocalInput(localInput: Type, frame: number) {
-    this.ISM.StoreLocalInput(localInput, frame);
-  }
-
-  public StoreGuessedInput(input: Type, frame: number) {
-    this.ISM.StoreGuessedInput(input, frame);
-  }
-
-  public GetRemoteInputForFrame(frame: number): Type {
-    return this.ISM.GetRemoteInputForFrame(frame);
   }
 
   public ShouldStall(): boolean {
@@ -134,14 +90,6 @@ export class SyncroManager<Type> {
     }
 
     return this.ISM.GetGuessedInputForFrame(frame);
-  }
-
-  public GetGuessedInputForFrame(frame: number) {
-    return this.ISM.GetGuessedInputForFrame(frame);
-  }
-
-  public OverWriteGuessedInputForFrame(input: Type, frame: number) {
-    this.ISM.OverWriteGuessedInput(input, frame);
   }
 
   public ShouldRollBack() {
