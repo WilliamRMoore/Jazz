@@ -43,6 +43,7 @@ let con: DataConnection;
 const peer = new Peer();
 
 export function initLoop() {
+  console.log('init!');
   const P1 = InitPlayer(new FlatVec(600, 100));
   const P2 = InitPlayer(new FlatVec(800, 100));
   const ISM = InitISM(InvalidGuessSpec);
