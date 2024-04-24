@@ -1,6 +1,6 @@
 //import { gravity } from '../../Globals/globals';
 import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
-import { ECB } from '../ECB';
+import { DefaultECB, ECB } from '../ECB';
 import {
   LedgeDetectorBoxData,
   LedgeDetectorData,
@@ -306,4 +306,35 @@ export function AddClampedYImpulseToPlayer(
       player.PlayerVelocity.Y += upperBound - pvy;
     }
   }
+}
+
+export function InitPlayer(position: FlatVec, faceRight = true) {
+  const ECB = DefaultECB();
+  const maxXVelocity = 1000;
+  const maxYVelocity = 1000;
+  const groundDecay = 0.8;
+  const arialDecay = 0.8;
+  const playerPosition = position;
+  const jumpVelocity = 20;
+  const numberOfJumps = 2;
+  const facingRight = faceRight;
+  const maxWalkSpeed = 12;
+  const maxRunSpeed = 18;
+  const arialImpulseLimit = 18;
+  const P = new Player(
+    ECB,
+    maxXVelocity,
+    maxYVelocity,
+    groundDecay,
+    arialDecay,
+    playerPosition,
+    jumpVelocity,
+    numberOfJumps,
+    facingRight,
+    maxWalkSpeed,
+    maxRunSpeed,
+    arialImpulseLimit
+  );
+  P.Grounded = false;
+  return P;
 }

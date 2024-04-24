@@ -47,7 +47,7 @@ beforeEach(() => {
       : true;
   });
 
-  SM = new StateMachine(p, ISM, FSM);
+  SM = new StateMachine(p);
 
   SM.AddState('run', run);
   SM.AddState('idle', idle);
@@ -62,12 +62,13 @@ test.skip('Walk', () => {
       input: { Action: 'walk', RXAxis: 0, RYAxsis: 0, LYAxsis: 0, LXAxsis: 0 },
       frame: 1,
       frameAdvantage: 0,
+      hash: '',
     },
     1
   );
   FSM.LocalFrame = 1;
-  SM.SetState(ISM.GetLocalInputForFrame(1).input.Action);
-  SM.Update();
+  SM.SetState(ISM.GetLocalInputForFrame(FSM.LocalFrame).input.Action);
+  SM.Update(ISM.GetLocalInputForFrame(FSM.LocalFrame).input);
 
   expect(SM.GetCurrentState()?.name).toBe('walk');
   expect(p.PlayerPosition.X > 300);
@@ -86,6 +87,7 @@ test('Walk to Run', () => {
       },
       frame: 1,
       frameAdvantage: 0,
+      hash: '',
     },
     1
   );
@@ -93,7 +95,7 @@ test('Walk to Run', () => {
   FSM.LocalFrame = 1;
 
   SM.SetState('walk');
-  SM.Update();
+  SM.Update(ISM.GetLocalInputForFrame(FSM.LocalFrame).input);
 
   ISM.StoreLocalInput(
     {
@@ -106,6 +108,7 @@ test('Walk to Run', () => {
       },
       frame: 2,
       frameAdvantage: 0,
+      hash: '',
     },
     2
   );
@@ -113,7 +116,7 @@ test('Walk to Run', () => {
   FSM.LocalFrame = 2;
 
   SM.SetState('run');
-  SM.Update();
+  SM.Update(ISM.GetLocalInputForFrame(FSM.LocalFrame).input);
 
   ISM.StoreLocalInput(
     {
@@ -126,6 +129,7 @@ test('Walk to Run', () => {
       },
       frame: 3,
       frameAdvantage: 0,
+      hash: '',
     },
     3
   );
@@ -133,5 +137,5 @@ test('Walk to Run', () => {
   FSM.LocalFrame = 3;
 
   SM.SetState('run');
-  SM.Update();
+  SM.Update(ISM.GetLocalInputForFrame(FSM.LocalFrame).input);
 });

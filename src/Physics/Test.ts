@@ -126,9 +126,9 @@ function TestAndResolveCirscleCollisions() {
 
       if (result.collision) {
         body1.Move(
-          VectorMultiplier(VectorNegator(result.normal), result.depth / 2)
+          VectorMultiplier(VectorNegator(result.normal!), result.depth! / 2)
         );
-        body2.Move(VectorMultiplier(result.normal, result.depth / 2));
+        body2.Move(VectorMultiplier(result.normal!, result.depth! / 2));
       }
     }
   }
@@ -147,9 +147,9 @@ function TestForPolygonCollisions() {
       //debugger;
       if (colRes.collision === true) {
         p1.Move(
-          VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
+          VectorMultiplier(VectorNegator(colRes.normal!), colRes.depth! / 2)
         );
-        p2.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
+        p2.Move(VectorMultiplier(colRes.normal!, colRes.depth! / 2));
         //dsareturn true;
       }
     }
@@ -168,9 +168,9 @@ function TestCirclPolygonCollisions() {
           b1.GetTransformVerticies()
         );
         if (colRes.collision) {
-          b1.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
+          b1.Move(VectorMultiplier(colRes.normal!, colRes.depth! / 2));
           b2.Move(
-            VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
+            VectorMultiplier(VectorNegator(colRes.normal!), colRes.depth! / 2)
           );
         }
       } else if (b1 instanceof Circle && b2 instanceof Box) {
@@ -181,9 +181,9 @@ function TestCirclPolygonCollisions() {
         );
         if (colRes.collision) {
           b1.Move(
-            VectorMultiplier(VectorNegator(colRes.normal), colRes.depth / 2)
+            VectorMultiplier(VectorNegator(colRes.normal!), colRes.depth! / 2)
           );
-          b2.Move(VectorMultiplier(colRes.normal, colRes.depth / 2));
+          b2.Move(VectorMultiplier(colRes.normal!, colRes.depth! / 2));
         }
       }
     }

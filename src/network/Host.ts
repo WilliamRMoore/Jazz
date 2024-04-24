@@ -21,18 +21,5 @@ function ConnectionConfigurator(c: DataConnection) {
   });
 }
 
-export function ConnectionConfiguratorOLD(
-  c: DataConnection,
-  connectionHandler: ConnectionHandler,
-  dataHandler: DataHandler
-) {
-  c.on('open', () => {
-    connectionHandler(c);
-  });
-  c.on('data', (rd) => {
-    dataHandler(rd);
-  });
-}
-
 export type DataHandler = (remoteData: unknown) => void;
 export type ConnectionHandler = (connnection: DataConnection) => void;
