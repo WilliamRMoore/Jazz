@@ -38,6 +38,7 @@ import {
   neutralFall,
 } from '../../Game/State/CharacterStates/Test';
 import { SyncroManager } from '../../network/SyncroManager';
+import { debug } from 'console';
 
 type loopCtx = {
   ISM: InputStorageManager<InputActionPacket<InputAction>>;
@@ -59,8 +60,6 @@ let host = false;
 let LOOPCONTEXT: loopCtx;
 
 export function initLoop() {
-  console.log('Twice?');
-  debugger;
   //AddDebug();
   const P1 = initPlayer(new FlatVec(600, 100));
   const P2 = initPlayer(new FlatVec(800, 100));
@@ -129,8 +128,8 @@ export function initLoop() {
     document.getElementById('hostcontrols')!.style.display = 'block';
     document.getElementById('hostorconnect')!.style.display = 'none';
     host = true;
-    P1SM.IsRemote(false);
-    P2SM.IsRemote(true);
+    P1SM.SetIsRemote(false);
+    P2SM.SetIsRemote(true);
   });
 
   document.getElementById('connectgame')!.addEventListener('click', () => {
@@ -139,8 +138,8 @@ export function initLoop() {
 
     document.getElementById('connectToPeer')!.addEventListener('click', () => {
       host = false;
-      P1SM.IsRemote(true);
-      P2SM.IsRemote(false);
+      P1SM.SetIsRemote(true);
+      P2SM.SetIsRemote(false);
       let connectionId = (document.getElementById('peerid') as HTMLInputElement)
         .value;
       let c = peer.connect(connectionId);
@@ -165,7 +164,6 @@ function LOOP(lctx: loopCtx) {
   delta = now - then;
   ctx.clearRect(0, 0, 1920, 1080);
   if (delta > interval) {
-    debugger;
     Logic(lctx);
 
     lctx.DS.Draw();
@@ -178,22 +176,23 @@ function initSynchroManager(
 ): SyncroManager<InputActionPacket<InputAction>> {
   const FCM = new FrameComparisonManager(ism, fsm);
   const RBM = new RollBackManager<InputActionPacket<InputAction>>(FCM, fsm);
-  const defaultInputFactory = (frameAdvantage: number, frame: number) => {
-    let def = {
-      input: {
-        Action: 'idle',
-        LXAxsis: 0,
-        LYAxsis: 0,
-        RYAxsis: 0,
-        RXAxis: 0,
-      },
-      frame,
-      frameAdvantage,
-    } as InputActionPacket<InputAction>;
-    return def;
-  };
+  const defaultInputFactory = (frameAdvantage: number, frame: number) => {};
 
-  const syncMan = new SyncroManager(fsm, ism, FCM, RBM, defaultInputFactory);
+  const syncMan = new SyncroManager(
+    fsm,
+    ism,
+    FCM,
+    RBM,
+    (i, frame) => {
+      var r = {
+        input: i.input,
+        frame: frame,
+        frameAdvantage: i.frameAdvantage,
+      } as InputActionPacket<InputAction>;
+      return r;
+    },
+    defaultInputFactory
+  );
 
   return syncMan;
 }
@@ -310,15 +309,16 @@ function setupSM(sm: StateMachine) {
 }
 
 function Logic(lctx: loopCtx) {
+  //debugger;
+  lctx.SyncMan.SetLocalFrameNumber(frame);
   lctx.SyncMan.UpdateNextSynFrame();
 
   if (lctx.SyncMan.ShouldRollBack()) {
     console.log(lctx.SyncMan.GetCurrentSyncFrame());
     rollBack(lctx);
   }
-
-  if (lctx.SyncMan.IsWithinFrameAdvantage()) {
-    lctx.SyncMan.SetLocalFrameNumber(frame);
+  debugger;
+  if (lctx.SyncMan.ShouldStall()) {
     const localInput = GetInput();
     const localInputPacket = {
       input: localInput,
@@ -343,7 +343,16 @@ function Logic(lctx: loopCtx) {
     } else {
       handleRemoteInput(lctx.playersArr[0], remoteInput.input, lctx.SMArray[0]);
     }
-    UpdateSM(lctx.SMArray);
+    let l = lctx.SMArray.length;
+    for (let i = 0; i < l; i++) {
+      let sm = lctx.SMArray[i];
+
+      if (sm.IsRemote()) {
+        sm.Update(remoteInput.input);
+      } else {
+        sm.Update(localInput);
+      }
+    }
     lctx.PGS.ApplyGravity();
     lctx.PVS.UpdateVelocity();
     lctx.LDS.CheckForLedge();
@@ -376,36 +385,29 @@ function HandleInput(player: Player, input: InputAction, SM: StateMachine) {
   if (!player.LedgeGrab) {
     if (input.Action == 'run') {
       if (player.Grounded) {
-        SM.SetState('walk');
+        SM.SetState('walk', input);
       }
       if (!player.Grounded) {
-        SM.SetState('neutralFall');
+        SM.SetState('neutralFall', input);
       }
     } else if (input.Action == 'jump') {
       //debugger;
       player.CurrentStateMachineState == 'jump'
-        ? SM.SetState('jump')
+        ? SM.SetState('jump', input)
         : player.Grounded
-        ? SM.SetState('jumpSquat')
-        : SM.SetState('jump');
+        ? SM.SetState('jumpSquat', input)
+        : SM.SetState('jump', input);
     } else {
       if (player.Grounded) {
-        SM.SetState('idle');
+        SM.SetState('idle', input);
       } else {
-        SM.SetState('neutralFall');
+        SM.SetState('neutralFall', input);
       }
     }
   } else {
     if (input.Action == 'jump') {
-      SM.SetState('jump');
+      SM.SetState('jump', input);
     }
-  }
-}
-
-function UpdateSM(smArr: Array<StateMachine>) {
-  let l = smArr.length;
-  for (let i = 0; i < l; i++) {
-    smArr[i].Update();
   }
 }
 
@@ -423,15 +425,40 @@ function rollBack(lctx: loopCtx) {
   debugger;
   let syncFrame = lctx.SyncMan.GetCurrentSyncFrame();
   let currentFrame = lctx.SyncMan.GetLocalFrameNumber();
+
+  let localInput = lctx.SyncMan.GetLocalInput(syncFrame);
+  let remoteInput = lctx.SyncMan.GetRemoteInputForFrame(syncFrame);
+
   lctx.FSM.LocalFrame = syncFrame;
-  lctx.PSHM.SetPlayerStateToFrame(syncFrame);
+  lctx.PSHM.SetPlayerStateToFrame(syncFrame, 0, localInput.input);
+  lctx.PSHM.SetPlayerStateToFrame(syncFrame, 1, remoteInput.input);
 
   for (let i = syncFrame; i < currentFrame; i++) {
-    lctx.SyncMan.UpdateNextSynFrame();
-    lctx.FSM.LocalFrame = i;
+    localInput = lctx.SyncMan.GetLocalInput(i);
+    remoteInput = lctx.SyncMan.GetRemoteInputForFrame(i);
+    let remoteGuess = lctx.SyncMan.GetGuessedInputForFrame(i);
 
-    let localInput = lctx.SyncMan.GetLocalInput(i);
-    let remoteInput = lctx.SyncMan.GetOrGuessRemoteInputForFrame(i);
+    if (remoteInput != null && remoteGuess != null) {
+      lctx.SyncMan.OverWriteGuessedInputForFrame(remoteInput, i);
+    }
+
+    if (remoteInput == null || remoteInput == undefined) {
+      remoteInput = remoteGuess;
+    }
+
+    if (remoteInput == null || remoteInput == undefined) {
+      remoteInput = {
+        input: {
+          Action: 'idle',
+          LXAxsis: 0,
+          LYAxsis: 0,
+          RYAxsis: 0,
+          RXAxis: 0,
+        },
+        frame: i,
+        frameAdvantage: 0,
+      } as InputActionPacket<InputAction>;
+    }
 
     if (host) {
       handleLocalInput(lctx.playersArr[0], localInput.input, lctx.SMArray[0]);
@@ -444,7 +471,17 @@ function rollBack(lctx: loopCtx) {
     } else {
       handleRemoteInput(lctx.playersArr[0], remoteInput.input, lctx.SMArray[0]);
     }
-    UpdateSM(lctx.SMArray);
+    let l = lctx.SMArray.length;
+    for (let i = 0; i < l; i++) {
+      let sm = lctx.SMArray[i];
+
+      if (sm.IsRemote()) {
+        sm.Update(remoteInput.input);
+      } else {
+        sm.Update(localInput.input);
+      }
+    }
+    //UpdateSM(lctx.SMArray);
     lctx.PGS.ApplyGravity();
     lctx.PVS.UpdateVelocity();
     lctx.LDS.CheckForLedge();
@@ -452,4 +489,6 @@ function rollBack(lctx: loopCtx) {
     updatePlayersPreviousePosition(lctx.playersArr);
     lctx.PSHM.RecordStateSnapShot();
   }
+  debugger;
+  lctx.SyncMan.UpdateNextSynFrame();
 }

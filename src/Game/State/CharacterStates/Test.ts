@@ -6,7 +6,7 @@ import { VectorAllocator } from '../../../Physics/FlatVec';
 export const idle = {
   name: 'idle',
   onEnter: (player) => {
-    console.log('Entering idle');
+    //console.log('Entering idle');
   },
   onUpdate: (stateFrame, player, stateMachine) => {},
 } as IState;
@@ -14,7 +14,7 @@ export const idle = {
 export const neutralFall = {
   name: 'neutralFall',
   onEnter: (player) => {
-    console.log('entering Fall');
+    //console.log('entering Fall');
   },
   onUpdate: (stateFrame, player, ia) => {
     // if (Math.abs(player.PlayerVelocity.X) < 18) {
@@ -31,7 +31,7 @@ export const neutralFall = {
 export const walk = {
   name: 'walk',
   onEnter: (player) => {
-    console.log('Entering walk');
+    //console.log('Entering walk');
   },
   onUpdate: (dt, player, ia) => {
     if (ia.LXAxsis > 0) {
@@ -47,7 +47,7 @@ export const walk = {
 export const turnWalk = {
   frameCount: 5,
   onEnter: (player) => {
-    console.log('Entering turn walk');
+    //console.log('Entering turn walk');
   },
   onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {
@@ -62,7 +62,7 @@ export const turnDash = {} as IState;
 export const run = {
   name: 'run',
   onEnter: (player) => {
-    console.log('enter run');
+    //console.log('enter run');
   },
   onUpdate: (stateFrame, player, ia) => {
     if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
@@ -71,7 +71,7 @@ export const run = {
   },
 
   onExit: (p) => {
-    console.log('Exiting run');
+    //console.log('Exiting run');
   },
 } as IState;
 
@@ -85,7 +85,7 @@ export const jumpSquat = {
   tranisitions: ['jump'],
   name: 'jumpSquat',
   onEnter: (player) => {
-    console.log('Entering jump squat');
+    //console.log('Entering jump squat');
   },
   onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {},
@@ -95,13 +95,19 @@ export const jump = {
   stateDefaultTransition: 'neutralFall',
   frameCount: 10,
   name: 'jump',
-  onEnter(player, inputAction) {
-    console.log('Entering Jump State');
+  onEnter(player) {
+    //console.log('Entering Jump State');
     player.Grounded = false;
     player.PlayerVelocity.Y = 0;
-    player.AddVelocity(VectorAllocator(inputAction.LXAxsis * 4, -15));
+    player.AddVelocity(VectorAllocator(0, -15));
   },
-  onUpdate: (stateFrame, p, ia) => {},
+  onUpdate: (stateFrame, p, ia) => {
+    // if (stateFrame == 0) {
+    //   p.Grounded = false;
+    //   p.PlayerVelocity.Y = 0;
+    //   p.AddVelocity(VectorAllocator(0, -15));
+    // }
+  },
 } as IState;
 
 export const land = {} as IState;
@@ -138,7 +144,7 @@ export const ledgeTitor = {} as IState;
 
 export const ledgeGrab = {
   name: 'ledgeGrab',
-  onEnter(player, inputAction) {
+  onEnter(player) {
     player.LedgeGrab = true;
     player.PlayerVelocity.X = 0;
     player.PlayerVelocity.Y = 0;

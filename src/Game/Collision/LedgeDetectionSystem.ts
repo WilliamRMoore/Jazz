@@ -36,7 +36,7 @@ export class LedgeDetectionSystem {
             left
           );
           if (rightResult.collision && !leftResult.collision) {
-            this.SMArray[i].ForceState('ledgeGrab');
+            this.SMArray[i].ForceState('ledgeGrab', 0);
             p.UpdatePlayerPosition(
               left[0].X,
               left[0].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)
@@ -55,7 +55,7 @@ export class LedgeDetectionSystem {
           );
 
           if (leftResult.collision && !rightResult.collision) {
-            this.SMArray[i].ForceState('ledgeGrab');
+            this.SMArray[i].ForceState('ledgeGrab', 0);
             p.UpdatePlayerPosition(
               right[1].X,
               right[1].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)

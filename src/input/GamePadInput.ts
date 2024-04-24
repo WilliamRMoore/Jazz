@@ -1,3 +1,6 @@
+import { Player } from '../Game/Player/Player';
+import { StateMachine } from '../Game/State/StateMachine';
+
 export class GamePadInput {
   LXAxis: number = 0;
   LYAxis: number = 0;
@@ -42,6 +45,7 @@ export type InputActionPacket<T> = {
   input: T;
   frame: number;
   frameAdvantage: number;
+  hash: string;
 };
 export type InputAction = {
   Action: string;
@@ -60,6 +64,20 @@ export function NewInputAction() {
     RYAxsis: 0,
   } as InputAction;
 }
+
+const defaultInputFactory = (frameAdvantage: number, frame: number) => {
+  let def = {
+    input: {
+      Action: 'idle',
+      LXAxsis: 0,
+      LYAxsis: 0,
+      RYAxsis: 0,
+      RXAxis: 0,
+    },
+    frame,
+    frameAdvantage,
+  } as InputActionPacket<InputAction>;
+};
 
 const currentInput = new GamePadInput();
 
@@ -289,3 +307,37 @@ const InvalidGuessSpec = (
 };
 
 export { InvalidGuessSpec };
+
+export function HandleInput(
+  player: Player,
+  input: InputAction,
+  SM: StateMachine
+) {
+  if (!player.LedgeGrab) {
+    if (input.Action == 'run') {
+      if (player.Grounded) {
+        SM.SetState('walk');
+      }
+      if (!player.Grounded) {
+        SM.SetState('neutralFall');
+      }
+    } else if (input.Action == 'jump') {
+      //debugger;
+      player.CurrentStateMachineState == 'jump'
+        ? SM.SetState('jump')
+        : player.Grounded
+        ? SM.SetState('jumpSquat')
+        : SM.SetState('jump');
+    } else {
+      if (player.Grounded) {
+        SM.SetState('idle');
+      } else {
+        SM.SetState('neutralFall');
+      }
+    }
+  } else {
+    if (input.Action == 'jump') {
+      SM.SetState('jump');
+    }
+  }
+}

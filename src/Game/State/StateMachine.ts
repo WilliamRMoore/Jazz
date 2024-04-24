@@ -1,8 +1,13 @@
-import { InputAction, InputActionPacket } from '../../input/GamePadInput';
-import { InputStorageManager } from '../../input/InputStorageManager';
-import { FrameStorageManager } from '../../network/FrameStorageManager';
-import { SyncroManager } from '../../network/SyncroManager';
+import { InputAction } from '../../input/GamePadInput';
 import { Player } from '../Player/Player';
+import {
+  idle,
+  walk,
+  jump,
+  neutralFall,
+  ledgeGrab,
+  jumpSquat,
+} from './CharacterStates/Test';
 import IState from './State';
 
 export class StateMachine {
@@ -10,39 +15,28 @@ export class StateMachine {
   private currentState?: IState;
   private currentStateFrame: number = 0;
   private player: Player;
-  private Remote: boolean;
-  private SyncMan: SyncroManager<InputActionPacket<InputAction>>;
-  // private ISM: InputStorageManager<InputActionPacket<InputAction>>;
-  // private FSM: FrameStorageManager;
 
-  constructor(
-    player: Player,
-    // ism: InputStorageManager<InputActionPacket<InputAction>>,
-    // fsm: FrameStorageManager,
-    syncMan: SyncroManager<InputActionPacket<InputAction>>,
-    remote: boolean = false
-  ) {
+  constructor(player: Player) {
     this.player = player;
-    // this.ISM = ism;
-    // this.FSM = fsm;
-    this.SyncMan = syncMan;
-    this.Remote = remote;
   }
 
-  public AddState(name: string, config: IState) {
+  public AddState(name: string, config: IState): void {
     this.states.set(name, config);
   }
 
-  public IsRemote(isHost: boolean) {
-    this.Remote = isHost;
-  }
-
-  public ForceState(name: string, frame: number = 0) {
+  public ForceState(name: string, frame: number): void {
+    //TODO problem forcing state in rollback with default transitions, jumpsquat doesn't work.
+    //need a rollback specific one, I think.
+    //States are saved after at least one update. Forcing a state will never be with frame 0, will at least be 1.
+    //Not true of other functions that use for state, need to specify one for rollback purposes only.
+    // May need to save state at begining of frame instead of end using the PSHM.
+    //Consider re-working logic loop.
     if (!this.states.has(name)) {
       return;
     }
 
     if (this.currentState?.name === name) {
+      this.currentStateFrame = frame;
       return;
     }
 
@@ -52,18 +46,14 @@ export class StateMachine {
 
     this.currentState = this.states.get(name)!;
 
-    if (this.currentState.onEnter) {
-      this.currentState.onEnter(
-        this.player,
-        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
-        this.GetInput()
-      );
+    if (this.currentState.onEnter && frame != 1 && frame != 0) {
+      this.currentState.onEnter(this.player);
     }
     this.player.CurrentStateMachineState = this.currentState.name;
     this.currentStateFrame = frame;
   }
 
-  public SetState(name: string) {
+  public SetState(name: string): void {
     if (!this.states.has(name)) {
       // do something
       return;
@@ -90,11 +80,7 @@ export class StateMachine {
     this.player.CurrentStateMachineState = this.currentState.name;
 
     if (this.currentState.onEnter) {
-      this.currentState.onEnter(
-        this.player,
-        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
-        this.GetInput()
-      );
+      this.currentState.onEnter(this.player);
     }
 
     this.currentStateFrame = 0;
@@ -103,7 +89,7 @@ export class StateMachine {
     return this.currentState;
   }
 
-  public Update() {
+  public Update(input: InputAction): void {
     if (
       this.currentState &&
       this.currentState.frameCount &&
@@ -114,26 +100,22 @@ export class StateMachine {
     }
 
     if (this.currentState && this.currentState.onUpdate) {
-      this.currentState.onUpdate(
-        this.currentStateFrame,
-        this.player,
-        //this.ISM.GetLocalInputForFrame(this.FSM.LocalFrame).input
-        this.GetInput()
-      );
+      this.currentState.onUpdate(this.currentStateFrame, this.player, input);
     }
 
     this.currentStateFrame++;
     this.player.CurrentStateMachineStateFrame = this.currentStateFrame;
   }
+}
 
-  private GetInput(): InputAction {
-    if (!this.Remote) {
-      return this.SyncMan.GetLocalInput(this.SyncMan.GetLocalFrameNumber())
-        .input;
-    }
+export function InitSM(p: Player): StateMachine {
+  const sm = new StateMachine(p);
+  sm.AddState('idle', idle);
+  sm.AddState('walk', walk);
+  sm.AddState('jump', jump);
+  sm.AddState('neutralFall', neutralFall);
+  sm.AddState(ledgeGrab.name, ledgeGrab);
+  sm.AddState(jumpSquat.name, jumpSquat);
 
-    return this.SyncMan.GetOrGuessRemoteInputForFrame(
-      this.SyncMan.GetLocalFrameNumber()
-    ).input;
-  }
+  return sm;
 }

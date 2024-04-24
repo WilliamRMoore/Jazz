@@ -1,3 +1,5 @@
+import { InvalidGuessSpec } from './GamePadInput';
+
 export class InputStorageManager<Type> implements IInputStorageManager<Type> {
   private readonly localInputStore: Array<Type>;
   private readonly remoteInputStore: Array<Type>;
@@ -26,7 +28,9 @@ export class InputStorageManager<Type> implements IInputStorageManager<Type> {
   }
 
   public OverWriteGuessedInput(input: Type, frame: number) {
-    this.guessedInputStore[frame] = input;
+    if (this.guessedInputStore[frame]) {
+      this.guessedInputStore[frame] = input;
+    }
   }
 
   public StoreRemoteInput(input: Type, frame: number) {
@@ -82,4 +86,11 @@ export interface IInputStorageManager<Type> {
   GetLocalInputForFrame(frame: number): Type;
   GetGuessedInputForFrame(frame: number): Type;
   ReturnFirstWrongGuess(lowerBound: number, upperBound: number): number | null;
+}
+
+export function InitISM<Type>(
+  invalidSpec: (guessed: Type, real: Type) => boolean
+) {
+  const ISM = new InputStorageManager<Type>(invalidSpec);
+  return ISM;
 }

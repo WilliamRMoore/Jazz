@@ -2,20 +2,15 @@ import { Player } from '../Player/Player';
 import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { StateMachine } from '../State/StateMachine';
 import { PlayerData, clonePlayerData } from './Clone';
+import { InputAction } from '../../input/GamePadInput';
 
 export class PlayerStateHistoryManager {
   private readonly PlayerStateSnapShots: Array<Array<PlayerData>>;
   private readonly Players: Array<Player>;
-  private readonly FSM: FrameStorageManager;
   private readonly StateMachines: Array<StateMachine>;
 
-  constructor(
-    players: Array<Player>,
-    stateMachines: Array<StateMachine>,
-    fsm: FrameStorageManager
-  ) {
+  constructor(players: Array<Player>, stateMachines: Array<StateMachine>) {
     this.Players = players;
-    this.FSM = fsm;
     this.PlayerStateSnapShots = new Array<Array<PlayerData>>(2);
     this.StateMachines = stateMachines;
     for (let index = 0; index < this.Players.length; index++) {
@@ -23,9 +18,8 @@ export class PlayerStateHistoryManager {
     }
   }
 
-  RecordStateSnapShot(): void {
+  RecordStateSnapShot(currentFrame: number): void {
     const upperBound = this.Players.length;
-    const currentFrame = this.FSM.LocalFrame;
 
     for (let index = 0; index < upperBound; index++) {
       const PlayerStateSnapShotHistory = this.PlayerStateSnapShots[index];
@@ -39,24 +33,15 @@ export class PlayerStateHistoryManager {
     return this.PlayerStateSnapShots?.[player]?.[frame] ?? null;
   }
 
-  SetPlayerStateToFrame(frame: number) {
-    const upperBound = this.Players.length;
-
-    for (let i = 0; i < upperBound; i++) {
-      const p = this.Players[i];
-      const pd = this.GetStateSnapShot(frame, i);
-      if (pd) {
-        p.SetPlayerState(pd);
-        const sm = this.StateMachines[i];
-        sm.ForceState(
-          p.CurrentStateMachineState,
-          p.CurrentStateMachineStateFrame
-        );
-      }
+  SetPlayerStateToFrame(frame: number, playerIndex: number) {
+    const p = this.Players[playerIndex];
+    const PD = this.GetStateSnapShot(frame, playerIndex);
+    if (PD) {
+      p.SetPlayerState(PD);
+      this.StateMachines[playerIndex].ForceState(
+        p.CurrentStateMachineState,
+        p.CurrentStateMachineStateFrame
+      );
     }
   }
 }
-
-// export function SetPlayerState(pd: PlayerData, p: Player) {
-
-// }

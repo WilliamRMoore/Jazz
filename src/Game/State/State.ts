@@ -6,7 +6,7 @@ interface IState {
   frameCount: number;
   stateDefaultTransition: string;
   name: string;
-  onEnter?: (player: Player, inputAction?: InputAction) => void;
+  onEnter?: (player: Player) => void;
   onUpdate?: (
     stateFrame: number,
     player: Player,

@@ -4,7 +4,7 @@ import { FrameStorageManager } from './FrameStorageManager';
 export class FrameComparisonManager<Type>
   implements IFrameComparisonManager<Type>
 {
-  private readonly MAX_ROLLBACK_FRAMES = 6;
+  private readonly MAX_ROLLBACK_FRAMES = 10000;
   private readonly FRAME_ADVANTAGE_LIMIT = 3;
   private readonly InputStorageManager: InputStorageManager<Type>;
   private readonly FrameStorageManager: FrameStorageManager;
@@ -24,7 +24,7 @@ export class FrameComparisonManager<Type>
         : this.FrameStorageManager.RemoteFrame;
 
     let syncFrame = this.InputStorageManager.ReturnFirstWrongGuess(
-      this.FrameStorageManager.GetSyncFrames().PreviousSyncFrame,
+      this.FrameStorageManager.GetSyncFrames().CurrentSyncFrame + 1,
       finalFrame
     );
 
@@ -53,6 +53,19 @@ export class FrameComparisonManager<Type>
     );
   }
 
+  ShouldStall(): boolean {
+    return !this.IsWithinFrameAdvatnage();
+    // let within = this.IsWithinFrameAdvatnage();
+    // if (!within) {
+    //   return (
+    //     this.FrameStorageManager.RemoteFrame >
+    //     this.FrameStorageManager.LocalFrame
+    //   );
+    // }
+
+    // return false;
+  }
+
   GetFrameAdvantageDifference(): number {
     return (
       this.GetLocalFrameAdvantage() -
@@ -74,4 +87,5 @@ export interface IFrameComparisonManager<Type> {
   IsWithinFrameAdvatnage(): boolean;
   GetFrameAdvantageDifference(): number;
   GetLocalFrameAdvantage(): number;
+  ShouldStall(): boolean;
 }

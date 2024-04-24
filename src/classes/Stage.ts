@@ -53,3 +53,18 @@ export default class Stage implements IDrawable {
     this.ledgeVerts = { left: leftLedge, right: rightLedge };
   }
 }
+
+export function InitStage() {
+  let stageVecs = new Array<FlatVec>();
+
+  stageVecs.push(
+    new FlatVec(510, 600),
+    new FlatVec(1410, 600),
+    new FlatVec(1410, 640),
+    new FlatVec(510, 640)
+  );
+
+  const stage = new Stage(stageVecs);
+
+  return stage;
+}
