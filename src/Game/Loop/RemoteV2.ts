@@ -110,15 +110,20 @@ export function initLoop() {
   } as loopCtx;
 
   listenForGamePadInput();
-  let l = () => LoopExec(() => Logic(lctx));
-  initControl(lctx, l);
+  let remoteLoop = () => LoopExec(() => RemoteLogic(lctx));
+  let localLoop = () => LoopExec(() => LocalLogic(lctx));
+  initControl(lctx, remoteLoop, localLoop);
 }
 
-function initControl(lctx: loopCtx, loop: () => void) {
+function initControl(
+  lctx: loopCtx,
+  remoteLoop: () => void,
+  localLoop: () => void
+) {
   let connectionConfigurator = ConfigureConnectionsFactory(
     (c: DataConnection) => {
       // <- entry
-      loop();
+      remoteLoop();
     },
     (rd: unknown) => {
       let remoteInput = rd as InputActionPacket<InputAction>;
@@ -143,6 +148,13 @@ function initControl(lctx: loopCtx, loop: () => void) {
     lctx.IsHost = true;
   });
 
+  document.getElementById('localGame')!.addEventListener('click', () => {
+    document.getElementById('hostcontrols')!.style.display = 'block';
+    document.getElementById('hostorconnect')!.style.display = 'none';
+    lctx.IsHost = true;
+    localLoop();
+  });
+
   document.getElementById('connectgame')!.addEventListener('click', () => {
     document.getElementById('connectcontrols')!.style.display = 'block';
     document.getElementById('hostorconnect')!.style.display = 'none';
@@ -158,7 +170,33 @@ function initControl(lctx: loopCtx, loop: () => void) {
   });
 }
 
-function Logic(lctx: loopCtx) {
+function LocalLogic(lctx: loopCtx) {
+  let frameNumber = lctx.SyncMan.GetLocalFrameNumber();
+  const player1 = lctx.playersArr[0];
+  const player1SM = lctx.SMArray[0];
+  const p1Input = GetInput();
+  const localInputPacket = {
+    input: p1Input,
+    frame: frameNumber,
+    frameAdvantage: 0,
+  } as InputActionPacket<InputAction>;
+
+  lctx.ISM.StoreLocalInput(localInputPacket, frameNumber);
+  HandleInput(player1, p1Input, player1SM);
+  player1SM.Update(p1Input);
+
+  lctx.PGS.ApplyGravity();
+  lctx.PVS.UpdateVelocity();
+  lctx.LDS.CheckForLedge();
+  lctx.SCS.handle();
+  updatePlayersPreviousePosition(lctx.playersArr);
+  lctx.PSHM.RecordStateSnapShot(frameNumber);
+  lctx.SyncMan.IncrementLocalFrameNumber();
+  lctx.DS.Draw();
+  document.getElementById('frameCounter')!.innerHTML = `<p>${frameNumber}</p>`;
+}
+
+function RemoteLogic(lctx: loopCtx) {
   let frameNumber = lctx.SyncMan.GetLocalFrameNumber();
 
   lctx.SyncMan.UpdateNextSyncFrame();
@@ -206,12 +244,12 @@ function Logic(lctx: loopCtx) {
 
     lctx.SyncMan.IncrementLocalFrameNumber();
     lctx.DS.Draw();
-    document.getElementById(
-      'frameCounter'
-    )!.innerHTML = `<p>${frameNumber}</p>`;
+    // document.getElementById(
+    //   'frameCounter'
+    // )!.innerHTML = `<p>${frameNumber}</p>`;
   } else {
-    console.log(lctx.SyncMan.GetCurrentSyncFrame());
-    console.log('Stalling');
+    // console.log(lctx.SyncMan.GetCurrentSyncFrame());
+    // console.log('Stalling');
   }
 }
 
