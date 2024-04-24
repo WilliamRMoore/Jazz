@@ -24,6 +24,24 @@ export class StateMachine {
     this.states.set(name, config);
   }
 
+  public ForceStateForRollback(name: string, frame: number): void {
+    //rollback: We are forcing a player to a previuously computed state,
+    //At this point, the statemachine will have already run the states on enter/ exit method for the computed player state.
+    //We do not need to run those in the force state for rollback method as a result.
+    if (!this.states.has(name)) {
+      return;
+    }
+
+    if (this.currentState?.name === name) {
+      this.currentStateFrame = frame;
+      return;
+    }
+
+    this.currentState = this.states.get(name)!;
+    this.player.CurrentStateMachineState = this.currentState.name;
+    this.currentStateFrame = frame;
+  }
+
   public ForceState(name: string, frame: number): void {
     //TODO problem forcing state in rollback with default transitions, jumpsquat doesn't work.
     //need a rollback specific one, I think.
@@ -46,11 +64,13 @@ export class StateMachine {
 
     this.currentState = this.states.get(name)!;
 
-    if (this.currentState.onEnter && frame != 1 && frame != 0) {
+    if (this.currentState.onEnter) {
       this.currentState.onEnter(this.player);
     }
     this.player.CurrentStateMachineState = this.currentState.name;
     this.currentStateFrame = frame;
+
+    return;
   }
 
   public SetState(name: string): void {

@@ -38,7 +38,7 @@ export class PlayerStateHistoryManager {
     const PD = this.GetStateSnapShot(frame, playerIndex);
     if (PD) {
       p.SetPlayerState(PD);
-      this.StateMachines[playerIndex].ForceState(
+      this.StateMachines[playerIndex].ForceStateForRollback(
         p.CurrentStateMachineState,
         p.CurrentStateMachineStateFrame
       );
