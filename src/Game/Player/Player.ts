@@ -318,9 +318,9 @@ export function InitPlayer(position: FlatVec, faceRight = true) {
   const jumpVelocity = 20;
   const numberOfJumps = 2;
   const facingRight = faceRight;
-  const maxWalkSpeed = 12;
-  const maxRunSpeed = 18;
-  const arialImpulseLimit = 18;
+  const maxWalkSpeed = 8;
+  const maxRunSpeed = 10;
+  const arialImpulseLimit = 12;
   const P = new Player(
     ECB,
     maxXVelocity,

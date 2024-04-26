@@ -128,6 +128,9 @@ function initControl(
     },
     (rd: unknown) => {
       let remoteInput = rd as InputActionPacket<InputAction>;
+      if (remoteInput.input.Action != 'default') {
+        debugger;
+      }
       lctx.ISM.StoreRemoteInput(remoteInput, remoteInput.frame);
       lctx.FSM.RemoteFrame = remoteInput.frame;
       lctx.FSM.RemoteFrameAdvantage = remoteInput.frameAdvantage;
@@ -228,10 +231,16 @@ function RemoteLogic(lctx: loopCtx) {
       lctx.SyncMan.GetRemoteInputForLoopFrame(frameNumber);
     let remoteInput = remoteInputPacket.input;
 
+    if (remoteInput.Action != 'default') {
+      debugger;
+    }
+
     HandleInput(localPlayer, localInput, localSM);
-    HandleInput(remotePlayer, remoteInput, remoteSM);
+    //HandleInput(remotePlayer, remoteInput, remoteSM);
 
     localSM.Update(localInput);
+
+    remoteSM.SetState(remoteInput);
     remoteSM.Update(remoteInput);
 
     lctx.PGS.ApplyGravity();
@@ -245,12 +254,12 @@ function RemoteLogic(lctx: loopCtx) {
 
     lctx.SyncMan.IncrementLocalFrameNumber();
     lctx.DS.Draw();
-    // document.getElementById(
-    //   'frameCounter'
-    // )!.innerHTML = `<p>${frameNumber}</p>`;
+    document.getElementById(
+      'frameCounter'
+    )!.innerHTML = `<p>${frameNumber}</p>`;
   } else {
     // console.log(lctx.SyncMan.GetCurrentSyncFrame());
-    // console.log('Stalling');
+    console.log('Stalling');
   }
 }
 
@@ -268,9 +277,11 @@ function rollBack(from: number, to: number, lctx: loopCtx) {
     let remoteInput = lctx.SyncMan.GetRemoteInputForRollBack(from);
 
     HandleInput(localPlayer, localInput.input, localSM);
-    HandleInput(remotePlayer, remoteInput.input, remoteSM);
+    //HandleInput(remotePlayer, remoteInput.input, remoteSM);
 
     localSM.Update(localInput.input);
+
+    remoteSM.SetState(remoteInput.input);
     remoteSM.Update(remoteInput.input);
 
     lctx.PGS.ApplyGravity();
@@ -328,4 +339,30 @@ function updatePlayersPreviousePosition(playersArr: Array<Player>) {
     p.PreviousPlayerPosition.X = p.PlayerPosition.X;
     p.PreviousPlayerPosition.Y = p.PlayerPosition.Y;
   }
+}
+
+function actionHeldFromLastFrameLocal(
+  ISM: InputStorageManager<InputActionPacket<InputAction>>,
+  frameNumber: number
+): boolean {
+  if (frameNumber === 0) {
+    return false;
+  }
+  let now = ISM.GetLocalInputForFrame(frameNumber);
+  let before = ISM.GetLocalInputForFrame(frameNumber--);
+
+  return now.input.Action == before.input.Action;
+}
+
+function actionHeldFromLastFrameRemote(
+  ISM: InputStorageManager<InputActionPacket<InputAction>>,
+  frameNumber: number
+): boolean {
+  if (frameNumber === 0) {
+    return false;
+  }
+  // let now = ISM.GetRemoteInputForFrame(frameNumber);
+  // let before = ISM.GetRemoteInputForFrame(frameNumber--);
+  // return now.input.Action == before.input.Action;
+  return false;
 }

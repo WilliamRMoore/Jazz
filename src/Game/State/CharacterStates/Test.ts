@@ -1,20 +1,40 @@
 import { AddClampedXImpulseToPlayer, Player } from '../../Player/Player';
 import { InputAction } from '../../../input/GamePadInput';
-import IState from '../State';
+import IState, { PState } from '../State';
 import { VectorAllocator } from '../../../Physics/FlatVec';
 
+export const idle2 = new PState('idle');
+idle2.SetOnEnter((p: Player) => console.log('Entering idle'));
+
+export const walk2 = new PState('walk');
+walk2.SetWhiteList([idle2]);
+
+export const startWalk2 = new PState('startWalk');
+startWalk2.SetFrameCount(3);
+startWalk2.SetDefaultTransition(walk2);
+startWalk2.SetWhiteList([walk2, idle2]);
+startWalk2.SetGetLegalTranisitions((ps: Array<PState>, action: string) => {
+  if (action == '') {
+    return null;
+  }
+  return null;
+});
+
 export const idle = {
-  name: 'idle',
-  onEnter: (player) => {
-    //console.log('Entering idle');
+  name: 'grounded-idle',
+  tranisitions: ['grounded-jump', 'grounded-move', 'grounded-moveFast'],
+  onEnter: (player, ia) => {
+    console.log('Entering idle');
   },
   onUpdate: (stateFrame, player, stateMachine) => {},
+  onExit: (p: Player) => {},
 } as IState;
 
 export const neutralFall = {
   name: 'neutralFall',
-  onEnter: (player) => {
-    //console.log('entering Fall');
+  tranisitions: ['ariel-jump'],
+  onEnter: (player, ia) => {
+    console.log('entering Fall');
   },
   onUpdate: (stateFrame, player, ia) => {
     // if (Math.abs(player.PlayerVelocity.X) < 18) {
@@ -30,23 +50,43 @@ export const neutralFall = {
 
 export const walk = {
   name: 'walk',
-  onEnter: (player) => {
-    //console.log('Entering walk');
+  tranisitions: ['jump', 'grounded-idle'],
+  onEnter: (player, ia) => {
+    console.log('Entering walk');
   },
-  onUpdate: (dt, player, ia) => {
+  onUpdate: (stateFrame, player, ia) => {
+    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxsis * 3);
+  },
+  onDefaultInput(inputAction) {
+    return 'grounded-idle';
+  },
+} as IState;
+
+export const startWalk = {
+  name: 'grounded-move',
+  frameCount: 20,
+  stateDefaultTransition: 'walk',
+  tranisitions: ['walk', 'grounded-moveFast', 'grounded-idle'],
+  onEnter: () => {
+    console.log('entering startwalk');
+  },
+  onUpdate: (stateFrame, player, ia) => {
     if (ia.LXAxsis > 0) {
       player.FacingRight = true;
     }
     if (ia.LXAxsis < 0) {
       player.FacingRight = false;
     }
-    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxsis * 5);
+    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxsis * 2);
+  },
+  onDefaultInput() {
+    return 'default';
   },
 } as IState;
 
 export const turnWalk = {
   frameCount: 5,
-  onEnter: (player) => {
+  onEnter: (player, ia) => {
     //console.log('Entering turn walk');
   },
   onUpdate: (stateFrame, player, ia) => {},
@@ -55,45 +95,113 @@ export const turnWalk = {
   },
 } as IState;
 
-export const dash = {} as IState;
+export const dash = {
+  frameCount: 5,
+  name: 'grounded-moveFast',
+  stateDefaultTransition: 'run',
+  tranisitions: ['run', 'grounded-moveFast'],
+  onEnter: (player, ia) => {
+    console.log('Enterdash');
+    player.PlayerVelocity.X = 0;
+    player.FacingRight = ia.LXAxsis > 0 ? true : false;
+    if (player.FacingRight) {
+      player.PlayerVelocity.X = 10;
+    } else {
+      player.PlayerVelocity.X = -10;
+    }
+  },
+  onUpdate: (stateFrame, player, ia) => {
+    if (stateFrame < 3) {
+      AddClampedXImpulseToPlayer(
+        player,
+        15, //player.MaxRunSpeed + 5,
+        ia.LXAxsis * 4
+      );
+    }
+  },
+  onExit: (player) => {},
+  onDefaultInput: () => '',
+} as IState;
 
 export const turnDash = {} as IState;
 
 export const run = {
   name: 'run',
-  onEnter: (player) => {
-    //console.log('enter run');
+  //stateDefaultTransition: 'stopRun',
+  tranisitions: ['grounded-idle'],
+  onEnter: (playe, ia) => {
+    console.log('Entering Run');
   },
   onUpdate: (stateFrame, player, ia) => {
-    if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
-      player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 15, 0));
+    AddClampedXImpulseToPlayer(player, player.MaxRunSpeed, ia.LXAxsis * 5);
+  },
+  onExit: (player) => {},
+  onDefaultInput: (inputAction) => 'grounded-idle',
+} as IState;
+
+export const turnRun = {
+  name: 'turnRun',
+  frameCount: 30,
+  stateDefaultTransition: 'run',
+  tranisitions: ['jumpSquat'],
+  onEnter: (player) => {
+    console.log('Entering turnrun!');
+  },
+  onUpdate: (stateFrame, player, ia) => {
+    if (player.FacingRight) {
+      AddClampedXImpulseToPlayer(player, 0, -1);
+    } else {
+      AddClampedXImpulseToPlayer(player, 0, 1);
     }
   },
-
-  onExit: (p) => {
-    //console.log('Exiting run');
+  onExit: (player) => {
+    player.FacingRight = !player.FacingRight;
   },
 } as IState;
 
-export const turnRun = {} as IState;
-
-export const stopRun = {} as IState;
+export const stopRun = {
+  name: 'stopRun',
+  frameCount: 15,
+  stateDefaultTransition: 'grounded-idle',
+  tranisitions: ['jumpSquat'],
+  onEnter: (player) => {
+    console.log('Entering stopRun');
+  },
+  onUpdate: (frameNumber, player, ia) => {},
+  onExit: (player) => {},
+} as IState;
 
 export const jumpSquat = {
   frameCount: 3,
-  stateDefaultTransition: 'jump',
-  tranisitions: ['jump'],
-  name: 'jumpSquat',
-  onEnter: (player) => {},
+  stateDefaultTransition: 'ground-jump',
+  tranisitions: ['ground-jump'],
+  name: 'grounded-jump',
+  onEnter: (player) => {
+    console.log('Entering jump squat');
+  },
   onUpdate: (stateFrame, player, ia) => {},
   onExit: (player) => {},
 } as IState;
 
-export const jump = {
+export const groundedJump = {
   stateDefaultTransition: 'neutralFall',
   frameCount: 10,
-  name: 'jump',
+  name: 'ground-jump',
   onEnter(player) {
+    console.log('Entering groundjump');
+    player.Grounded = false;
+    player.PlayerVelocity.Y = 0;
+    player.AddVelocity(VectorAllocator(0, -15));
+  },
+  onUpdate: (stateFrame, p, ia) => {},
+} as IState;
+
+export const ariealJump = {
+  stateDefaultTransition: 'neutralFall',
+  frameCount: 10,
+  name: 'ariel-jump',
+  onEnter(player) {
+    console.log('Entering arieljump');
     player.Grounded = false;
     player.PlayerVelocity.Y = 0;
     player.AddVelocity(VectorAllocator(0, -15));
@@ -135,15 +243,17 @@ export const ledgeTitor = {} as IState;
 
 export const ledgeGrab = {
   name: 'ledgeGrab',
-  onEnter(player) {
+  tranisitions: ['ledgeGrab', 'jump'],
+  onEnter(player, ia) {
     player.LedgeGrab = true;
     player.PlayerVelocity.X = 0;
     player.PlayerVelocity.Y = 0;
+    console.log('Entering ledge grab');
   },
   onUpdate(stateFrame, player, inputAction) {
     //player.PlayerVelocity.Y = 0;
   },
-  onExit(player, inputAction) {
+  onExit(player) {
     player.LedgeGrab = false;
   },
 } as IState;

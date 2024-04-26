@@ -2,6 +2,7 @@ import { Player } from '../Player/Player';
 import { IntersectsPolygons } from '../../Physics/Collisions';
 import Stage from '../../classes/Stage';
 import { StateMachine } from '../State/StateMachine';
+import { InputAction } from '../../input/GamePadInput';
 export class LedgeDetectionSystem {
   Players: Array<Player>;
   Stage: Stage;
@@ -36,7 +37,9 @@ export class LedgeDetectionSystem {
             left
           );
           if (rightResult.collision && !leftResult.collision) {
-            this.SMArray[i].ForceState('ledgeGrab', 0);
+            let inputAction = {} as InputAction;
+            inputAction.Action = 'ledgeGrab';
+            this.SMArray[i].ForceState(0, inputAction);
             p.UpdatePlayerPosition(
               left[0].X,
               left[0].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)
@@ -55,7 +58,9 @@ export class LedgeDetectionSystem {
           );
 
           if (leftResult.collision && !rightResult.collision) {
-            this.SMArray[i].ForceState('ledgeGrab', 0);
+            let inputAction = {} as InputAction;
+            inputAction.Action = 'ledgeGrab';
+            this.SMArray[i].ForceState(0, inputAction);
             p.UpdatePlayerPosition(
               right[1].X,
               right[1].Y + (ecbPoints.bottom.Y - ecbPoints.top.Y)

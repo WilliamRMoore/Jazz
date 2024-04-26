@@ -20,7 +20,9 @@ export class StageCollisionSystem {
     this.players = players;
     this.stage = stage;
   }
-
+  //TODO: Move colision resolution out to the main loop, just return a colision result.
+  //Need to force state in to lang state possible with ground detection.
+  //Will be easier in the main loop.
   public handle() {
     const sverts = this.stage.GetVerticies();
 

@@ -183,7 +183,7 @@ function transcribeInput(input: GamePadInput) {
     }
 
     if (LXAxis != 0) {
-      inputAction.Action = Actions.sideAttcak;
+      inputAction.Action = Actions.sideAttack;
       return inputAction;
     }
     inputAction.Action = Actions.attack;
@@ -193,7 +193,7 @@ function transcribeInput(input: GamePadInput) {
   // Right stick was used
   // Right stick more horizontal than vertical
   if (Math.abs(RXAxis) > Math.abs(RYAxis)) {
-    inputAction.Action = Actions.sideAttcak;
+    inputAction.Action = Actions.sideAttack;
     return inputAction;
   }
 
@@ -227,12 +227,16 @@ function transcribeInput(input: GamePadInput) {
   }
 
   if (Math.abs(input.LXAxis) > 0) {
-    inputAction.Action = Actions.run;
+    if (Math.abs(input.LXAxis) < 0.6) {
+      inputAction.Action = Actions.move;
+      return inputAction;
+    }
+    inputAction.Action = Actions.moveFast;
     return inputAction;
   }
 
   // Nothing was pressed
-  inputAction.Action = Actions.idle;
+  inputAction.Action = Actions.default;
   return inputAction;
 }
 
@@ -268,11 +272,16 @@ interface IActions {
   special: string;
   upAttack: string;
   downAttack: string;
-  sideAttcak: string;
+  sideAttack: string;
   attack: string;
-  idle: string;
-  run: string;
+  default: string;
+  move: string;
+  moveFast: string;
+  //run: string;
+  // dash: string;
+  // walk: string;
   jump: string;
+  //jumpSquat: string;
   grab: string;
   guard: string;
 }
@@ -284,10 +293,11 @@ const Actions: IActions = {
   special: 'special',
   upAttack: 'up_attack',
   downAttack: 'down_attack',
-  sideAttcak: 'side_attack',
+  sideAttack: 'side_attack',
   attack: 'attack',
-  idle: 'idle',
-  run: 'run',
+  default: 'default',
+  move: 'move',
+  moveFast: 'moveFast',
   jump: 'jump',
   grab: 'grab',
   guard: 'guard',
@@ -313,31 +323,73 @@ export function HandleInput(
   input: InputAction,
   SM: StateMachine
 ) {
-  if (!player.LedgeGrab) {
-    if (input.Action == 'run') {
-      if (player.Grounded) {
-        SM.SetState('walk');
-      }
-      if (!player.Grounded) {
-        SM.SetState('neutralFall');
-      }
-    } else if (input.Action == 'jump') {
-      //debugger;
-      player.CurrentStateMachineState == 'jump'
-        ? SM.SetState('jump')
-        : player.Grounded
-        ? SM.SetState('jumpSquat')
-        : SM.SetState('jump');
-    } else {
-      if (player.Grounded) {
-        SM.SetState('idle');
-      } else {
-        SM.SetState('neutralFall');
-      }
-    }
-  } else {
-    if (input.Action == 'jump') {
-      SM.SetState('jump');
-    }
+  // if (player.Grounded) {
+  //   let a = handleGroundedPlayerInput(input);
+  //   SM.SetState(a);
+  //   return;
+  // }
+  //TODO: We need a transition state from idle to walk, idleToWalk, that can transisition to run.
+  //This approach can solve issue where we need the player to "hold" an action, as well.
+  //idle -> attackCharge -> attack attack charge can default to smash
+  // Might need to name the final state something different than the input action, can't request smash on charge if smash is a valid transition for charge.
+  if (input.Action == 'default') {
+    SM.SetState(input);
+    return;
   }
+
+  if (player.Grounded) {
+    input.Action = 'grounded-' + input.Action;
+    SM.SetState(input);
+  } else {
+    input.Action = 'ariel-' + input.Action;
+    SM.SetState(input);
+  }
+  return;
+  // if (!player.LedgeGrab) {
+  //   if (input.Action == 'run') {
+  //     if (player.Grounded) {
+  //       SM.SetState('walk');
+  //     }
+  //     if (!player.Grounded) {
+  //       SM.SetState('neutralFall');
+  //     }
+  //   } else if (input.Action == 'jump') {
+  //     //debugger;
+  //     player.CurrentStateMachineState == 'jump'
+  //       ? SM.SetState('jump')
+  //       : player.Grounded
+  //       ? SM.SetState('jumpSquat')
+  //       : SM.SetState('jump');
+  //   } else {
+  //     if (player.Grounded) {
+  //       SM.SetState('idle');
+  //     } else {
+  //       SM.SetState('neutralFall');
+  //     }
+  //   }
+  // } else {
+  //   if (input.Action == 'jump') {
+  //     SM.SetState('jump');
+  //   }
+  // }
 }
+
+// function handleGroundedPlayerInput(ia: InputAction): string {
+//   switch (ia.Action) {
+//     case Actions.jump:
+//       return Actions.jumpSquat;
+//     default:
+//       return ia.Action;
+//   }
+// }
+
+// function HandlerArielPlayerInput(ia: InputAction) {
+//   switch (ia.Action) {
+//     case Actions.dash:
+//       return 'neutralFall';
+//     case Actions.walk:
+//       return 'neutralFall';
+//     default:
+//       return ia.Action;
+//   }
+// }
