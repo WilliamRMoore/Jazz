@@ -15,7 +15,7 @@ export class SyncroManager<Type> {
   private readonly FCM: IFrameComparisonManager<Type>;
   private readonly RBM: IRollBackManager<Type>;
   private readonly guessToRealCopy: (i: Type, frame: number) => Type;
-  private readonly DefaultInputFactory: (
+  private readonly defaultInputFactory: (
     frameAdvantage: number,
     frame: number
   ) => Type;
@@ -33,7 +33,7 @@ export class SyncroManager<Type> {
     this.FCM = fcm;
     this.RBM = rbm;
     this.guessToRealCopy = guessToRealCopy;
-    this.DefaultInputFactory = defaultInputFactory;
+    this.defaultInputFactory = defaultInputFactory;
   }
 
   public GetLocalFrameNumber(): number {
@@ -78,7 +78,7 @@ export class SyncroManager<Type> {
       return copy;
     }
 
-    return this.DefaultInputFactory(0, frame);
+    return this.defaultInputFactory(0, frame);
   }
 
   public GetRemoteInputForRollBack(frame: number) {

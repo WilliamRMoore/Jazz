@@ -1,22 +1,18 @@
 export class FrameStorageManager implements IFrameStorageManager {
   private readonly INTIAL_FRAME = 0;
 
-  private syncedFrame = {
-    PreviousSyncFrame: 0,
-    CurrentSyncFrame: 0,
-  } as SyncedFrames;
+  private syncedFrame = this.INTIAL_FRAME;
 
   public LocalFrame = this.INTIAL_FRAME;
   public RemoteFrame = this.INTIAL_FRAME;
   public RemoteFrameAdvantage = 0;
 
-  public GetSyncFrames(): SyncedFrames {
+  public GetSyncFrame(): number {
     return this.syncedFrame;
   }
 
   public SetCurrentSyncFrame(syncFrame: number) {
-    this.syncedFrame.PreviousSyncFrame = this.syncedFrame.CurrentSyncFrame;
-    this.syncedFrame.CurrentSyncFrame = syncFrame;
+    this.syncedFrame = syncFrame;
   }
 }
 
@@ -26,6 +22,6 @@ type SyncedFrames = {
 };
 
 export interface IFrameStorageManager {
-  GetSyncFrames(): SyncedFrames;
+  GetSyncFrame(): number;
   SetCurrentSyncFrame(syncFrame: number): void;
 }

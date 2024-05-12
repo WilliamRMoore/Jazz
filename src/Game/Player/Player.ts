@@ -6,6 +6,7 @@ import {
   LedgeDetectorData,
   PlayerData,
 } from '../GameState/Clone';
+import IState from '../State/State';
 
 export class Player {
   Grounded: boolean = false;
@@ -30,7 +31,7 @@ export class Player {
   AirSpeedInpulseLimit: number;
   FastFallSpeed: number;
   FallSpeed: number;
-  CurrentStateMachineState: string = '';
+  CurrentStateMachineState: IState;
   CurrentStateMachineStateFrame: number = 0;
 
   constructor(

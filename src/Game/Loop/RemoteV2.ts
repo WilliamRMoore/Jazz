@@ -211,6 +211,7 @@ function RemoteLogic(lctx: loopCtx) {
 
     rollBack(syncFrame, frameNumber, lctx);
   }
+
   if (!lctx.SyncMan.ShouldStall()) {
     //Execute Loop Normally
     const localPlayer = getLocalPlayer(lctx);
@@ -258,7 +259,6 @@ function RemoteLogic(lctx: loopCtx) {
       'frameCounter'
     )!.innerHTML = `<p>${frameNumber}</p>`;
   } else {
-    // console.log(lctx.SyncMan.GetCurrentSyncFrame());
     console.log('Stalling');
   }
 }
@@ -266,7 +266,7 @@ function RemoteLogic(lctx: loopCtx) {
 function rollBack(from: number, to: number, lctx: loopCtx) {
   const localPlayer = getLocalPlayer(lctx);
   const localSM = getLocalSM(lctx);
-  const remotePlayer = getRemotePlayer(lctx);
+  //const remotePlayer = getRemotePlayer(lctx);
   const remoteSM = getRemoteSM(lctx);
   lctx.PSHM.SetPlayerStateToFrame(from, getLocalPlayerIndex(lctx));
   lctx.PSHM.SetPlayerStateToFrame(from, getRemotePlayerIndex(lctx));
@@ -339,30 +339,4 @@ function updatePlayersPreviousePosition(playersArr: Array<Player>) {
     p.PreviousPlayerPosition.X = p.PlayerPosition.X;
     p.PreviousPlayerPosition.Y = p.PlayerPosition.Y;
   }
-}
-
-function actionHeldFromLastFrameLocal(
-  ISM: InputStorageManager<InputActionPacket<InputAction>>,
-  frameNumber: number
-): boolean {
-  if (frameNumber === 0) {
-    return false;
-  }
-  let now = ISM.GetLocalInputForFrame(frameNumber);
-  let before = ISM.GetLocalInputForFrame(frameNumber--);
-
-  return now.input.Action == before.input.Action;
-}
-
-function actionHeldFromLastFrameRemote(
-  ISM: InputStorageManager<InputActionPacket<InputAction>>,
-  frameNumber: number
-): boolean {
-  if (frameNumber === 0) {
-    return false;
-  }
-  // let now = ISM.GetRemoteInputForFrame(frameNumber);
-  // let before = ISM.GetRemoteInputForFrame(frameNumber--);
-  // return now.input.Action == before.input.Action;
-  return false;
 }

@@ -26,7 +26,10 @@ export class LedgeDetectionSystem {
       const p = this.Players[i];
       const ecbPoints = p.ECB.GetPoints();
 
+      //If we aren't grounded, and if we are moving down (falling in the air)
+      //We can only grab ledges when airborne and falling down.
       if (!p.Grounded && p.PlayerVelocity.Y > 0) {
+        //if we are facing right, we shouldn't be able to grab the right hand ledge, We can only grab ledges we are facing.
         if (p.FacingRight) {
           let rightResult = IntersectsPolygons(
             p.LedgeDetector.GetRightSideDetector(),
@@ -46,7 +49,7 @@ export class LedgeDetectionSystem {
             );
           }
         }
-
+        //if we are facing left, we shouldn't be able to grab the left hand ledge, We can only grab ledges we are facing.
         if (!p.FacingRight) {
           let leftResult = IntersectsPolygons(
             p.LedgeDetector.GetLeftSideDetector(),

@@ -1,6 +1,7 @@
 import { FlatVec } from '../../Physics/FlatVec';
 import { ECB, ECBPoints } from '../ECB';
 import { LedgeDetector, LedgeDetectorBox, Player } from '../Player/Player';
+import IState from '../State/State';
 
 export function cloneFlatVec(source: FlatVec) {
   return new FlatVec(source.X, source.Y);
@@ -66,7 +67,7 @@ export function clonePlayerData(source: Player) {
     ECBData: cloneECBData(source.ECB),
     LedgeDetectorData: cloneLedgeDetectorData(source.LedgeDetector),
     FacingRight: source.FacingRight,
-    CurrentStateMachineState: String(source.CurrentStateMachineState),
+    CurrentStateMachineState: source.CurrentStateMachineState,
     CurrentStateMachineStateFrame: source.CurrentStateMachineStateFrame,
   } as PlayerData;
 }
@@ -80,7 +81,7 @@ export type PlayerData = {
   ECBData: ECBData;
   LedgeDetectorData: LedgeDetectorData;
   FacingRight: boolean;
-  CurrentStateMachineState: string;
+  CurrentStateMachineState: IState;
   CurrentStateMachineStateFrame: number;
 };
 

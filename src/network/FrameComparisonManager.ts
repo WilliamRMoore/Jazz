@@ -24,7 +24,7 @@ export class FrameComparisonManager<Type>
         : this.FrameStorageManager.RemoteFrame;
 
     let syncFrame = this.InputStorageManager.ReturnFirstWrongGuess(
-      this.FrameStorageManager.GetSyncFrames().CurrentSyncFrame + 1,
+      this.FrameStorageManager.GetSyncFrame() + 1,
       finalFrame
     );
 
@@ -35,12 +35,8 @@ export class FrameComparisonManager<Type>
     this.FrameStorageManager.SetCurrentSyncFrame(syncFrame);
   }
 
-  GetPreviousSyncFrame(): number {
-    return this.FrameStorageManager.GetSyncFrames().PreviousSyncFrame;
-  }
-
   GetCurrentSyncFrame(): number {
-    return this.FrameStorageManager.GetSyncFrames().CurrentSyncFrame;
+    return this.FrameStorageManager.GetSyncFrame();
   }
 
   IsWithinFrameAdvatnage(): boolean {
@@ -55,15 +51,6 @@ export class FrameComparisonManager<Type>
 
   ShouldStall(): boolean {
     return !this.IsWithinFrameAdvatnage();
-    // let within = this.IsWithinFrameAdvatnage();
-    // if (!within) {
-    //   return (
-    //     this.FrameStorageManager.RemoteFrame >
-    //     this.FrameStorageManager.LocalFrame
-    //   );
-    // }
-
-    // return false;
   }
 
   GetFrameAdvantageDifference(): number {
@@ -82,7 +69,7 @@ export class FrameComparisonManager<Type>
 
 export interface IFrameComparisonManager<Type> {
   UpdateNextSyncFrame(): void;
-  GetPreviousSyncFrame(): number;
+  // GetPreviousSyncFrame(): number;
   GetCurrentSyncFrame(): number;
   IsWithinFrameAdvatnage(): boolean;
   GetFrameAdvantageDifference(): number;

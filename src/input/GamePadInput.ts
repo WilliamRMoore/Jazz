@@ -241,7 +241,7 @@ function transcribeInput(input: GamePadInput) {
 }
 
 function setDeadzone(v: number) {
-  const DEADZONE = 0.5;
+  const DEADZONE = 0.7;
 
   if (Math.abs(v) < DEADZONE) {
     v = 0;
@@ -277,11 +277,7 @@ interface IActions {
   default: string;
   move: string;
   moveFast: string;
-  //run: string;
-  // dash: string;
-  // walk: string;
   jump: string;
-  //jumpSquat: string;
   grab: string;
   guard: string;
 }
@@ -332,18 +328,19 @@ export function HandleInput(
   //This approach can solve issue where we need the player to "hold" an action, as well.
   //idle -> attackCharge -> attack attack charge can default to smash
   // Might need to name the final state something different than the input action, can't request smash on charge if smash is a valid transition for charge.
-  if (input.Action == 'default') {
-    SM.SetState(input);
-    return;
-  }
+  // if (input.Action == 'default') {
+  //   SM.SetState(input);
+  //   return;
+  // }
 
-  if (player.Grounded) {
-    input.Action = 'grounded-' + input.Action;
-    SM.SetState(input);
-  } else {
-    input.Action = 'ariel-' + input.Action;
-    SM.SetState(input);
-  }
+  // if (player.Grounded) {
+  //   input.Action = 'grounded-' + input.Action;
+  //   SM.SetState(input);
+  // } else {
+  //   input.Action = 'ariel-' + input.Action;
+  //   SM.SetState(input);
+  // }
+  SM.SetState(input);
   return;
   // if (!player.LedgeGrab) {
   //   if (input.Action == 'run') {

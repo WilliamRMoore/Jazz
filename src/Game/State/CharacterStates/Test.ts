@@ -1,52 +1,39 @@
 import { AddClampedXImpulseToPlayer, Player } from '../../Player/Player';
 import { InputAction } from '../../../input/GamePadInput';
-import IState, { PState } from '../State';
+import IState from '../State';
 import { VectorAllocator } from '../../../Physics/FlatVec';
 
-export const idle2 = new PState('idle');
-idle2.SetOnEnter((p: Player) => console.log('Entering idle'));
-
-export const walk2 = new PState('walk');
-walk2.SetWhiteList([idle2]);
-
-export const startWalk2 = new PState('startWalk');
-startWalk2.SetFrameCount(3);
-startWalk2.SetDefaultTransition(walk2);
-startWalk2.SetWhiteList([walk2, idle2]);
-startWalk2.SetGetLegalTranisitions((ps: Array<PState>, action: string) => {
-  if (action == '') {
-    return null;
-  }
-  return null;
-});
+// export const idle = {
+//   name: 'grounded-idle',
+//   tranisitions: ['grounded-jump', 'grounded-move', 'grounded-moveFast'],
+//   onEnter: (player, ia) => {
+//     console.log('Entering idle');
+//   },
+//   onUpdate: (stateFrame, player, stateMachine) => {},
+//   onExit: (p: Player) => {},
+// } as IState;
 
 export const idle = {
-  name: 'grounded-idle',
-  tranisitions: ['grounded-jump', 'grounded-move', 'grounded-moveFast'],
-  onEnter: (player, ia) => {
-    console.log('Entering idle');
-  },
-  onUpdate: (stateFrame, player, stateMachine) => {},
-  onExit: (p: Player) => {},
-} as IState;
+  name: 'idle',
+};
 
-export const neutralFall = {
-  name: 'neutralFall',
-  tranisitions: ['ariel-jump'],
-  onEnter: (player, ia) => {
-    console.log('entering Fall');
-  },
-  onUpdate: (stateFrame, player, ia) => {
-    // if (Math.abs(player.PlayerVelocity.X) < 18) {
-    //   player.AddVelocity(VectorAllocator(ia!.LXAxsis * 5, 0));
-    // }
-    AddClampedXImpulseToPlayer(
-      player,
-      player.AirSpeedInpulseLimit,
-      ia.LXAxsis * 5
-    );
-  },
-} as IState;
+// export const neutralFall = {
+//   name: 'neutralFall',
+//   tranisitions: ['ariel-jump'],
+//   onEnter: (player, ia) => {
+//     console.log('entering Fall');
+//   },
+//   onUpdate: (stateFrame, player, ia) => {
+//     // if (Math.abs(player.PlayerVelocity.X) < 18) {
+//     //   player.AddVelocity(VectorAllocator(ia!.LXAxsis * 5, 0));
+//     // }
+//     AddClampedXImpulseToPlayer(
+//       player,
+//       player.AirSpeedInpulseLimit,
+//       ia.LXAxsis * 5
+//     );
+//   },
+// } as IState;
 
 export const walk = {
   name: 'walk',
@@ -96,7 +83,7 @@ export const turnWalk = {
 } as IState;
 
 export const dash = {
-  frameCount: 5,
+  frameCount: 12,
   name: 'grounded-moveFast',
   stateDefaultTransition: 'run',
   tranisitions: ['run', 'grounded-moveFast'],
@@ -111,7 +98,7 @@ export const dash = {
     }
   },
   onUpdate: (stateFrame, player, ia) => {
-    if (stateFrame < 3) {
+    if (stateFrame < 4) {
       AddClampedXImpulseToPlayer(
         player,
         15, //player.MaxRunSpeed + 5,
