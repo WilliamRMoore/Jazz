@@ -1,3 +1,5 @@
+import { FlatVec, VectorAllocator } from './Physics/FlatVec';
+
 export function HashCode(obj: any): number {
   const j = JSON.stringify(obj);
 
@@ -20,4 +22,10 @@ export function clamp(val: number, min: number, max: number): number {
 
 export function randomNumber(min: number, max: number): number {
   return Math.round(Math.random() * (max - min) + min);
+}
+
+export function FillArrayWithFlatVec(fvArr: FlatVec[]): void {
+  for (let index = 0; index < fvArr.length; index++) {
+    fvArr[index] = VectorAllocator();
+  }
 }
