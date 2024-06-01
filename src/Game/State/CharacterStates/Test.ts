@@ -23,7 +23,7 @@ export const neutralFall = {
     AddClampedXImpulseToPlayer(
       player,
       player.AirSpeedInpulseLimit,
-      ia.LXAxsis * 5
+      ia.LXAxis * 5
     );
   },
 } as IState;
@@ -34,13 +34,13 @@ export const walk = {
     //console.log('Entering walk');
   },
   onUpdate: (dt, player, ia) => {
-    if (ia.LXAxsis > 0) {
+    if (ia.LXAxis > 0) {
       player.FacingRight = true;
     }
-    if (ia.LXAxsis < 0) {
+    if (ia.LXAxis < 0) {
       player.FacingRight = false;
     }
-    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxsis * 5);
+    AddClampedXImpulseToPlayer(player, player.MaxWalkSpeed, ia.LXAxis * 5);
   },
 } as IState;
 
@@ -66,7 +66,7 @@ export const run = {
   },
   onUpdate: (stateFrame, player, ia) => {
     if (Math.abs(player.PlayerVelocity.X) <= player.MaxWalkSpeed) {
-      player.AddVelocity(VectorAllocator(ia?.LXAxsis! * 15, 0));
+      player.AddVelocity(VectorAllocator(ia?.LXAxis! * 15, 0));
     }
   },
 

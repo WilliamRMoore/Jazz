@@ -49,19 +49,19 @@ export type InputActionPacket<T> = {
 };
 export type InputAction = {
   Action: string;
-  LXAxsis: number;
-  LYAxsis: number;
+  LXAxis: number;
+  LYAxis: number;
   RXAxis: number;
-  RYAxsis: number;
+  RYAxis: number;
 };
 
 export function NewInputAction() {
   return {
     Action: '',
-    LXAxsis: 0,
-    LYAxsis: 0,
+    LXAxis: 0,
+    LYAxis: 0,
     RXAxis: 0,
-    RYAxsis: 0,
+    RYAxis: 0,
   } as InputAction;
 }
 
@@ -69,9 +69,9 @@ const defaultInputFactory = (frameAdvantage: number, frame: number) => {
   let def = {
     input: {
       Action: 'idle',
-      LXAxsis: 0,
-      LYAxsis: 0,
-      RYAxsis: 0,
+      LXAxis: 0,
+      LYAxis: 0,
+      RYAxis: 0,
       RXAxis: 0,
     },
     frame,
@@ -143,10 +143,10 @@ function transcribeInput(input: GamePadInput) {
   const RYAxis = input.RYAxis;
   const inputAction = NewInputAction();
 
-  inputAction.LXAxsis = LXAxis;
-  inputAction.LYAxsis = LYAxis;
+  inputAction.LXAxis = LXAxis;
+  inputAction.LYAxis = LYAxis;
   inputAction.RXAxis = RXAxis;
-  inputAction.RYAxsis = RYAxis;
+  inputAction.RYAxis = RYAxis;
 
   // special was pressed
   if (input.special) {
@@ -298,10 +298,10 @@ const InvalidGuessSpec = (
   real: InputActionPacket<InputAction>
 ) => {
   return guessed.input.Action == real.input.Action &&
-    guessed.input.LXAxsis == real.input.LXAxsis &&
-    guessed.input.LYAxsis == real.input.LYAxsis &&
+    guessed.input.LXAxis == real.input.LXAxis &&
+    guessed.input.LYAxis == real.input.LYAxis &&
     guessed.input.RXAxis == real.input.RXAxis &&
-    guessed.input.RYAxsis == real.input.RYAxsis
+    guessed.input.RYAxis == real.input.RYAxis
     ? false
     : true;
 };

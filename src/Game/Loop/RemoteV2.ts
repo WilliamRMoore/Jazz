@@ -55,9 +55,9 @@ export function initLoop() {
       let def = {
         input: {
           Action: 'idle',
-          LXAxsis: 0,
-          LYAxsis: 0,
-          RYAxsis: 0,
+          LXAxis: 0,
+          LYAxis: 0,
+          RYAxis: 0,
           RXAxis: 0,
         },
         frame,

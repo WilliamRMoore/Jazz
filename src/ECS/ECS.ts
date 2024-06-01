@@ -35,11 +35,13 @@ export abstract class Component {
 
 export class Entity {
   public readonly ID: number;
+  public readonly Components = new Map<string, Component>();
   constructor(id: number) {
     this.ID = id;
   }
 
   Attach(comp: Component) {
+    this.Components.set(comp.CompName, comp);
     comp.Attach(this);
   }
 }
