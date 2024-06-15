@@ -5,16 +5,18 @@ export class GroundedComponent extends Component {
   public readonly CompName = GroundedComponent.CompName;
   EntId: number = -1;
   private Grounded: boolean = false;
+  public LastFrameGrounded: number = -1;
 
   Attach(ent: Entity): void {
     this.EntId = ent.ID;
   }
 
-  Ground() {
+  Ground(frameNumber: number) {
+    this.LastFrameGrounded = frameNumber;
     this.Grounded = true;
   }
 
-  Ungroung() {
+  Unground() {
     this.Grounded = false;
   }
 

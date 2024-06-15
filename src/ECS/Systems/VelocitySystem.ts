@@ -1,31 +1,36 @@
-import { PositionComponent } from '../Components/Actor/Position';
-import { VelocityComponent } from '../Components/Actor/Velocity';
 import {
-  ComponentCollection,
-  DTO,
-  ECS,
-  EcsExtension,
-  EntiyCollection,
-} from '../ECS';
+  PositionComponent,
+  UnboxPositionComponent,
+} from '../Components/Actor/Position';
+import {
+  UnboxVelocityComponent,
+  VelocityComponent,
+} from '../Components/Actor/Velocity';
+import { ComponentCollection, DTO, ECS, Entity, EntityRegistry } from '../ECS';
 
 export class VelocityECSSystem {
-  ECS: EntiyCollection;
-  Extensions: VelocityECSExtension;
+  ECS: EntityRegistry;
+  private dto: DTO<vpdto>;
   constructor(ecs: ECS) {
-    let ex = new VelocityECSExtension();
-    ex.Visit(ecs);
-    this.Extensions = ex;
     this.ECS = ecs.EntityRegistry;
+    this.dto = new DTO<vpdto>({ pc: null, vc: null }, (d) => {
+      d.pc = null;
+      d.vc = null;
+    });
   }
 
-  RunAll() {
-    for (let [eid, comps] of this.ECS) {
-      let dto = this.Extensions.GetPosAndVel(comps);
-      let res = dto.Data;
+  Run() {
+    let eid: number;
+    let ent: Entity;
+    let indexes = this.ECS.keys();
 
-      if (res.pc && res.vc) {
-        res.pc.Pos.X += res.vc.Vel.X;
-        res.pc.Pos.Y += res.vc.Vel.Y;
+    for (eid of indexes) {
+      ent = this.ECS.get(eid)!;
+      let dto = UnboxPositionAndVelocity(ent.Components, this.dto);
+
+      if (dto.Data.pc && dto.Data.vc) {
+        dto.Data.pc.Pos.X += dto.Data.vc.Vel.X;
+        dto.Data.pc.Pos.Y += dto.Data.vc.Vel.Y;
       }
     }
   }
@@ -36,28 +41,13 @@ export type vpdto = {
   vc: VelocityComponent | null;
 };
 
-export class VelocityECSExtension extends EcsExtension {
-  private dto: DTO<vpdto>;
-  constructor() {
-    super();
-    this.dto = new DTO<vpdto>({ pc: null, vc: null }, (d) => {
-      d.pc = null;
-      d.vc = null;
-    });
-  }
+function UnboxPositionAndVelocity(
+  comps: ComponentCollection,
+  dto: DTO<vpdto>
+): DTO<vpdto> {
+  dto.clear();
+  dto.Data.pc = UnboxPositionComponent(comps) ?? null;
+  dto.Data.vc = UnboxVelocityComponent(comps) ?? null;
 
-  GetPosAndVel(comps: ComponentCollection): DTO<vpdto> {
-    this.dto.clear();
-    this.dto.Data.pc = this.UnboxPos(comps);
-    this.dto.Data.vc = this.UnboxVel(comps);
-    return this.dto;
-  }
-
-  UnboxPos(comps: ComponentCollection): PositionComponent {
-    return comps.get(PositionComponent.CompName) as PositionComponent;
-  }
-
-  UnboxVel(comps: ComponentCollection) {
-    return comps.get(VelocityComponent.CompName) as VelocityComponent;
-  }
+  return dto;
 }

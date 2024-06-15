@@ -4,7 +4,7 @@ import { Component, ComponentCollection, Entity } from '../../ECS';
 export class PositionComponent extends Component {
   static CompName = 'PosComp';
   public readonly CompName = PositionComponent.CompName;
-  EntId = 1;
+  EntId = -1;
   public Pos: FlatVec;
 
   constructor() {

@@ -39,10 +39,10 @@ beforeEach(() => {
 
   ISM = new InputStorageManager<InputActionPacket<InputAction>>((i1, i2) => {
     return i1.input.Action == i2.input.Action &&
-      i1.input.LXAxsis == i2.input.LXAxsis &&
-      i1.input.LYAxsis == i2.input.LYAxsis &&
+      i1.input.LXAxis == i2.input.LXAxis &&
+      i1.input.LYAxis == i2.input.LYAxis &&
       i1.input.RXAxis == i2.input.RXAxis &&
-      i1.input.RYAxsis == i2.input.RYAxsis
+      i1.input.RYAxis == i2.input.RYAxis
       ? false
       : true;
   });
@@ -59,7 +59,7 @@ beforeEach(() => {
 test.skip('Walk', () => {
   ISM.StoreLocalInput(
     {
-      input: { Action: 'walk', RXAxis: 0, RYAxsis: 0, LYAxsis: 0, LXAxsis: 0 },
+      input: { Action: 'walk', RXAxis: 0, RYAxis: 0, LYAxis: 0, LXAxis: 0 },
       frame: 1,
       frameAdvantage: 0,
       hash: '',
@@ -80,10 +80,10 @@ test('Walk to Run', () => {
     {
       input: {
         Action: 'walk',
-        LXAxsis: 1.0,
-        LYAxsis: 0.0,
+        LXAxis: 1.0,
+        LYAxis: 0.0,
         RXAxis: 0.0,
-        RYAxsis: 0.0,
+        RYAxis: 0.0,
       },
       frame: 1,
       frameAdvantage: 0,
@@ -101,10 +101,10 @@ test('Walk to Run', () => {
     {
       input: {
         Action: 'run',
-        LXAxsis: 4.0,
-        LYAxsis: 0.0,
+        LXAxis: 4.0,
+        LYAxis: 0.0,
         RXAxis: 0.0,
-        RYAxsis: 0.0,
+        RYAxis: 0.0,
       },
       frame: 2,
       frameAdvantage: 0,
@@ -122,10 +122,10 @@ test('Walk to Run', () => {
     {
       input: {
         Action: 'run',
-        LXAxsis: 4.0,
-        LYAxsis: 0.0,
+        LXAxis: 4.0,
+        LYAxis: 0.0,
         RXAxis: 0.0,
-        RYAxsis: 0.0,
+        RYAxis: 0.0,
       },
       frame: 3,
       frameAdvantage: 0,

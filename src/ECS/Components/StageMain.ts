@@ -78,3 +78,11 @@ export function UnboxStageMainComponent(
     | StageMainComponent
     | undefined;
 }
+
+export class UnboxxedStage {
+  public MainStage: StageMainComponent;
+
+  constructor(ent: Entity) {
+    this.MainStage = UnboxStageMainComponent(ent.Components)!;
+  }
+}

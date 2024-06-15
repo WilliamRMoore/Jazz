@@ -47,27 +47,22 @@ export class Entity {
 }
 
 export type ComponentCollection = Map<string, Component>;
-export type EntiyCollection = Map<number, ComponentCollection>;
+export type EntityRegistry = Map<number, Entity>;
 
 export class ECS extends Vistable {
-  public EntityRegistry: EntiyCollection;
+  public EntityRegistry: EntityRegistry;
   private currentId: number;
 
   constructor() {
     super();
     this.currentId = 0;
-    this.EntityRegistry = new Map<number, Map<string, Component>>();
+    this.EntityRegistry = new Map<number, Entity>();
   }
 
   CreateEntity(): Entity {
     let newEnt = new Entity(this.GetNextId());
-    this.EntityRegistry.set(newEnt.ID, new Map<string, Component>());
+    this.EntityRegistry.set(newEnt.ID, newEnt);
     return newEnt;
-  }
-
-  RegisterComponent(e: Entity, c: Component) {
-    e.Attach(c);
-    this.EntityRegistry.get(e.ID)!.set(c.CompName, c);
   }
 
   Accept(visitor: EcsExtension): void {

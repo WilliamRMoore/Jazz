@@ -1,32 +1,19 @@
-import {
-  GravityComponent,
-  UnboxGravityComponent,
-} from '../Components/Actor/Gravity';
-import {
-  ComponentCollection,
-  DTO,
-  ECS,
-  EcsExtension,
-  EntiyCollection,
-} from '../ECS';
-import { VelocityECSExtension } from './VelocitySystem';
-
+import { UnboxGravityComponent } from '../Components/Actor/Gravity';
+import { UnboxVelocityComponent } from '../Components/Actor/Velocity';
+import { ECS, EntityRegistry } from '../ECS';
 export class GravitySystem {
-  ECS: EntiyCollection;
-  VelExt: VelocityECSExtension;
+  EntityRegistry: EntityRegistry;
   private gravity: number = 0.5;
 
   constructor(ecs: ECS) {
-    this.ECS = ecs.EntityRegistry;
-    this.VelExt = new VelocityECSExtension();
-    this.VelExt.Visit(ecs);
+    this.EntityRegistry = ecs.EntityRegistry;
   }
 
   RunAll() {
-    for (let [eid, comps] of this.ECS) {
-      let grav = UnboxGravityComponent(comps);
+    for (let [eid, ent] of this.EntityRegistry) {
+      let grav = UnboxGravityComponent(ent.Components);
       if (grav) {
-        let vc = this.VelExt.UnboxVel(comps);
+        let vc = UnboxVelocityComponent(ent.Components)!;
         vc.Vel.Y += this.gravity;
       }
     }
