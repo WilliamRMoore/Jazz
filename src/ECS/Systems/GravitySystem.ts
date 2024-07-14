@@ -1,5 +1,10 @@
 import { UnboxGravityComponent } from '../Components/Actor/Gravity';
-import { UnboxVelocityComponent } from '../Components/Actor/Velocity';
+import { UnboxPlayerFlagsComponent } from '../Components/Actor/Player/PlayerStateFlags';
+import { UnboxSpeedsComponent } from '../Components/Actor/Player/Speeds';
+import {
+  UnboxVelocityComponent,
+  VelocityComponent,
+} from '../Components/Actor/Velocity';
 import { ECS, EntityRegistry } from '../ECS';
 export class GravitySystem {
   EntityRegistry: EntityRegistry;
@@ -11,11 +16,43 @@ export class GravitySystem {
 
   RunAll() {
     for (let [eid, ent] of this.EntityRegistry) {
-      let grav = UnboxGravityComponent(ent.Components);
-      if (grav) {
-        let vc = UnboxVelocityComponent(ent.Components)!;
-        vc.Vel.Y += this.gravity;
+      const grav = UnboxGravityComponent(ent.Components);
+      const flags = UnboxPlayerFlagsComponent(ent.Components);
+      const speedInfo = UnboxSpeedsComponent(ent.Components);
+
+      if (grav && flags && speedInfo) {
+        const vc = UnboxVelocityComponent(ent.Components)!;
+
+        if (flags.IsGrounded() || flags.IsInLedgeGrab()) {
+          vc.Vel.Y = 0;
+          continue;
+        }
+
+        AddClampedImpluseToPlayerForGravity(
+          vc,
+          speedInfo.FallSpeed,
+          this.gravity
+        );
+        // vc.Vel.Y += this.gravity;
       }
     }
+  }
+}
+
+function AddClampedImpluseToPlayerForGravity(
+  vc: VelocityComponent,
+  clamp: number,
+  y: number
+) {
+  const upperBound = Math.abs(clamp);
+  const pvy = vc.Vel.Y;
+
+  if (y > 0 && pvy < upperBound) {
+    const test = pvy + y;
+    if (test <= upperBound) {
+      vc.Vel.Y += y;
+      return;
+    }
+    vc.Vel.Y += upperBound - pvy;
   }
 }

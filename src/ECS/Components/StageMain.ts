@@ -69,6 +69,8 @@ export function InitStageManinComponent() {
   );
 
   const stage = new StageMainComponent(stageVecs);
+
+  return stage;
 }
 
 export function UnboxStageMainComponent(
@@ -79,7 +81,7 @@ export function UnboxStageMainComponent(
     | undefined;
 }
 
-export class UnboxxedStage {
+export class UnboxedStage {
   public MainStage: StageMainComponent;
 
   constructor(ent: Entity) {

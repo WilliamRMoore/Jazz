@@ -7,47 +7,72 @@ import {
   VelocityComponent,
 } from '../Components/Actor/Velocity';
 import { ComponentCollection, DTO, ECS, Entity, EntityRegistry } from '../ECS';
+import { UnboxedPlayer } from '../Extensions/ECSBuilderExtensions';
 
-export class VelocityECSSystem {
-  ECS: EntityRegistry;
-  private dto: DTO<vpdto>;
-  constructor(ecs: ECS) {
-    this.ECS = ecs.EntityRegistry;
-    this.dto = new DTO<vpdto>({ pc: null, vc: null }, (d) => {
-      d.pc = null;
-      d.vc = null;
-    });
+export class PlayerVelocityECSSystem {
+  private Players: Array<UnboxedPlayer>;
+  constructor(players: Array<Entity>) {
+    this.Players = new Array<UnboxedPlayer>();
+    players.forEach((p) => this.Players.push(new UnboxedPlayer(p)));
   }
 
-  Run() {
-    let eid: number;
-    let ent: Entity;
-    let indexes = this.ECS.keys();
+  ApplyVelocity() {
+    for (let index = 0; index < this.Players.length; index++) {
+      const player = this.Players[index];
 
-    for (eid of indexes) {
-      ent = this.ECS.get(eid)!;
-      let dto = UnboxPositionAndVelocity(ent.Components, this.dto);
+      const grounded = player.FlagsComp.IsGrounded();
+      const ledgeGrab = player.FlagsComp.IsInLedgeGrab();
+      let pvx = player.VelComp.Vel.X;
+      let pvy = player.VelComp.Vel.Y;
+      const fallSpeed = player.SpeedsComp.FallSpeed;
+      const pgvd = player.SpeedsComp.GroundedVelocityDecay;
+      const pavd = player.SpeedsComp.AerialVelocityDecay;
 
-      if (dto.Data.pc && dto.Data.vc) {
-        dto.Data.pc.Pos.X += dto.Data.vc.Vel.X;
-        dto.Data.pc.Pos.Y += dto.Data.vc.Vel.Y;
+      player.AddToPlayerPosition(pvx, pvy);
+
+      //=================================
+      //Apply velocty delay for next frame
+
+      //if grounded, apply grounded velocity decay.
+      if (grounded || ledgeGrab) {
+        //if we are moving right
+        if (pvx > 0) {
+          pvx -= pgvd;
+        }
+        // if we are moving left
+        if (pvx < 0) {
+          pvx += pgvd;
+        }
       }
+      //if not grounded, or in ledgegrab
+      if (!grounded && !ledgeGrab) {
+        // if going right
+        if (pvx > 0) {
+          pvx -= pavd;
+        }
+        //if going left
+        if (pvx < 0) {
+          pvx += pavd;
+        }
+        // if we are falling faster than our set fallspeed
+        if (pvy > fallSpeed) {
+          pvy -= pavd;
+        }
+        //if we are flying upward
+        if (pvy < 0) {
+          pvy += pavd;
+        }
+      }
+
+      //=================================
+
+      // if we are moving slow enough, just set velocity to 0
+      if (Math.abs(pvx) < 3) {
+        pvx = 0;
+      }
+
+      player.VelComp.Vel.X = pvx;
+      player.VelComp.Vel.Y = pvy;
     }
   }
-}
-
-export type vpdto = {
-  pc: PositionComponent | null;
-  vc: VelocityComponent | null;
-};
-
-function UnboxPositionAndVelocity(
-  comps: ComponentCollection,
-  dto: DTO<vpdto>
-): DTO<vpdto> {
-  dto.clear();
-  dto.Data.pc = UnboxPositionComponent(comps) ?? null;
-  dto.Data.vc = UnboxVelocityComponent(comps) ?? null;
-
-  return dto;
 }

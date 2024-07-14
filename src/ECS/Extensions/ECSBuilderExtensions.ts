@@ -26,7 +26,15 @@ import {
   LedgeDetectorComponent,
   UnboxLedgeDetectorComponent,
 } from '../Components/Actor/Player/LedgeDetector';
-import { SpeedsComponentBuilder } from '../Components/Actor/Player/Speeds';
+import {
+  PlayerFlagsComponent,
+  UnboxPlayerFlagsComponent,
+} from '../Components/Actor/Player/PlayerStateFlags';
+import {
+  SpeedsComponent,
+  SpeedsComponentBuilder,
+  UnboxSpeedsComponent,
+} from '../Components/Actor/Player/Speeds';
 import {
   StageCollisionResultComponent,
   UnboxStageCollisionResultComponent,
@@ -75,27 +83,40 @@ export class UnboxedPlayer {
   public PosComp: PositionComponent;
   public VelComp: VelocityComponent;
   public GravComp: GravityComponent;
-  public DirectionComp: DirectionComponent;
+  public FlagsComp: PlayerFlagsComponent;
   public JumpInfoComp: JumpComponent;
-  public GroundedComp: GroundedComponent;
   public CurrentSateComp: CurrentStateComponent;
   public ECBComp: ECBComponent;
   public LedgeDetectorComp: LedgeDetectorComponent;
   public StageColResComp: StageCollisionResultComponent;
-
+  public SpeedsComp: SpeedsComponent;
   constructor(playerEnt: Entity) {
     this.Id = playerEnt.ID;
     this.PosComp = UnboxPositionComponent(playerEnt.Components)!;
     this.VelComp = UnboxVelocityComponent(playerEnt.Components)!;
     this.GravComp = UnboxGravityComponent(playerEnt.Components)!;
-    this.DirectionComp = UnboxDirectionComponent(playerEnt.Components)!;
+    this.FlagsComp = UnboxPlayerFlagsComponent(playerEnt.Components)!;
     this.JumpInfoComp = UnboxJumpComponent(playerEnt.Components)!;
-    this.GroundedComp = UnboxGroundedComponent(playerEnt.Components)!;
     this.CurrentSateComp = UnboxCurrentStateComponent(playerEnt.Components)!;
     this.ECBComp = UnboxECBComponent(playerEnt.Components)!;
     this.LedgeDetectorComp = UnboxLedgeDetectorComponent(playerEnt.Components)!;
     this.StageColResComp = UnboxStageCollisionResultComponent(
       playerEnt.Components
     )!;
+    this.SpeedsComp = UnboxSpeedsComponent(playerEnt.Components)!;
+  }
+
+  public UpdatePlayerPosition(x: number, y: number) {
+    this.PosComp.Pos.X = x;
+    this.PosComp.Pos.Y = y;
+    this.ECBComp.MoveToPosition(x, y);
+    this.LedgeDetectorComp.MoveTo(x, y);
+  }
+
+  public AddToPlayerPosition(vx: number, vy: number) {
+    this.PosComp.Pos.X += vx;
+    this.PosComp.Pos.Y += vy;
+    this.ECBComp.MoveToPosition(this.PosComp.Pos.X, this.PosComp.Pos.Y);
+    this.LedgeDetectorComp.MoveTo(this.PosComp.Pos.X, this.PosComp.Pos.Y);
   }
 }

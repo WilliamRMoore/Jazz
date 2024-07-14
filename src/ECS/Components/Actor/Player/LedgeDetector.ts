@@ -6,7 +6,7 @@ export class LedgeDetectorComponent extends Component {
   static CompName = 'LedgeGrab';
   public readonly CompName = LedgeDetectorComponent.CompName;
   EntId: number = -1;
-  public InLedgeGrab: boolean = false;
+  //private InLedgeGrab: boolean = false;
   private YOffset: number;
   private Box: LedgeDetectorBox;
   private RightSideBox = new Array<FlatVec>(4);

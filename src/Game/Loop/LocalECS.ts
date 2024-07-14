@@ -1,4 +1,4 @@
-import { ECS } from '../../ECS/ECS';
+import { ECS, Entity } from '../../ECS/ECS';
 import { ECSBuilderExtension } from '../../ECS/Extensions/ECSBuilderExtensions';
 import { InputStorageManager } from '../../input/InputStorageManager';
 import {
@@ -10,6 +10,11 @@ import { FrameStorageManager } from '../../network/FrameStorageManager';
 import { FrameComparisonManager } from '../../network/FrameComparisonManager';
 import { RollBackManager } from '../../network/rollBackManager';
 import { SyncroManager } from '../../network/SyncroManager';
+import { InitStageManinComponent } from '../../ECS/Components/StageMain';
+import { StageCollisionSystem } from '../../ECS/Systems/StageCollisionSystem';
+import { LedgeDetectionSystem } from '../../ECS/Systems/LedgeDetectionSystem';
+import { GravitySystem } from '../../ECS/Systems/GravitySystem';
+import { PlayerVelocityECSSystem } from '../../ECS/Systems/VelocitySystem';
 
 export function initLoop() {
   console.log('init');
@@ -18,54 +23,15 @@ export function initLoop() {
   extension.Visit(ecs);
 
   const playerEnt = extension.BuildDefaultPlayer();
+  const players = new Array<Entity>();
+  players.push(playerEnt);
+  const stageEnt = ecs.CreateEntity();
+  stageEnt.Attach(InitStageManinComponent());
   const ism = new InputStorageManager(InvalidGuessSpec);
   const fsm = new FrameStorageManager();
-  const syncMan = initSynchroManager(
-    fsm,
-    ism,
-    (frameAdvantage, frame) => {
-      let def = {
-        input: {
-          Action: 'idle',
-          LXAxis: 0,
-          LYAxis: 0,
-          RYAxis: 0,
-          RXAxis: 0,
-        },
-        frame,
-        frameAdvantage,
-        hash: '',
-      } as InputActionPacket<InputAction>;
-      return def;
-    },
-    (inputAction: InputActionPacket<InputAction>, frame: number) => {
-      let n = {
-        input: inputAction.input,
-        frame,
-        frameAdvantage: inputAction.frameAdvantage,
-        hash: inputAction.hash,
-      } as InputActionPacket<InputAction>;
-      return n;
-    }
-  );
-}
 
-function initSynchroManager<Type>(
-  fsm: FrameStorageManager,
-  ism: InputStorageManager<Type>,
-  defaultInputFactory: (frameAdvantage: number, frame: number) => Type,
-  guessToRealCopy: (item: Type, frame: number) => Type
-) {
-  const FCM = new FrameComparisonManager(ism, fsm);
-  const RBM = new RollBackManager<Type>(FCM, fsm);
-
-  const syncMan = new SyncroManager<Type>(
-    fsm,
-    ism,
-    FCM,
-    RBM,
-    guessToRealCopy,
-    defaultInputFactory
-  );
-  return syncMan;
+  const SCS = new StageCollisionSystem(stageEnt, players);
+  const LDS = new LedgeDetectionSystem(stageEnt, players);
+  const PGS = new GravitySystem(ecs);
+  const PVS = new PlayerVelocityECSSystem(players);
 }
