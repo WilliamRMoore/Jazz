@@ -226,8 +226,13 @@ function transcribeInput(input: GamePadInput) {
     return inputAction;
   }
 
+  if (Math.abs(input.LXAxis) > 0.8) {
+    inputAction.Action = Actions.moveFast;
+    return inputAction;
+  }
+
   if (Math.abs(input.LXAxis) > 0) {
-    inputAction.Action = Actions.run;
+    inputAction.Action = Actions.move;
     return inputAction;
   }
 
@@ -271,13 +276,15 @@ interface IActions {
   sideAttcak: string;
   attack: string;
   idle: string;
-  run: string;
+  //run: string;
+  move: string;
+  moveFast: string;
   jump: string;
   grab: string;
   guard: string;
 }
 
-const Actions: IActions = {
+export const Actions: IActions = {
   upSpecial: 'up_special',
   downSpecial: 'down_special',
   sideSpecial: 'side_special',
@@ -287,7 +294,8 @@ const Actions: IActions = {
   sideAttcak: 'side_attack',
   attack: 'attack',
   idle: 'idle',
-  run: 'run',
+  move: 'move',
+  moveFast: 'move_fast',
   jump: 'jump',
   grab: 'grab',
   guard: 'guard',

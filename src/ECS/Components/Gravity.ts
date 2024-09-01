@@ -1,9 +1,8 @@
-import { Component, ComponentCollection, Entity } from '../../ECS';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class GravityComponent extends Component {
   static CompName = 'GravComp';
   public readonly CompName = GravityComponent.CompName;
-  EntId = -1;
 
   Attach(ent: Entity): void {
     this.EntId = ent.ID;

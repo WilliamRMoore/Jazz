@@ -1,52 +1,36 @@
-import {
-  GravityComponent,
-  UnboxGravityComponent,
-} from '../Components/Actor/Gravity';
+import { MakeStateMachine } from '../../Game/State/EcsStateMachine';
+import { GravityComponent, UnboxGravityComponent } from '../Components/Gravity';
 import {
   CurrentStateComponent,
   UnboxCurrentStateComponent,
-} from '../Components/Actor/Player/CurrentState';
-import {
-  DirectionComponent,
-  UnboxDirectionComponent,
-} from '../Components/Actor/Player/Direction';
-import {
-  ECBComponent,
-  UnboxECBComponent,
-} from '../Components/Actor/Player/ECB';
-import {
-  GroundedComponent,
-  UnboxGroundedComponent,
-} from '../Components/Actor/Player/Grounded';
-import {
-  JumpComponent,
-  UnboxJumpComponent,
-} from '../Components/Actor/Player/Jump';
+} from '../Components/CurrentState';
+import { ECBComponent, UnboxECBComponent } from '../Components/ECB';
+import { JumpComponent, UnboxJumpComponent } from '../Components/Jump';
 import {
   LedgeDetectorComponent,
   UnboxLedgeDetectorComponent,
-} from '../Components/Actor/Player/LedgeDetector';
+} from '../Components/LedgeDetector';
 import {
   PlayerFlagsComponent,
   UnboxPlayerFlagsComponent,
-} from '../Components/Actor/Player/PlayerStateFlags';
+} from '../Components/PlayerStateFlags';
 import {
   SpeedsComponent,
   SpeedsComponentBuilder,
   UnboxSpeedsComponent,
-} from '../Components/Actor/Player/Speeds';
+} from '../Components/Speeds';
 import {
-  StageCollisionResultComponent,
-  UnboxStageCollisionResultComponent,
-} from '../Components/Actor/Player/StageCollisionResult';
+  StateMachineComponent,
+  UnboxStateMachineComponent,
+} from '../Components/StateMachine';
 import {
   PositionComponent,
   UnboxPositionComponent,
-} from '../Components/Actor/Position';
+} from '../Components/Position';
 import {
   UnboxVelocityComponent,
   VelocityComponent,
-} from '../Components/Actor/Velocity';
+} from '../Components/Velocity';
 import { EcsExtension, Entity } from '../ECS';
 
 export class ECSBuilderExtension extends EcsExtension {
@@ -62,24 +46,23 @@ export class ECSBuilderExtension extends EcsExtension {
 
     let speedsComp = speedsCompBuilder.Build();
 
-    ent.Attach(speedsComp);
     ent.Attach(new PositionComponent());
     ent.Attach(new VelocityComponent());
     ent.Attach(new GravityComponent());
-    ent.Attach(new DirectionComponent());
+    ent.Attach(new PlayerFlagsComponent());
     ent.Attach(new JumpComponent(20));
-    ent.Attach(new GroundedComponent());
     ent.Attach(new CurrentStateComponent());
     ent.Attach(new ECBComponent());
     ent.Attach(new LedgeDetectorComponent(0, 0, 30, 70));
-    ent.Attach(new StageCollisionResultComponent());
+    ent.Attach(speedsComp); // SpeedsComponent
+    MakeStateMachine(ent); // StateMachineComponent
 
     return ent;
   }
 }
 
 export class UnboxedPlayer {
-  public Id: number;
+  public Entity: Entity;
   public PosComp: PositionComponent;
   public VelComp: VelocityComponent;
   public GravComp: GravityComponent;
@@ -88,10 +71,11 @@ export class UnboxedPlayer {
   public CurrentSateComp: CurrentStateComponent;
   public ECBComp: ECBComponent;
   public LedgeDetectorComp: LedgeDetectorComponent;
-  public StageColResComp: StageCollisionResultComponent;
   public SpeedsComp: SpeedsComponent;
+  public StateMachineComp: StateMachineComponent;
+
   constructor(playerEnt: Entity) {
-    this.Id = playerEnt.ID;
+    this.Entity = playerEnt;
     this.PosComp = UnboxPositionComponent(playerEnt.Components)!;
     this.VelComp = UnboxVelocityComponent(playerEnt.Components)!;
     this.GravComp = UnboxGravityComponent(playerEnt.Components)!;
@@ -100,23 +84,25 @@ export class UnboxedPlayer {
     this.CurrentSateComp = UnboxCurrentStateComponent(playerEnt.Components)!;
     this.ECBComp = UnboxECBComponent(playerEnt.Components)!;
     this.LedgeDetectorComp = UnboxLedgeDetectorComponent(playerEnt.Components)!;
-    this.StageColResComp = UnboxStageCollisionResultComponent(
-      playerEnt.Components
-    )!;
     this.SpeedsComp = UnboxSpeedsComponent(playerEnt.Components)!;
+    this.StateMachineComp = UnboxStateMachineComponent(playerEnt.Components)!;
   }
 
   public UpdatePlayerPosition(x: number, y: number) {
-    this.PosComp.Pos.X = x;
-    this.PosComp.Pos.Y = y;
+    const pos = this.PosComp.Pos;
+    pos.X = x;
+    pos.Y = y;
     this.ECBComp.MoveToPosition(x, y);
     this.LedgeDetectorComp.MoveTo(x, y);
   }
 
   public AddToPlayerPosition(vx: number, vy: number) {
-    this.PosComp.Pos.X += vx;
-    this.PosComp.Pos.Y += vy;
-    this.ECBComp.MoveToPosition(this.PosComp.Pos.X, this.PosComp.Pos.Y);
-    this.LedgeDetectorComp.MoveTo(this.PosComp.Pos.X, this.PosComp.Pos.Y);
+    const pos = this.PosComp.Pos;
+    pos.X += vx;
+    pos.Y += vy;
+    const posX = pos.X;
+    const posY = pos.Y;
+    this.ECBComp.MoveToPosition(posX, posY);
+    this.LedgeDetectorComp.MoveTo(posX, posY);
   }
 }

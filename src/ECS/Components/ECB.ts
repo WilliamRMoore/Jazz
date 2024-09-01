@@ -1,6 +1,6 @@
-import { FlatVec } from '../../../../Physics/FlatVec';
-import { FillArrayWithFlatVec } from '../../../../utils';
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { FlatVec } from '../../Physics/FlatVec';
+import { FillArrayWithFlatVec } from '../../utils';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class ECBComponent extends Component {
   public static CompName = 'ECBComp';
@@ -9,7 +9,6 @@ export class ECBComponent extends Component {
   private EcbOffsets: ECBOffsets;
   private Verts = new Array<FlatVec>(4);
   private Color: string;
-  EntId: number = -1;
 
   constructor() {
     super();
@@ -35,17 +34,21 @@ export class ECBComponent extends Component {
   }
 
   Update(): void {
-    this.Verts[0].X = this.Position.X + this.EcbOffsets.topX;
-    this.Verts[0].Y = this.Position.Y + this.EcbOffsets.topY;
+    const px = this.Position.X;
+    const py = this.Position.Y;
+    const offSets = this.EcbOffsets;
 
-    this.Verts[1].X = this.Position.X + this.EcbOffsets.rightX;
-    this.Verts[1].Y = this.Position.Y + this.EcbOffsets.rightY;
+    this.Verts[0].X = px + offSets.topX;
+    this.Verts[0].Y = py + offSets.topY;
 
-    this.Verts[2].X = this.Position.X + this.EcbOffsets.bottX;
-    this.Verts[2].Y = this.Position.Y + this.EcbOffsets.bottY;
+    this.Verts[1].X = px + offSets.rightX;
+    this.Verts[1].Y = py + offSets.rightY;
 
-    this.Verts[3].X = this.Position.X + this.EcbOffsets.leftX;
-    this.Verts[3].Y = this.Position.Y + this.EcbOffsets.leftY;
+    this.Verts[2].X = px + offSets.bottX;
+    this.Verts[2].Y = py + offSets.bottY;
+
+    this.Verts[3].X = px + offSets.leftX;
+    this.Verts[3].Y = py + offSets.leftY;
   }
 
   Top(): FlatVec {

@@ -4,7 +4,7 @@ import { FrameStorageManager } from './FrameStorageManager';
 export class FrameComparisonManager<Type>
   implements IFrameComparisonManager<Type>
 {
-  private readonly MAX_ROLLBACK_FRAMES = 10000;
+  private readonly MAX_ROLLBACK_FRAMES = 25;
   private readonly FRAME_ADVANTAGE_LIMIT = 1;
   private readonly InputStorageManager: InputStorageManager<Type>;
   private readonly FrameStorageManager: FrameStorageManager;

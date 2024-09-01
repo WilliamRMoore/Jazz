@@ -1,4 +1,4 @@
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class PlayerFlagsComponent extends Component {
   static CompName = 'PlayerFlagsComp';
@@ -6,7 +6,7 @@ export class PlayerFlagsComponent extends Component {
 
   private FacingRight = false;
   private Grounded: boolean = false;
-  private LastFrameGrounded: number = -1;
+  //private LastFrameGrounded: number = -1;
   private InLedgeGrab: boolean = false;
 
   FaceRight(): void {
@@ -25,8 +25,8 @@ export class PlayerFlagsComponent extends Component {
     return !this.IsFacingRight();
   }
 
-  Ground(frameNumber: number): void {
-    this.LastFrameGrounded = frameNumber;
+  Ground(/*frameNumber: number*/): void {
+    //this.LastFrameGrounded = frameNumber;
     this.Grounded = true;
   }
 
@@ -38,8 +38,16 @@ export class PlayerFlagsComponent extends Component {
     return this.Grounded;
   }
 
-  GetLastFrameGrounded(): number {
-    return this.LastFrameGrounded;
+  // GetLastFrameGrounded(): number {
+  //   return this.LastFrameGrounded;
+  // }
+
+  GrabLedge() {
+    this.InLedgeGrab = true;
+  }
+
+  UnGrabLedge() {
+    this.InLedgeGrab = false;
   }
 
   IsInLedgeGrab(): boolean {
@@ -47,7 +55,6 @@ export class PlayerFlagsComponent extends Component {
   }
 
   Attach(ent: Entity): void {
-    ent.Attach(this);
     this.EntId = ent.ID;
   }
 }

@@ -1,10 +1,10 @@
-import { UnboxGravityComponent } from '../Components/Actor/Gravity';
-import { UnboxPlayerFlagsComponent } from '../Components/Actor/Player/PlayerStateFlags';
-import { UnboxSpeedsComponent } from '../Components/Actor/Player/Speeds';
+import { UnboxGravityComponent } from '../Components/Gravity';
+import { UnboxPlayerFlagsComponent } from '../Components/PlayerStateFlags';
+import { UnboxSpeedsComponent } from '../Components/Speeds';
 import {
   UnboxVelocityComponent,
   VelocityComponent,
-} from '../Components/Actor/Velocity';
+} from '../Components/Velocity';
 import { ECS, EntityRegistry } from '../ECS';
 export class GravitySystem {
   EntityRegistry: EntityRegistry;

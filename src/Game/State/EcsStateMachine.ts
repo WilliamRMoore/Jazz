@@ -1,49 +1,21 @@
-import {
-  GravityComponent,
-  UnboxGravityComponent,
-} from '../../ECS/Components/Actor/Gravity';
-import {
-  CurrentStateComponent,
-  UnboxCurrentStateComponent,
-} from '../../ECS/Components/Actor/Player/CurrentState';
-import {
-  DirectionComponent,
-  UnboxDirectionComponent,
-} from '../../ECS/Components/Actor/Player/Direction';
-import {
-  ECBComponent,
-  UnboxECBComponent,
-} from '../../ECS/Components/Actor/Player/ECB';
-import {
-  GroundedComponent,
-  UnboxGroundedComponent,
-} from '../../ECS/Components/Actor/Player/Grounded';
-import {
-  JumpComponent,
-  UnboxJumpComponent,
-} from '../../ECS/Components/Actor/Player/Jump';
-import {
-  LedgeDetectorComponent,
-  UnboxLedgeDetectorComponent,
-} from '../../ECS/Components/Actor/Player/LedgeDetector';
-import {
-  PositionComponent,
-  UnboxPositionComponent,
-} from '../../ECS/Components/Actor/Position';
-import {
-  UnboxVelocityComponent,
-  VelocityComponent,
-} from '../../ECS/Components/Actor/Velocity';
-import { ComponentCollection, Entity } from '../../ECS/ECS';
+import { StateMachineComponent } from '../../ECS/Components/StateMachine';
+import { Entity } from '../../ECS/ECS';
 import { UnboxedPlayer } from '../../ECS/Extensions/ECSBuilderExtensions';
 import { InputAction } from '../../input/GamePadInput';
+import {
+  idle,
+  neutralFall,
+  startWalk,
+  walk,
+  ledgeGrab,
+} from './CharacterStates/Movement/ECSStateTest';
 
 export interface ECSIState {
-  FrameCount: number;
+  FrameCount?: number;
   StateDefaultTransition?: ECSIState;
   Transitions?: Map<string, ECSIState>;
   Name: string;
-  OnEnter?: (player: UnboxedPlayer, ia: InputAction) => void;
+  OnEnter?: (player: UnboxedPlayer, ia: InputAction | null) => void;
   OnUpdate?: (
     player: UnboxedPlayer,
     ia: InputAction,
@@ -60,6 +32,7 @@ export class EcsStateMachine {
   private CurrentStateFrame: number = 0;
 
   constructor(playerEnt: Entity) {
+    playerEnt.Attach(new StateMachineComponent(this));
     this.Player = new UnboxedPlayer(playerEnt);
   }
 
@@ -100,15 +73,13 @@ export class EcsStateMachine {
     this.CurrentStateFrame = frame;
   }
 
-  public ForceState(frame: number, inputAction: InputAction): void {
-    let actionname = inputAction.Action;
-
-    if (!this.States.has(actionname)) {
+  public ForceState(stateName: string): void {
+    if (!this.States.has(stateName)) {
       return;
     }
 
-    if (this.CurrentState?.Name === actionname) {
-      this.CurrentStateFrame = frame;
+    if (this.CurrentState?.Name === stateName) {
+      this.CurrentStateFrame = 0;
       return;
     }
 
@@ -116,20 +87,20 @@ export class EcsStateMachine {
       this.CurrentState.OnExit(this.Player);
     }
 
-    this.CurrentState = this.States.get(actionname)!;
+    this.CurrentState = this.States.get(stateName)!;
     this.Transitions = this.CurrentState?.Transitions;
 
     if (this.CurrentState.OnEnter) {
-      this.CurrentState.OnEnter(this.Player, inputAction);
+      this.CurrentState.OnEnter(this.Player, null);
     }
     this.Player.CurrentSateComp.SetCurrentState(this.CurrentState);
-    this.CurrentStateFrame = frame;
+    this.CurrentStateFrame = 0;
 
     return;
   }
 
-  public SetState(ia: InputAction): void {
-    const stateName = ia.Action;
+  public SetState(stateName: string, ia: InputAction | null): void {
+    //const stateName = ia.Action;
 
     //if we have legal transitions, and those transitions do not contain the state we are wanting to set, return.
     if (this.Transitions && !this.Transitions.has(stateName)) {
@@ -212,30 +183,12 @@ export class EcsStateMachine {
   }
 }
 
-export type PlayerComponents = {
-  Position: PositionComponent;
-  Velocity: VelocityComponent;
-  Gravity: GravityComponent;
-  Direction: DirectionComponent;
-  Jump: JumpComponent;
-  Ground: GroundedComponent;
-  CurrentState: CurrentStateComponent;
-  ECB: ECBComponent;
-  LedgeDetector: LedgeDetectorComponent;
-};
+export function MakeStateMachine(p: Entity) {
+  const SM = new EcsStateMachine(p);
+  SM.AddState(idle);
+  SM.AddState(startWalk);
+  SM.AddState(neutralFall);
+  SM.AddState(ledgeGrab);
 
-function GetAllPlayerComponents(comps: ComponentCollection) {
-  let compDto = {
-    Position: UnboxPositionComponent(comps)!,
-    Velocity: UnboxVelocityComponent(comps)!,
-    Gravity: UnboxGravityComponent(comps)!,
-    Direction: UnboxDirectionComponent(comps)!,
-    Jump: UnboxJumpComponent(comps)!,
-    Ground: UnboxGroundedComponent(comps)!,
-    CurrentState: UnboxCurrentStateComponent(comps)!,
-    ECB: UnboxECBComponent(comps)!,
-    LedgeDetector: UnboxLedgeDetectorComponent(comps)!,
-  } as PlayerComponents;
-
-  return compDto;
+  return SM;
 }

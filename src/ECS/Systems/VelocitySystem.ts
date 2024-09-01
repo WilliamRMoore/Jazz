@@ -1,15 +1,7 @@
-import {
-  PositionComponent,
-  UnboxPositionComponent,
-} from '../Components/Actor/Position';
-import {
-  UnboxVelocityComponent,
-  VelocityComponent,
-} from '../Components/Actor/Velocity';
-import { ComponentCollection, DTO, ECS, Entity, EntityRegistry } from '../ECS';
+import { Entity } from '../ECS';
 import { UnboxedPlayer } from '../Extensions/ECSBuilderExtensions';
 
-export class PlayerVelocityECSSystem {
+export class VelocityECSSystem {
   private Players: Array<UnboxedPlayer>;
   constructor(players: Array<Entity>) {
     this.Players = new Array<UnboxedPlayer>();

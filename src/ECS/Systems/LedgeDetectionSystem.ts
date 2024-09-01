@@ -1,3 +1,4 @@
+import { ledgeGrab } from '../../Game/State/CharacterStates/Movement/ECSStateTest';
 import { IntersectsPolygons } from '../../Physics/Collisions';
 import { FlatVec } from '../../Physics/FlatVec';
 import { UnboxedStage } from '../Components/StageMain';
@@ -34,6 +35,7 @@ export class LedgeDetectionSystem {
           );
           if (rightResult.collision && !leftResult.collision) {
             // force player state into ledge grab
+            player.StateMachineComp.StateMachine.ForceState(ledgeGrab.Name);
             player.UpdatePlayerPosition(
               this.LeftLedge[0].X,
               this.LeftLedge[0].Y +
@@ -53,6 +55,7 @@ export class LedgeDetectionSystem {
           );
           if (leftResult.collision && !rightResult.collision) {
             // forse player state into ledge grab
+            player.StateMachineComp.StateMachine.ForceState(ledgeGrab.Name);
             player.UpdatePlayerPosition(
               this.RightLedge[1].X,
               this.RightLedge[1].Y +

@@ -1,14 +1,6 @@
-export abstract class Visitor {
-  abstract Visit(host: any): void;
-}
-
-export abstract class Vistable {
-  abstract Accept(visitor: Visitor): void;
-}
-
-export abstract class EcsExtension extends Visitor {
+export abstract class EcsExtension {
   ecs: ECS;
-  Visit(host: ECS): void {
+  Extend(host: ECS): void {
     this.ecs = host;
   }
 }
@@ -36,8 +28,16 @@ export abstract class Component {
 export class Entity {
   public readonly ID: number;
   public readonly Components = new Map<string, Component>();
-  constructor(id: number) {
+  public readonly Tags = new Set<string>();
+  constructor(id: number, tags: string[] | null = null) {
     this.ID = id;
+    if (tags) {
+      const tl = tags.length;
+
+      for (let i = 0; i < tl; i++) {
+        this.Tags.add(tags[i]);
+      }
+    }
   }
 
   Attach(comp: Component) {
@@ -49,12 +49,11 @@ export class Entity {
 export type ComponentCollection = Map<string, Component>;
 export type EntityRegistry = Map<number, Entity>;
 
-export class ECS extends Vistable {
+export class ECS {
   public EntityRegistry: EntityRegistry;
   private currentId: number;
 
   constructor() {
-    super();
     this.currentId = 0;
     this.EntityRegistry = new Map<number, Entity>();
   }
@@ -65,8 +64,8 @@ export class ECS extends Vistable {
     return newEnt;
   }
 
-  Accept(visitor: EcsExtension): void {
-    visitor.Visit(this);
+  ExtendEcs(ext: EcsExtension): void {
+    ext.Extend(this);
   }
 
   private GetNextId(): number {

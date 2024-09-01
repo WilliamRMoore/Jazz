@@ -1,4 +1,4 @@
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class SpeedsComponent extends Component {
   static CompName = 'SpeedsComp';
@@ -16,8 +16,6 @@ export class SpeedsComponent extends Component {
   public readonly RunSpeedMultiplier: number;
   public readonly FastFallSpeed: number;
   public readonly FallSpeed: number;
-
-  EntId: number = -1;
 
   constructor(
     grndSpeedVelDecay: number,

@@ -1,9 +1,8 @@
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class JumpComponent extends Component {
   static CompName = 'JumpComp';
   public readonly CompName = JumpComponent.CompName;
-  EntId: number = -1;
 
   public readonly JumpVelocity: number;
   public readonly NumberOfJumps: number = 2;

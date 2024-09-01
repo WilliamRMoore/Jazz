@@ -1,11 +1,10 @@
-import { FlatVec, VectorAllocator } from '../../../Physics/FlatVec';
-import { Component, ComponentCollection, Entity } from '../../ECS';
+import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class PositionComponent extends Component {
   static CompName = 'PosComp';
   public readonly CompName = PositionComponent.CompName;
-  EntId = -1;
-  public Pos: FlatVec;
+  public readonly Pos: FlatVec;
 
   constructor() {
     super();

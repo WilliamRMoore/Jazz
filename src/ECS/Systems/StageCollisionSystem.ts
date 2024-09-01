@@ -10,6 +10,16 @@ import { UnboxedStage } from '../Components/StageMain';
 import { Entity } from '../ECS';
 import { UnboxedPlayer } from '../Extensions/ECSBuilderExtensions';
 import { LineSegmentIntersection } from '../../Physics/RayCast/RayCast';
+import { IInputStorageManager } from '../../input/InputStorageManager';
+import {
+  Actions,
+  InputAction,
+  InputActionPacket,
+} from '../../input/GamePadInput';
+import {
+  land,
+  neutralFall,
+} from '../../Game/State/CharacterStates/Movement/ECSStateTest';
 
 export class StageCollisionSystem {
   private Stage: UnboxedStage;
@@ -22,10 +32,11 @@ export class StageCollisionSystem {
     playerEnts.forEach((p) => this.Players.push(new UnboxedPlayer(p)));
   }
 
-  public Detect(frameNumber: number) {
+  public Detect() {
     const sverts = this.Stage.MainStage.GetVerticies();
+    const pLength = this.Players.length;
 
-    for (let index = 0; index < this.Players.length; index++) {
+    for (let index = 0; index < pLength; index++) {
       const player = this.Players[index];
       const pVerts = player.ECBComp.GetVerticies();
 
@@ -36,6 +47,7 @@ export class StageCollisionSystem {
         move.Y += this.GroundedCorrrection;
         let resolution = VectorAdder(player.PosComp.Pos, move);
 
+        // correction if we hit a corner, I just want it to push you on the x axis, not the y.
         if (Math.abs(res!.normal!.X) > 0 && res.normal!.Y > 0) {
           const fix = move.X <= 0 ? move.Y : -move.Y;
           move.X += fix;
@@ -43,27 +55,35 @@ export class StageCollisionSystem {
           resolution = VectorAdder(player.PosComp.Pos, move);
         }
 
-        player.StageColResComp.Set(resolution);
-
         player.UpdatePlayerPosition(resolution.X, resolution.Y);
 
+        const bottomEcbPoint = player.ECBComp.Bottom();
         const ecbTestPoint = VectorAllocator(
-          player.ECBComp.Bottom().X,
-          player.ECBComp.Bottom().Y + this.GroundedDetectDepth
+          bottomEcbPoint.X,
+          bottomEcbPoint.Y + this.GroundedDetectDepth
         );
 
-        this.checkGround(
+        const grounded = this.checkGround(
           ecbTestPoint,
           player.ECBComp.Bottom(),
           sverts[0],
           sverts[1]
-        ) == true
-          ? player.FlagsComp.Ground(frameNumber)
-          : player.FlagsComp.Unground();
+        );
+
+        if (grounded && !player.FlagsComp.IsGrounded()) {
+          player.FlagsComp.Ground();
+          player.StateMachineComp.StateMachine.ForceState(land.Name);
+        }
+
+        if (!grounded) {
+          player.FlagsComp.Unground();
+          player.StateMachineComp.StateMachine.SetState(neutralFall.Name, null);
+        }
       }
 
       if (!res.collision) {
         player.FlagsComp.Unground();
+        player.StateMachineComp.StateMachine.SetState(neutralFall.Name, null);
       }
     }
   }

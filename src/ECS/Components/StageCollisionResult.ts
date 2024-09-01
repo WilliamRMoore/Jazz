@@ -1,10 +1,9 @@
-import { FlatVec, VectorAllocator } from '../../../../Physics/FlatVec';
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class StageCollisionResultComponent extends Component {
   static CompName = 'StageColRes';
   public CompName = StageCollisionResultComponent.CompName;
-  EntId: number = -1;
   private CollisionOccured: boolean = false;
   private Resolution: FlatVec = VectorAllocator();
 

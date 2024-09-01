@@ -1,12 +1,10 @@
-import { FlatVec } from '../../../../Physics/FlatVec';
-import { FillArrayWithFlatVec } from '../../../../utils';
-import { Component, ComponentCollection, Entity } from '../../../ECS';
+import { FlatVec } from '../../Physics/FlatVec';
+import { FillArrayWithFlatVec } from '../../utils';
+import { Component, ComponentCollection, Entity } from '../ECS';
 
 export class LedgeDetectorComponent extends Component {
   static CompName = 'LedgeGrab';
   public readonly CompName = LedgeDetectorComponent.CompName;
-  EntId: number = -1;
-  //private InLedgeGrab: boolean = false;
   private YOffset: number;
   private Box: LedgeDetectorBox;
   private RightSideBox = new Array<FlatVec>(4);
@@ -71,12 +69,12 @@ export class LedgeDetectorComponent extends Component {
     return this.LeftSideBox;
   }
 
-  GetForwardColor(): string {
-    return this.ForwardBoxColor;
+  GetRightBoxColor(facingRight: boolean): string {
+    return facingRight ? this.ForwardBoxColor : this.BackwardBoxColor;
   }
 
-  GetBackwardBoxColor(): string {
-    return this.BackwardBoxColor;
+  GetLeftBoxColor(facingRight: boolean): string {
+    return this.GetRightBoxColor(!facingRight);
   }
 
   SetForwardBoxColor(color: string): void {

@@ -4,7 +4,6 @@ import { FlatVec, VectorAllocator } from '../../Physics/FlatVec';
 export class StageMainComponent extends Component {
   static CompName = 'StageMainComp';
   public CompName = StageMainComponent.CompName;
-  EntId: number = -1;
 
   private Verticies: FlatVec[];
   private ledgeVerts: { left: FlatVec[]; right: FlatVec[] };
