@@ -1,3 +1,39 @@
-<!doctype html><html><head><meta charset="utf-8"/><title>Webpack App</title></head><style>body{
-            background: black;
-        }</style><body><div id="hostorconnect"><button id="hostgame">Host Game</button> <button id="connectgame">Connect To Game</button></div><br><div id="connectcontrols" style="display: none;"><label style="color: white;">Input Peer ID</label> <input id="peerid"> <button id="connectToPeer">Connect</button></div><div id="hostcontrols" style="display: none;"><label style="color: white;">My peer ID</label><div id="mypeerid" style="color: white;"></div></div><br><div id="frameCounter" style="color: white;"></div><canvas style="background: gray;"></canvas><script src="main.js"></script></body></html>
+<head>
+    <title>Jazz</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+        select, button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 5px;
+            margin: 5px;
+        }
+        button:disabled, select:disabled {
+            background-color: #555;
+            color: #888;
+        }
+        h1 {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello from game page</h1>
+<select id="mode-select">
+    <option value="">Select a mode</option>
+    <option value="1">Test</option>
+    <option value="2">Local 2 player</option>
+</select>
+<select disabled id="p1-gamepad-select"></select>
+<select disabled id="p2-gamepad-select"></select>
+<button disabled id="refresh-gamepad-select">Refresh</button>
+<canvas id="game"></canvas>
+<button disabled id="start-game">Start Game</button>
+
+<script src="./index.js">
+</script>
