@@ -1,5 +1,5 @@
 import { StateMachine } from '../player/finite-state-machine/PlayerStateMachine';
-import { InputAction } from '../../loops/Input';
+import { InputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { ComponentHistory } from '../player/playerComponents';
 import { Player } from '../player/playerOrchestrator';

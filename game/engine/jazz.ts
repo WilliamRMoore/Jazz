@@ -1,5 +1,5 @@
 import { DefaultCharacterConfig } from '../character/default';
-import { InputAction } from '../loops/Input';
+import { InputAction } from '../input/Input';
 import { FlatVec } from './physics/vector';
 import { Player } from './player/playerOrchestrator';
 import { defaultStage } from './stage/stageComponents';

@@ -1,4 +1,4 @@
-import { InputAction } from '../../loops/Input';
+import { InputAction } from '../../input/Input';
 
 export class FrameStorageManager {
   private readonly INITIAL_FRAME = 0;

@@ -1,6 +1,6 @@
 import { Player } from '../playerOrchestrator';
 import { World } from '../../world/world';
-import { InputAction } from '../../../loops/Input';
+import { InputAction } from '../../../input/Input';
 import {
   ActionStateMappings,
   FSMStates,

@@ -1,4 +1,4 @@
-import { InputAction } from '../loops/Input';
+import { InputAction } from '../input/Input';
 
 const VERSION = 'V0.001';
 

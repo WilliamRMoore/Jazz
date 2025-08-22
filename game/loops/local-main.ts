@@ -2,7 +2,7 @@ import { IJazz, JazzDebugger } from '../engine/jazz';
 import { STATE_IDS } from '../engine/player/finite-state-machine/PlayerStates';
 import { DebugRenderer, resolution } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
-import { GetInput } from './Input';
+import { GetInput } from '../input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 
