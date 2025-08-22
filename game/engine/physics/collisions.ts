@@ -48,7 +48,7 @@ export function IntersectsPolygons(
     }
   }
 
-  verticiesAVec.Zero(); //.SetXY(0, 0);
+  verticiesAVec.Zero();
   verticiesBVec.Zero();
 
   for (let i = 0; i < verticiesB.length; i++) {
