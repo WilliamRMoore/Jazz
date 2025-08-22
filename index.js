@@ -6198,7 +6198,7 @@
     requestAnimationFrame(loop);
   }
 
-  // game/loops/Input.ts
+  // game/input/Input.ts
   var GamePadInput = class {
     LXAxis = 0;
     LYAxis = 0;
