@@ -70,7 +70,7 @@
     }
   };
 
-  // game/engine/player/finite-state-machine/PlayerStates.ts
+  // game/engine/finite-state-machine/PlayerStates.ts
   var seq = new Sequencer();
   seq.SeqStart = -1;
   var GAME_EVENTS = class {
@@ -4973,7 +4973,7 @@
     w.SetPoolHistory();
   }
 
-  // game/engine/player/finite-state-machine/PlayerStateMachine.ts
+  // game/engine/finite-state-machine/PlayerStateMachine.ts
   var StateMachine = class {
     player;
     world;
