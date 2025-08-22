@@ -1,0 +1,39 @@
+<head>
+    <title>Jazz</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+        select, button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 5px;
+            margin: 5px;
+        }
+        button:disabled, select:disabled {
+            background-color: #555;
+            color: #888;
+        }
+        h1 {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello from game page</h1>
+<select id="mode-select">
+    <option value="">Select a mode</option>
+    <option value="1">Test</option>
+    <option value="2">Local 2 player</option>
+</select>
+<select disabled id="p1-gamepad-select"></select>
+<select disabled id="p2-gamepad-select"></select>
+<button disabled id="refresh-gamepad-select">Refresh</button>
+<canvas id="game"></canvas>
+<button disabled id="start-game">Start Game</button>
+
+<script src="./dist/index.js">
+</script>
