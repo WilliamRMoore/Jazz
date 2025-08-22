@@ -3,6 +3,7 @@
 
 # Build output
 /dist
+/public
 
 # VSCode
 .vscode/
