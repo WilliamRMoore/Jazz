@@ -68,3 +68,5 @@ npm run build
 ```
 
 This will generate a bundled JavaScript file in the `dist/` directory.
+
+![Diagran](https://raw.githubusercontent.com/WilliamRMoore/HtmxDotnet/refs/heads/main/game-architecture-Finite%20State%20Machine%20Arch.webp)
