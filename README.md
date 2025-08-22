@@ -69,4 +69,33 @@ npm run build
 
 This will generate a bundled JavaScript file in the `dist/` directory.
 
+## How to Play
+
+### Starting a Game
+
+You can play a running demo of the game in your browser here: [https://williamrmoore.github.io/Jazz/](https://williamrmoore.github.io/Jazz/)
+
+Follow these steps on the game page to get started:
+
+1.  **Select a Mode:** Use the first dropdown menu to choose a game mode like "Test" or "Local 2 player".
+2.  **Select Controllers:** After selecting a mode, the controller selection dropdowns will be enabled. Assign a connected gamepad to each player.
+    - If your controller doesn't appear in the list, try pressing a button on it and then click the **Refresh** button.
+3.  **Start Game:** Once the mode and controllers are configured, click the **Start Game** button to begin the match.
+
+### Controls (Gamepad)
+
+The primary controls are as follows:
+
+- **Movement:** Left Stick
+- **Normal Attacks:** `A` button
+- **Special Attacks:** `B` button
+- **Power Attacks / Aerials:** Right Stick
+
+### Debug Controls
+
+The game engine includes a debugger with special controls that may be active in certain modes (like "Test" mode):
+
+- **Pause/Resume:** Press the `Start` button.
+- **Advance One Frame:** While the game is paused, press the `Select` (or `Back`/`View`) button to advance the game by a single frame.
+
 ![Diagran](https://raw.githubusercontent.com/WilliamRMoore/HtmxDotnet/refs/heads/main/game-architecture-Finite%20State%20Machine%20Arch.webp)
