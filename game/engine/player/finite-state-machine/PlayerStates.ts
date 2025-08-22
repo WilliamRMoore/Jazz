@@ -1,4 +1,4 @@
-import { Player, PlayerOnStage } from '../playerOrchestrator';
+import { Player } from '../playerOrchestrator';
 import { EaseIn, Sequencer } from '../../utils';
 import { World } from '../../world/world';
 import { FSMState } from './PlayerStateMachine';
