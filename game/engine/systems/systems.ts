@@ -6,9 +6,9 @@ import {
 import {
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../player/finite-state-machine/PlayerStates';
+} from '../finite-state-machine/PlayerStates';
 import { World } from '../world/world';
-import { StateMachine } from '../player/finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { Player, PlayerOnStage } from '../player/playerOrchestrator';
 import { AttackResult } from '../pools/AttackResult';
 import { PooledVector } from '../pools/PooledVector';

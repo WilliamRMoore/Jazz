@@ -5,8 +5,8 @@ import {
   Idle,
   StateId,
   STATE_IDS,
-} from './finite-state-machine/PlayerStates';
-import { FSMState } from './finite-state-machine/PlayerStateMachine';
+} from '../finite-state-machine/PlayerStates';
+import { FSMState } from '../finite-state-machine/PlayerStateMachine';
 import { FlatVec } from '../physics/vector';
 import { FillArrayWithFlatVec } from '../utils';
 import { Player } from './playerOrchestrator';

@@ -1,6 +1,6 @@
-import { Player } from '../playerOrchestrator';
-import { World } from '../../world/world';
-import { InputAction } from '../../../input/Input';
+import { Player } from '../player/playerOrchestrator';
+import { World } from '../world/world';
+import { InputAction } from '../../input/Input';
 import {
   ActionStateMappings,
   FSMStates,
@@ -10,7 +10,7 @@ import {
   StateId,
   ActionMappings,
 } from './PlayerStates';
-import { FSMInfoComponent } from '../playerComponents';
+import { FSMInfoComponent } from '../player/playerComponents';
 
 export type FSMState = {
   StateName: string;

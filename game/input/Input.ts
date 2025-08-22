@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
   GameEventId,
-} from '../engine/player/finite-state-machine/PlayerStates';
+} from '../engine/finite-state-machine/PlayerStates';
 import { World } from '../engine/world/world';
 
 export type InputAction = {

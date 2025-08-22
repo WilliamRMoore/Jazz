@@ -1,10 +1,10 @@
-import { Player } from '../playerOrchestrator';
-import { EaseIn, Sequencer } from '../../utils';
-import { World } from '../../world/world';
+import { Player } from '../player/playerOrchestrator';
+import { EaseIn, Sequencer } from '../utils';
+import { World } from '../world/world';
 import { FSMState } from './PlayerStateMachine';
-import { InputAction } from '../../../input/Input';
-import { FlatVec } from '../../physics/vector';
-import { Attack } from '../playerComponents';
+import { InputAction } from '../../input/Input';
+import { FlatVec } from '../physics/vector';
+import { Attack } from '../player/playerComponents';
 
 // Aliases =========================================================================
 

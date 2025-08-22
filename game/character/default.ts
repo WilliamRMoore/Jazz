@@ -4,7 +4,7 @@ import {
   StateId,
   STATE_IDS,
   GAME_EVENT_IDS,
-} from '../engine/player/finite-state-machine/PlayerStates';
+} from '../engine/finite-state-machine/PlayerStates';
 import { FlatVec } from '../engine/physics/vector';
 import {
   Attack,
