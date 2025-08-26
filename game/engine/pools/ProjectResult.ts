@@ -16,7 +16,7 @@ export class ProjectionResult implements IProjectionResult, IPooledObject {
     return this.min;
   }
 
-  public _setMinMax(min: number, max: number): void {
+  public SetMinMax(min: number, max: number): void {
     this.min = min;
     this.max = max;
   }
@@ -30,5 +30,5 @@ export class ProjectionResult implements IProjectionResult, IPooledObject {
 export interface IProjectionResult {
   get Max(): number;
   get Min(): number;
-  _setMinMax(x: number, y: number): void;
+  SetMinMax(x: number, y: number): void;
 }

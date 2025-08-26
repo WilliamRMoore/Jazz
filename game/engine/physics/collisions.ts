@@ -87,7 +87,7 @@ export function IntersectsPolygons(
   }
 
   const res = colResPool.Rent();
-  res._setCollisionTrue(normal.X, normal.Y, depth);
+  res.SetCollisionTrue(normal.X, normal.Y, depth);
   return res;
 }
 
@@ -110,7 +110,7 @@ export function IntersectsCircles(
   const depth = raddi - dist;
   const returnValue = colResPool.Rent();
 
-  returnValue._setCollisionTrue(norm.X, norm.Y, depth);
+  returnValue.SetCollisionTrue(norm.X, norm.Y, depth);
 
   return returnValue;
 }
@@ -270,7 +270,7 @@ function projectVerticies(
   }
 
   let result = projResPool.Rent();
-  result._setMinMax(min, max);
+  result.SetMinMax(min, max);
   return result;
 }
 

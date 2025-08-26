@@ -1,8 +1,8 @@
 import { IPooledObject } from './Pool';
 
 export interface ICollisionResult {
-  _setCollisionTrue(x: number, y: number, depth: number): void;
-  _setCollisionFalse(): void;
+  SetCollisionTrue(x: number, y: number, depth: number): void;
+  SetCollisionFalse(): void;
   get NormX(): number;
   get NormY(): number;
   get Collision(): boolean;
@@ -15,14 +15,14 @@ export class CollisionResult implements ICollisionResult, IPooledObject {
   private normY: number = 0;
   private depth: number = 0;
 
-  _setCollisionTrue(x: number, y: number, depth: number): void {
+  public SetCollisionTrue(x: number, y: number, depth: number): void {
     this.collision = true;
     this.normX = x;
     this.normY = y;
     this.depth = depth;
   }
 
-  _setCollisionFalse(): void {
+  public SetCollisionFalse(): void {
     this.collision = false;
     this.normX = 0;
     this.normY = 0;
@@ -46,6 +46,6 @@ export class CollisionResult implements ICollisionResult, IPooledObject {
   }
 
   public Zero(): void {
-    this._setCollisionFalse();
+    this.SetCollisionFalse();
   }
 }
