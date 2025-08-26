@@ -5,6 +5,7 @@ import {
 } from '../physics/collisions';
 import {
   GAME_EVENT_IDS,
+  SoftLand,
   STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
 import { World } from '../world/world';
@@ -29,6 +30,7 @@ import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 
 const correctionDepth: number = 0.1;
 const cornerJitterCorrection = 2;
+
 export function StageCollisionDetection(
   playerCount: number,
   players: Array<Player>,
@@ -40,50 +42,117 @@ export function StageCollisionDetection(
 ): void {
   const stageVerts = stage.StageVerticies.GetVerts();
   const stageGround = stage.StageVerticies.GetGround();
-  const leftMostPeice = stageGround[0];
-  const rightMostPeice = stageGround[stageGround.length - 1];
+  const leftMostPiece = stageGround[0];
+  const rightMostPiece = stageGround[stageGround.length - 1];
   const leftStagePoint = vecPool
     .Rent()
-    .SetXY(leftMostPeice.X1, leftMostPeice.Y1);
+    .SetXY(leftMostPiece.X1, leftMostPiece.Y1);
   const rightStagePoint = vecPool
     .Rent()
-    .SetXY(rightMostPeice.X2, rightMostPeice.Y2);
+    .SetXY(rightMostPiece.X2, rightMostPiece.Y2);
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = players[playerIndex];
     const sm = stateMachines[playerIndex];
     const pFlags = p.Flags;
     const playerVerts = p.ECB.GetHull();
-    const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
-    const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+    const fsmIno = p.FSMInfo;
+    const preResolutionStateId = fsmIno.CurrentStatetId;
+    const preResolutionYOffset = p.ECB.YOffset;
 
+    // --- 1. Always resolve collision first ---
+    const collisionResult = IntersectsPolygons(
+      playerVerts,
+      stageVerts,
+      vecPool,
+      colResPool,
+      projResPool
+    );
+
+    if (collisionResult.Collision) {
+      const normalX = collisionResult.NormX;
+      const normalY = collisionResult.NormY;
+      const pPos = p.Position;
+      const playerPosDTO = vecPool.Rent().SetXY(pPos.X, pPos.Y);
+      const move = vecPool
+        .Rent()
+        .SetXY(normalX, normalY)
+        .Negate()
+        .Multiply(collisionResult.Depth);
+
+      // Ground correction
+      if (normalX === 0 && normalY > 0) {
+        // move.AddToY(yOffset);
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y + correctionDepth);
+      }
+      // Right wall correction
+      if (normalX > 0 && normalY === 0) {
+        move.AddToX(correctionDepth);
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+      }
+      // Left wall correction
+      if (normalX < 0 && normalY === 0) {
+        move.AddToX(-correctionDepth);
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+      }
+      // Ceiling
+      if (normalX === 0 && normalY < 0) {
+        move.AddToY(-correctionDepth);
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+      }
+      // Corner case (top corners, normalY < 0)
+      if (Math.abs(normalX) > 0 && normalY < 0) {
+        move.AddToX(move.X <= 0 ? move.Y : -move.Y);
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+      }
+      // Corner case (bottom corners, normalY > 0)
+      if (Math.abs(normalX) > 0 && normalY > 0) {
+        playerPosDTO.AddVec(move);
+        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+      }
+    }
+
+    // --- 2. Jitter correction after collision resolution ---
     const standingOnLeftLedge =
       Math.abs(p.Position.X - leftStagePoint.X) <= cornerJitterCorrection;
     const standingOnRightLedge =
       Math.abs(p.Position.X - rightStagePoint.X) <= cornerJitterCorrection;
 
-    if (grnd === true && standingOnLeftLedge) {
+    if (
+      standingOnLeftLedge &&
+      PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)
+    ) {
       p.SetPlayerPosition(
         leftStagePoint.X + cornerJitterCorrection,
         p.Position.Y
-      ); // + 2 to avoid jitter on corner
+      );
     }
-
-    if (grnd === true && standingOnRightLedge) {
+    if (
+      standingOnRightLedge &&
+      PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)
+    ) {
       p.SetPlayerPosition(
         rightStagePoint.X - cornerJitterCorrection,
         p.Position.Y
       );
     }
 
+    // --- 3. Grounded check and state update ---
+    const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
+    const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+
     if (
       grnd === false &&
       prvGrnd === true &&
       pFlags.CanWalkOffStage === false
     ) {
-      const position = p.Position;
-
       // Snap to nearest ledge regardless of facing
+      const position = p.Position;
       if (
         Math.abs(position.X - leftStagePoint.X) <
         Math.abs(position.X - rightStagePoint.X)
@@ -102,91 +171,26 @@ export function StageCollisionDetection(
       continue;
     }
 
-    // detect the collision
-    const collisionResult = IntersectsPolygons(
-      playerVerts,
-      stageVerts,
-      vecPool,
-      colResPool,
-      projResPool
-    );
-
-    if (collisionResult.Collision) {
-      const normalX = collisionResult.NormX;
-      const normalY = collisionResult.NormY;
-      const pPos = p.Position;
-      const yOffset = p.ECB.YOffset;
-      const playerPosDTO = vecPool.Rent().SetXY(pPos.X, pPos.Y);
-      const move = vecPool
-        .Rent()
-        .SetXY(normalX, normalY)
-        .Negate()
-        .Multiply(collisionResult.Depth);
-
-      //Ground correction
-      if (normalX === 0 && normalY > 0) {
-        move.AddToY(+yOffset);
-
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y + correctionDepth);
-        sm.UpdateFromWorld(
-          p.Velocity.Y < 8
-            ? GAME_EVENT_IDS.SOFT_LAND_GE
-            : GAME_EVENT_IDS.LAND_GE
-        );
-
-        continue;
-      }
-
-      //Right wall correction
-      if (normalX > 0 && normalY === 0) {
-        move.AddToX(correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-
-        continue;
-      }
-
-      // Left Wall Correction
-      if (normalX < 0 && normalY === 0) {
-        move.AddToX(-correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-
-        continue;
-      }
-
-      //ceiling
-      if (normalX === 0 && normalY < 0) {
-        move.AddToY(-correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-
-        continue;
-      }
-
-      // corner case, literally
-      if (Math.abs(normalX) > 0 && normalY > 0) {
-        move.AddToX(move.X <= 0 ? move.Y : -move.Y); // add the y value into x
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-
-        continue;
-      }
-
-      if (Math.abs(normalX) > 0 && normalY < 0) {
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-
-        continue;
-      }
-    }
-
-    // no collision
-
+    // If not grounded and not grabbing ledge, set to falling
     if (grnd === false && p.FSMInfo.CurrentStatetId != STATE_IDS.LEDGE_GRAB_S) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
       continue;
+    }
+
+    // If grounded and had a collision, set landing state (soft/hard)
+    if (grnd === true && collisionResult.Collision) {
+      sm.UpdateFromWorld(
+        p.Velocity.Y < 8 ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE
+      );
+    }
+
+    if (
+      preResolutionStateId !== STATE_IDS.LAND_S &&
+      preResolutionStateId !== STATE_IDS.SOFT_LAND_S &&
+      (fsmIno.CurrentStatetId === STATE_IDS.LAND_S ||
+        fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
+    ) {
+      p.AddToPlayerYPosition(preResolutionYOffset);
     }
   }
 }
