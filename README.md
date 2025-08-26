@@ -2,6 +2,10 @@
 
 A 2D platform fighting game engine prototype built with TypeScript and the HTML5 Canvas.
 
+playbe demo here: https://williamrmoore.github.io/Jazz/
+
+Look below for a "How To Play" guide. 
+
 ## About The Project
 
 Jazz is a foundational project for creating 2D platform fighting games. It leverages modern web technologies to deliver a responsive gaming experience directly in the browser. The engine is designed with a focus on a clear and extensible architecture to make character creation and gameplay logic easy to manage.
