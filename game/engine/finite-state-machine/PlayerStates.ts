@@ -211,9 +211,11 @@ export function RunCondition(
 const IdleToTurn: condition = {
   Name: 'IdleToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis < 0 && flags.IsFacingRight) {
       return true;
@@ -231,14 +233,17 @@ const IdleToTurn: condition = {
 const IdleToDash: condition = {
   Name: 'IdleToDash',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
 
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const ia = inputStore.GetInputForFrame(curFrame); //w.GetPlayerCurrentInput(playerIndex)!;
 
     if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
@@ -263,19 +268,22 @@ const IdleToDash: condition = {
 const IdleToDashturn: condition = {
   Name: 'IdleToTurnDash',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const prevIa = w.GetPlayerPreviousInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
 
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
 
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
     const lxAxis = ia.LXAxis;
 
@@ -295,9 +303,12 @@ const IdleToDashturn: condition = {
 const WalkToDash: condition = {
   Name: 'WalkToDash',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const fsmInfo = p.FSMInfo;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
       fsmInfo.CurrentStateFrame > 2 ||
@@ -307,7 +318,7 @@ const WalkToDash: condition = {
     }
 
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (
       flags.IsFacingRight &&
@@ -333,9 +344,12 @@ const WalkToDash: condition = {
 const WalkToTurn: condition = {
   Name: 'WalkToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const player = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (prevIa === undefined) {
       return false;
@@ -347,7 +361,7 @@ const WalkToTurn: condition = {
       return true;
     }
 
-    const flags = p.Flags;
+    const flags = player.Flags;
     if (
       (prevLax === 0 && flags.IsFacingRight && curLax < 0) ||
       (prevLax === 0 && flags.IsFacingLeft && curLax > 0)
@@ -363,9 +377,12 @@ const WalkToTurn: condition = {
 const RunToTurn: condition = {
   Name: 'RunToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const player = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (prevIa === undefined) {
       return false;
@@ -378,7 +395,7 @@ const RunToTurn: condition = {
       return true;
     }
 
-    const flags = p.Flags;
+    const flags = player.Flags;
     if (
       (prevLax === 0 && flags.IsFacingRight && curLax < 0) ||
       (prevLax === 0 && flags.IsFacingLeft && curLax > 0)
@@ -394,9 +411,12 @@ const RunToTurn: condition = {
 const DashToTurn: condition = {
   Name: 'DashToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const player = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (prevIa === undefined) {
       return false;
@@ -407,7 +427,7 @@ const DashToTurn: condition = {
     const laxDifference = curLax - prevLax; // Difference between current and previous X-axis
     const threshold = 0.5; // Threshold for detecting significant variation
 
-    const flags = p.Flags;
+    const flags = player.Flags;
     const facingRight = flags.IsFacingRight;
     // Check if the variation exceeds the threshold and is in the opposite direction of the player's facing direction
     if (laxDifference < -threshold && facingRight) {
@@ -432,13 +452,16 @@ const DashToTurn: condition = {
 const ToJump: condition = {
   Name: 'ToJump',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const player = w.GetPlayer(playerIndex)!;
-    const currentInput = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevInput = w.GetPlayerPreviousInput(playerIndex);
+    const player = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const jumpId = GAME_EVENT_IDS.JUMP_GE;
 
     if (
-      inputMacthesTargetNotRepeating(jumpId, currentInput, prevInput) &&
+      inputMacthesTargetNotRepeating(jumpId, ia, prevIa) &&
       player.Jump.HasJumps()
     ) {
       return true;
@@ -452,8 +475,10 @@ const ToJump: condition = {
 const ToAirDodge: condition = {
   Name: 'ToAirDodge',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const currentInput = w.GetPlayerCurrentInput(playerIndex);
-    if (currentInput?.Action === GAME_EVENT_IDS.GUARD_GE) {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    if (ia?.Action === GAME_EVENT_IDS.GUARD_GE) {
       return true;
     }
     return false;
@@ -464,9 +489,11 @@ const ToAirDodge: condition = {
 const DashDefaultRun: condition = {
   Name: 'DashDefaultRun',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis > 0 && flags.IsFacingRight) {
       return true;
@@ -484,7 +511,9 @@ const DashDefaultRun: condition = {
 const DashDefaultIdle: condition = {
   Name: 'DashDefaultIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis === 0) {
       return true;
@@ -498,8 +527,10 @@ const DashDefaultIdle: condition = {
 const TurnDefaultWalk: condition = {
   Name: 'TurnDefaultWalk',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex);
-    const p = w.GetPlayer(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const p = w.PlayerData.Player(playerIndex);
     const facingRight = p?.Flags.IsFacingRight;
 
     if ((facingRight && ia!.LXAxis < 0) || (!facingRight && ia!.LXAxis > 0)) {
@@ -513,20 +544,22 @@ const TurnDefaultWalk: condition = {
 const TurnToDash: condition = {
   Name: 'TurnToDash',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const stateFrame = p.FSMInfo.CurrentStateFrame;
 
     if (stateFrame > 2) {
       return false;
     }
 
-    const input = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (input.LXAxis < -0.5 && p.Flags.IsFacingRight) {
+    if (ia.LXAxis < -0.5 && p.Flags.IsFacingRight) {
       return true;
     }
 
-    if (input.LXAxis > 0.5 && p.Flags.IsFacingLeft) {
+    if (ia.LXAxis > 0.5 && p.Flags.IsFacingLeft) {
       return true;
     }
 
@@ -538,8 +571,11 @@ const TurnToDash: condition = {
 const ToNair: condition = {
   Name: 'ToNAir',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
   },
@@ -549,9 +585,12 @@ const ToNair: condition = {
 const ToFAir: condition = {
   Name: 'ToFAir',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex);
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex) ?? ia;
+    const p = w.PlayerData.Player(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (ia.Action === prevIa.Action) {
       return false;
@@ -594,9 +633,12 @@ const ToFAir: condition = {
 const ToBAir: condition = {
   Name: 'ToBAir',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex);
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const p = w.PlayerData.Player(playerIndex);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (ia.Action === prevIa?.Action) {
       return false;
@@ -620,8 +662,11 @@ const ToBAir: condition = {
 const ToUAir: condition = {
   Name: 'UAir',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     return inputMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
@@ -635,8 +680,11 @@ const ToUAir: condition = {
 const ToDAir: condition = {
   Name: 'UAir',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     return inputMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
@@ -650,7 +698,9 @@ const ToDAir: condition = {
 const SideTiltToWalk: condition = {
   Name: 'SideTiltToWalk',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (
       ia.Action !== GAME_EVENT_IDS.MOVE_GE ||
@@ -659,7 +709,7 @@ const SideTiltToWalk: condition = {
       return false;
     }
 
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
 
     if (ia.LXAxis > 0 && flags.IsFacingRight) {
@@ -750,7 +800,9 @@ const defaultUpChargeEx: condition = {
 const LandToIdle: condition = {
   Name: 'LandToIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetInputManager(playerIndex).GetInputForFrame(w.localFrame)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis === 0) {
       return true;
@@ -764,9 +816,11 @@ const LandToIdle: condition = {
 const LandToWalk: condition = {
   Name: 'LandToWalk',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis > 0 && flags.IsFacingRight) {
       return true;
@@ -784,9 +838,11 @@ const LandToWalk: condition = {
 const LandToTurn: condition = {
   Name: 'LandToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis < 0 && flags.IsFacingRight) {
       return true;
@@ -804,7 +860,9 @@ const LandToTurn: condition = {
 const DefaultDownTiltToCrouch: condition = {
   Name: 'DefaultDownTiltToCrouch',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.DOWN_GE) {
       return true;
     }
@@ -816,9 +874,12 @@ const DefaultDownTiltToCrouch: condition = {
 const RunStopToTurn: condition = {
   Name: 'RunStopToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxis > 0 && flags.IsFacingLeft) {
       return true;
@@ -836,9 +897,12 @@ const RunStopToTurn: condition = {
 const IdleToAttack: condition = {
   Name: 'IdleToAttack',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex);
-    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, lastIa);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
+    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
   },
   StateId: STATE_IDS.ATTACK_S,
 };
@@ -846,14 +910,17 @@ const IdleToAttack: condition = {
 const IdleToSideCharge: condition = {
   Name: 'IdleToSideCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
       inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false
     ) {
       return false;
@@ -871,13 +938,16 @@ const IdleToSideCharge: condition = {
 const IdleToUpTilt: condition = {
   Name: 'IdleToUpTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     if (
       inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false
     ) {
       return false;
@@ -895,14 +965,17 @@ const IdleToUpTilt: condition = {
 const IdleToUpCharge: condition = {
   Name: 'IdleToUpCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
       inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false
     ) {
       return false;
@@ -920,8 +993,10 @@ const IdleToUpCharge: condition = {
 const RunToDashAttack: condition = {
   Name: 'ToDashAttack',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       const facingRight = p.Flags.IsFacingRight;
       if (
@@ -939,8 +1014,10 @@ const RunToDashAttack: condition = {
 const WalkToSideTilt: condition = {
   Name: 'WalkToSideTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       const facingRight = p.Flags.IsFacingRight;
       if (
@@ -958,12 +1035,15 @@ const WalkToSideTilt: condition = {
 const ToSideSpecial: condition = {
   Name: 'ToSideSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      lastIa
+      prevIa
     );
   },
   StateId: STATE_IDS.SIDE_SPCL_S,
@@ -972,13 +1052,16 @@ const ToSideSpecial: condition = {
 const ToDownSpecial: condition = {
   Name: 'IdleToDownSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const lastIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     return inputMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      lastIa
+      prevIa
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_S,
@@ -987,8 +1070,11 @@ const ToDownSpecial: condition = {
 const ToDownTilt: condition = {
   Name: 'ToDownTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
-    const prevIa = w.GetPlayerPreviousInput(playerIndex);
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     return inputMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
@@ -1002,7 +1088,7 @@ const ToDownTilt: condition = {
 const HitStopToLaunch: condition = {
   Name: 'HitStopToLaunch',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
 
     if (p.HitStop.HitStopFrames > 0) {
       return false;
@@ -1016,7 +1102,7 @@ const HitStopToLaunch: condition = {
 const LaunchToTumble: condition = {
   Name: 'LaunchToHitStun',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex)!;
 
     if (p.HitStun.FramesOfHitStun > 0) {
       return false;
@@ -1030,13 +1116,15 @@ const LaunchToTumble: condition = {
 const SideChargeToEx: condition = {
   Name: 'SideChargeToEx',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
       return true;
     }
 
-    const p = w.GetPlayer(playerIndex)!;
+    const p = w.PlayerData.Player(playerIndex);
     const flags = p.Flags;
 
     if (flags.IsFacingRight && ia.RXAxis <= 0) {
@@ -1055,7 +1143,9 @@ const SideChargeToEx: condition = {
 const UpChargeToEx: condition = {
   Name: 'UpChargeToEx',
   ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.GetPlayerCurrentInput(playerIndex)!;
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
       return true;
@@ -1788,7 +1878,9 @@ export const Walk: FSMState = {
     p.Flags.SetCanWalkOffFalse();
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     if (ia !== undefined) {
       p.AddWalkImpulseToPlayer(ia.LXAxis);
     }
@@ -1821,7 +1913,9 @@ export const Dash: FSMState = {
     p.Velocity.AddClampedXImpulse(MaxDashSpeed, impulse);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const speedsComp = p.Speeds;
     const dashSpeedMultiplier = speedsComp.DashMultiplier;
     const impulse = (ia?.LXAxis ?? 0) * dashSpeedMultiplier;
@@ -1846,7 +1940,9 @@ export const Run: FSMState = {
   StateId: STATE_IDS.RUN_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     if (ia !== undefined) {
       const speeds = p.Speeds;
       p.Velocity.AddClampedXImpulse(
@@ -1906,11 +2002,13 @@ export const Jump: FSMState = {
       p.Velocity.Y = -p.Jump.JumpVelocity;
     }
 
-    const inputAction = w.GetPlayerCurrentInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const speedsComp = p.Speeds;
     p.Velocity.AddClampedXImpulse(
       speedsComp.AerialSpeedInpulseLimit,
-      (inputAction?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
+      (ia?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
     );
   },
   OnExit: (p: Player, w: World) => {
@@ -1928,9 +2026,12 @@ export const NeutralFall: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.N_FALL_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speedsComp = p.Speeds;
-    const prevIa = w.GetPlayerPreviousInput(p.ID)!;
 
     if (p.Velocity.Y > 0 && ia.LYAxis < -0.8 && prevIa.LYAxis > -0.8) {
       p.Flags.FastFallOn();
@@ -1999,7 +2100,9 @@ export const AirDodge: FSMState = {
     p.Flags.FastFallOff();
     p.Flags.GravityOff();
     const pVel = p.Velocity;
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const angle = Math.atan2(ia?.LYAxis, ia?.LXAxis);
     const speed = p.Speeds.AirDogeSpeed;
     pVel.X = Math.cos(angle) * speed;
@@ -2030,7 +2133,9 @@ export const Helpess: FSMState = {
     }
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const speeds = p.Speeds;
     const airSpeed = speeds.AerialSpeedInpulseLimit;
     const airMult = speeds.ArielVelocityMultiplier;
@@ -2143,7 +2248,9 @@ export const SideTilt: FSMState = {
   StateName: 'SideTilt',
   StateId: STATE_IDS.SIDE_TILT_S,
   OnEnter: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LYAxis > 0.15) {
       p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.S_TILT_U_GE);
@@ -2210,7 +2317,9 @@ export const UpTilt: FSMState = {
 export const SideCharge: FSMState = {
   StateName: 'SideChagrge',
   OnEnter: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const rXAxis = ia.RXAxis;
 
     if (rXAxis > 0) {
@@ -2267,7 +2376,9 @@ export const SideChargeEx: FSMState = {
 export const UpCharge: FSMState = {
   StateName: 'UpCharge',
   OnEnter: (p, w) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
     const rXAxis = ia.RXAxis;
     if (rXAxis > 0) {
       p.Flags.FaceRight();
@@ -2339,8 +2450,11 @@ export const NAerialAttack: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.N_AIR_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
-    const prevIa = w.GetPlayerPreviousInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speeds = p.Speeds;
     const airSpeed = speeds.AerialSpeedInpulseLimit;
     const airMult = speeds.ArielVelocityMultiplier;
@@ -2364,8 +2478,11 @@ export const FAerialAttack: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.F_AIR_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
-    const prevIa = w.GetPlayerPreviousInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speedsComp = p.Speeds;
     p.Velocity.AddClampedXImpulse(
       speedsComp.AerialSpeedInpulseLimit,
@@ -2390,8 +2507,11 @@ export const UAirAttack: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.U_AIR_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
-    const prevIa = w.GetPlayerPreviousInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speedsComp = p.Speeds;
     p.Velocity.AddClampedXImpulse(
       speedsComp.AerialSpeedInpulseLimit,
@@ -2416,8 +2536,11 @@ export const BAirAttack: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.B_AIR_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
-    const prevIa = w.GetPlayerPreviousInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speedsComp = p.Speeds;
     p.Velocity.AddClampedXImpulse(
       speedsComp.AerialSpeedInpulseLimit,
@@ -2442,8 +2565,11 @@ export const DAirAttack: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.D_AIR_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
-    const prevIa = w.GetPlayerPreviousInput(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
     const speedsComp = p.Speeds;
     p.Velocity.AddClampedXImpulse(
       speedsComp.AerialSpeedInpulseLimit,
@@ -2463,7 +2589,8 @@ export const SideSpecial: FSMState = {
   StateName: 'SideSpecial',
   StateId: STATE_IDS.SIDE_SPCL_S,
   OnEnter: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID)!;
+    const curFrame = w.localFrame;
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
     const lxAxis = ia.LXAxis;
 
     if (lxAxis < 0) {
@@ -2597,7 +2724,8 @@ export const Tumble: FSMState = {
     p.Jump.IncrementJumps();
   },
   OnUpdate: (p: Player, w: World) => {
-    const ia = w.GetPlayerCurrentInput(p.ID);
+    const curFrame = w.localFrame;
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
     const speeds = p.Speeds;
     const airSpeed = speeds.AerialSpeedInpulseLimit;
     const airMult = speeds.ArielVelocityMultiplier;

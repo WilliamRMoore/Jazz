@@ -59,12 +59,7 @@ export class Jazz implements IJazz {
     const world = this.World;
     world.SetFrameTimeForFrame(world.localFrame, frameTimeDelta);
     world.SetFrameTimeStampForFrame(world.localFrame, frameTimeStart);
-    world.VecPool.Zero();
-    world.ColResPool.Zero();
-    world.ProjResPool.Zero();
-    world.AtkResPool.Zero();
-    world.ActiveHitBubbleDtoPool.Zero();
-    world.ClstsPntsResPool.Zero();
+    world.Pools.Zero();
     world.localFrame++;
   }
 
@@ -77,94 +72,49 @@ export class Jazz implements IJazz {
     inputAction: InputAction,
     frameNumber: number
   ) {
-    this.world
-      .GetInputManager(pIndex)
-      .StoreInputForFrame(frameNumber, inputAction);
+    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
+      frameNumber,
+      inputAction
+    );
   }
 
   private tick() {
     const world = this.world;
     const frame = world.localFrame;
-    const playerCount = world.PlayerCount;
-    const players = world.Players;
-    const stateMachines = world.StateMachines;
-    const histories = world.ComponentHistories;
-    const stage = world.Stage;
-    const activewHitBubbleDtoPool = world.ActiveHitBubbleDtoPool;
-    const vecPool = world.VecPool;
-    const colResPool = world.ColResPool;
-    const projResPool = world.ProjResPool;
-    const atkResPool = world.AtkResPool;
-    const clstsPntsResPool = world.ClstsPntsResPool;
+    const playerData = world.PlayerData;
+    const playerCount = playerData.PlayerCount;
+    const stageData = world.StageData;
+    const historyData = world.HistoryData;
+    const pools = world.Pools;
 
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const player = world.GetPlayer(playerIndex);
+      const player = playerData.Player(playerIndex);
       player?.ECB.UpdatePreviousECB();
     }
 
-    PlayerInput(playerCount, players, stateMachines, world);
+    PlayerInput(playerData, world);
 
-    Gravity(playerCount, players, stage);
+    Gravity(playerData, stageData);
 
-    ApplyVelocty(playerCount, players);
+    ApplyVelocty(playerData);
 
-    ApplyVeloctyDecay(playerCount, players, stage);
+    ApplyVeloctyDecay(playerData, stageData);
 
-    PlayerCollisionDetection(
-      playerCount,
-      players,
-      vecPool,
-      colResPool,
-      projResPool
-    );
+    PlayerCollisionDetection(playerData, pools);
 
-    LedgeGrabDetection(
-      playerCount,
-      players,
-      stateMachines,
-      stage,
-      vecPool,
-      colResPool,
-      projResPool
-    );
+    LedgeGrabDetection(playerData, stageData, pools);
 
-    StageCollisionDetection(
-      playerCount,
-      players,
-      stateMachines,
-      stage,
-      vecPool,
-      colResPool,
-      projResPool
-    );
+    StageCollisionDetection(playerData, stageData, pools);
 
-    PlayerSensors(
-      world,
-      playerCount,
-      players,
-      vecPool,
-      clstsPntsResPool,
-      colResPool
-    );
+    PlayerSensors(world, playerData, pools);
 
-    PlayerAttacks(
-      playerCount,
-      players,
-      stateMachines,
-      frame,
-      activewHitBubbleDtoPool,
-      atkResPool,
-      vecPool,
-      colResPool,
-      clstsPntsResPool,
-      histories
-    );
+    PlayerAttacks(playerData, historyData, pools, frame);
 
-    OutOfBoundsCheck(playerCount, players, stateMachines, stage);
+    OutOfBoundsCheck(playerData, stageData);
 
-    TimedFlags(playerCount, players);
+    TimedFlags(playerData);
 
-    RecordHistory(frame, playerCount, players, histories, world);
+    RecordHistory(world, playerData, historyData, frame);
   }
 }
 

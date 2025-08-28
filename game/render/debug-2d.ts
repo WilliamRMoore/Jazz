@@ -130,7 +130,7 @@ export type resolution = {
 };
 
 function drawStage(ctx: CanvasRenderingContext2D, world: World) {
-  const stage = world.Stage;
+  const stage = world.StageData.Stage;
   const stageVerts = stage!.StageVerticies.GetVerts()!;
   const color = 'green';
   const stageVertsLength = stageVerts.length;
@@ -170,7 +170,7 @@ function drawPlayer(
   world: World,
   alpha: number
 ) {
-  const playerCount = world.PlayerCount;
+  const playerCount = world.PlayerData.PlayerCount;
   const currentFrame = world.localFrame - 1;
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
   for (let i = 0; i < playerCount; i++) {
