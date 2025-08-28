@@ -842,7 +842,7 @@ function GetSideSpecial() {
   const impulses = new Map<frameNumber, FlatVec>();
 
   const reactor: SensorReactor = (w, sensorOwner, detectedPlayer) => {
-    const sm = w.GetStateMachine(sensorOwner.ID)!;
+    const sm = w.PlayerData.StateMachine(sensorOwner.ID)!;
     sm.UpdateFromWorld(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
     // change the state here
   };

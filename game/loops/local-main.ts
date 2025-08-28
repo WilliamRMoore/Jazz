@@ -29,7 +29,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   engine.Init(playerCount, positions);
 
   for (let i = 0; i < playerCount; i++) {
-    const sm = engine.World.GetStateMachine(i)!;
+    const sm = engine.World.PlayerData.StateMachine(i)!;
     sm.SetInitialState(STATE_IDS.N_FALL_S);
   }
 

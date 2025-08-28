@@ -12,26 +12,84 @@ import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 
-export class World {
+export type PlayerData = {
+  PlayerCount: number;
+  StateMachine: (playerId: number) => StateMachine;
+  InputStore: (playerId: number) => InputStoreLocal<InputAction>;
+  Player: (playerId: number) => Player;
+  AddPlayer: (p: Player) => void;
+  AddStateMachine: (sm: StateMachine) => void;
+  AddInputStore: (is: InputStoreLocal<InputAction>) => void;
+};
+
+export type StageData = {
+  Stage: Stage;
+};
+
+export type Pools = {
+  ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
+  VecPool: Pool<PooledVector>;
+  ColResPool: Pool<CollisionResult>;
+  ProjResPool: Pool<ProjectionResult>;
+  AtkResPool: Pool<AttackResult>;
+  ClstsPntsResPool: Pool<ClosestPointsResult>;
+  Zero: () => void;
+};
+
+export type HistoryData = {
+  PlayerComponentHistories: Array<ComponentHistory>;
+  RentedVecHistory: Array<number>;
+  RentedColResHsitory: Array<number>;
+  RentedProjResHistory: Array<number>;
+  RentedAtkResHistory: Array<number>;
+  RentedAtiveHitBubHistory: Array<number>;
+};
+
+class PlayerState implements PlayerData {
   private players: Array<Player> = [];
-  private stage?: Stage;
   private stateMachines: Array<StateMachine> = [];
+  private inputStore: Array<InputStoreLocal<InputAction>> = [];
+
+  public StateMachine(playerId: number): StateMachine {
+    return this.stateMachines[playerId];
+  }
+
+  public InputStore(playerId: number): InputStoreLocal<InputAction> {
+    return this.inputStore[playerId];
+  }
+
+  public Player(playerId: number): Player {
+    return this.players[playerId];
+  }
+
+  public AddPlayer(p: Player): void {
+    this.players.push(p);
+  }
+
+  public AddStateMachine(sm: StateMachine): void {
+    this.stateMachines.push(sm);
+  }
+
+  public AddInputStore(is: InputStoreLocal<InputAction>): void {
+    this.inputStore.push(is);
+  }
+
+  public get PlayerCount(): number {
+    return this.players.length;
+  }
+}
+
+class StageWorldState implements StageData {
+  public Stage: Stage;
+}
+
+class PoolContainer implements PoolContainer {
   public readonly ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
   public readonly VecPool: Pool<PooledVector>;
   public readonly ColResPool: Pool<CollisionResult>;
   public readonly ProjResPool: Pool<ProjectionResult>;
   public readonly AtkResPool: Pool<AttackResult>;
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
-  public localFrame = 0;
-  private readonly InputStore: Array<InputStoreLocal<InputAction>> = [];
-  private readonly PlayerComponentHistories: Array<ComponentHistory> = [];
-  private readonly RentedVecHistory: Array<number> = [];
-  private readonly RentedColResHsitory: Array<number> = [];
-  private readonly RentedProjResHistory: Array<number> = [];
-  private readonly RentedAtkResHistory: Array<number> = [];
-  private readonly RentedAtiveHitBubHistory: Array<number> = [];
-  private readonly FrameTimes: Array<number> = [];
-  private readonly FrameTimeStamps: Array<number> = [];
 
   constructor() {
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
@@ -53,34 +111,57 @@ export class World {
       () => new ClosestPointsResult()
     );
   }
+  public Zero(): void {
+    this.ActiveHitBubbleDtoPool.Zero();
+    this.VecPool.Zero();
+    this.ColResPool.Zero();
+    this.ProjResPool.Zero();
+    this.AtkResPool.Zero();
+    this.ClstsPntsResPool.Zero();
+  }
+}
+
+class History implements HistoryData {
+  public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
+  public readonly RentedVecHistory: Array<number> = [];
+  public readonly RentedColResHsitory: Array<number> = [];
+  public readonly RentedProjResHistory: Array<number> = [];
+  public readonly RentedAtkResHistory: Array<number> = [];
+  public readonly RentedAtiveHitBubHistory: Array<number> = [];
+}
+
+export class World {
+  public readonly StageData: StageWorldState = new StageWorldState();
+  public readonly PlayerData: PlayerState = new PlayerState();
+  public readonly HistoryData: History = new History();
+  public localFrame = 0;
+  private readonly FrameTimes: Array<number> = [];
+  private readonly FrameTimeStamps: Array<number> = [];
+  public readonly Pools: PoolContainer = new PoolContainer();
+
+  public get PreviousFrame(): number {
+    return this.localFrame - 1 >= 0 ? this.localFrame - 1 : 0;
+  }
 
   public SetPlayer(p: Player): void {
-    this.players?.push(p);
-    this.stateMachines.push(new StateMachine(p, this));
-    this.InputStore.push(new InputStoreLocal<InputAction>());
+    this.PlayerData.AddPlayer(p);
+    this.PlayerData.AddStateMachine(new StateMachine(p, this));
+    this.PlayerData.AddInputStore(new InputStoreLocal<InputAction>());
     const compHist = new ComponentHistory();
     compHist.StaticPlayerHistory.LedgeDetectorWidth = p.LedgeDetector.Width;
     compHist.StaticPlayerHistory.ledgDetecorHeight = p.LedgeDetector.Height;
     p.HurtBubbles.HurtCapsules.forEach((hc) =>
       compHist.StaticPlayerHistory.HurtCapsules.push(hc)
     );
-    this.PlayerComponentHistories.push(compHist);
+    this.HistoryData.PlayerComponentHistories.push(compHist);
   }
 
   public SetStage(s: Stage) {
-    this.stage = s;
-  }
-
-  public GetPlayer(index: number): Player | undefined {
-    return this.players[index];
-  }
-
-  public GetStateMachine(index: number): StateMachine | undefined {
-    return this.stateMachines[index];
+    this.StageData.Stage = s;
   }
 
   public GetComponentHistory(index: number): ComponentHistory | undefined {
-    return this.PlayerComponentHistories[index];
+    return this.HistoryData.PlayerComponentHistories[index];
   }
 
   public GetFrameTimeForFrame(frame: number): number | undefined {
@@ -100,74 +181,34 @@ export class World {
   }
 
   public GetRentedVecsForFrame(frame: number): number {
-    return this.RentedVecHistory[frame];
+    return this.HistoryData.RentedVecHistory[frame];
   }
 
   public GetRentedColResForFrame(frame: number): number {
-    return this.RentedColResHsitory[frame];
+    return this.HistoryData.RentedColResHsitory[frame];
   }
 
   public GetRentedProjResForFrame(frame: number): number {
-    return this.RentedProjResHistory[frame];
+    return this.HistoryData.RentedProjResHistory[frame];
   }
 
   public GetRentedAtkResForFrame(frame: number): number {
-    return this.RentedAtkResHistory[frame];
+    return this.HistoryData.RentedAtkResHistory[frame];
   }
 
   public GetRentedActiveHitBubblesForFrame(frame: number): number {
-    return this.RentedAtiveHitBubHistory[frame];
+    return this.HistoryData.RentedAtiveHitBubHistory[frame];
   }
 
   public SetPoolHistory(): void {
     const frame = this.localFrame;
-    this.RentedVecHistory[frame] = this.VecPool.ActiveCount;
-    this.RentedColResHsitory[frame] = this.ColResPool.ActiveCount;
-    this.RentedProjResHistory[frame] = this.ProjResPool.ActiveCount;
-    this.RentedAtkResHistory[frame] = this.AtkResPool.ActiveCount;
-    this.RentedAtiveHitBubHistory[frame] =
-      this.ActiveHitBubbleDtoPool.ActiveCount;
-  }
-
-  public get Stage(): Stage {
-    return this.stage!;
-  }
-
-  public get Players(): Array<Player> {
-    return this.players;
-  }
-
-  public get StateMachines(): Array<StateMachine> {
-    return this.stateMachines;
-  }
-
-  public get ComponentHistories(): Array<ComponentHistory> {
-    return this.PlayerComponentHistories;
-  }
-
-  public GetPlayerPreviousInput(playerId: number): InputAction | undefined {
-    const localFrame = this.localFrame;
-    return this.InputStore[playerId].GetInputForFrame(
-      localFrame - 1 >= 0 ? localFrame - 1 : 0
-    );
-  }
-
-  public GetPlayerCurrentInput(playerId: number): InputAction | undefined {
-    return this.InputStore[playerId].GetInputForFrame(this.localFrame);
-  }
-
-  public GetPlayeInputForFrame(
-    playerId: number,
-    frame: number
-  ): InputAction | undefined {
-    return this.InputStore[playerId].GetInputForFrame(frame);
-  }
-
-  public GetInputManager(playerIndex: number): InputStoreLocal<InputAction> {
-    return this.InputStore[playerIndex];
-  }
-
-  public get PlayerCount(): number {
-    return this.players.length;
+    const histDat = this.HistoryData;
+    const pools = this.Pools;
+    histDat.RentedVecHistory[frame] = pools.VecPool.ActiveCount;
+    histDat.RentedColResHsitory[frame] = pools.ColResPool.ActiveCount;
+    histDat.RentedProjResHistory[frame] = pools.ProjResPool.ActiveCount;
+    histDat.RentedAtkResHistory[frame] = pools.AtkResPool.ActiveCount;
+    histDat.RentedAtiveHitBubHistory[frame] =
+      pools.ActiveHitBubbleDtoPool.ActiveCount;
   }
 }
