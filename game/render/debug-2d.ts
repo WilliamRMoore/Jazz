@@ -1,5 +1,5 @@
 import { Circle } from '../engine/physics/circle';
-import { FlatVec } from '../engine/physics/vector';
+import { FlatVec, Line } from '../engine/physics/vector';
 import {
   Attack,
   AttackSnapShot,
@@ -90,6 +90,7 @@ export class DebugRenderer {
     ctx.fillRect(0, 0, this.xRes, this.yRes); // Fill the entire canvas with grey
 
     drawStage(ctx, world);
+    drawPlatforms(ctx, world.StageData.Stage.Platforms);
     drawPlayer(ctx, world, alpha);
 
     const frameTime = world.GetFrameTimeForFrame(localFrame);
@@ -163,6 +164,28 @@ function drawStage(ctx: CanvasRenderingContext2D, world: World) {
   }
   ctx.closePath();
   ctx.fill();
+}
+
+function drawPlatforms(
+  ctx: CanvasRenderingContext2D,
+  plats?: Array<Line>
+): void {
+  if (plats === undefined || plats.length === 0) {
+    return;
+  }
+  const color = 'white';
+  const platsLength = plats.length;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 5;
+  for (let i = 0; i < platsLength; i++) {
+    const plat = plats[i];
+    ctx.beginPath();
+    ctx.moveTo(plat.X1, plat.Y1);
+    ctx.lineTo(plat.X2, plat.Y2);
+    ctx.closePath();
+    ctx.stroke();
+  }
 }
 
 function drawPlayer(

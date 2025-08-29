@@ -2,6 +2,7 @@ import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
   IntersectsPolygons,
+  LineSegmentIntersection,
 } from '../physics/collisions';
 import {
   CanPlayerWalkOffStage,
@@ -16,7 +17,12 @@ import {
   World,
 } from '../world/world';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { Player, PlayerOnStage } from '../player/playerOrchestrator';
+import {
+  Player,
+  PlayerOnPlats,
+  PlayerOnStage,
+  PlayerOnStageOrPlats,
+} from '../player/playerOrchestrator';
 import { AttackResult } from '../pools/AttackResult';
 import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
@@ -24,7 +30,7 @@ import { CollisionResult } from '../pools/CollisionResult';
 import { ComponentHistory } from '../player/playerComponents';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
-import { Stage } from '../stage/stageComponents';
+import { Stage } from '../stage/stageMain';
 
 /**
  * TODO:
@@ -35,6 +41,7 @@ import { Stage } from '../stage/stageComponents';
 
 const correctionDepth: number = 0.1;
 const cornerJitterCorrection = 2;
+const hardLandVelocty = 8;
 
 export function StageCollisionDetection(
   playerData: PlayerData,
@@ -59,10 +66,17 @@ export function StageCollisionDetection(
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const sm = playerData.StateMachine(playerIndex);
-    const playerVerts = p.ECB.GetHull();
+    const ecb = p.ECB;
+    const playerVerts = ecb.GetHull();
     const fsmIno = p.FSMInfo;
     const preResolutionStateId = fsmIno.CurrentStatetId;
-    const preResolutionYOffset = p.ECB.YOffset;
+    const preResolutionYOffset = ecb.YOffset;
+
+    const playerOnPlats = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
+
+    if (playerOnPlats) {
+      continue;
+    }
 
     // --- 1. Always resolve collision first ---
     const collisionResult = IntersectsPolygons(
@@ -181,7 +195,9 @@ export function StageCollisionDetection(
     // If grounded and had a collision, set landing state (soft/hard)
     if (grnd === true && collisionResult.Collision) {
       sm.UpdateFromWorld(
-        p.Velocity.Y < 8 ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE
+        shouldSoftland(p.Velocity.Y)
+          ? GAME_EVENT_IDS.SOFT_LAND_GE
+          : GAME_EVENT_IDS.LAND_GE
       );
     }
 
@@ -192,6 +208,107 @@ export function StageCollisionDetection(
         fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
     ) {
       p.AddToPlayerYPosition(preResolutionYOffset);
+    }
+  }
+}
+
+function shouldSoftland(yVelocity: number) {
+  return yVelocity < hardLandVelocty;
+}
+
+export function PlatformDetection(
+  playerData: PlayerData,
+  stageData: StageData,
+  currentFrame: number
+): void {
+  const plats = stageData.Stage.Platforms;
+  if (plats === undefined) {
+    return;
+  }
+  const playerCount = playerData.PlayerCount;
+  const platCount = plats.length;
+
+  for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    const p = playerData.Player(playerIndex);
+    const velocity = p.Velocity;
+    const inputStore = playerData.InputStore(playerIndex);
+    const ia = inputStore.GetInputForFrame(currentFrame);
+
+    if (PlayerOnPlats(stageData.Stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+      const sm = playerData.StateMachine(playerIndex);
+      if (ia.LYAxis < -0.5) {
+        p.AddToPlayerYPosition(10);
+        sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+        continue;
+      }
+      const landId = shouldSoftland(velocity.Y)
+        ? GAME_EVENT_IDS.SOFT_LAND_GE
+        : GAME_EVENT_IDS.LAND_GE;
+      sm.UpdateFromWorld(landId);
+    }
+
+    if (velocity.Y <= 0 || ia.LYAxis < -0.5) {
+      continue;
+    }
+
+    const ecb = p.ECB;
+    const previousBottom = ecb.PrevBottom;
+    const currentBottom = ecb.Bottom;
+
+    for (let platIndex = 0; platIndex < platCount; platIndex++) {
+      const plat = plats[platIndex];
+
+      const intersected = LineSegmentIntersection(
+        previousBottom.X,
+        previousBottom.Y,
+        currentBottom.X,
+        currentBottom.Y,
+        plat.X1,
+        plat.Y1,
+        plat.X2,
+        plat.Y2
+      );
+
+      if (intersected === false) {
+        continue;
+      }
+
+      const ecbBottom = ecb.Bottom;
+      const isPlayerTooFarRight = ecbBottom.X > plat.X2;
+      const isPlayerTooFarLeft = ecbBottom.X < plat.X1;
+
+      if (isPlayerTooFarRight === true) {
+        p.SetPlayerPosition(plat.X2, plat.Y1 - correctionDepth);
+        const landId = shouldSoftland(velocity.Y)
+          ? GAME_EVENT_IDS.SOFT_LAND_GE
+          : GAME_EVENT_IDS.LAND_GE;
+        playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
+        const newYOffset = p.ECB.YOffset; // after state/offset change
+        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+        p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
+        break;
+      }
+
+      if (isPlayerTooFarLeft === true) {
+        p.SetPlayerPosition(plat.X1, plat.Y1 - correctionDepth);
+        const landId = shouldSoftland(velocity.Y)
+          ? GAME_EVENT_IDS.SOFT_LAND_GE
+          : GAME_EVENT_IDS.LAND_GE;
+        playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
+        const newYOffset = p.ECB.YOffset; // after state/offset change
+        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+        p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
+        break;
+      }
+
+      p.SetPlayerPosition(currentBottom.X, plat.Y1 - correctionDepth);
+      const landId = shouldSoftland(velocity.Y)
+        ? GAME_EVENT_IDS.SOFT_LAND_GE
+        : GAME_EVENT_IDS.LAND_GE;
+      playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
+      const newYOffset = p.ECB.YOffset; // after state/offset change
+      const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+      p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
     }
   }
 }
@@ -228,7 +345,7 @@ export function LedgeGrabDetection(
       continue;
     }
 
-    if (PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth)) {
+    if (PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth)) {
       continue;
     }
 
@@ -369,7 +486,7 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   const ecb = p.ECB;
   const attack = p.Attacks.GetAttack();
   if (attack === undefined) {
-    return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
+    return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
   }
   if (attack.GravityActive === false) {
     return false;
@@ -377,7 +494,7 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   // attack is defined, and has gravity set to active
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
+  return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
 }
 
 export function PlayerInput(playerData: PlayerData, world: World): void {
@@ -795,7 +912,11 @@ export function ApplyVeloctyDecay(
       continue;
     }
 
-    const grounded = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
+    const grounded = PlayerOnStageOrPlats(
+      stage,
+      p.ECB.Bottom,
+      p.ECB.SensorDepth
+    );
     const playerVelocity = p.Velocity;
     const pvx = playerVelocity.X;
     const pvy = playerVelocity.Y;
