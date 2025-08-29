@@ -4,6 +4,7 @@ import {
   IntersectsPolygons,
 } from '../physics/collisions';
 import {
+  CanPlayerWalkOffStage,
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
@@ -23,6 +24,7 @@ import { CollisionResult } from '../pools/CollisionResult';
 import { ComponentHistory } from '../player/playerComponents';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { Stage } from '../stage/stageComponents';
 
 /**
  * TODO:
@@ -57,7 +59,6 @@ export function StageCollisionDetection(
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const sm = playerData.StateMachine(playerIndex);
-    const pFlags = p.Flags;
     const playerVerts = p.ECB.GetHull();
     const fsmIno = p.FSMInfo;
     const preResolutionStateId = fsmIno.CurrentStatetId;
@@ -148,12 +149,9 @@ export function StageCollisionDetection(
     // --- 3. Grounded check and state update ---
     const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+    const canWalkOffStage = CanPlayerWalkOffStage(p);
 
-    if (
-      grnd === false &&
-      prvGrnd === true &&
-      pFlags.CanWalkOffStage === false
-    ) {
+    if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
       // Snap to nearest ledge regardless of facing
       const position = p.Position;
       if (
@@ -342,32 +340,57 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
     const p = playerData.Player(playerIndex);
     const stage = stageData.Stage;
 
-    if (p.Flags.IsInHitPause === true || p.Flags.HasGravity === false) {
+    if (p.Flags.IsInHitPause === true || playerHasGravity(p, stage) === false) {
       continue;
     }
-
-    if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth) === false) {
-      const speeds = p.Speeds;
-      const grav = speeds.Gravity;
-      const isFF = p.Flags.IsFastFalling;
-      const fallSpeed = isFF ? speeds.FastFallSpeed : speeds.FallSpeed;
-      const GravMutliplier = isFF ? 2 : 1;
-      p.Velocity.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
-    }
+    const speeds = p.Speeds;
+    const grav = speeds.Gravity;
+    const isFF = p.Flags.IsFastFalling;
+    const fallSpeed = isFF ? speeds.FastFallSpeed : speeds.FallSpeed;
+    const GravMutliplier = isFF ? 2 : 1;
+    p.Velocity.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
   }
+}
+
+function playerHasGravity(p: Player, stage: Stage): boolean {
+  switch (p.FSMInfo.CurrentStatetId) {
+    case STATE_IDS.AIR_DODGE_S:
+      return false;
+    case STATE_IDS.LEDGE_GRAB_S:
+      return false;
+    case STATE_IDS.HIT_STOP_S:
+      return false;
+    default:
+      break;
+  }
+  if (p.Flags.IsInHitPause) {
+    return false;
+  }
+  const ecb = p.ECB;
+  const attack = p.Attacks.GetAttack();
+  if (attack === undefined) {
+    return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
+  }
+  if (attack.GravityActive === false) {
+    return false;
+  }
+  // attack is defined, and has gravity set to active
+  // just need to check if player is on stage
+  // if player on stage, no gravity, if off stage, gravity
+  return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
 }
 
 export function PlayerInput(playerData: PlayerData, world: World): void {
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-    const p = playerData.Player(playerIndex); //playerArr[playerIndex];
+    const p = playerData.Player(playerIndex);
     if (p.Flags.IsInHitPause) {
       continue;
     }
     const input = world.PlayerData.InputStore(playerIndex).GetInputForFrame(
       world.localFrame
     );
-    playerData.StateMachine(playerIndex).UpdateFromInput(input, world); //stateMachines[playerIndex]!.UpdateFromInput(input, world);
+    playerData.StateMachine(playerIndex).UpdateFromInput(input, world);
   }
 }
 
@@ -382,10 +405,10 @@ export function PlayerSensors(
   }
 
   for (let outerIdx = 0; outerIdx < playerCount - 1; outerIdx++) {
-    const pA = playerData.Player(outerIdx); //players[outerIdx];
+    const pA = playerData.Player(outerIdx);
 
     for (let innerIdx = outerIdx + 1; innerIdx < playerCount; innerIdx++) {
-      const pB = playerData.Player(innerIdx); //players[innerIdx];
+      const pB = playerData.Player(innerIdx);
 
       const pAVspB = sesnsorDetect(
         pA,
@@ -890,6 +913,9 @@ function KillPlayer(p: Player, sm: StateMachine): void {
   p.Velocity.Y = 0;
   p.Points.SubtractMatchPoints(1);
   p.Points.ResetDamagePoints();
+  p.Flags.FastFallOff();
+  p.Flags.ZeroIntangabilityFrames();
+  p.Flags.ZeroHitPauseFrames();
   sm.ForceState(STATE_IDS.N_FALL_S);
   // reduce stock count
 }

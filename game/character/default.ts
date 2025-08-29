@@ -126,6 +126,10 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
       .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
+      .set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 })
+      .set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 })
+      .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
+      .set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 })
       .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
 
     this.SCB = new SpeedsComponentBuilder();
