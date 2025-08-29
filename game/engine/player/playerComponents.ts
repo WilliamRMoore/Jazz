@@ -507,8 +507,6 @@ export class PlayerPointsComponent
 export type FlagsSnapShot = {
   FacingRight: boolean;
   FastFalling: boolean;
-  Gravity: boolean;
-  CanWalkOffStage: boolean;
   HitPauseFrames: number;
   IntangabilityFrames: number;
 };
@@ -516,8 +514,6 @@ export type FlagsSnapShot = {
 export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   private facingRight: boolean = false;
   private fastFalling: boolean = false;
-  private gravityOn: boolean = true;
-  private canWalkOffStage: boolean = false;
   private hitPauseFrames: number = 0;
   private intangabilityFrames: number = 0;
 
@@ -541,22 +537,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.facingRight = !this.facingRight;
   }
 
-  public SetCanWalkOffTrue(): void {
-    this.canWalkOffStage = true;
-  }
-
-  public SetCanWalkOffFalse(): void {
-    this.canWalkOffStage = false;
-  }
-
-  public GravityOn(): void {
-    this.gravityOn = true;
-  }
-
-  public GravityOff(): void {
-    this.gravityOn = false;
-  }
-
   public SetHitPauseFrames(frames: number): void {
     this.hitPauseFrames = frames;
   }
@@ -567,6 +547,14 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
 
   public SetIntangabilityFrames(frames: number): void {
     this.intangabilityFrames = frames;
+  }
+
+  public ZeroIntangabilityFrames(): void {
+    this.intangabilityFrames = 0;
+  }
+
+  public ZeroHitPauseFrames(): void {
+    this.hitPauseFrames = 0;
   }
 
   public DecrementIntangabilityFrames(): void {
@@ -585,14 +573,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return !this.facingRight;
   }
 
-  public get CanWalkOffStage(): boolean {
-    return this.canWalkOffStage;
-  }
-
-  public get HasGravity(): boolean {
-    return this.gravityOn;
-  }
-
   public get IsInHitPause(): boolean {
     return this.hitPauseFrames > 0;
   }
@@ -605,8 +585,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return {
       FacingRight: this.facingRight,
       FastFalling: this.fastFalling,
-      Gravity: this.gravityOn,
-      CanWalkOffStage: this.canWalkOffStage,
       HitPauseFrames: this.hitPauseFrames,
       IntangabilityFrames: this.intangabilityFrames,
     } as FlagsSnapShot;
@@ -615,8 +593,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   public SetFromSnapShot(snapShot: FlagsSnapShot): void {
     this.fastFalling = snapShot.FastFalling;
     this.facingRight = snapShot.FacingRight;
-    this.gravityOn = snapShot.Gravity;
-    this.canWalkOffStage = snapShot.CanWalkOffStage;
     this.hitPauseFrames = snapShot.HitPauseFrames;
     this.intangabilityFrames = snapShot.IntangabilityFrames;
   }
