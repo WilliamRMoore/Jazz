@@ -186,6 +186,43 @@
     D_SPCL_ATK = seq.Next;
   };
   var ATTACK_IDS = new ATTACKS();
+  function CanPlayerWalkOffStage(p) {
+    const currentStatid = p.FSMInfo.CurrentStatetId;
+    switch (currentStatid) {
+      case STATE_IDS.IDLE_S:
+        return false;
+      case STATE_IDS.WALK_S:
+        return false;
+      case STATE_IDS.RUN_TURN_S:
+        return false;
+      case STATE_IDS.STOP_RUN_S:
+        return false;
+      case STATE_IDS.DASH_ATTACK_S:
+        return false;
+      case STATE_IDS.ATTACK_S:
+        return false;
+      case STATE_IDS.SIDE_TILT_S:
+        return false;
+      case STATE_IDS.UP_TILT_S:
+        return false;
+      case STATE_IDS.DOWN_TILT_S:
+        return false;
+      case STATE_IDS.SIDE_CHARGE_S:
+        return false;
+      case STATE_IDS.SIDE_CHARGE_EX_S:
+        return false;
+      case STATE_IDS.UP_CHARGE_S:
+        return false;
+      case STATE_IDS.UP_CHARGE_EX_S:
+        return false;
+      case STATE_IDS.CROUCH_S:
+        return false;
+      case STATE_IDS.LEDGE_GRAB_S:
+        return false;
+      default:
+        return true;
+    }
+  }
   var StateRelation = class {
     stateId;
     mappings;
@@ -230,9 +267,11 @@
   var IdleToTurn = {
     Name: "IdleToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis < 0 && flags.IsFacingRight) {
         return true;
       }
@@ -246,12 +285,15 @@
   var IdleToDash = {
     Name: "IdleToDash",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
@@ -270,15 +312,18 @@
   var IdleToDashturn = {
     Name: "IdleToTurnDash",
     ConditionFunc: (w, playerIndex) => {
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
       const lxAxis = ia.LXAxis;
       if (lxAxis < 0 && flags.IsFacingRight) {
@@ -294,14 +339,17 @@
   var WalkToDash = {
     Name: "WalkToDash",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const fsmInfo = p.FSMInfo;
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (fsmInfo.CurrentStateFrame > 2 || prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (flags.IsFacingRight && ia.LXAxis > 0 && ia.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
         return true;
       }
@@ -315,9 +363,12 @@
   var WalkToTurn = {
     Name: "WalkToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const player = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (prevIa === void 0) {
         return false;
       }
@@ -326,7 +377,7 @@
       if (prevLax < 0 && curLax > 0 || prevLax > 0 && curLax < 0) {
         return true;
       }
-      const flags = p.Flags;
+      const flags = player.Flags;
       if (prevLax === 0 && flags.IsFacingRight && curLax < 0 || prevLax === 0 && flags.IsFacingLeft && curLax > 0) {
         return true;
       }
@@ -337,9 +388,12 @@
   var RunToTurn = {
     Name: "RunToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const player = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (prevIa === void 0) {
         return false;
       }
@@ -348,7 +402,7 @@
       if (prevLax < 0 && curLax > 0 || prevLax > 0 && curLax < 0) {
         return true;
       }
-      const flags = p.Flags;
+      const flags = player.Flags;
       if (prevLax === 0 && flags.IsFacingRight && curLax < 0 || prevLax === 0 && flags.IsFacingLeft && curLax > 0) {
         return true;
       }
@@ -359,9 +413,12 @@
   var DashToTurn = {
     Name: "DashToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const player = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (prevIa === void 0) {
         return false;
       }
@@ -369,7 +426,7 @@
       const curLax = ia.LXAxis;
       const laxDifference = curLax - prevLax;
       const threshold = 0.5;
-      const flags = p.Flags;
+      const flags = player.Flags;
       const facingRight = flags.IsFacingRight;
       if (laxDifference < -threshold && facingRight) {
         if (curLax < 0) {
@@ -388,11 +445,14 @@
   var ToJump = {
     Name: "ToJump",
     ConditionFunc: (w, playerIndex) => {
-      const player = w.GetPlayer(playerIndex);
-      const currentInput2 = w.GetPlayerCurrentInput(playerIndex);
-      const prevInput = w.GetPlayerPreviousInput(playerIndex);
+      const player = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const jumpId = GAME_EVENT_IDS.JUMP_GE;
-      if (inputMacthesTargetNotRepeating(jumpId, currentInput2, prevInput) && player.Jump.HasJumps()) {
+      if (inputMacthesTargetNotRepeating(jumpId, ia, prevIa) && player.Jump.HasJumps()) {
         return true;
       }
       return false;
@@ -402,8 +462,10 @@
   var ToAirDodge = {
     Name: "ToAirDodge",
     ConditionFunc: (w, playerIndex) => {
-      const currentInput2 = w.GetPlayerCurrentInput(playerIndex);
-      if (currentInput2?.Action === GAME_EVENT_IDS.GUARD_GE) {
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      if (ia?.Action === GAME_EVENT_IDS.GUARD_GE) {
         return true;
       }
       return false;
@@ -413,9 +475,11 @@
   var DashDefaultRun = {
     Name: "DashDefaultRun",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis > 0 && flags.IsFacingRight) {
         return true;
       }
@@ -429,7 +493,9 @@
   var DashDefaultIdle = {
     Name: "DashDefaultIdle",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis === 0) {
         return true;
       }
@@ -440,8 +506,10 @@
   var TurnDefaultWalk = {
     Name: "TurnDefaultWalk",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const p = w.GetPlayer(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const p = w.PlayerData.Player(playerIndex);
       const facingRight = p?.Flags.IsFacingRight;
       if (facingRight && ia.LXAxis < 0 || !facingRight && ia.LXAxis > 0) {
         return true;
@@ -453,17 +521,21 @@
   var TurnToDash = {
     Name: "TurnToDash",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const stateFrame = p.FSMInfo.CurrentStateFrame;
       if (stateFrame > 2) {
         return false;
       }
-      const input = w.GetPlayerCurrentInput(playerIndex);
-      if (input.LXAxis < -0.5 && p.Flags.IsFacingRight) {
-        return true;
-      }
-      if (input.LXAxis > 0.5 && p.Flags.IsFacingLeft) {
-        return true;
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      if (ia.LXAxis < -0.5 && p.Flags.IsFacingRight || ia.LXAxis > 0.5 && p.Flags.IsFacingLeft) {
+        const prevIa = inputStore.GetInputForFrame(w.PreviousFrame);
+        return inputMacthesTargetNotRepeating(
+          GAME_EVENT_IDS.MOVE_FAST_GE,
+          ia,
+          prevIa
+        );
       }
       return false;
     },
@@ -472,8 +544,11 @@
   var ToNair = {
     Name: "ToNAir",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
     },
     StateId: STATE_IDS.N_AIR_S
@@ -481,9 +556,12 @@
   var ToFAir = {
     Name: "ToFAir",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex) ?? ia;
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (ia.Action === prevIa.Action) {
         return false;
       }
@@ -516,9 +594,12 @@
   var ToBAir = {
     Name: "ToBAir",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (ia.Action === prevIa?.Action) {
         return false;
       }
@@ -537,8 +618,11 @@
   var ToUAir = {
     Name: "UAir",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
@@ -550,8 +634,11 @@
   var ToDAir = {
     Name: "UAir",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
@@ -563,11 +650,13 @@
   var SideTiltToWalk = {
     Name: "SideTiltToWalk",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action !== GAME_EVENT_IDS.MOVE_GE || ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
         return false;
       }
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
       if (ia.LXAxis > 0 && flags.IsFacingRight) {
         return true;
@@ -645,7 +734,9 @@
   var LandToIdle = {
     Name: "LandToIdle",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetInputManager(playerIndex).GetInputForFrame(w.localFrame);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis === 0) {
         return true;
       }
@@ -656,9 +747,11 @@
   var LandToWalk = {
     Name: "LandToWalk",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis > 0 && flags.IsFacingRight) {
         return true;
       }
@@ -672,9 +765,11 @@
   var LandToTurn = {
     Name: "LandToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis < 0 && flags.IsFacingRight) {
         return true;
       }
@@ -688,7 +783,9 @@
   var DefaultDownTiltToCrouch = {
     Name: "DefaultDownTiltToCrouch",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action === GAME_EVENT_IDS.DOWN_GE) {
         return true;
       }
@@ -699,9 +796,11 @@
   var RunStopToTurn = {
     Name: "RunStopToTurn",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LXAxis > 0 && flags.IsFacingLeft) {
         return true;
       }
@@ -715,21 +814,27 @@
   var IdleToAttack = {
     Name: "IdleToAttack",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
-      return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, lastIa);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
+      return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
     },
     StateId: STATE_IDS.ATTACK_S
   };
   var IdleToSideCharge = {
     Name: "IdleToSideCharge",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false) {
         return false;
       }
@@ -743,12 +848,15 @@
   var IdleToUpTilt = {
     Name: "IdleToUpTilt",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false) {
         return false;
       }
@@ -762,12 +870,15 @@
   var IdleToUpCharge = {
     Name: "IdleToUpCharge",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       if (inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        lastIa
+        prevIa
       ) === false) {
         return false;
       }
@@ -781,8 +892,10 @@
   var RunToDashAttack = {
     Name: "ToDashAttack",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
         const facingRight = p.Flags.IsFacingRight;
         if (ia.LXAxis > 0 && facingRight || ia.LXAxis < 0 && facingRight === false) {
@@ -796,8 +909,10 @@
   var WalkToSideTilt = {
     Name: "WalkToSideTilt",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
         const facingRight = p.Flags.IsFacingRight;
         if (ia.LXAxis > 0 && facingRight || ia.LXAxis < 0 && facingRight === false) {
@@ -811,12 +926,15 @@
   var ToSideSpecial = {
     Name: "ToSideSpecial",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_SPCL_GE,
         ia,
-        lastIa
+        prevIa
       );
     },
     StateId: STATE_IDS.SIDE_SPCL_S
@@ -824,12 +942,15 @@
   var ToDownSpecial = {
     Name: "IdleToDownSpecial",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const lastIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_SPCL_GE,
         ia,
-        lastIa
+        prevIa
       );
     },
     StateId: STATE_IDS.DOWN_SPCL_S
@@ -837,8 +958,11 @@
   var ToDownTilt = {
     Name: "ToDownTilt",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
-      const prevIa = w.GetPlayerPreviousInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       return inputMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
@@ -850,7 +974,7 @@
   var HitStopToLaunch = {
     Name: "HitStopToLaunch",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       if (p.HitStop.HitStopFrames > 0) {
         return false;
       }
@@ -861,7 +985,7 @@
   var LaunchToTumble = {
     Name: "LaunchToHitStun",
     ConditionFunc: (w, playerIndex) => {
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       if (p.HitStun.FramesOfHitStun > 0) {
         return false;
       }
@@ -872,11 +996,13 @@
   var SideChargeToEx = {
     Name: "SideChargeToEx",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
         return true;
       }
-      const p = w.GetPlayer(playerIndex);
+      const p = w.PlayerData.Player(playerIndex);
       const flags = p.Flags;
       if (flags.IsFacingRight && ia.RXAxis <= 0) {
         return true;
@@ -891,7 +1017,9 @@
   var UpChargeToEx = {
     Name: "UpChargeToEx",
     ConditionFunc: (w, playerIndex) => {
-      const ia = w.GetPlayerCurrentInput(playerIndex);
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
         return true;
       }
@@ -1387,28 +1515,26 @@
     StateName: "IDLE",
     StateId: STATE_IDS.IDLE_S,
     OnEnter: (p, w) => {
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   var Walk = {
     StateName: "WALK",
     StateId: STATE_IDS.WALK_S,
     OnEnter: (p, w) => {
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia !== void 0) {
         p.AddWalkImpulseToPlayer(ia.LXAxis);
       }
     },
     OnExit: (p, w) => {
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   var Turn = {
@@ -1432,7 +1558,9 @@
       p.Velocity.AddClampedXImpulse(MaxDashSpeed, impulse);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const speedsComp = p.Speeds;
       const dashSpeedMultiplier = speedsComp.DashMultiplier;
       const impulse = (ia?.LXAxis ?? 0) * dashSpeedMultiplier;
@@ -1459,7 +1587,9 @@
     OnEnter: (p, w) => {
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia !== void 0) {
         const speeds = p.Speeds;
         p.Velocity.AddClampedXImpulse(
@@ -1475,35 +1605,33 @@
     StateName: "RUN_TURN",
     StateId: STATE_IDS.RUN_TURN_S,
     OnEnter: (p, w) => {
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
       p.Flags.ChangeDirections();
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   var RunStop = {
     StateName: "RUN_STOP",
     StateId: STATE_IDS.STOP_RUN_S,
     OnEnter: (p, w) => {
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   var JumpSquat = {
     StateName: "JUMPSQUAT",
     StateId: STATE_IDS.JUMP_SQUAT_S,
     OnEnter: (p, w) => {
+      p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
+      p.ECB.ResetECBShape();
     }
   };
   var Jump = {
@@ -1520,11 +1648,13 @@
       if (p.FSMInfo.CurrentStateFrame === 1) {
         p.Velocity.Y = -p.Jump.JumpVelocity;
       }
-      const inputAction = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const speedsComp = p.Speeds;
       p.Velocity.AddClampedXImpulse(
         speedsComp.AerialSpeedInpulseLimit,
-        (inputAction?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
+        (ia?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
       );
     },
     OnExit: (p, w) => {
@@ -1541,9 +1671,12 @@
       p.ECB.SetECBShape(STATE_IDS.N_FALL_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speedsComp = p.Speeds;
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
       if (p.Velocity.Y > 0 && ia.LYAxis < -0.8 && prevIa.LYAxis > -0.8) {
         p.Flags.FastFallOn();
       }
@@ -1564,10 +1697,12 @@
       p.Jump.ResetJumps();
       p.Velocity.Y = 0;
       p.LedgeDetector.ZeroLedgeGrabCount();
+      p.ECB.SetECBShape(STATE_IDS.LAND_S);
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
+      p.ECB.ResetECBShape();
     }
   };
   var SoftLand = {
@@ -1578,10 +1713,12 @@
       p.Jump.ResetJumps();
       p.Velocity.Y = 0;
       p.LedgeDetector.ZeroLedgeGrabCount();
+      p.ECB.SetECBShape(STATE_IDS.SOFT_LAND_S);
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
+      p.ECB.ResetECBShape();
     }
   };
   var LedgeGrab = {
@@ -1589,7 +1726,6 @@
     StateId: STATE_IDS.LEDGE_GRAB_S,
     OnEnter: (p, w) => {
       p.Flags.FastFallOff();
-      p.Flags.GravityOff();
       p.Velocity.X = 0;
       p.Velocity.Y = 0;
       const ledgeDetectorComp = p.LedgeDetector;
@@ -1597,11 +1733,12 @@
       jumpComp.ResetJumps();
       jumpComp.IncrementJumps();
       ledgeDetectorComp.IncrementLedgeGrabs();
+      p.ECB.SetECBShape(STATE_IDS.LEDGE_GRAB_S);
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
-      p.Flags.GravityOn();
+      p.ECB.ResetECBShape();
     }
   };
   var AirDodge = {
@@ -1609,9 +1746,10 @@
     StateId: STATE_IDS.AIR_DODGE_S,
     OnEnter: (p, w) => {
       p.Flags.FastFallOff();
-      p.Flags.GravityOff();
       const pVel = p.Velocity;
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const angle = Math.atan2(ia?.LYAxis, ia?.LXAxis);
       const speed = p.Speeds.AirDogeSpeed;
       pVel.X = Math.cos(angle) * speed;
@@ -1629,7 +1767,6 @@
       pVel.Y *= 1 - ease;
     },
     OnExit: (p, w) => {
-      p.Flags.GravityOn();
     }
   };
   var Helpess = {
@@ -1641,7 +1778,9 @@
       }
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const speeds = p.Speeds;
       const airSpeed = speeds.AerialSpeedInpulseLimit;
       const airMult = speeds.ArielVelocityMultiplier;
@@ -1684,7 +1823,6 @@
     StateId: STATE_IDS.DASH_ATTACK_S,
     OnEnter: (p, w) => {
       p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DASH_ATTACK_GE);
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
       const attackComp = p.Attacks;
@@ -1707,7 +1845,6 @@
     OnExit: (p, w) => {
       const attackComp = p.Attacks;
       attackComp.ZeroCurrentAttack();
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   var DownTilt = {
@@ -1745,7 +1882,9 @@
     StateName: "SideTilt",
     StateId: STATE_IDS.SIDE_TILT_S,
     OnEnter: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       if (ia.LYAxis > 0.15) {
         p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.S_TILT_U_GE);
         p.ECB.SetECBShape(STATE_IDS.SIDE_TILT_S);
@@ -1803,7 +1942,9 @@
   var SideCharge = {
     StateName: "SideChagrge",
     OnEnter: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const rXAxis = ia.RXAxis;
       if (rXAxis > 0) {
         p.Flags.FaceRight();
@@ -1811,7 +1952,6 @@
       if (rXAxis < 0) {
         p.Flags.FaceLeft();
       }
-      p.Flags.SetCanWalkOffFalse();
       const attackComp = p.Attacks;
       attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_CHARGE_GE);
       attackComp.GetAttack().OnEnter(w, p);
@@ -1819,7 +1959,6 @@
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
-      p.Flags.SetCanWalkOffTrue();
       const attackComp = p.Attacks;
       attackComp.ZeroCurrentAttack();
       p.ECB.ResetECBShape();
@@ -1852,7 +1991,9 @@
   var UpCharge = {
     StateName: "UpCharge",
     OnEnter: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
       const rXAxis = ia.RXAxis;
       if (rXAxis > 0) {
         p.Flags.FaceRight();
@@ -1860,14 +2001,12 @@
       if (rXAxis < 0) {
         p.Flags.FaceLeft();
       }
-      p.Flags.SetCanWalkOffFalse();
       p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.UP_CHARGE_GE);
       p.ECB.SetECBShape(STATE_IDS.UP_CHARGE_S);
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
-      p.Flags.SetCanWalkOffTrue();
       p.Attacks.ZeroCurrentAttack();
       p.ECB.ResetECBShape();
     },
@@ -1924,8 +2063,11 @@
       p.ECB.SetECBShape(STATE_IDS.N_AIR_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speeds = p.Speeds;
       const airSpeed = speeds.AerialSpeedInpulseLimit;
       const airMult = speeds.ArielVelocityMultiplier;
@@ -1948,8 +2090,11 @@
       p.ECB.SetECBShape(STATE_IDS.F_AIR_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speedsComp = p.Speeds;
       p.Velocity.AddClampedXImpulse(
         speedsComp.AerialSpeedInpulseLimit,
@@ -1973,8 +2118,11 @@
       p.ECB.SetECBShape(STATE_IDS.U_AIR_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speedsComp = p.Speeds;
       p.Velocity.AddClampedXImpulse(
         speedsComp.AerialSpeedInpulseLimit,
@@ -1998,8 +2146,11 @@
       p.ECB.SetECBShape(STATE_IDS.B_AIR_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speedsComp = p.Speeds;
       p.Velocity.AddClampedXImpulse(
         speedsComp.AerialSpeedInpulseLimit,
@@ -2023,8 +2174,11 @@
       p.ECB.SetECBShape(STATE_IDS.D_AIR_S);
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
-      const prevIa = w.GetPlayerPreviousInput(p.ID);
+      const inputStore = w.PlayerData.InputStore(p.ID);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
       const speedsComp = p.Speeds;
       p.Velocity.AddClampedXImpulse(
         speedsComp.AerialSpeedInpulseLimit,
@@ -2043,7 +2197,8 @@
     StateName: "SideSpecial",
     StateId: STATE_IDS.SIDE_SPCL_S,
     OnEnter: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const curFrame = w.localFrame;
+      const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
       const lxAxis = ia.LXAxis;
       if (lxAxis < 0) {
         p.Flags.FaceLeft();
@@ -2051,7 +2206,6 @@
       if (lxAxis >= 0) {
         p.Flags.FaceRight();
       }
-      p.Flags.SetCanWalkOffTrue();
       const attackComp = p.Attacks;
       attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_SPCL_GE);
       const atk = attackComp.GetAttack();
@@ -2098,10 +2252,6 @@
     OnEnter: (p, w) => {
       const attackComp = p.Attacks;
       attackComp.SetCurrentAttack(GAME_EVENT_IDS.DOWN_SPCL_GE);
-      const gravity = attackComp.GetAttack().GravityActive;
-      if (gravity === false) {
-        p.Flags.GravityOff();
-      }
       p.ECB.SetECBShape(STATE_IDS.DOWN_SPCL_S);
     },
     OnUpdate: (p, w) => {
@@ -2117,7 +2267,6 @@
     },
     OnExit: (p, w) => {
       const attackComp = p.Attacks;
-      p.Flags.GravityOn();
       attackComp.ZeroCurrentAttack();
       p.ECB.ResetECBShape();
     }
@@ -2127,7 +2276,6 @@
     StateId: STATE_IDS.HIT_STOP_S,
     OnEnter: (p, world) => {
       p.Flags.FastFallOff();
-      p.Flags.GravityOff();
       p.Velocity.X = 0;
       p.Velocity.Y = 0;
     },
@@ -2135,7 +2283,6 @@
       p.HitStop.Decrement();
     },
     OnExit: (p, world) => {
-      p.Flags.GravityOn();
       p.HitStop.SetZero();
     }
   };
@@ -2166,7 +2313,8 @@
       p.Jump.IncrementJumps();
     },
     OnUpdate: (p, w) => {
-      const ia = w.GetPlayerCurrentInput(p.ID);
+      const curFrame = w.localFrame;
+      const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
       const speeds = p.Speeds;
       const airSpeed = speeds.AerialSpeedInpulseLimit;
       const airMult = speeds.ArielVelocityMultiplier;
@@ -2180,13 +2328,11 @@
     StateId: STATE_IDS.CROUCH_S,
     OnEnter: (p, w) => {
       p.ECB.SetECBShape(STATE_IDS.CROUCH_S);
-      p.Flags.SetCanWalkOffFalse();
     },
     OnUpdate: (p, w) => {
     },
     OnExit: (p, w) => {
       p.ECB.ResetECBShape();
-      p.Flags.SetCanWalkOffTrue();
     }
   };
   function ShouldFastFall(curLYAxsis, prevLYAxsis) {
@@ -2308,7 +2454,7 @@
       normal.Negate();
     }
     const res = colResPool.Rent();
-    res._setCollisionTrue(normal.X, normal.Y, depth);
+    res.SetCollisionTrue(normal.X, normal.Y, depth);
     return res;
   }
   function IntersectsCircles(colResPool, v1, v2, r1, r2) {
@@ -2320,7 +2466,7 @@
     const norm = v2.SubtractVec(v1).Normalize();
     const depth = raddi - dist;
     const returnValue = colResPool.Rent();
-    returnValue._setCollisionTrue(norm.X, norm.Y, depth);
+    returnValue.SetCollisionTrue(norm.X, norm.Y, depth);
     return returnValue;
   }
   function ClosestPointsBetweenSegments(p1, q1, p2, q2, vecPool, ClosestPointsPool) {
@@ -2413,7 +2559,7 @@
       }
     }
     let result = projResPool.Rent();
-    result._setMinMax(min, max);
+    result.SetMinMax(min, max);
     return result;
   }
   function LineSegmentIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
@@ -2819,8 +2965,6 @@
   var PlayerFlagsComponent = class {
     facingRight = false;
     fastFalling = false;
-    gravityOn = true;
-    canWalkOffStage = false;
     hitPauseFrames = 0;
     intangabilityFrames = 0;
     FaceRight() {
@@ -2838,18 +2982,6 @@
     ChangeDirections() {
       this.facingRight = !this.facingRight;
     }
-    SetCanWalkOffTrue() {
-      this.canWalkOffStage = true;
-    }
-    SetCanWalkOffFalse() {
-      this.canWalkOffStage = false;
-    }
-    GravityOn() {
-      this.gravityOn = true;
-    }
-    GravityOff() {
-      this.gravityOn = false;
-    }
     SetHitPauseFrames(frames) {
       this.hitPauseFrames = frames;
     }
@@ -2858,6 +2990,12 @@
     }
     SetIntangabilityFrames(frames) {
       this.intangabilityFrames = frames;
+    }
+    ZeroIntangabilityFrames() {
+      this.intangabilityFrames = 0;
+    }
+    ZeroHitPauseFrames() {
+      this.hitPauseFrames = 0;
     }
     DecrementIntangabilityFrames() {
       this.intangabilityFrames--;
@@ -2871,12 +3009,6 @@
     get IsFacingLeft() {
       return !this.facingRight;
     }
-    get CanWalkOffStage() {
-      return this.canWalkOffStage;
-    }
-    get HasGravity() {
-      return this.gravityOn;
-    }
     get IsInHitPause() {
       return this.hitPauseFrames > 0;
     }
@@ -2887,8 +3019,6 @@
       return {
         FacingRight: this.facingRight,
         FastFalling: this.fastFalling,
-        Gravity: this.gravityOn,
-        CanWalkOffStage: this.canWalkOffStage,
         HitPauseFrames: this.hitPauseFrames,
         IntangabilityFrames: this.intangabilityFrames
       };
@@ -2896,8 +3026,6 @@
     SetFromSnapShot(snapShot) {
       this.fastFalling = snapShot.FastFalling;
       this.facingRight = snapShot.FacingRight;
-      this.gravityOn = snapShot.Gravity;
-      this.canWalkOffStage = snapShot.CanWalkOffStage;
       this.hitPauseFrames = snapShot.HitPauseFrames;
       this.intangabilityFrames = snapShot.IntangabilityFrames;
     }
@@ -3689,7 +3817,7 @@
         height: 70,
         width: 70,
         yOffset: -25
-      }).set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 }).set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 }).set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 }).set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 }).set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+      }).set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 }).set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 }).set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 }).set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 }).set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 }).set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 }).set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 }).set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 }).set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
       this.SCB = new SpeedsComponentBuilder();
       this.SCB.SetWalkSpeeds(6, 1.6);
       this.SCB.SetRunSpeeds(10, 2.2);
@@ -4021,7 +4149,7 @@
     const activeFrames = 80;
     const impulses = /* @__PURE__ */ new Map();
     const reactor = (w, sensorOwner, detectedPlayer) => {
-      const sm = w.GetStateMachine(sensorOwner.ID);
+      const sm = w.PlayerData.StateMachine(sensorOwner.ID);
       sm.UpdateFromWorld(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
     };
     const onEnter = (w, p) => {
@@ -4362,35 +4490,90 @@
   // game/engine/systems/systems.ts
   var correctionDepth = 0.1;
   var cornerJitterCorrection = 2;
-  function StageCollisionDetection(playerCount, players, stateMachines, stage, vecPool, colResPool, projResPool) {
+  function StageCollisionDetection(playerData, stageData, pools) {
+    const playerCount = playerData.PlayerCount;
+    const stage = stageData.Stage;
     const stageVerts = stage.StageVerticies.GetVerts();
     const stageGround = stage.StageVerticies.GetGround();
-    const leftMostPeice = stageGround[0];
-    const rightMostPeice = stageGround[stageGround.length - 1];
-    const leftStagePoint = vecPool.Rent().SetXY(leftMostPeice.X1, leftMostPeice.Y1);
-    const rightStagePoint = vecPool.Rent().SetXY(rightMostPeice.X2, rightMostPeice.Y2);
+    const leftMostPiece = stageGround[0];
+    const rightMostPiece = stageGround[stageGround.length - 1];
+    const leftStagePoint = pools.VecPool.Rent().SetXY(
+      leftMostPiece.X1,
+      leftMostPiece.Y1
+    );
+    const rightStagePoint = pools.VecPool.Rent().SetXY(
+      rightMostPiece.X2,
+      rightMostPiece.Y2
+    );
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = players[playerIndex];
-      const sm = stateMachines[playerIndex];
-      const pFlags = p.Flags;
+      const p = playerData.Player(playerIndex);
+      const sm = playerData.StateMachine(playerIndex);
       const playerVerts = p.ECB.GetHull();
-      const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
-      const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+      const fsmIno = p.FSMInfo;
+      const preResolutionStateId = fsmIno.CurrentStatetId;
+      const preResolutionYOffset = p.ECB.YOffset;
+      const collisionResult = IntersectsPolygons(
+        playerVerts,
+        stageVerts,
+        pools.VecPool,
+        pools.ColResPool,
+        pools.ProjResPool
+      );
+      if (collisionResult.Collision) {
+        const normalX = collisionResult.NormX;
+        const normalY = collisionResult.NormY;
+        const pPos = p.Position;
+        const playerPosDTO = pools.VecPool.Rent().SetXY(pPos.X, pPos.Y);
+        const move = pools.VecPool.Rent().SetXY(normalX, normalY).Negate().Multiply(collisionResult.Depth);
+        if (normalX === 0 && normalY > 0) {
+          move.AddToY(correctionDepth);
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+        if (normalX > 0 && normalY === 0) {
+          move.AddToX(correctionDepth);
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+        if (normalX < 0 && normalY === 0) {
+          move.AddToX(-correctionDepth);
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+        if (normalX === 0 && normalY < 0) {
+          move.AddToY(-correctionDepth);
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+        const absX = Math.abs(normalX);
+        if (absX > 0 && normalY < 0) {
+          move.AddToX(move.X <= 0 ? move.Y : -move.Y);
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+        if (absX > 0 && normalY > 0) {
+          playerPosDTO.AddVec(move);
+          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
+        }
+      }
       const standingOnLeftLedge = Math.abs(p.Position.X - leftStagePoint.X) <= cornerJitterCorrection;
       const standingOnRightLedge = Math.abs(p.Position.X - rightStagePoint.X) <= cornerJitterCorrection;
-      if (grnd === true && standingOnLeftLedge) {
+      if (standingOnLeftLedge && PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
         p.SetPlayerPosition(
           leftStagePoint.X + cornerJitterCorrection,
           p.Position.Y
         );
       }
-      if (grnd === true && standingOnRightLedge) {
+      if (standingOnRightLedge && PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
         p.SetPlayerPosition(
           rightStagePoint.X - cornerJitterCorrection,
           p.Position.Y
         );
       }
-      if (grnd === false && prvGrnd === true && pFlags.CanWalkOffStage === false) {
+      const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
+      const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+      const canWalkOffStage = CanPlayerWalkOffStage(p);
+      if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
         const position = p.Position;
         if (Math.abs(position.X - leftStagePoint.X) < Math.abs(position.X - rightStagePoint.X)) {
           p.SetPlayerPosition(
@@ -4406,71 +4589,28 @@
         sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
         continue;
       }
-      const collisionResult = IntersectsPolygons(
-        playerVerts,
-        stageVerts,
-        vecPool,
-        colResPool,
-        projResPool
-      );
-      if (collisionResult.Collision) {
-        const normalX = collisionResult.NormX;
-        const normalY = collisionResult.NormY;
-        const pPos = p.Position;
-        const yOffset = p.ECB.YOffset;
-        const playerPosDTO = vecPool.Rent().SetXY(pPos.X, pPos.Y);
-        const move = vecPool.Rent().SetXY(normalX, normalY).Negate().Multiply(collisionResult.Depth);
-        if (normalX === 0 && normalY > 0) {
-          move.AddToY(+yOffset);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y + correctionDepth);
-          sm.UpdateFromWorld(
-            p.Velocity.Y < 8 ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE
-          );
-          continue;
-        }
-        if (normalX > 0 && normalY === 0) {
-          move.AddToX(correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-          continue;
-        }
-        if (normalX < 0 && normalY === 0) {
-          move.AddToX(-correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-          continue;
-        }
-        if (normalX === 0 && normalY < 0) {
-          move.AddToY(-correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-          continue;
-        }
-        if (Math.abs(normalX) > 0 && normalY > 0) {
-          move.AddToX(move.X <= 0 ? move.Y : -move.Y);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-          continue;
-        }
-        if (Math.abs(normalX) > 0 && normalY < 0) {
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-          continue;
-        }
-      }
       if (grnd === false && p.FSMInfo.CurrentStatetId != STATE_IDS.LEDGE_GRAB_S) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         continue;
       }
+      if (grnd === true && collisionResult.Collision) {
+        sm.UpdateFromWorld(
+          p.Velocity.Y < 8 ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE
+        );
+      }
+      if (preResolutionStateId !== STATE_IDS.LAND_S && preResolutionStateId !== STATE_IDS.SOFT_LAND_S && (fsmIno.CurrentStatetId === STATE_IDS.LAND_S || fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)) {
+        p.AddToPlayerYPosition(preResolutionYOffset);
+      }
     }
   }
-  function LedgeGrabDetection(playerCount, players, stateMachines, stage, vecPool, colResPool, projResPool) {
+  function LedgeGrabDetection(playerData, stageData, pools) {
+    const stage = stageData.Stage;
     const ledges = stage.Ledges;
     const leftLedge = ledges.GetLeftLedge();
     const rightLedge = ledges.GetRightLedge();
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = players[playerIndex];
+      const p = playerData.Player(playerIndex);
       if (p.Flags.IsInHitPause) {
         continue;
       }
@@ -4478,7 +4618,7 @@
       if (ledgeDetector.CanGrabLedge === false) {
         continue;
       }
-      const sm = stateMachines[playerIndex];
+      const sm = playerData.StateMachine(playerIndex);
       const flags = p.Flags;
       const ecb = p.ECB;
       if (p.Velocity.Y < 0 || p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
@@ -4493,9 +4633,9 @@
         const intersectsLeftLedge = IntersectsPolygons(
           leftLedge,
           front,
-          vecPool,
-          colResPool,
-          projResPool
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ProjResPool
         );
         if (intersectsLeftLedge.Collision) {
           sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
@@ -4506,9 +4646,9 @@
       const intersectsRightLedge = IntersectsPolygons(
         rightLedge,
         front,
-        vecPool,
-        colResPool,
-        projResPool
+        pools.VecPool,
+        pools.ColResPool,
+        pools.ProjResPool
       );
       if (intersectsRightLedge.Collision) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
@@ -4516,19 +4656,20 @@
       }
     }
   }
-  function PlayerCollisionDetection(playerCount, playerArr, vecPool, colResPool, projResPool) {
+  function PlayerCollisionDetection(playerData, pools) {
+    const playerCount = playerData.PlayerCount;
     if (playerCount < 2) {
       return;
     }
     for (let pIOuter = 0; pIOuter < playerCount; pIOuter++) {
-      const checkPlayer = playerArr[pIOuter];
+      const checkPlayer = playerData.Player(pIOuter);
       const checkPlayerStateId = checkPlayer.FSMInfo.CurrentState.StateId;
       if (checkPlayerStateId === STATE_IDS.LEDGE_GRAB_S || checkPlayer.Flags.IsInHitPause) {
         continue;
       }
       const checkPlayerEcb = checkPlayer.ECB.GetActiveVerts();
       for (let pIInner = pIOuter + 1; pIInner < playerCount; pIInner++) {
-        const otherPlayer = playerArr[pIInner];
+        const otherPlayer = playerData.Player(pIInner);
         const otherPlayerStateId = otherPlayer.FSMInfo.CurrentState.StateId;
         if (otherPlayerStateId === STATE_IDS.LEDGE_GRAB_S || otherPlayer.Flags.IsInHitPause) {
           continue;
@@ -4537,9 +4678,9 @@
         const collision = IntersectsPolygons(
           checkPlayerEcb,
           otherPlayerEcb,
-          vecPool,
-          colResPool,
-          projResPool
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ProjResPool
         );
         if (collision.Collision) {
           const checkPlayerPos = checkPlayer.Position;
@@ -4560,53 +4701,81 @@
       }
     }
   }
-  function Gravity(playerCount, playersArr, stage) {
+  function Gravity(playerData, stageData) {
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = playersArr[playerIndex];
-      if (p.Flags.IsInHitPause === true || p.Flags.HasGravity === false) {
+      const p = playerData.Player(playerIndex);
+      const stage = stageData.Stage;
+      if (p.Flags.IsInHitPause === true || playerHasGravity(p, stage) === false) {
         continue;
       }
-      if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth) === false) {
-        const speeds = p.Speeds;
-        const grav = speeds.Gravity;
-        const isFF = p.Flags.IsFastFalling;
-        const fallSpeed = isFF ? speeds.FastFallSpeed : speeds.FallSpeed;
-        const GravMutliplier = isFF ? 2 : 1;
-        p.Velocity.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
-      }
+      const speeds = p.Speeds;
+      const grav = speeds.Gravity;
+      const isFF = p.Flags.IsFastFalling;
+      const fallSpeed = isFF ? speeds.FastFallSpeed : speeds.FallSpeed;
+      const GravMutliplier = isFF ? 2 : 1;
+      p.Velocity.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
     }
   }
-  function PlayerInput(playerCount, playerArr, stateMachines, world) {
+  function playerHasGravity(p, stage) {
+    switch (p.FSMInfo.CurrentStatetId) {
+      case STATE_IDS.AIR_DODGE_S:
+        return false;
+      case STATE_IDS.LEDGE_GRAB_S:
+        return false;
+      case STATE_IDS.HIT_STOP_S:
+        return false;
+      default:
+        break;
+    }
+    if (p.Flags.IsInHitPause) {
+      return false;
+    }
+    const ecb = p.ECB;
+    const attack = p.Attacks.GetAttack();
+    if (attack === void 0) {
+      return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
+    }
+    if (attack.GravityActive === false) {
+      return false;
+    }
+    return !PlayerOnStage(stage, ecb.Bottom, ecb.SensorDepth);
+  }
+  function PlayerInput(playerData, world) {
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = playerArr[playerIndex];
+      const p = playerData.Player(playerIndex);
       if (p.Flags.IsInHitPause) {
         continue;
       }
-      const input = world.GetPlayerCurrentInput(playerIndex);
-      stateMachines[playerIndex].UpdateFromInput(input, world);
+      const input = world.PlayerData.InputStore(playerIndex).GetInputForFrame(
+        world.localFrame
+      );
+      playerData.StateMachine(playerIndex).UpdateFromInput(input, world);
     }
   }
-  function PlayerSensors(world, playerCount, players, vecPool, closestPointsPool, collisionResultPool) {
+  function PlayerSensors(world, playerData, pools) {
+    const playerCount = playerData.PlayerCount;
     if (playerCount < 2) {
       return;
     }
     for (let outerIdx = 0; outerIdx < playerCount - 1; outerIdx++) {
-      const pA = players[outerIdx];
+      const pA = playerData.Player(outerIdx);
       for (let innerIdx = outerIdx + 1; innerIdx < playerCount; innerIdx++) {
-        const pB = players[innerIdx];
+        const pB = playerData.Player(innerIdx);
         const pAVspB = sesnsorDetect(
           pA,
           pB,
-          vecPool,
-          collisionResultPool,
-          closestPointsPool
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ClstsPntsResPool
         );
         const pBVspA = sesnsorDetect(
           pB,
           pA,
-          vecPool,
-          collisionResultPool,
-          closestPointsPool
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ClstsPntsResPool
         );
         if (pAVspB) {
           pA.Sensors.ReactAction(world, pA, pB);
@@ -4664,33 +4833,34 @@
     }
     return false;
   }
-  function PlayerAttacks(playerCount, players, stateMachines, currentFrame, activeHitBuubleDtoPool, atkResPool, vecPool, colResPool, clstsPntsResPool, componentHistories) {
+  function PlayerAttacks(playerData, historyData, pools, currentFrame) {
+    const playerCount = playerData.PlayerCount;
     if (playerCount === 1) {
       return;
     }
-    for (let i = 0; i < playerCount - 1; i++) {
-      for (let j = i + 1; j < playerCount; j++) {
-        const p1 = players[i];
-        const p2 = players[j];
+    for (let outerPIdx = 0; outerPIdx < playerCount - 1; outerPIdx++) {
+      for (let innerPIdx = outerPIdx + 1; innerPIdx < playerCount; innerPIdx++) {
+        const p1 = playerData[outerPIdx];
+        const p2 = playerData[innerPIdx];
         const p1HitsP2Result = PAvsPB(
           currentFrame,
-          activeHitBuubleDtoPool,
-          atkResPool,
-          vecPool,
-          colResPool,
-          clstsPntsResPool,
-          componentHistories,
+          pools.ActiveHitBubbleDtoPool,
+          pools.AtkResPool,
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ClstsPntsResPool,
+          historyData.PlayerComponentHistories,
           p1,
           p2
         );
         const p2HitsP1Result = PAvsPB(
           currentFrame,
-          activeHitBuubleDtoPool,
-          atkResPool,
-          vecPool,
-          colResPool,
-          clstsPntsResPool,
-          componentHistories,
+          pools.ActiveHitBubbleDtoPool,
+          pools.AtkResPool,
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ClstsPntsResPool,
+          historyData.PlayerComponentHistories,
           p2,
           p1
         );
@@ -4698,15 +4868,15 @@
           const clang = Math.abs(p1HitsP2Result.Damage - p2HitsP1Result.Damage) < 3;
         }
         if (p1HitsP2Result.Hit) {
-          resolveHitResult(p1, p2, stateMachines, p1HitsP2Result, vecPool);
+          resolveHitResult(p1, p2, playerData, p1HitsP2Result, pools.VecPool);
         }
         if (p2HitsP1Result.Hit) {
-          resolveHitResult(p2, p1, stateMachines, p2HitsP1Result, vecPool);
+          resolveHitResult(p2, p1, playerData, p2HitsP1Result, pools.VecPool);
         }
       }
     }
   }
-  function resolveHitResult(pA, pB, stateMachines, pAHitsPbResult, vecPool) {
+  function resolveHitResult(pA, pB, pAlayerData, pAHitsPbResult, vecPool) {
     const damage = pAHitsPbResult.Damage;
     pB.Points.AddDamage(damage);
     const kb = CalculateKnockback(pB, pAHitsPbResult);
@@ -4726,7 +4896,7 @@
     }
     pB.HitStop.SetHitStop(hitStop);
     pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
-    const pBSm = stateMachines[pB.ID];
+    const pBSm = pAlayerData.StateMachine(pB.ID);
     pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
   }
   function PAvsPB(currentFrame, activeHbPool, atkResPool, vecPool, colResPool, clstsPntsResPool, componentHistories, pA, pB) {
@@ -4850,9 +5020,10 @@
     const b = attackRes.BaseKnockBack;
     return ((p / 10 + p * d / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
   }
-  function ApplyVelocty(playerCount, players) {
+  function ApplyVelocty(playerData) {
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = players[playerIndex];
+      const p = playerData.Player(playerIndex);
       if (p.Flags.IsInHitPause) {
         continue;
       }
@@ -4860,9 +5031,11 @@
       p.AddToPlayerPosition(playerVelocity.X, playerVelocity.Y);
     }
   }
-  function ApplyVeloctyDecay(playerCount, players, stage) {
+  function ApplyVeloctyDecay(playerData, stageData) {
+    const playerCount = playerData.PlayerCount;
+    const stage = stageData.Stage;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = players[playerIndex];
+      const p = playerData.Player(playerIndex);
       const flags = p.Flags;
       if (flags.IsInHitPause) {
         continue;
@@ -4872,6 +5045,7 @@
       const pvx = playerVelocity.X;
       const pvy = playerVelocity.Y;
       const speeds = p.Speeds;
+      const absPvx = Math.abs(pvx);
       if (grounded) {
         const groundedVelocityDecay = speeds.GroundedVelocityDecay;
         if (pvx > 0) {
@@ -4880,7 +5054,7 @@
         if (pvx < 0) {
           playerVelocity.X += groundedVelocityDecay;
         }
-        if (Math.abs(pvx) < 1) {
+        if (absPvx < 1) {
           playerVelocity.X = 0;
         }
         if (pvy > 0) {
@@ -4902,14 +5076,15 @@
       if (pvy < 0) {
         playerVelocity.Y += aerialVelocityDecay;
       }
-      if (Math.abs(pvx) < 1.5) {
+      if (absPvx < 1.5) {
         playerVelocity.X = 0;
       }
     }
   }
-  function TimedFlags(playerCount, playerArr) {
+  function TimedFlags(playerData) {
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = playerArr[playerIndex];
+      const p = playerData.Player(playerIndex);
       const flags = p.Flags;
       if (flags.IsInHitPause === true) {
         flags.DecrementHitPause();
@@ -4919,10 +5094,13 @@
       }
     }
   }
-  function OutOfBoundsCheck(playerCount, playerArr, playerStateMachineArr, stage) {
+  function OutOfBoundsCheck(playerData, stageData) {
+    const playerCount = playerData.PlayerCount;
+    const stage = stageData.Stage;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = playerArr[playerIndex];
-      const sm = playerStateMachineArr[playerIndex];
+      const p = playerData.Player(playerIndex);
+      [playerIndex];
+      const sm = playerData.StateMachine(playerIndex);
       const pPos = p.Position;
       const pY = pPos.Y;
       const pX = pPos.X;
@@ -4950,12 +5128,16 @@
     p.Velocity.Y = 0;
     p.Points.SubtractMatchPoints(1);
     p.Points.ResetDamagePoints();
+    p.Flags.FastFallOff();
+    p.Flags.ZeroIntangabilityFrames();
+    p.Flags.ZeroHitPauseFrames();
     sm.ForceState(STATE_IDS.N_FALL_S);
   }
-  function RecordHistory(frameNumber, playerCount, playerArr, playerHistories, w) {
+  function RecordHistory(w, playerData, historyData, frameNumber) {
+    const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const p = playerArr[playerIndex];
-      const history = playerHistories[playerIndex];
+      const p = playerData.Player(playerIndex);
+      const history = historyData.PlayerComponentHistories[playerIndex];
       history.PositionHistory[frameNumber] = p.Position.SnapShot();
       history.FsmInfoHistory[frameNumber] = p.FSMInfo.SnapShot();
       history.PlayerPointsHistory[frameNumber] = p.Points.SnapShot();
@@ -5270,13 +5452,13 @@
     normX = 0;
     normY = 0;
     depth = 0;
-    _setCollisionTrue(x, y, depth) {
+    SetCollisionTrue(x, y, depth) {
       this.collision = true;
       this.normX = x;
       this.normY = y;
       this.depth = depth;
     }
-    _setCollisionFalse() {
+    SetCollisionFalse() {
       this.collision = false;
       this.normX = 0;
       this.normY = 0;
@@ -5295,7 +5477,7 @@
       return this.normY;
     }
     Zero() {
-      this._setCollisionFalse();
+      this.SetCollisionFalse();
     }
   };
 
@@ -5313,7 +5495,7 @@
     get Min() {
       return this.min;
     }
-    _setMinMax(min, max) {
+    SetMinMax(min, max) {
       this.min = min;
       this.max = max;
     }
@@ -5445,26 +5627,42 @@
   };
 
   // game/engine/world/world.ts
-  var World = class {
+  var PlayerState = class {
     players = [];
-    stage;
     stateMachines = [];
+    inputStore = [];
+    StateMachine(playerId) {
+      return this.stateMachines[playerId];
+    }
+    InputStore(playerId) {
+      return this.inputStore[playerId];
+    }
+    Player(playerId) {
+      return this.players[playerId];
+    }
+    AddPlayer(p) {
+      this.players.push(p);
+    }
+    AddStateMachine(sm) {
+      this.stateMachines.push(sm);
+    }
+    AddInputStore(is) {
+      this.inputStore.push(is);
+    }
+    get PlayerCount() {
+      return this.players.length;
+    }
+  };
+  var StageWorldState = class {
+    Stage;
+  };
+  var PoolContainer = class {
     ActiveHitBubbleDtoPool;
     VecPool;
     ColResPool;
     ProjResPool;
     AtkResPool;
     ClstsPntsResPool;
-    localFrame = 0;
-    InputStore = [];
-    PlayerComponentHistories = [];
-    RentedVecHistory = [];
-    RentedColResHsitory = [];
-    RentedProjResHistory = [];
-    RentedAtkResHistory = [];
-    RentedAtiveHitBubHistory = [];
-    FrameTimes = [];
-    FrameTimeStamps = [];
     constructor() {
       this.ActiveHitBubbleDtoPool = new Pool(
         20,
@@ -5485,29 +5683,51 @@
         () => new ClosestPointsResult()
       );
     }
+    Zero() {
+      this.ActiveHitBubbleDtoPool.Zero();
+      this.VecPool.Zero();
+      this.ColResPool.Zero();
+      this.ProjResPool.Zero();
+      this.AtkResPool.Zero();
+      this.ClstsPntsResPool.Zero();
+    }
+  };
+  var History = class {
+    PlayerComponentHistories = [];
+    RentedVecHistory = [];
+    RentedColResHsitory = [];
+    RentedProjResHistory = [];
+    RentedAtkResHistory = [];
+    RentedAtiveHitBubHistory = [];
+  };
+  var World = class {
+    StageData = new StageWorldState();
+    PlayerData = new PlayerState();
+    HistoryData = new History();
+    localFrame = 0;
+    FrameTimes = [];
+    FrameTimeStamps = [];
+    Pools = new PoolContainer();
+    get PreviousFrame() {
+      return this.localFrame - 1 >= 0 ? this.localFrame - 1 : 0;
+    }
     SetPlayer(p) {
-      this.players?.push(p);
-      this.stateMachines.push(new StateMachine(p, this));
-      this.InputStore.push(new InputStoreLocal());
+      this.PlayerData.AddPlayer(p);
+      this.PlayerData.AddStateMachine(new StateMachine(p, this));
+      this.PlayerData.AddInputStore(new InputStoreLocal());
       const compHist = new ComponentHistory();
       compHist.StaticPlayerHistory.LedgeDetectorWidth = p.LedgeDetector.Width;
       compHist.StaticPlayerHistory.ledgDetecorHeight = p.LedgeDetector.Height;
       p.HurtBubbles.HurtCapsules.forEach(
         (hc) => compHist.StaticPlayerHistory.HurtCapsules.push(hc)
       );
-      this.PlayerComponentHistories.push(compHist);
+      this.HistoryData.PlayerComponentHistories.push(compHist);
     }
     SetStage(s) {
-      this.stage = s;
-    }
-    GetPlayer(index) {
-      return this.players[index];
-    }
-    GetStateMachine(index) {
-      return this.stateMachines[index];
+      this.StageData.Stage = s;
     }
     GetComponentHistory(index) {
-      return this.PlayerComponentHistories[index];
+      return this.HistoryData.PlayerComponentHistories[index];
     }
     GetFrameTimeForFrame(frame) {
       return this.FrameTimes[frame];
@@ -5522,57 +5742,29 @@
       return this.FrameTimeStamps[frame];
     }
     GetRentedVecsForFrame(frame) {
-      return this.RentedVecHistory[frame];
+      return this.HistoryData.RentedVecHistory[frame];
     }
     GetRentedColResForFrame(frame) {
-      return this.RentedColResHsitory[frame];
+      return this.HistoryData.RentedColResHsitory[frame];
     }
     GetRentedProjResForFrame(frame) {
-      return this.RentedProjResHistory[frame];
+      return this.HistoryData.RentedProjResHistory[frame];
     }
     GetRentedAtkResForFrame(frame) {
-      return this.RentedAtkResHistory[frame];
+      return this.HistoryData.RentedAtkResHistory[frame];
     }
     GetRentedActiveHitBubblesForFrame(frame) {
-      return this.RentedAtiveHitBubHistory[frame];
+      return this.HistoryData.RentedAtiveHitBubHistory[frame];
     }
     SetPoolHistory() {
       const frame = this.localFrame;
-      this.RentedVecHistory[frame] = this.VecPool.ActiveCount;
-      this.RentedColResHsitory[frame] = this.ColResPool.ActiveCount;
-      this.RentedProjResHistory[frame] = this.ProjResPool.ActiveCount;
-      this.RentedAtkResHistory[frame] = this.AtkResPool.ActiveCount;
-      this.RentedAtiveHitBubHistory[frame] = this.ActiveHitBubbleDtoPool.ActiveCount;
-    }
-    get Stage() {
-      return this.stage;
-    }
-    get Players() {
-      return this.players;
-    }
-    get StateMachines() {
-      return this.stateMachines;
-    }
-    get ComponentHistories() {
-      return this.PlayerComponentHistories;
-    }
-    GetPlayerPreviousInput(playerId) {
-      const localFrame = this.localFrame;
-      return this.InputStore[playerId].GetInputForFrame(
-        localFrame - 1 >= 0 ? localFrame - 1 : 0
-      );
-    }
-    GetPlayerCurrentInput(playerId) {
-      return this.InputStore[playerId].GetInputForFrame(this.localFrame);
-    }
-    GetPlayeInputForFrame(playerId, frame) {
-      return this.InputStore[playerId].GetInputForFrame(frame);
-    }
-    GetInputManager(playerIndex) {
-      return this.InputStore[playerIndex];
-    }
-    get PlayerCount() {
-      return this.players.length;
+      const histDat = this.HistoryData;
+      const pools = this.Pools;
+      histDat.RentedVecHistory[frame] = pools.VecPool.ActiveCount;
+      histDat.RentedColResHsitory[frame] = pools.ColResPool.ActiveCount;
+      histDat.RentedProjResHistory[frame] = pools.ProjResPool.ActiveCount;
+      histDat.RentedAtkResHistory[frame] = pools.AtkResPool.ActiveCount;
+      histDat.RentedAtiveHitBubHistory[frame] = pools.ActiveHitBubbleDtoPool.ActiveCount;
     }
   };
 
@@ -5603,90 +5795,42 @@
       const world = this.World;
       world.SetFrameTimeForFrame(world.localFrame, frameTimeDelta);
       world.SetFrameTimeStampForFrame(world.localFrame, frameTimeStart);
-      world.VecPool.Zero();
-      world.ColResPool.Zero();
-      world.ProjResPool.Zero();
-      world.AtkResPool.Zero();
-      world.ActiveHitBubbleDtoPool.Zero();
-      world.ClstsPntsResPool.Zero();
+      world.Pools.Zero();
       world.localFrame++;
     }
     UpdateInputForCurrentFrame(ia, pIndex) {
       this.UpdateInput(pIndex, ia, this.world.localFrame);
     }
     UpdateInput(pIndex, inputAction, frameNumber) {
-      this.world.GetInputManager(pIndex).StoreInputForFrame(frameNumber, inputAction);
+      this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
+        frameNumber,
+        inputAction
+      );
     }
     tick() {
       const world = this.world;
       const frame = world.localFrame;
-      const playerCount = world.PlayerCount;
-      const players = world.Players;
-      const stateMachines = world.StateMachines;
-      const histories = world.ComponentHistories;
-      const stage = world.Stage;
-      const activewHitBubbleDtoPool = world.ActiveHitBubbleDtoPool;
-      const vecPool = world.VecPool;
-      const colResPool = world.ColResPool;
-      const projResPool = world.ProjResPool;
-      const atkResPool = world.AtkResPool;
-      const clstsPntsResPool = world.ClstsPntsResPool;
+      const playerData = world.PlayerData;
+      const playerCount = playerData.PlayerCount;
+      const stageData = world.StageData;
+      const historyData = world.HistoryData;
+      const pools = world.Pools;
       for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-        const player = world.GetPlayer(playerIndex);
+        const player = playerData.Player(playerIndex);
         player?.ECB.UpdatePreviousECB();
       }
-      PlayerInput(playerCount, players, stateMachines, world);
-      Gravity(playerCount, players, stage);
-      ApplyVelocty(playerCount, players);
-      ApplyVeloctyDecay(playerCount, players, stage);
-      PlayerCollisionDetection(
-        playerCount,
-        players,
-        vecPool,
-        colResPool,
-        projResPool
-      );
-      LedgeGrabDetection(
-        playerCount,
-        players,
-        stateMachines,
-        stage,
-        vecPool,
-        colResPool,
-        projResPool
-      );
-      StageCollisionDetection(
-        playerCount,
-        players,
-        stateMachines,
-        stage,
-        vecPool,
-        colResPool,
-        projResPool
-      );
-      PlayerSensors(
-        world,
-        playerCount,
-        players,
-        vecPool,
-        clstsPntsResPool,
-        colResPool
-      );
-      PlayerAttacks(
-        playerCount,
-        players,
-        stateMachines,
-        frame,
-        activewHitBubbleDtoPool,
-        atkResPool,
-        vecPool,
-        colResPool,
-        clstsPntsResPool,
-        histories
-      );
-      OutOfBoundsCheck(playerCount, players, stateMachines, stage);
-      TimedFlags(playerCount, players);
-      RecordHistory(frame, playerCount, players, histories, world);
+      PlayerInput(playerData, world);
+      Gravity(playerData, stageData);
+      ApplyVelocty(playerData);
+      ApplyVeloctyDecay(playerData, stageData);
+      PlayerCollisionDetection(playerData, pools);
+      LedgeGrabDetection(playerData, stageData, pools);
+      StageCollisionDetection(playerData, stageData, pools);
+      PlayerSensors(world, playerData, pools);
+      PlayerAttacks(playerData, historyData, pools, frame);
+      OutOfBoundsCheck(playerData, stageData);
+      TimedFlags(playerData);
+      RecordHistory(world, playerData, historyData, frame);
     }
   };
   var JazzDebugger = class {
@@ -5818,7 +5962,7 @@
     }
   };
   function drawStage(ctx, world) {
-    const stage = world.Stage;
+    const stage = world.StageData.Stage;
     const stageVerts = stage.StageVerticies.GetVerts();
     const color = "green";
     const stageVertsLength = stageVerts.length;
@@ -5849,7 +5993,7 @@
     ctx.fill();
   }
   function drawPlayer(ctx, world, alpha) {
-    const playerCount = world.PlayerCount;
+    const playerCount = world.PlayerData.PlayerCount;
     const currentFrame = world.localFrame - 1;
     const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
     for (let i = 0; i < playerCount; i++) {
@@ -6408,7 +6552,7 @@
     }
     engine.Init(playerCount, positions);
     for (let i = 0; i < playerCount; i++) {
-      const sm = engine.World.GetStateMachine(i);
+      const sm = engine.World.PlayerData.StateMachine(i);
       sm.SetInitialState(STATE_IDS.N_FALL_S);
     }
     LOGIC_LOOP(engine, playerInfo);
