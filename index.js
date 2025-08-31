@@ -464,11 +464,7 @@
     ConditionFunc: (w, playerIndex) => {
       const inputStore = w.PlayerData.InputStore(playerIndex);
       const curFrame = w.localFrame;
-      const ia = inputStore.GetInputForFrame(curFrame);
-      if (ia?.Action === GAME_EVENT_IDS.GUARD_GE) {
-        return true;
-      }
-      return false;
+      return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
     },
     StateId: STATE_IDS.AIR_DODGE_S
   };
@@ -1463,7 +1459,8 @@
       { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
       { geId: GAME_EVENT_IDS.MOVE_GE, sId: STATE_IDS.WALK_S },
       { geId: GAME_EVENT_IDS.MOVE_FAST_GE, sId: STATE_IDS.DASH_S },
-      { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S }
+      { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
+      { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S }
     ]);
     crouchTranslations.SetConditions([ToDownSpecial, ToDownTilt]);
     const crouchRelations = new StateRelation(
@@ -1642,7 +1639,7 @@
       p.Flags.FastFallOff();
       jumpComp.IncrementJumps();
       p.ECB.SetECBShape(STATE_IDS.JUMP_S);
-      p.AddToPlayerYPosition(-p.ECB.YOffset);
+      p.AddToPlayerYPosition(-p.ECB.YOffset - 5);
     },
     OnUpdate: (p, w) => {
       if (p.FSMInfo.CurrentStateFrame === 1) {
@@ -1747,6 +1744,7 @@
     OnEnter: (p, w) => {
       p.Flags.FastFallOff();
       const pVel = p.Velocity;
+      const ecb = p.ECB;
       const inputStore = w.PlayerData.InputStore(p.ID);
       const curFrame = w.localFrame;
       const ia = inputStore.GetInputForFrame(curFrame);
@@ -1754,6 +1752,7 @@
       const speed = p.Speeds.AirDogeSpeed;
       pVel.X = Math.cos(angle) * speed;
       pVel.Y = -Math.sin(angle) * speed;
+      ecb.SetECBShape(STATE_IDS.AIR_DODGE_S);
     },
     OnUpdate: (p, w) => {
       const frameLength = p.FSMInfo.GetFrameLengthForState(
@@ -1767,6 +1766,7 @@
       pVel.Y *= 1 - ease;
     },
     OnExit: (p, w) => {
+      p.ECB.ResetECBShape();
     }
   };
   var Helpess = {
@@ -2349,6 +2349,19 @@
       return false;
     }
     return true;
+  }
+  function isBufferedInput(inputStore, currentFrame, bufferFrames, targetGameEvent) {
+    for (let i = 0; i < bufferFrames; i++) {
+      const ia = inputStore.GetInputForFrame(currentFrame - i);
+      if (!ia) continue;
+      if (ia.Action === targetGameEvent) {
+        const prevIa = inputStore.GetInputForFrame(currentFrame - i - 1);
+        if (prevIa.Action !== targetGameEvent) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
   function addAttackImpulseToPlayer(p, impulse, attack) {
     const x = p.Flags.IsFacingRight ? impulse.X : -impulse.X;
@@ -2967,6 +2980,7 @@
     fastFalling = false;
     hitPauseFrames = 0;
     intangabilityFrames = 0;
+    disablePlatformDetection = 0;
     FaceRight() {
       this.facingRight = true;
     }
@@ -2988,8 +3002,17 @@
     DecrementHitPause() {
       this.hitPauseFrames--;
     }
+    DecrementIntangabilityFrames() {
+      this.intangabilityFrames--;
+    }
     SetIntangabilityFrames(frames) {
       this.intangabilityFrames = frames;
+    }
+    DecrementDisablePlatDetection() {
+      this.disablePlatformDetection--;
+    }
+    SetDisablePlatFrames(frameCount) {
+      this.disablePlatformDetection = frameCount;
     }
     ZeroIntangabilityFrames() {
       this.intangabilityFrames = 0;
@@ -2997,8 +3020,8 @@
     ZeroHitPauseFrames() {
       this.hitPauseFrames = 0;
     }
-    DecrementIntangabilityFrames() {
-      this.intangabilityFrames--;
+    ZeroDisablePlatDetection() {
+      this.disablePlatformDetection = 0;
     }
     get IsFastFalling() {
       return this.fastFalling;
@@ -3015,12 +3038,16 @@
     get IsIntangible() {
       return this.intangabilityFrames > 0;
     }
+    get IsPlatDetectDisabled() {
+      return this.disablePlatformDetection > 0;
+    }
     SnapShot() {
       return {
         FacingRight: this.facingRight,
         FastFalling: this.fastFalling,
         HitPauseFrames: this.hitPauseFrames,
-        IntangabilityFrames: this.intangabilityFrames
+        IntangabilityFrames: this.intangabilityFrames,
+        DisablePlatDetection: this.disablePlatformDetection
       };
     }
     SetFromSnapShot(snapShot) {
@@ -3028,6 +3055,7 @@
       this.facingRight = snapShot.FacingRight;
       this.hitPauseFrames = snapShot.HitPauseFrames;
       this.intangabilityFrames = snapShot.IntangabilityFrames;
+      this.disablePlatformDetection = snapShot.DisablePlatDetection;
     }
   };
   var ECBComponent = class {
@@ -3817,7 +3845,7 @@
         height: 70,
         width: 70,
         yOffset: -25
-      }).set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 }).set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 }).set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 }).set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 }).set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 }).set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 }).set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 }).set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 }).set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+      }).set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 }).set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 }).set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 }).set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 }).set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 }).set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 }).set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 }).set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 }).set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 }).set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 }).set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 }).set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
       this.SCB = new SpeedsComponentBuilder();
       this.SCB.SetWalkSpeeds(6, 1.6);
       this.SCB.SetRunSpeeds(10, 2.2);
@@ -4654,23 +4682,31 @@
     const platCount = plats.length;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
+      const flags = p.Flags;
+      if (flags.IsPlatDetectDisabled) {
+        continue;
+      }
       const velocity = p.Velocity;
+      if (velocity.Y < 0) {
+        continue;
+      }
       const inputStore = playerData.InputStore(playerIndex);
       const ia = inputStore.GetInputForFrame(currentFrame);
-      if (PlayerOnPlats(stageData.Stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+      const ecb = p.ECB;
+      if (PlayerOnPlats(stageData.Stage, ecb.Bottom, ecb.SensorDepth)) {
         const sm = playerData.StateMachine(playerIndex);
         if (ia.LYAxis < -0.5) {
-          p.AddToPlayerYPosition(10);
           sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+          flags.SetDisablePlatFrames(11);
           continue;
         }
         const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
         sm.UpdateFromWorld(landId);
       }
-      if (velocity.Y <= 0 || ia.LYAxis < -0.5) {
+      const fsmInfo = p.FSMInfo;
+      if (velocity.Y <= 0 || ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
         continue;
       }
-      const ecb = p.ECB;
       const previousBottom = ecb.PrevBottom;
       const currentBottom = ecb.Bottom;
       for (let platIndex = 0; platIndex < platCount; platIndex++) {
@@ -4688,14 +4724,13 @@
         if (intersected === false) {
           continue;
         }
-        const ecbBottom = ecb.Bottom;
-        const isPlayerTooFarRight = ecbBottom.X > plat.X2;
-        const isPlayerTooFarLeft = ecbBottom.X < plat.X1;
+        const isPlayerTooFarRight = currentBottom.X > plat.X2;
+        const isPlayerTooFarLeft = currentBottom.X < plat.X1;
         if (isPlayerTooFarRight === true) {
           p.SetPlayerPosition(plat.X2, plat.Y1 - correctionDepth);
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
-          const newYOffset2 = p.ECB.YOffset;
+          const newYOffset2 = ecb.YOffset;
           const desiredPlayerY2 = plat.Y1 - correctionDepth - newYOffset2;
           p.SetPlayerPosition(currentBottom.X, desiredPlayerY2);
           break;
@@ -4704,7 +4739,7 @@
           p.SetPlayerPosition(plat.X1, plat.Y1 - correctionDepth);
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
-          const newYOffset2 = p.ECB.YOffset;
+          const newYOffset2 = ecb.YOffset;
           const desiredPlayerY2 = plat.Y1 - correctionDepth - newYOffset2;
           p.SetPlayerPosition(currentBottom.X, desiredPlayerY2);
           break;
@@ -4712,7 +4747,7 @@
         p.SetPlayerPosition(currentBottom.X, plat.Y1 - correctionDepth);
         const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-        const newYOffset = p.ECB.YOffset;
+        const newYOffset = ecb.YOffset;
         const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
         p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
       }
@@ -5211,6 +5246,9 @@
       if (flags.IsIntangible === true) {
         flags.DecrementIntangabilityFrames();
       }
+      if (flags.IsPlatDetectDisabled === true) {
+        flags.DecrementDisablePlatDetection();
+      }
     }
   }
   function OutOfBoundsCheck(playerData, stageData) {
@@ -5430,6 +5468,7 @@
       this.P1localInputStore[frame] = input;
     }
     GetInputForFrame(frame) {
+      frame = frame >= 0 ? frame : 0;
       return this.P1localInputStore[frame];
     }
   };
