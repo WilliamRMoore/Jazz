@@ -21,6 +21,7 @@ import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import {
   Player,
   PlayerOnPlats,
+  PlayerOnPlatsReturnsYCoord,
   PlayerOnStage,
   PlayerOnStageOrPlats,
 } from '../player/playerOrchestrator';
@@ -222,9 +223,11 @@ export function PlatformDetection(
   currentFrame: number
 ): void {
   const plats = stageData.Stage.Platforms;
+
   if (plats === undefined) {
     return;
   }
+
   const playerCount = playerData.PlayerCount;
   const platCount = plats.length;
 
@@ -241,30 +244,40 @@ export function PlatformDetection(
     if (velocity.Y < 0) {
       continue;
     }
+
     const inputStore = playerData.InputStore(playerIndex);
     const ia = inputStore.GetInputForFrame(currentFrame);
+    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
     const ecb = p.ECB;
 
-    if (PlayerOnPlats(stageData.Stage, ecb.Bottom, ecb.SensorDepth)) {
+    const yCoord = PlayerOnPlatsReturnsYCoord(
+      stageData.Stage,
+      ecb.Bottom,
+      ecb.SensorDepth
+    );
+
+    if (yCoord != undefined) {
       const sm = playerData.StateMachine(playerIndex);
-      if (ia.LYAxis < -0.5) {
+      const checkValue = -(prevIa.LYAxis - ia.LYAxis);
+      if (checkValue <= -0.5) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         flags.SetDisablePlatFrames(11);
         continue;
       }
+
       const landId = shouldSoftland(velocity.Y)
         ? GAME_EVENT_IDS.SOFT_LAND_GE
         : GAME_EVENT_IDS.LAND_GE;
       sm.UpdateFromWorld(landId);
+      const newYOffset = ecb.YOffset;
+      p.SetPlayerPosition(ecb.Bottom.X, yCoord - correctionDepth - newYOffset);
+      continue;
     }
 
     const fsmInfo = p.FSMInfo;
 
     //if we are moving downward, and we are holding down, and we are NOT in the airdodge space,
-    if (
-      velocity.Y <= 0 ||
-      (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S)
-    ) {
+    if (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
       continue;
     }
 
@@ -293,37 +306,34 @@ export function PlatformDetection(
       const isPlayerTooFarRight = currentBottom.X > plat.X2;
       const isPlayerTooFarLeft = currentBottom.X < plat.X1;
 
-      if (isPlayerTooFarRight === true) {
-        p.SetPlayerPosition(plat.X2, plat.Y1 - correctionDepth);
+      if (isPlayerTooFarRight) {
         const landId = shouldSoftland(velocity.Y)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
         const newYOffset = ecb.YOffset;
         const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
-        p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
+        p.SetPlayerPosition(plat.X2, desiredPlayerY);
         break;
       }
 
-      if (isPlayerTooFarLeft === true) {
-        p.SetPlayerPosition(plat.X1, plat.Y1 - correctionDepth);
+      if (isPlayerTooFarLeft) {
         const landId = shouldSoftland(velocity.Y)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
         const newYOffset = ecb.YOffset;
         const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
-        p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
+        p.SetPlayerPosition(plat.X1, desiredPlayerY);
         break;
       }
 
-      p.SetPlayerPosition(currentBottom.X, plat.Y1 - correctionDepth);
       const landId = shouldSoftland(velocity.Y)
         ? GAME_EVENT_IDS.SOFT_LAND_GE
         : GAME_EVENT_IDS.LAND_GE;
       playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
       const newYOffset = ecb.YOffset;
-      const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+      const desiredPlayerY = plat.Y2 - correctionDepth - newYOffset;
       p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
     }
   }
@@ -1012,7 +1022,6 @@ export function OutOfBoundsCheck(
   const stage = stageData.Stage;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
-    [playerIndex];
     const sm = playerData.StateMachine(playerIndex);
 
     const pPos = p.Position;
@@ -1075,7 +1084,6 @@ export function RecordHistory(
     history.PlayerPointsHistory[frameNumber] = p.Points.SnapShot();
     history.VelocityHistory[frameNumber] = p.Velocity.SnapShot();
     history.FlagsHistory[frameNumber] = p.Flags.SnapShot();
-    history.LedgeDetectorHistory[frameNumber] = p.LedgeDetector.SnapShot();
     history.PlayerHitStopHistory[frameNumber] = p.HitStop.SnapShot();
     history.PlayerHitStunHistory[frameNumber] = p.HitStun.SnapShot();
     history.LedgeDetectorHistory[frameNumber] = p.LedgeDetector.SnapShot();

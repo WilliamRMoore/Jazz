@@ -282,7 +282,7 @@ const IdleToDash: condition = {
       return false;
     }
 
-    const ia = inputStore.GetInputForFrame(curFrame); //w.GetPlayerCurrentInput(playerIndex)!;
+    const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
@@ -516,9 +516,6 @@ const ToAirDodge: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
-    // const ia = inputStore.GetInputForFrame(curFrame);
-    // const prevIa = inputStore.GetInputForFrame(w.PreviousFrame);
-    // //return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.GUARD_GE, ia, prevIa);
     return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
   StateId: STATE_IDS.AIR_DODGE_S,
@@ -2135,6 +2132,7 @@ export const AirDodge: FSMState = {
   StateId: STATE_IDS.AIR_DODGE_S,
   OnEnter: (p: Player, w: World) => {
     p.Flags.FastFallOff();
+    p.Flags.ZeroDisablePlatDetection();
     const pVel = p.Velocity;
     const ecb = p.ECB;
     const inputStore = w.PlayerData.InputStore(p.ID);

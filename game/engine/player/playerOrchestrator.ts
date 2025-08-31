@@ -249,6 +249,37 @@ export function PlayerOnPlats(
   return false;
 }
 
+export function PlayerOnPlatsReturnsYCoord(
+  s: Stage,
+  ecbBottom: FlatVec,
+  ecbSensorDepth: number
+): number | undefined {
+  const plats = s.Platforms;
+  if (plats === undefined) {
+    return undefined;
+  }
+  const platLength = plats.length;
+
+  for (let i = 0; i < platLength; i++) {
+    const plat = plats[i];
+    if (
+      LineSegmentIntersection(
+        ecbBottom.X,
+        ecbBottom.Y,
+        ecbBottom.X,
+        ecbBottom.Y - ecbSensorDepth,
+        plat.X1,
+        plat.Y1,
+        plat.X2,
+        plat.Y2
+      )
+    ) {
+      return plat.Y1;
+    }
+  }
+  return undefined;
+}
+
 export function PlayerOnStageOrPlats(
   s: Stage,
   ecbBottom: FlatVec,
