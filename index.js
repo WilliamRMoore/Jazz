@@ -1743,6 +1743,7 @@
     StateId: STATE_IDS.AIR_DODGE_S,
     OnEnter: (p, w) => {
       p.Flags.FastFallOff();
+      p.Flags.ZeroDisablePlatDetection();
       const pVel = p.Velocity;
       const ecb = p.ECB;
       const inputStore = w.PlayerData.InputStore(p.ID);
@@ -4428,6 +4429,29 @@
     }
     return false;
   }
+  function PlayerOnPlatsReturnsYCoord(s, ecbBottom, ecbSensorDepth) {
+    const plats = s.Platforms;
+    if (plats === void 0) {
+      return void 0;
+    }
+    const platLength = plats.length;
+    for (let i = 0; i < platLength; i++) {
+      const plat = plats[i];
+      if (LineSegmentIntersection(
+        ecbBottom.X,
+        ecbBottom.Y,
+        ecbBottom.X,
+        ecbBottom.Y - ecbSensorDepth,
+        plat.X1,
+        plat.Y1,
+        plat.X2,
+        plat.Y2
+      )) {
+        return plat.Y1;
+      }
+    }
+    return void 0;
+  }
   function PlayerOnStageOrPlats(s, ecbBottom, ecbSensorDepth) {
     if (PlayerOnPlats(s, ecbBottom, ecbSensorDepth)) {
       return true;
@@ -4692,19 +4716,29 @@
       }
       const inputStore = playerData.InputStore(playerIndex);
       const ia = inputStore.GetInputForFrame(currentFrame);
+      const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
       const ecb = p.ECB;
-      if (PlayerOnPlats(stageData.Stage, ecb.Bottom, ecb.SensorDepth)) {
+      const yCoord = PlayerOnPlatsReturnsYCoord(
+        stageData.Stage,
+        ecb.Bottom,
+        ecb.SensorDepth
+      );
+      if (yCoord != void 0) {
         const sm = playerData.StateMachine(playerIndex);
-        if (ia.LYAxis < -0.5) {
+        const checkValue = -(prevIa.LYAxis - ia.LYAxis);
+        if (checkValue <= -0.5) {
           sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
           flags.SetDisablePlatFrames(11);
           continue;
         }
         const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
         sm.UpdateFromWorld(landId);
+        const newYOffset = ecb.YOffset;
+        p.SetPlayerPosition(ecb.Bottom.X, yCoord - correctionDepth - newYOffset);
+        continue;
       }
       const fsmInfo = p.FSMInfo;
-      if (velocity.Y <= 0 || ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
+      if (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
         continue;
       }
       const previousBottom = ecb.PrevBottom;
@@ -4727,28 +4761,25 @@
         const isPlayerTooFarRight = currentBottom.X > plat.X2;
         const isPlayerTooFarLeft = currentBottom.X < plat.X1;
         if (isPlayerTooFarRight === true) {
-          p.SetPlayerPosition(plat.X2, plat.Y1 - correctionDepth);
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
           const newYOffset2 = ecb.YOffset;
           const desiredPlayerY2 = plat.Y1 - correctionDepth - newYOffset2;
-          p.SetPlayerPosition(currentBottom.X, desiredPlayerY2);
+          p.SetPlayerPosition(plat.X2, desiredPlayerY2);
           break;
         }
         if (isPlayerTooFarLeft === true) {
-          p.SetPlayerPosition(plat.X1, plat.Y1 - correctionDepth);
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
           const newYOffset2 = ecb.YOffset;
           const desiredPlayerY2 = plat.Y1 - correctionDepth - newYOffset2;
-          p.SetPlayerPosition(currentBottom.X, desiredPlayerY2);
+          p.SetPlayerPosition(plat.X1, desiredPlayerY2);
           break;
         }
-        p.SetPlayerPosition(currentBottom.X, plat.Y1 - correctionDepth);
         const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
         const newYOffset = ecb.YOffset;
-        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+        const desiredPlayerY = plat.Y2 - correctionDepth - newYOffset;
         p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
       }
     }
