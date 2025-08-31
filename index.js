@@ -4613,49 +4613,29 @@
       if (collisionResult.Collision) {
         const normalX = collisionResult.NormX;
         const normalY = collisionResult.NormY;
-        const pPos = p.Position;
-        const playerPosDTO = pools.VecPool.Rent().SetXY(pPos.X, pPos.Y);
         const move = pools.VecPool.Rent().SetXY(normalX, normalY).Negate().Multiply(collisionResult.Depth);
         if (normalX === 0 && normalY > 0) {
           move.AddToY(correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-        }
-        if (normalX > 0 && normalY === 0) {
+        } else if (normalX > 0 && normalY === 0) {
           move.AddToX(correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-        }
-        if (normalX < 0 && normalY === 0) {
+        } else if (normalX < 0 && normalY === 0) {
           move.AddToX(-correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-        }
-        if (normalX === 0 && normalY < 0) {
+        } else if (normalX === 0 && normalY < 0) {
           move.AddToY(-correctionDepth);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-        }
-        const absX = Math.abs(normalX);
-        if (absX > 0 && normalY < 0) {
+        } else if (Math.abs(normalX) > 0 && normalY < 0) {
           move.AddToX(move.X <= 0 ? move.Y : -move.Y);
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
         }
-        if (absX > 0 && normalY > 0) {
-          playerPosDTO.AddVec(move);
-          p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-        }
+        p.AddToPlayerPosition(move.X, move.Y);
       }
+      const onStage = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
       const standingOnLeftLedge = Math.abs(p.Position.X - leftStagePoint.X) <= cornerJitterCorrection;
       const standingOnRightLedge = Math.abs(p.Position.X - rightStagePoint.X) <= cornerJitterCorrection;
-      if (standingOnLeftLedge && PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+      if (standingOnLeftLedge && onStage) {
         p.SetPlayerPosition(
           leftStagePoint.X + cornerJitterCorrection,
           p.Position.Y
         );
-      }
-      if (standingOnRightLedge && PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+      } else if (standingOnRightLedge && onStage) {
         p.SetPlayerPosition(
           rightStagePoint.X - cornerJitterCorrection,
           p.Position.Y
@@ -5271,13 +5251,13 @@
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
       const flags = p.Flags;
-      if (flags.IsInHitPause === true) {
+      if (flags.IsInHitPause) {
         flags.DecrementHitPause();
       }
-      if (flags.IsIntangible === true) {
+      if (flags.IsIntangible) {
         flags.DecrementIntangabilityFrames();
       }
-      if (flags.IsPlatDetectDisabled === true) {
+      if (flags.IsPlatDetectDisabled) {
         flags.DecrementDisablePlatDetection();
       }
     }
