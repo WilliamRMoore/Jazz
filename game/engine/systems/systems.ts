@@ -5,6 +5,7 @@ import {
   LineSegmentIntersection,
 } from '../physics/collisions';
 import {
+  AirDodge,
   CanPlayerWalkOffStage,
   GAME_EVENT_IDS,
   STATE_IDS,
@@ -34,7 +35,6 @@ import { Stage } from '../stage/stageMain';
 
 /**
  * TODO:
- * Add Platform Collision Detections
  * Add Projectile Systems
  * Add Grab Systems
  */
@@ -230,15 +230,26 @@ export function PlatformDetection(
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
+    const flags = p.Flags;
+
+    if (flags.IsPlatDetectDisabled) {
+      continue;
+    }
+
     const velocity = p.Velocity;
+
+    if (velocity.Y < 0) {
+      continue;
+    }
     const inputStore = playerData.InputStore(playerIndex);
     const ia = inputStore.GetInputForFrame(currentFrame);
+    const ecb = p.ECB;
 
-    if (PlayerOnPlats(stageData.Stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+    if (PlayerOnPlats(stageData.Stage, ecb.Bottom, ecb.SensorDepth)) {
       const sm = playerData.StateMachine(playerIndex);
       if (ia.LYAxis < -0.5) {
-        p.AddToPlayerYPosition(10);
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+        flags.SetDisablePlatFrames(11);
         continue;
       }
       const landId = shouldSoftland(velocity.Y)
@@ -247,11 +258,16 @@ export function PlatformDetection(
       sm.UpdateFromWorld(landId);
     }
 
-    if (velocity.Y <= 0 || ia.LYAxis < -0.5) {
+    const fsmInfo = p.FSMInfo;
+
+    //if we are moving downward, and we are holding down, and we are NOT in the airdodge space,
+    if (
+      velocity.Y <= 0 ||
+      (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S)
+    ) {
       continue;
     }
 
-    const ecb = p.ECB;
     const previousBottom = ecb.PrevBottom;
     const currentBottom = ecb.Bottom;
 
@@ -273,9 +289,9 @@ export function PlatformDetection(
         continue;
       }
 
-      const ecbBottom = ecb.Bottom;
-      const isPlayerTooFarRight = ecbBottom.X > plat.X2;
-      const isPlayerTooFarLeft = ecbBottom.X < plat.X1;
+      // const ecbBottom = ecb.Bottom;
+      const isPlayerTooFarRight = currentBottom.X > plat.X2;
+      const isPlayerTooFarLeft = currentBottom.X < plat.X1;
 
       if (isPlayerTooFarRight === true) {
         p.SetPlayerPosition(plat.X2, plat.Y1 - correctionDepth);
@@ -283,7 +299,7 @@ export function PlatformDetection(
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-        const newYOffset = p.ECB.YOffset; // after state/offset change
+        const newYOffset = ecb.YOffset;
         const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
         p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
         break;
@@ -295,7 +311,7 @@ export function PlatformDetection(
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-        const newYOffset = p.ECB.YOffset; // after state/offset change
+        const newYOffset = ecb.YOffset;
         const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
         p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
         break;
@@ -306,7 +322,7 @@ export function PlatformDetection(
         ? GAME_EVENT_IDS.SOFT_LAND_GE
         : GAME_EVENT_IDS.LAND_GE;
       playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-      const newYOffset = p.ECB.YOffset; // after state/offset change
+      const newYOffset = ecb.YOffset;
       const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
       p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
     }
@@ -981,6 +997,9 @@ export function TimedFlags(playerData: PlayerData): void {
     }
     if (flags.IsIntangible === true) {
       flags.DecrementIntangabilityFrames();
+    }
+    if (flags.IsPlatDetectDisabled === true) {
+      flags.DecrementDisablePlatDetection();
     }
   }
 }

@@ -5,6 +5,7 @@ import { FSMState } from './PlayerStateMachine';
 import { InputAction } from '../../input/Input';
 import { FlatVec } from '../physics/vector';
 import { Attack } from '../player/playerComponents';
+import { InputStoreLocal } from '../engine-state-management/Managers';
 
 // Aliases =========================================================================
 
@@ -515,11 +516,10 @@ const ToAirDodge: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    if (ia?.Action === GAME_EVENT_IDS.GUARD_GE) {
-      return true;
-    }
-    return false;
+    // const ia = inputStore.GetInputForFrame(curFrame);
+    // const prevIa = inputStore.GetInputForFrame(w.PreviousFrame);
+    // //return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.GUARD_GE, ia, prevIa);
+    return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
   StateId: STATE_IDS.AIR_DODGE_S,
 };
@@ -1832,6 +1832,7 @@ function InitCrouchRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.MOVE_GE, sId: STATE_IDS.WALK_S },
     { geId: GAME_EVENT_IDS.MOVE_FAST_GE, sId: STATE_IDS.DASH_S },
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
+    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
   ]);
 
   crouchTranslations.SetConditions([ToDownSpecial, ToDownTilt]);
@@ -2025,7 +2026,7 @@ export const Jump: FSMState = {
     p.Flags.FastFallOff();
     jumpComp.IncrementJumps();
     p.ECB.SetECBShape(STATE_IDS.JUMP_S);
-    p.AddToPlayerYPosition(-p.ECB.YOffset);
+    p.AddToPlayerYPosition(-p.ECB.YOffset - 5);
   },
   OnUpdate: (p: Player, w: World) => {
     if (p.FSMInfo.CurrentStateFrame === 1) {
@@ -2135,6 +2136,7 @@ export const AirDodge: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.Flags.FastFallOff();
     const pVel = p.Velocity;
+    const ecb = p.ECB;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
@@ -2142,6 +2144,7 @@ export const AirDodge: FSMState = {
     const speed = p.Speeds.AirDogeSpeed;
     pVel.X = Math.cos(angle) * speed;
     pVel.Y = -Math.sin(angle) * speed;
+    ecb.SetECBShape(STATE_IDS.AIR_DODGE_S);
   },
   OnUpdate: (p: Player, w: World) => {
     const frameLength = p.FSMInfo.GetFrameLengthForState(
@@ -2154,7 +2157,9 @@ export const AirDodge: FSMState = {
     pVel.X *= 1 - ease;
     pVel.Y *= 1 - ease;
   },
-  OnExit: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
 };
 
 export const Helpess: FSMState = {
@@ -2814,6 +2819,26 @@ function inputMacthesTargetNotRepeating(
   }
 
   return true;
+}
+
+function isBufferedInput(
+  inputStore: InputStoreLocal<InputAction>,
+  currentFrame: number,
+  bufferFrames: number,
+  targetGameEvent: GameEventId
+): boolean {
+  for (let i = 0; i < bufferFrames; i++) {
+    const ia = inputStore.GetInputForFrame(currentFrame - i);
+    if (!ia) continue;
+    if (ia.Action === targetGameEvent) {
+      // Check if the input was held for more than the buffer window
+      const prevIa = inputStore.GetInputForFrame(currentFrame - i - 1);
+      if (prevIa.Action !== targetGameEvent) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function addAttackImpulseToPlayer(p: Player, impulse: FlatVec, attack: Attack) {

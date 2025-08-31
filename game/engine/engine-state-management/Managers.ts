@@ -128,6 +128,7 @@ export class InputStoreLocal<Type> implements IInputStoreLocal<Type> {
   }
 
   GetInputForFrame(frame: number): Type {
+    frame = frame >= 0 ? frame : 0;
     return this.P1localInputStore[frame];
   }
 }
