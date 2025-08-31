@@ -4760,7 +4760,7 @@
         }
         const isPlayerTooFarRight = currentBottom.X > plat.X2;
         const isPlayerTooFarLeft = currentBottom.X < plat.X1;
-        if (isPlayerTooFarRight === true) {
+        if (isPlayerTooFarRight) {
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
           const newYOffset2 = ecb.YOffset;
@@ -4768,7 +4768,7 @@
           p.SetPlayerPosition(plat.X2, desiredPlayerY2);
           break;
         }
-        if (isPlayerTooFarLeft === true) {
+        if (isPlayerTooFarLeft) {
           const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
           playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
           const newYOffset2 = ecb.YOffset;
@@ -5287,7 +5287,6 @@
     const stage = stageData.Stage;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
-      [playerIndex];
       const sm = playerData.StateMachine(playerIndex);
       const pPos = p.Position;
       const pY = pPos.Y;
@@ -5331,7 +5330,6 @@
       history.PlayerPointsHistory[frameNumber] = p.Points.SnapShot();
       history.VelocityHistory[frameNumber] = p.Velocity.SnapShot();
       history.FlagsHistory[frameNumber] = p.Flags.SnapShot();
-      history.LedgeDetectorHistory[frameNumber] = p.LedgeDetector.SnapShot();
       history.PlayerHitStopHistory[frameNumber] = p.HitStop.SnapShot();
       history.PlayerHitStunHistory[frameNumber] = p.HitStun.SnapShot();
       history.LedgeDetectorHistory[frameNumber] = p.LedgeDetector.SnapShot();
