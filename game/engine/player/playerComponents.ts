@@ -509,6 +509,7 @@ export type FlagsSnapShot = {
   FastFalling: boolean;
   HitPauseFrames: number;
   IntangabilityFrames: number;
+  DisablePlatDetection: number;
 };
 
 export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
@@ -516,6 +517,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   private fastFalling: boolean = false;
   private hitPauseFrames: number = 0;
   private intangabilityFrames: number = 0;
+  private disablePlatformDetection: number = 0;
 
   public FaceRight(): void {
     this.facingRight = true;
@@ -545,8 +547,20 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.hitPauseFrames--;
   }
 
+  public DecrementIntangabilityFrames(): void {
+    this.intangabilityFrames--;
+  }
+
   public SetIntangabilityFrames(frames: number): void {
     this.intangabilityFrames = frames;
+  }
+
+  public DecrementDisablePlatDetection(): void {
+    this.disablePlatformDetection--;
+  }
+
+  public SetDisablePlatFrames(frameCount: number): void {
+    this.disablePlatformDetection = frameCount;
   }
 
   public ZeroIntangabilityFrames(): void {
@@ -557,8 +571,8 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.hitPauseFrames = 0;
   }
 
-  public DecrementIntangabilityFrames(): void {
-    this.intangabilityFrames--;
+  public ZeroDisablePlatDetection(): void {
+    this.disablePlatformDetection = 0;
   }
 
   public get IsFastFalling(): boolean {
@@ -581,12 +595,17 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return this.intangabilityFrames > 0;
   }
 
+  public get IsPlatDetectDisabled(): boolean {
+    return this.disablePlatformDetection > 0;
+  }
+
   public SnapShot(): FlagsSnapShot {
     return {
       FacingRight: this.facingRight,
       FastFalling: this.fastFalling,
       HitPauseFrames: this.hitPauseFrames,
       IntangabilityFrames: this.intangabilityFrames,
+      DisablePlatDetection: this.disablePlatformDetection,
     } as FlagsSnapShot;
   }
 
@@ -595,6 +614,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.facingRight = snapShot.FacingRight;
     this.hitPauseFrames = snapShot.HitPauseFrames;
     this.intangabilityFrames = snapShot.IntangabilityFrames;
+    this.disablePlatformDetection = snapShot.DisablePlatDetection;
   }
 }
 

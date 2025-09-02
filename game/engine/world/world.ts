@@ -3,7 +3,7 @@ import { InputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { ComponentHistory } from '../player/playerComponents';
 import { Player } from '../player/playerOrchestrator';
-import { Stage } from '../stage/stageComponents';
+import { Stage } from '../stage/stageMain';
 import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
 import { CollisionResult } from '../pools/CollisionResult';

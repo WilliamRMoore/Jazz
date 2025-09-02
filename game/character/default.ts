@@ -124,6 +124,7 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 })
       .set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 })
       .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
+      .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 })
       .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
       .set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 })

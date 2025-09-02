@@ -2,7 +2,7 @@ import { DefaultCharacterConfig } from '../character/default';
 import { InputAction } from '../input/Input';
 import { FlatVec } from './physics/vector';
 import { Player } from './player/playerOrchestrator';
-import { defaultStage } from './stage/stageComponents';
+import { defaultStage } from './stage/stageMain';
 import {
   ApplyVelocty,
   Gravity,
@@ -16,6 +16,7 @@ import {
   StageCollisionDetection,
   PlayerSensors,
   ApplyVeloctyDecay,
+  PlatformDetection,
 } from './systems/systems';
 import { World } from './world/world';
 
@@ -105,6 +106,8 @@ export class Jazz implements IJazz {
     LedgeGrabDetection(playerData, stageData, pools);
 
     StageCollisionDetection(playerData, stageData, pools);
+
+    PlatformDetection(playerData, stageData, frame);
 
     PlayerSensors(world, playerData, pools);
 

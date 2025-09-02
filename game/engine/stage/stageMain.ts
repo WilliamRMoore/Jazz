@@ -15,18 +15,27 @@ export function defaultStage() {
   const rightLedgePoint = new FlatVec(topRightX, topRighty);
   const sl = new Ledges(leftLedgePoint, rightLedgePoint);
   const db = new DeathBoundry(-100, 1180, -100, 2020);
-  return new Stage(sv, sl, db);
+  const plats = new Array<Line>();
+  plats.push(new Line(950, 450, 1150, 450));
+  return new Stage(sv, sl, db, plats);
 }
 
 export class Stage {
   public readonly StageVerticies: StageVerticies;
   public readonly Ledges: Ledges;
   public readonly DeathBoundry: DeathBoundry;
+  public readonly Platforms: Array<Line> | undefined;
 
-  constructor(sv: StageVerticies, sl: Ledges, db: DeathBoundry) {
+  constructor(
+    sv: StageVerticies,
+    sl: Ledges,
+    db: DeathBoundry,
+    pl?: Array<Line>
+  ) {
     this.StageVerticies = sv;
     this.Ledges = sl;
     this.DeathBoundry = db;
+    this.Platforms = pl;
   }
 }
 

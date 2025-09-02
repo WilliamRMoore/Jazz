@@ -275,18 +275,18 @@ function projectVerticies(
 }
 
 export function LineSegmentIntersection(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-  x3: number,
-  y3: number,
-  x4: number,
-  y4: number
+  ax1: number,
+  ay1: number,
+  ax2: number,
+  ay2: number,
+  bx3: number,
+  by3: number,
+  bx4: number,
+  by4: number
 ): boolean {
-  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-  const numeA = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
-  const numeB = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
+  const denom = (by4 - by3) * (ax2 - ax1) - (bx4 - bx3) * (ay2 - ay1);
+  const numeA = (bx4 - bx3) * (ay1 - by3) - (by4 - by3) * (ax1 - bx3);
+  const numeB = (ax2 - ax1) * (ay1 - by3) - (ay2 - ay1) * (ax1 - bx3);
 
   if (denom === 0) {
     return false;
