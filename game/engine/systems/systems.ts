@@ -90,8 +90,6 @@ export function StageCollisionDetection(
     if (collisionResult.Collision) {
       const normalX = collisionResult.NormX;
       const normalY = collisionResult.NormY;
-      const pPos = p.Position;
-      const playerPosDTO = pools.VecPool.Rent().SetXY(pPos.X, pPos.Y);
       const move = pools.VecPool.Rent()
         .SetXY(normalX, normalY)
         .Negate()
@@ -100,60 +98,40 @@ export function StageCollisionDetection(
       // Ground correction
       if (normalX === 0 && normalY > 0) {
         move.AddToY(correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
       }
       // Right wall correction
-      if (normalX > 0 && normalY === 0) {
+      else if (normalX > 0 && normalY === 0) {
         move.AddToX(correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
       }
       // Left wall correction
-      if (normalX < 0 && normalY === 0) {
+      else if (normalX < 0 && normalY === 0) {
         move.AddToX(-correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
       }
       // Ceiling
-      if (normalX === 0 && normalY < 0) {
+      else if (normalX === 0 && normalY < 0) {
         move.AddToY(-correctionDepth);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
       }
       // Corner case (top corners, normalY < 0)
-      const absX = Math.abs(normalX);
-      if (absX > 0 && normalY < 0) {
+      else if (Math.abs(normalX) > 0 && normalY < 0) {
         move.AddToX(move.X <= 0 ? move.Y : -move.Y);
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
       }
-      // Corner case (bottom corners, normalY > 0)
-      if (absX > 0 && normalY > 0) {
-        playerPosDTO.AddVec(move);
-        p.SetPlayerPosition(playerPosDTO.X, playerPosDTO.Y);
-      }
+
+      p.AddToPlayerPosition(move.X, move.Y);
     }
 
     // --- 2. Jitter correction after collision resolution ---
+    const onStage = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const standingOnLeftLedge =
       Math.abs(p.Position.X - leftStagePoint.X) <= cornerJitterCorrection;
     const standingOnRightLedge =
       Math.abs(p.Position.X - rightStagePoint.X) <= cornerJitterCorrection;
 
-    if (
-      standingOnLeftLedge &&
-      PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)
-    ) {
+    if (standingOnLeftLedge && onStage) {
       p.SetPlayerPosition(
         leftStagePoint.X + cornerJitterCorrection,
         p.Position.Y
       );
-    }
-    if (
-      standingOnRightLedge &&
-      PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)
-    ) {
+    } else if (standingOnRightLedge && onStage) {
       p.SetPlayerPosition(
         rightStagePoint.X - cornerJitterCorrection,
         p.Position.Y
@@ -302,10 +280,10 @@ export function PlatformDetection(
       }
 
       // const ecbBottom = ecb.Bottom;
-      const isPlayerTooFarRight = currentBottom.X > plat.X2;
-      const isPlayerTooFarLeft = currentBottom.X < plat.X1;
+      const playerIsTooFarRight = currentBottom.X > plat.X2;
+      const playerIsTooFarLeft = currentBottom.X < plat.X1;
 
-      if (isPlayerTooFarRight) {
+      if (playerIsTooFarRight) {
         const landId = shouldSoftland(velocity.Y)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
@@ -316,7 +294,7 @@ export function PlatformDetection(
         break;
       }
 
-      if (isPlayerTooFarLeft) {
+      if (playerIsTooFarLeft) {
         const landId = shouldSoftland(velocity.Y)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE;
@@ -657,9 +635,9 @@ export function PlayerAttacks(
   }
 
   for (let outerPIdx = 0; outerPIdx < playerCount - 1; outerPIdx++) {
+    const p1 = playerData.Player(outerPIdx);
     for (let innerPIdx = outerPIdx + 1; innerPIdx < playerCount; innerPIdx++) {
-      const p1 = playerData[outerPIdx];
-      const p2 = playerData[innerPIdx];
+      const p2 = playerData.Player(innerPIdx);
 
       const p1HitsP2Result = PAvsPB(
         currentFrame,
@@ -952,9 +930,7 @@ export function ApplyVeloctyDecay(
       const groundedVelocityDecay = speeds.GroundedVelocityDecay;
       if (pvx > 0) {
         playerVelocity.X -= groundedVelocityDecay;
-      }
-
-      if (pvx < 0) {
+      } else if (pvx < 0) {
         playerVelocity.X += groundedVelocityDecay;
       }
 
@@ -976,9 +952,7 @@ export function ApplyVeloctyDecay(
 
     if (pvx > 0) {
       playerVelocity.X -= aerialVelocityDecay;
-    }
-
-    if (pvx < 0) {
+    } else if (pvx < 0) {
       playerVelocity.X += aerialVelocityDecay;
     }
 
@@ -1001,13 +975,13 @@ export function TimedFlags(playerData: PlayerData): void {
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const flags = p.Flags;
-    if (flags.IsInHitPause === true) {
+    if (flags.IsInHitPause) {
       flags.DecrementHitPause();
     }
-    if (flags.IsIntangible === true) {
+    if (flags.IsIntangible) {
       flags.DecrementIntangabilityFrames();
     }
-    if (flags.IsPlatDetectDisabled === true) {
+    if (flags.IsPlatDetectDisabled) {
       flags.DecrementDisablePlatDetection();
     }
   }
@@ -1076,7 +1050,7 @@ export function RecordHistory(
 ): void {
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-    const p = playerData.Player(playerIndex); //playerArr[playerIndex]!;
+    const p = playerData.Player(playerIndex);
     const history = historyData.PlayerComponentHistories[playerIndex];
     history.PositionHistory[frameNumber] = p.Position.SnapShot();
     history.FsmInfoHistory[frameNumber] = p.FSMInfo.SnapShot();
