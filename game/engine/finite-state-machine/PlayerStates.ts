@@ -33,6 +33,8 @@ class GAME_EVENTS {
   public readonly SIDE_CHARGE_EX_GE = seq.Next as GameEventId;
   public readonly UP_CHARGE_GE = seq.Next as GameEventId;
   public readonly UP_CHARGE_EX_GE = seq.Next as GameEventId;
+  public readonly DOWN_CHARGE_GE = seq.Next as GameEventId;
+  public readonly DOWN_CHARGE_EX_GE = seq.Next as GameEventId;
   public readonly ATTACK_GE = seq.Next as GameEventId;
   public readonly DASH_ATTACK_GE = seq.Next as GameEventId;
   public readonly D_TILT_GE = seq.Next as GameEventId;
@@ -45,6 +47,10 @@ class GAME_EVENTS {
   public readonly B_AIR_GE = seq.Next as GameEventId;
   public readonly U_AIR_GE = seq.Next as GameEventId;
   public readonly D_AIR_GE = seq.Next as GameEventId;
+  public readonly S_SPCL_AIR_GE = seq.Next as GameEventId;
+  public readonly S_SPCL_AIR_EX_GE = seq.Next as GameEventId;
+  public readonly U_SPCL_AIR_GE = seq.Next as GameEventId;
+  public readonly D_SPCL_AIR_GE = seq.Next as GameEventId;
   public readonly IDLE_GE = seq.Next as GameEventId;
   public readonly MOVE_GE = seq.Next as GameEventId;
   public readonly MOVE_FAST_GE = seq.Next as GameEventId;
@@ -104,7 +110,10 @@ class STATES {
   public readonly D_AIR_S = seq.Next as StateId;
   public readonly SIDE_SPCL_S = seq.Next as StateId;
   public readonly SIDE_SPCL_EX_S = seq.Next as StateId;
+  public readonly SIDE_SPCL_AIR_S = seq.Next as StateId;
+  public readonly SIDE_SPCL_EX_AIR_S = seq.Next as StateId;
   public readonly DOWN_SPCL_S = seq.Next as StateId;
+  public readonly DOWN_SPCL_AIR_S = seq.Next as StateId;
   public readonly HIT_STOP_S = seq.Next as StateId;
   public readonly LAUNCH_S = seq.Next as StateId;
   public readonly TUMBLE_S = seq.Next as StateId;
@@ -122,6 +131,10 @@ class ATTACKS {
   public readonly D_GRND_ATK = seq.Next as AttackId;
   public readonly S_CHARGE_ATK = seq.Next as AttackId;
   public readonly S_CHARGE_EX_ATK = seq.Next as AttackId;
+  public readonly U_CHARGE_ATK = seq.Next as AttackId;
+  public readonly U_CHARGE_EX_ATK = seq.Next as AttackId;
+  public readonly D_CHARGE_ATK = seq.Next as AttackId;
+  public readonly D_CHARGE_EX_ATK = seq.Next as AttackId;
   public readonly S_TILT_ATK = seq.Next as AttackId;
   public readonly S_TILT_U_ATK = seq.Next as AttackId;
   public readonly S_TITL_D_ATK = seq.Next as AttackId;
@@ -136,8 +149,11 @@ class ATTACKS {
   public readonly N_SPCL_ATK = seq.Next as AttackId;
   public readonly S_SPCL_ATK = seq.Next as AttackId;
   public readonly S_SPCL_EX_ATK = seq.Next as AttackId;
+  public readonly S_SPCL_AIR_ATK = seq.Next as AttackId;
+  public readonly S_SPCL_EX_AIR_ATK = seq.Next as AttackId;
   public readonly U_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_ATK = seq.Next as AttackId;
+  public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();
@@ -835,6 +851,14 @@ const defaultUpChargeEx: condition = {
   StateId: STATE_IDS.UP_CHARGE_EX_S,
 };
 
+const defaultDownChargeEx: condition = {
+  Name: 'DefaultDownChargeEx',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+};
+
 const LandToIdle: condition = {
   Name: 'LandToIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -945,8 +969,8 @@ const IdleToAttack: condition = {
   StateId: STATE_IDS.ATTACK_S,
 };
 
-const IdleToSideCharge: condition = {
-  Name: 'IdleToSideCharge',
+const ToSideCharge: condition = {
+  Name: 'ToSideCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
@@ -964,11 +988,12 @@ const IdleToSideCharge: condition = {
       return false;
     }
 
-    if (Math.abs(ia.RXAxis) > Math.abs(ia.RYAxis) === false) {
-      return false;
+    const rxAbs = Math.abs(ia.RXAxis);
+    if (rxAbs > 0 && rxAbs > Math.abs(ia.RYAxis)) {
+      return true;
     }
 
-    return true;
+    return false;
   },
   StateId: STATE_IDS.SIDE_CHARGE_S,
 };
@@ -1000,8 +1025,8 @@ const IdleToUpTilt: condition = {
   StateId: STATE_IDS.UP_TILT_S,
 };
 
-const IdleToUpCharge: condition = {
-  Name: 'IdleToUpCharge',
+const ToUpCharge: condition = {
+  Name: 'ToUpCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
@@ -1028,6 +1053,38 @@ const IdleToUpCharge: condition = {
   StateId: STATE_IDS.UP_CHARGE_S,
 };
 
+const ToDownCharge: condition = {
+  Name: 'ToDownCharge',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
+
+    if (
+      inputMacthesTargetNotRepeating(
+        GAME_EVENT_IDS.DOWN_ATTACK_GE,
+        ia,
+        prevIa
+      ) === false
+    ) {
+      return false;
+    }
+
+    if (ia.RYAxis >= 0) {
+      return false;
+    }
+
+    if (Math.abs(ia.RYAxis) > Math.abs(ia.RXAxis) === false) {
+      return false;
+    }
+
+    return true;
+  },
+  StateId: STATE_IDS.DOWN_CHARGE_S,
+};
+
 const RunToDashAttack: condition = {
   Name: 'ToDashAttack',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1036,6 +1093,9 @@ const RunToDashAttack: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
+      if (Math.abs(ia.RXAxis) > 0) {
+        return false;
+      }
       const facingRight = p.Flags.IsFacingRight;
       if (
         (ia.LXAxis > 0 && facingRight) ||
@@ -1049,22 +1109,25 @@ const RunToDashAttack: condition = {
   StateId: STATE_IDS.DASH_ATTACK_S,
 };
 
-const WalkToSideTilt: condition = {
-  Name: 'WalkToSideTilt',
+const ToSideTilt: condition = {
+  Name: 'ToSideTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex);
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-    if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
-      const facingRight = p.Flags.IsFacingRight;
-      if (
-        (ia.LXAxis > 0 && facingRight) ||
-        (ia.LXAxis < 0 && facingRight === false)
-      ) {
-        return true;
-      }
+    if (ia.Action !== GAME_EVENT_IDS.SIDE_ATTACK_GE) {
+      return false;
     }
+
+    if (Math.abs(ia.RXAxis) > 0) {
+      return false;
+    }
+    const facingRight = p.Flags.IsFacingRight;
+    if ((ia.LXAxis > 0 && facingRight) || (ia.LXAxis < 0 && !facingRight)) {
+      return true;
+    }
+
     return false;
   },
   StateId: STATE_IDS.SIDE_TILT_S,
@@ -1189,13 +1252,36 @@ const UpChargeToEx: condition = {
       return true;
     }
 
-    if (ia.RYAxis >= 0) {
+    // This handles releasing the analog stick from the 'up' position
+    if (ia.RYAxis <= 0.1) {
       return true;
     }
 
     return false;
   },
   StateId: STATE_IDS.UP_CHARGE_EX_S,
+};
+
+const DownChargeToEx: condition = {
+  Name: 'DownChargeToEx',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+
+    // Release C-stick
+    if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
+      return true;
+    }
+
+    // Release analog stick from down position
+    if (ia.RYAxis >= -0.1) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
 // StateMapping init functions ====================================================================
@@ -1216,9 +1302,10 @@ function InitIdleRelations(): StateRelation {
     IdleToDashturn,
     IdleToTurn,
     IdleToAttack,
-    IdleToSideCharge,
-    IdleToUpCharge,
+    ToSideCharge,
+    ToUpCharge,
     IdleToUpTilt,
+    ToDownCharge,
     ToSideSpecial,
     ToDownSpecial,
   ];
@@ -1243,7 +1330,7 @@ function InitTurnRelations(): StateRelation {
     ToSideSpecial,
   ];
 
-  turnTranslations.SetConditions([TurnToDash, ToSideSpecial, WalkToSideTilt]);
+  turnTranslations.SetConditions([TurnToDash, ToSideSpecial, ToSideTilt]);
 
   turnTranslations.SetDefaults(defaultConditions);
 
@@ -1266,7 +1353,10 @@ function InitWalkRelations(): StateRelation {
     WalkToTurn,
     WalkToDash,
     ToSideSpecial,
-    WalkToSideTilt,
+    ToSideCharge,
+    ToDownCharge,
+    ToUpCharge,
+    ToSideTilt,
   ];
 
   walkTranslations.SetConditions(conditions);
@@ -1627,11 +1717,42 @@ function InitiUpChargeExRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
-  translations.SetConditions([UpChargeToEx]);
-
   translations.SetDefaults([defaultIdle]);
 
   const relation = new StateRelation(STATE_IDS.UP_CHARGE_EX_S, translations);
+
+  return relation;
+}
+
+function InitDownChargeRelations(): StateRelation {
+  const downChargeRelations = new ActionStateMappings();
+
+  downChargeRelations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  downChargeRelations.SetConditions([DownChargeToEx]);
+
+  downChargeRelations.SetDefaults([defaultDownChargeEx]);
+
+  const relation = new StateRelation(
+    STATE_IDS.DOWN_CHARGE_S,
+    downChargeRelations
+  );
+
+  return relation;
+}
+
+function InitDownChargeExRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translations.SetDefaults([defaultIdle]);
+
+  const relation = new StateRelation(STATE_IDS.DOWN_CHARGE_EX_S, translations);
 
   return relation;
 }
@@ -1759,6 +1880,41 @@ function InitSideSpecialExtensionRelations(): StateRelation {
   );
 
   return sideSpclExRelations;
+}
+
+function InitSideSpecialAirRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    {
+      geId: GAME_EVENT_IDS.S_SPCL_AIR_EX_GE,
+      sId: STATE_IDS.SIDE_SPCL_EX_AIR_S,
+    },
+  ]);
+
+  translation.SetDefaults([defaultNFall]);
+
+  const relation = new StateRelation(STATE_IDS.SIDE_SPCL_AIR_S, translation);
+
+  return relation;
+}
+
+function InitSideSpecialExAirRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translations.SetDefaults([defaultNFall]);
+
+  const relations = new StateRelation(
+    STATE_IDS.SIDE_SPCL_EX_AIR_S,
+    translations
+  );
+
+  return relations;
 }
 
 function InitDownSpecialRelations(): StateRelation {
@@ -2457,17 +2613,51 @@ export const UpChargeEx: FSMState = {
 
 export const DownCharge: FSMState = {
   StateName: 'DownCharge',
-  OnEnter: (p, w) => {},
+  OnEnter: (p, w) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const rXAxis = ia.RXAxis;
+    if (rXAxis > 0) {
+      p.Flags.FaceRight();
+    }
+    if (rXAxis < 0) {
+      p.Flags.FaceLeft();
+    }
+    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DOWN_CHARGE_GE);
+    p.ECB.SetECBShape(STATE_IDS.DOWN_CHARGE_S);
+  },
   OnUpdate: (p, w) => {},
-  OnExit: (p, w) => {},
+  OnExit: (p, w) => {
+    p.Attacks.ZeroCurrentAttack();
+    p.ECB.ResetECBShape();
+  },
   StateId: STATE_IDS.DOWN_CHARGE_S,
 };
 
 export const DownChargeEx: FSMState = {
   StateName: 'DownChargeExt',
-  OnEnter: (p, w) => {},
-  OnUpdate: (p, w) => {},
-  OnExit: (p, w) => {},
+  OnEnter: (p, w) => {
+    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DOWN_CHARGE_EX_GE);
+    p.ECB.SetECBShape(STATE_IDS.DOWN_CHARGE_EX_S);
+  },
+  OnUpdate: (p, w) => {
+    const attackComp = p.Attacks;
+    const attack = attackComp.GetAttack()!;
+    const impulse = attack?.GetActiveImpulseForFrame(
+      p.FSMInfo.CurrentStateFrame
+    );
+
+    if (impulse === undefined) {
+      return;
+    }
+
+    addAttackImpulseToPlayer(p, impulse, attack);
+  },
+  OnExit: (p, w) => {
+    p.Attacks.ZeroCurrentAttack();
+    p.ECB.ResetECBShape();
+  },
   StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
@@ -2673,6 +2863,44 @@ export const SideSpecialExtension: FSMState = {
   },
 };
 
+export const SideSpecialAir: FSMState = {
+  StateName: 'SideSpecialAir',
+  StateId: STATE_IDS.SIDE_SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const curFrame = w.localFrame;
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
+    const lxAxis = ia.LXAxis;
+
+    if (lxAxis < 0) {
+      p.Flags.FaceLeft();
+    }
+    if (lxAxis >= 0) {
+      p.Flags.FaceRight();
+    }
+
+    const attackComp = p.Attacks;
+    attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_SPCL_GE);
+    const atk = attackComp.GetAttack()!;
+    atk.OnEnter(w, p);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const attack = p.Attacks.GetAttack()!;
+    const currentStateFrame = p.FSMInfo.CurrentStateFrame;
+    const impulse = attack.GetActiveImpulseForFrame(currentStateFrame);
+
+    if (impulse !== undefined) {
+      addAttackImpulseToPlayer(p, impulse, attack);
+    }
+    attack.OnUpdate(w, p, currentStateFrame);
+  },
+  OnExit: (p: Player, w: World) => {
+    const atkComp = p.Attacks;
+    const atk = atkComp.GetAttack()!;
+    atk.OnExit(w, p);
+    atkComp.ZeroCurrentAttack();
+  },
+};
+
 export const DownSpecial: FSMState = {
   StateName: 'DownSpecial',
   StateId: STATE_IDS.DOWN_SPCL_S,
@@ -2773,8 +3001,6 @@ export const Crouch: FSMState = {
  * neutralSpecial EX
  * upSpecial
  * upSpecial EX
- * downCharge
- * upcharge
  * grab
  * runGrab
  * shield
@@ -2790,7 +3016,6 @@ export const Crouch: FSMState = {
  * ledgeRecover
  * flinch
  * clang
- * platDrop
  */
 
 //==================== Utils =====================
@@ -2887,6 +3112,10 @@ const HIT_STOP_RELATIONS = InitHitStopRelations();
 const TUMBLE_RELATIONS = InitTumbleRelations();
 const LAUNCH_RELATIONS = InitLaunchRelations();
 const CROUCH_RELATIONS = InitCrouchRelations();
+const UP_CHARGE_RELATIONS = InitUpChargeRelations();
+const UP_CHARGE_EX_RELATIONS = InitiUpChargeExRelations();
+const DOWN_CHARGE_RELATIONS = InitDownChargeRelations();
+const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -2908,6 +3137,10 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(ATTACK_RELATIONS.stateId, ATTACK_RELATIONS.mappings)
   .set(SIDE_CHARGE_RELATIONS.stateId, SIDE_CHARGE_RELATIONS.mappings)
   .set(SIDE_CHARGE_EX_RELATIONS.stateId, SIDE_CHARGE_EX_RELATIONS.mappings)
+  .set(UP_CHARGE_RELATIONS.stateId, UP_CHARGE_RELATIONS.mappings)
+  .set(UP_CHARGE_EX_RELATIONS.stateId, UP_CHARGE_EX_RELATIONS.mappings)
+  .set(DOWN_CHARGE_RELATIONS.stateId, DOWN_CHARGE_RELATIONS.mappings)
+  .set(DOWN_CHARGE_EX_RELATIONS.stateId, DOWN_CHARGE_EX_RELATIONS.mappings)
   .set(DOWN_TILT_RELATIONS.stateId, DOWN_TILT_RELATIONS.mappings)
   .set(UP_TILT_RELATIONS.stateId, UP_TILT_RELATIONS.mappings)
   .set(SIDE_TILT_RELATIONS.stateId, SIDE_TILT_RELATIONS.mappings)
@@ -2946,6 +3179,10 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(SideCharge.StateId, SideCharge)
   .set(SideChargeEx.StateId, SideChargeEx)
   .set(SideTilt.StateId, SideTilt)
+  .set(UpCharge.StateId, UpCharge)
+  .set(UpChargeEx.StateId, UpChargeEx)
+  .set(DownCharge.StateId, DownCharge)
+  .set(DownChargeEx.StateId, DownChargeEx)
   .set(DashAttack.StateId, DashAttack)
   .set(NAerialAttack.StateId, NAerialAttack)
   .set(FAerialAttack.StateId, FAerialAttack)
@@ -2966,6 +3203,10 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
   .set(GAME_EVENT_IDS.SIDE_CHARGE_GE, ATTACK_IDS.S_CHARGE_ATK)
   .set(GAME_EVENT_IDS.SIDE_CHARGE_EX_GE, ATTACK_IDS.S_CHARGE_EX_ATK)
+  .set(GAME_EVENT_IDS.UP_CHARGE_GE, ATTACK_IDS.U_CHARGE_ATK)
+  .set(GAME_EVENT_IDS.UP_CHARGE_EX_GE, ATTACK_IDS.U_CHARGE_EX_ATK)
+  .set(GAME_EVENT_IDS.DOWN_CHARGE_GE, ATTACK_IDS.D_CHARGE_ATK)
+  .set(GAME_EVENT_IDS.DOWN_CHARGE_EX_GE, ATTACK_IDS.D_CHARGE_EX_ATK)
   .set(GAME_EVENT_IDS.DASH_ATTACK_GE, ATTACK_IDS.DASH_ATK)
   .set(GAME_EVENT_IDS.D_TILT_GE, ATTACK_IDS.D_TILT_ATK)
   .set(GAME_EVENT_IDS.S_TILT_GE, ATTACK_IDS.S_TILT_ATK)

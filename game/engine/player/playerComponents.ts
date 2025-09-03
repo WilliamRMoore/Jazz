@@ -18,6 +18,12 @@ import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { World } from '../world/world';
 import { CreateConvexHull } from '../physics/collisions';
 
+/***
+ * TODO:
+ * Add shield component
+ * Add projectile component
+ */
+
 /**
  * This file contains everything pertaining to player components.
  *

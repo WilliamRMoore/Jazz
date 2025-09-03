@@ -67,8 +67,10 @@ export class DefaultCharacterConfig {
     const upTilt = GetUpTilt();
     const sideCharge = GetSideCharge();
     const sideChargeExtension = GetSideChargeExtension();
-    // upCharge
-    // downCharge
+    const upCharge = GetUpcharge();
+    const UpChargeExtension = GetUpchargeExt();
+    const downCharge = GetDownCharge();
+    const downChargeEx = GetDownChargeExtension();
     const dashAtk = GetDashAttack();
     // grab
     // runGrab
@@ -78,7 +80,10 @@ export class DefaultCharacterConfig {
     // nuetralSpecial
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
+    // side special aerial
+    // side special extensio aerial
     const DownSpecial = GetDownSpecial();
+    // down special aerial
     // upSpecial
     // upSpecialExtension
     const neutralAir = GetNeutralAir();
@@ -104,6 +109,10 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.SIDE_TILT_S, sideTilt.TotalFrameLength)
       .set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength)
       .set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength)
+      .set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength)
+      .set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength)
+      .set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength)
+      .set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength)
       .set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength)
       .set(STATE_IDS.F_AIR_S, fAir.TotalFrameLength)
       .set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength)
@@ -124,6 +133,8 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 })
       .set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 })
       .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
+      .set(STATE_IDS.DOWN_CHARGE_S, { height: 110, width: 85, yOffset: 0 })
+      .set(STATE_IDS.DOWN_CHARGE_EX_S, { height: 65, width: 100, yOffset: 0 })
       .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 })
       .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
@@ -165,6 +176,10 @@ export class DefaultCharacterConfig {
       .set(ATTACK_IDS.S_TITL_D_ATK, sideTiltDown)
       .set(ATTACK_IDS.S_CHARGE_ATK, sideCharge)
       .set(ATTACK_IDS.S_CHARGE_EX_ATK, sideChargeExtension)
+      .set(ATTACK_IDS.U_CHARGE_ATK, upCharge)
+      .set(ATTACK_IDS.U_CHARGE_EX_ATK, UpChargeExtension)
+      .set(ATTACK_IDS.D_CHARGE_ATK, downCharge)
+      .set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx)
       .set(ATTACK_IDS.S_SPCL_ATK, sideSpecial)
       .set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx)
       .set(ATTACK_IDS.D_SPCL_ATK, DownSpecial)
@@ -178,7 +193,7 @@ export class DefaultCharacterConfig {
 
   private populateHurtCircles() {
     const body = new HurtCapsule(0, -40, 0, -50, 40);
-    const head = new HurtCapsule(0, -105, 0, -140, 14);
+    const head = new HurtCapsule(0, -105, 0, -125, 14);
     this.HurtCapsules.push(head);
     this.HurtCapsules.push(body);
   }
@@ -787,6 +802,111 @@ function GetUpTilt() {
       launchAngle,
       hitBubbleOffsets2
     );
+
+  return bldr.Build();
+}
+
+function GetUpcharge() {
+  const totalFrames = 180;
+
+  const bldr = new AttackBuilder('UpCharge')
+    .WithTotalFrames(totalFrames)
+    .WithGravity(true);
+
+  return bldr.Build();
+}
+
+function GetUpchargeExt() {
+  const totalFrames = 45;
+  const damage = 20;
+  const launchAngle = 75;
+  const radius = 30;
+  const baseKb = 25;
+  const knockBackScaling = 35;
+
+  const startAngle = (1 * Math.PI) / 100;
+  const endAngle = (50 * Math.PI) / 100;
+
+  const h1offset = generateArcBubbleOffsets(
+    startAngle,
+    endAngle,
+    6,
+    105,
+    0,
+    21
+  );
+
+  h1offset.forEach((v, k) => {
+    v.Y -= 40;
+  });
+
+  const bldr = new AttackBuilder('UpChargeExtension');
+
+  bldr
+    .WithBaseKnockBack(baseKb)
+    .WithKnockBackScaling(knockBackScaling)
+    .WithGravity(true)
+    .WithTotalFrames(totalFrames)
+    .WithHitBubble(damage, radius, 0, launchAngle, h1offset);
+
+  return bldr.Build();
+}
+
+function GetDownCharge() {
+  const totalFrames = 180;
+
+  const bldr = new AttackBuilder('DownCharge')
+    .WithTotalFrames(totalFrames)
+    .WithGravity(true);
+
+  return bldr.Build();
+}
+
+function GetDownChargeExtension() {
+  const totalFrames = 55;
+  const damage = 15;
+  const launchAngle = 90;
+  const radius = 30;
+  const baseKb = 35;
+  const knockBackScaling = 15;
+
+  const of1 = new Map<frameNumber, FlatVec>();
+  const of2 = new Map<frameNumber, FlatVec>();
+  const of3 = new Map<frameNumber, FlatVec>();
+  const of4 = new Map<frameNumber, FlatVec>();
+  const of5 = new Map<frameNumber, FlatVec>();
+  const of6 = new Map<frameNumber, FlatVec>();
+
+  const activeFrames = 9;
+  const attackStart = 21;
+
+  for (let i = 0; i < activeFrames; i++) {
+    const frame = i + attackStart;
+    if (i < 3) {
+      of1.set(frame, new FlatVec(50, 0));
+      of2.set(frame, new FlatVec(-50, 0));
+    } else if (i < 6) {
+      of3.set(frame, new FlatVec(70, 0));
+      of4.set(frame, new FlatVec(-70, 0));
+    } else if (i < 9) {
+      of5.set(frame, new FlatVec(90, 0));
+      of6.set(frame, new FlatVec(-90, 0));
+    }
+  }
+
+  const bldr = new AttackBuilder('DownChargeExtension');
+
+  bldr
+    .WithBaseKnockBack(baseKb)
+    .WithKnockBackScaling(knockBackScaling)
+    .WithGravity(true)
+    .WithTotalFrames(totalFrames)
+    .WithHitBubble(damage, radius, 0, launchAngle, of1)
+    .WithHitBubble(damage, radius, 1, launchAngle, of2)
+    .WithHitBubble(damage, radius, 2, launchAngle, of3)
+    .WithHitBubble(damage, radius, 3, launchAngle, of4)
+    .WithHitBubble(damage, radius, 4, launchAngle, of5)
+    .WithHitBubble(damage, radius, 5, launchAngle, of6);
 
   return bldr.Build();
 }

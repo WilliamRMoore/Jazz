@@ -36,7 +36,6 @@ import { Stage } from '../stage/stageMain';
 /**
  * TODO:
  * Add Projectile Systems
- * Add Grab Systems
  */
 
 const correctionDepth: number = 0.1;
@@ -247,7 +246,9 @@ export function PlatformDetection(
         : GAME_EVENT_IDS.LAND_GE;
       sm.UpdateFromWorld(landId);
       const newYOffset = ecb.YOffset;
-      p.SetPlayerPosition(ecb.Bottom.X, yCoord - correctionDepth - newYOffset);
+      // Add correctionDepth to place the player slightly *inside* the platform,
+      // allowing the ground sensor to work on the next frame.
+      p.SetPlayerPosition(ecb.Bottom.X, yCoord + correctionDepth - newYOffset);
       continue;
     }
 
@@ -289,7 +290,7 @@ export function PlatformDetection(
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
         const newYOffset = ecb.YOffset;
-        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+        const desiredPlayerY = plat.Y1 + correctionDepth - newYOffset;
         p.SetPlayerPosition(plat.X2, desiredPlayerY);
         break;
       }
@@ -300,7 +301,7 @@ export function PlatformDetection(
           : GAME_EVENT_IDS.LAND_GE;
         playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
         const newYOffset = ecb.YOffset;
-        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
+        const desiredPlayerY = plat.Y1 + correctionDepth - newYOffset;
         p.SetPlayerPosition(plat.X1, desiredPlayerY);
         break;
       }
@@ -310,7 +311,7 @@ export function PlatformDetection(
         : GAME_EVENT_IDS.LAND_GE;
       playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
       const newYOffset = ecb.YOffset;
-      const desiredPlayerY = plat.Y2 - correctionDepth - newYOffset;
+      const desiredPlayerY = plat.Y2 + correctionDepth - newYOffset;
       p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
     }
   }
