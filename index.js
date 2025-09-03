@@ -1304,7 +1304,7 @@
   function InitSoftLandRelations() {
     const softLandTranslations = new ActionStateMappings();
     softLandTranslations.SetMappings([
-      { geId: STATE_IDS.HIT_STOP_S, sId: STATE_IDS.HIT_STOP_S },
+      { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
       { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S }
     ]);
     softLandTranslations.SetDefaults([LandToIdle, LandToWalk, LandToTurn]);
