@@ -1012,16 +1012,19 @@ export function OutOfBoundsCheck(
     if (pY > deathBoundry.bottomBoundry) {
       // kill player?
       KillPlayer(p, sm);
+      return;
     }
 
     if (pX < deathBoundry.leftBoundry) {
       // kill Player?
       KillPlayer(p, sm);
+      return;
     }
 
     if (pX > deathBoundry.rightBoundry) {
       // kill player?
       KillPlayer(p, sm);
+      return;
     }
   }
 }
