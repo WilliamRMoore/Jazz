@@ -4726,7 +4726,11 @@
     const sl = new Ledges(leftLedgePoint, rightLedgePoint);
     const db = new DeathBoundry(-100, 1180, -100, 2020);
     const plats = new Array();
-    plats.push(new Line(950, 450, 1150, 450));
+    plats.push(
+      new Line(950, 300, 1150, 300),
+      new Line(700, 475, 900, 475),
+      new Line(1200, 475, 1400, 475)
+    );
     return new Stage(sv, sl, db, plats);
   }
   var Stage = class {
@@ -5528,12 +5532,15 @@
       }
       if (pY > deathBoundry.bottomBoundry) {
         KillPlayer(p, sm);
+        return;
       }
       if (pX < deathBoundry.leftBoundry) {
         KillPlayer(p, sm);
+        return;
       }
       if (pX > deathBoundry.rightBoundry) {
         KillPlayer(p, sm);
+        return;
       }
     }
   }
@@ -6242,8 +6249,8 @@
       ApplyVeloctyDecay(playerData, stageData);
       PlayerCollisionDetection(playerData, pools);
       LedgeGrabDetection(playerData, stageData, pools);
-      StageCollisionDetection(playerData, stageData, pools);
       PlatformDetection(playerData, stageData, frame);
+      StageCollisionDetection(playerData, stageData, pools);
       PlayerSensors(world, playerData, pools);
       PlayerAttacks(playerData, historyData, pools, frame);
       OutOfBoundsCheck(playerData, stageData);
