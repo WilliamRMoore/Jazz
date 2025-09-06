@@ -1183,6 +1183,7 @@ export class Attack {
     frameNumber,
     FlatVec
   >();
+  public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   private onEnter: AttackOnEnter = (w, p) => {};
   private onUpdate: AttackOnUpdate = (w, p, fN) => {};
@@ -1196,6 +1197,7 @@ export class Attack {
     kbScaling: number,
     impulseClamp: number | undefined,
     hitBubbles: Array<HitBubble>,
+    canOnlyFallOffLedgeWhenFacingAwayFromIt: boolean = false,
     gravityActive: boolean = true,
     impulses: Map<frameNumber, FlatVec> | undefined = undefined,
     onEnter: AttackOnEnter | undefined,
@@ -1206,6 +1208,8 @@ export class Attack {
     this.TotalFrameLength = totalFrameLength;
     this.InteruptableFrame = interuptableFrame;
     this.GravityActive = gravityActive;
+    this.CanOnlyFallOffLedgeIfFacingAwayFromIt =
+      canOnlyFallOffLedgeWhenFacingAwayFromIt;
     this.BaseKnockBack = baseKb;
     this.KnockBackScaling = kbScaling;
     this.ImpulseClamp = impulseClamp;
@@ -1287,6 +1291,7 @@ export class AttackBuilder {
   private impulseClamp: number | undefined;
   private impulses: Map<frameNumber, FlatVec> | undefined;
   private hitBubbles: Array<HitBubble> = [];
+  private canOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   private onEnter: AttackOnEnter | undefined;
   private onUpdate: AttackOnUpdate | undefined;
   private onExit: AttackOnExit | undefined;
@@ -1316,6 +1321,11 @@ export class AttackBuilder {
 
   public WithGravity(gravity: boolean): AttackBuilder {
     this.hasGravtity = gravity;
+    return this;
+  }
+
+  public CanOnlyFallOffLedgeIfFacingIt(): AttackBuilder {
+    this.canOnlyFallOffLedgeIfFacingAwayFromIt = true;
     return this;
   }
 
@@ -1373,6 +1383,7 @@ export class AttackBuilder {
       this.knockBackScaling,
       this.impulseClamp,
       this.hitBubbles,
+      this.canOnlyFallOffLedgeIfFacingAwayFromIt,
       this.hasGravtity,
       this.impulses,
       this.onEnter,

@@ -20,6 +20,7 @@ import {
 } from './playerComponents';
 import { LineSegmentIntersection } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
+import { CanStateWalkOffLedge } from '../finite-state-machine/PlayerStates';
 
 export type speedBuilderOptions = (scb: SpeedsComponentBuilder) => void;
 
@@ -146,6 +147,15 @@ export class Player {
 
   public get Attacks(): AttackComponment {
     return this.attacks;
+  }
+
+  public CanFallOffLedgeWhenFacingIt(): boolean {
+    const a = this.attacks.GetAttack();
+
+    if (a === undefined) {
+      return false;
+    }
+    return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
   }
 
   public AddWalkImpulseToPlayer(impulse: number): void {

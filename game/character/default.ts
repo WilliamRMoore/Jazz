@@ -80,8 +80,8 @@ export class DefaultCharacterConfig {
     // nuetralSpecial
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
-    // side special aerial
-    // side special extensio aerial
+    const sideSpecialAir = GetSideSpecialAir();
+    const sideSpecialExAir = GetSideSpecialExtensionAir();
     const DownSpecial = GetDownSpecial();
     // down special aerial
     // upSpecial
@@ -120,6 +120,8 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength)
+      .set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength)
+      .set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_S, DownSpecial.TotalFrameLength);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
@@ -188,6 +190,8 @@ export class DefaultCharacterConfig {
       .set(ATTACK_IDS.U_AIR_ATK, uAir)
       .set(ATTACK_IDS.B_AIR_ATK, bAir)
       .set(ATTACK_IDS.D_AIR_ATK, dAir)
+      .set(ATTACK_IDS.S_SPCL_AIR_ATK, sideSpecialAir)
+      .set(ATTACK_IDS.S_SPCL_EX_AIR_ATK, sideSpecialExAir)
       .set(ATTACK_IDS.DASH_ATK, dashAtk);
   }
 
@@ -1038,6 +1042,88 @@ function GetSideSpecialExtension() {
       p.Velocity.Y = 0;
     })
     .WithHitBubble(damage, radius, 0, 89, hb1Offsets);
+
+  return bldr.Build();
+}
+
+function GetSideSpecialAir() {
+  const activeFrames = 70;
+  const impulses = new Map<frameNumber, FlatVec>();
+
+  const reactor: SensorReactor = (w, sensorOwner, detectedPlayer) => {
+    const sm = w.PlayerData.StateMachine(sensorOwner.ID)!;
+    sm.UpdateFromWorld(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
+    // change the state here
+  };
+
+  const onEnter: AttackOnEnter = (w, p) => {
+    const vel = p.Velocity;
+    vel.X = 0;
+    vel.Y = 0;
+    p.Sensors.SetSensorReactor(reactor);
+  };
+
+  const onUpdate: AttackOnUpdate = (w, p, fN) => {
+    if (fN === 15) {
+      p.Sensors.ActivateSensor(-15, 45, 30)
+        .ActivateSensor(-50, 45, 30)
+        .ActivateSensor(-85, 45, 30);
+    }
+
+    if (fN === 40) {
+      p.Sensors.DeactivateSensors();
+    }
+  };
+
+  const onExit: AttackOnExit = (w, p) => {
+    p.Sensors.DeactivateSensors();
+  };
+
+  //impulses.set(5, new FlatVec(-6, 0)).set(6, new FlatVec(-3, 0));
+  for (let i = 14; i < 35; i++) {
+    impulses.set(i, new FlatVec(4, 0));
+  }
+
+  const bldr = new AttackBuilder('SideSpecialAir');
+
+  bldr
+    .WithUpdateAction(onUpdate)
+    .WithExitAction(onExit)
+    .WithEnterAction(onEnter)
+    .WithImpulses(impulses, 12)
+    .WithTotalFrames(activeFrames)
+    .WithGravity(false);
+
+  return bldr.Build();
+}
+
+function GetSideSpecialExtensionAir() {
+  const totalFrameLength = 25;
+  const hb1Offsets = new Map<frameNumber, FlatVec>();
+  const damage = 16;
+  const radius = 40;
+  const baseKnockBack = 30;
+  const knockBackScaling = 45;
+  const launchAngle = 270;
+
+  hb1Offsets
+    .set(3, new FlatVec(25, -125))
+    .set(4, new FlatVec(65, -100))
+    .set(5, new FlatVec(100, -75))
+    .set(6, new FlatVec(90, -50))
+    .set(7, new FlatVec(80, -35));
+
+  const bldr = new AttackBuilder('SideSpecialExtensionAir');
+
+  bldr
+    .WithTotalFrames(totalFrameLength)
+    .WithBaseKnockBack(baseKnockBack)
+    .WithKnockBackScaling(knockBackScaling)
+    .WithEnterAction((w: World, p: Player) => {
+      p.Velocity.X = 0;
+      p.Velocity.Y = 0;
+    })
+    .WithHitBubble(damage, radius, 0, launchAngle, hb1Offsets);
 
   return bldr.Build();
 }

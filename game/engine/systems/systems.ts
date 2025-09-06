@@ -5,7 +5,7 @@ import {
   LineSegmentIntersection,
 } from '../physics/collisions';
 import {
-  CanPlayerWalkOffStage,
+  CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
@@ -140,7 +140,7 @@ export function StageCollisionDetection(
     // --- 3. Grounded check and state update ---
     const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
-    const canWalkOffStage = CanPlayerWalkOffStage(p);
+    const canWalkOffStage = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
 
     if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
       // Snap to nearest ledge regardless of facing

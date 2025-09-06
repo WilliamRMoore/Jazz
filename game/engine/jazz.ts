@@ -103,11 +103,11 @@ export class Jazz implements IJazz {
 
     PlayerCollisionDetection(playerData, pools);
 
-    LedgeGrabDetection(playerData, stageData, pools);
-
     PlatformDetection(playerData, stageData, frame);
 
     StageCollisionDetection(playerData, stageData, pools);
+
+    LedgeGrabDetection(playerData, stageData, pools);
 
     PlayerSensors(world, playerData, pools);
 
