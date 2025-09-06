@@ -5059,12 +5059,6 @@
   function shouldSoftland(yVelocity) {
     return yVelocity < hardLandVelocty;
   }
-  function handlePlatformLanding(p, sm, yCoord, xCoord) {
-    const landId = shouldSoftland(p.Velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
-    sm.UpdateFromWorld(landId);
-    const newYOffset = p.ECB.YOffset;
-    p.SetPlayerPosition(xCoord, yCoord + correctionDepth - newYOffset);
-  }
   function PlatformDetection(playerData, stageData, currentFrame) {
     const plats = stageData.Stage.Platforms;
     if (plats === void 0) {
@@ -5086,41 +5080,12 @@
       const ia = inputStore.GetInputForFrame(currentFrame);
       const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
       const ecb = p.ECB;
-      const wasOnPlat = PlayerOnPlats(
-        stageData.Stage,
-        ecb.PrevBottom,
-        ecb.SensorDepth
-      );
-      const isOnPlat = PlayerOnPlats(
+      const yCoord = PlayerOnPlatsReturnsYCoord(
         stageData.Stage,
         ecb.Bottom,
         ecb.SensorDepth
       );
-      if (wasOnPlat && !isOnPlat) {
-        if (p.CanFallOffLedgeWhenFacingIt()) {
-          const isFacingRight = p.Flags.IsFacingRight;
-          const isMovingRight = p.Velocity.X > 0;
-          const canFall = isFacingRight === isMovingRight;
-          if (!canFall) {
-            p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
-            playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-            continue;
-          }
-        } else {
-          const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
-          if (!canWalkOff) {
-            p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
-            playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-            continue;
-          }
-        }
-      }
-      const landingYCoord = PlayerOnPlatsReturnsYCoord(
-        stageData.Stage,
-        ecb.Bottom,
-        ecb.SensorDepth
-      );
-      if (landingYCoord != void 0) {
+      if (yCoord != void 0) {
         const sm = playerData.StateMachine(playerIndex);
         const checkValue = -(prevIa.LYAxis - ia.LYAxis);
         if (checkValue <= -0.5) {
@@ -5128,7 +5093,10 @@
           flags.SetDisablePlatFrames(11);
           continue;
         }
-        handlePlatformLanding(p, sm, landingYCoord, ecb.Bottom.X);
+        const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
+        sm.UpdateFromWorld(landId);
+        const newYOffset = ecb.YOffset;
+        p.SetPlayerPosition(ecb.Bottom.X, yCoord + correctionDepth - newYOffset);
         continue;
       }
       const fsmInfo = p.FSMInfo;
@@ -5155,29 +5123,26 @@
         const playerIsTooFarRight = currentBottom.X > plat.X2;
         const playerIsTooFarLeft = currentBottom.X < plat.X1;
         if (playerIsTooFarRight) {
-          handlePlatformLanding(
-            p,
-            playerData.StateMachine(playerIndex),
-            plat.Y1,
-            plat.X2
-          );
+          const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
+          playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
+          const newYOffset2 = ecb.YOffset;
+          const desiredPlayerY2 = plat.Y1 + correctionDepth - newYOffset2;
+          p.SetPlayerPosition(plat.X2, desiredPlayerY2);
           break;
         }
         if (playerIsTooFarLeft) {
-          handlePlatformLanding(
-            p,
-            playerData.StateMachine(playerIndex),
-            plat.Y1,
-            plat.X1
-          );
+          const landId2 = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
+          playerData.StateMachine(playerIndex).UpdateFromWorld(landId2);
+          const newYOffset2 = ecb.YOffset;
+          const desiredPlayerY2 = plat.Y1 + correctionDepth - newYOffset2;
+          p.SetPlayerPosition(plat.X1, desiredPlayerY2);
           break;
         }
-        handlePlatformLanding(
-          p,
-          playerData.StateMachine(playerIndex),
-          plat.Y2,
-          currentBottom.X
-        );
+        const landId = shouldSoftland(velocity.Y) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE;
+        playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
+        const newYOffset = ecb.YOffset;
+        const desiredPlayerY = plat.Y2 + correctionDepth - newYOffset;
+        p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
       }
     }
   }
