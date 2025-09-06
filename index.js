@@ -101,7 +101,7 @@
     U_AIR_GE = seq.Next;
     D_AIR_GE = seq.Next;
     S_SPCL_AIR_GE = seq.Next;
-    S_SPCL_AIR_EX_GE = seq.Next;
+    S_SPCL_EX_AIR_GE = seq.Next;
     U_SPCL_AIR_GE = seq.Next;
     D_SPCL_AIR_GE = seq.Next;
     IDLE_GE = seq.Next;
@@ -202,9 +202,8 @@
     D_SPCL_AIR_ATK = seq.Next;
   };
   var ATTACK_IDS = new ATTACKS();
-  function CanPlayerWalkOffStage(p) {
-    const currentStatid = p.FSMInfo.CurrentStatetId;
-    switch (currentStatid) {
+  function CanStateWalkOffLedge(stateId) {
+    switch (stateId) {
       case STATE_IDS.IDLE_S:
         return false;
       case STATE_IDS.WALK_S:
@@ -991,6 +990,22 @@
     },
     StateId: STATE_IDS.SIDE_SPCL_S
   };
+  var ToSideSpecialAir = {
+    Name: "ToSideSpecialAir",
+    ConditionFunc: (w, playerIndex) => {
+      const inputStore = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.localFrame;
+      const prevFrame = w.PreviousFrame;
+      const ia = inputStore.GetInputForFrame(curFrame);
+      const prevIa = inputStore.GetInputForFrame(prevFrame);
+      return inputMacthesTargetNotRepeating(
+        GAME_EVENT_IDS.SIDE_SPCL_GE,
+        ia,
+        prevIa
+      );
+    },
+    StateId: STATE_IDS.SIDE_SPCL_AIR_S
+  };
   var ToDownSpecial = {
     Name: "IdleToDownSpecial",
     ConditionFunc: (w, playerIndex) => {
@@ -1283,7 +1298,8 @@
       ToUAir,
       ToDAir,
       ToFAir,
-      ToBAir
+      ToBAir,
+      ToSideSpecialAir
     ]);
     const nFallRelations = new StateRelation(
       STATE_IDS.N_FALL_S,
@@ -1342,7 +1358,7 @@
     const helpessTranslations = new ActionStateMappings();
     helpessTranslations.SetMappings([
       { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
-      { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.LAND_S },
+      { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
       { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S }
     ]);
     const HelplessRelations = new StateRelation(
@@ -1527,6 +1543,31 @@
       sideSpclExTranslations
     );
     return sideSpclExRelations;
+  }
+  function InitSideSpecialAirRelations() {
+    const translation = new ActionStateMappings();
+    translation.SetMappings([
+      { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+      {
+        geId: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE,
+        sId: STATE_IDS.SIDE_SPCL_EX_AIR_S
+      }
+    ]);
+    translation.SetDefaults([defaultHelpess]);
+    const relation = new StateRelation(STATE_IDS.SIDE_SPCL_AIR_S, translation);
+    return relation;
+  }
+  function InitSideSpecialExAirRelations() {
+    const translations = new ActionStateMappings();
+    translations.SetMappings([
+      { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+    ]);
+    translations.SetDefaults([defaultHelpess]);
+    const relations = new StateRelation(
+      STATE_IDS.SIDE_SPCL_EX_AIR_S,
+      translations
+    );
+    return relations;
   }
   function InitDownSpecialRelations() {
     const downSpecialTranslations = new ActionStateMappings();
@@ -2393,7 +2434,7 @@
   };
   var SideSpecialAir = {
     StateName: "SideSpecialAir",
-    StateId: STATE_IDS.SIDE_SPCL_S,
+    StateId: STATE_IDS.SIDE_SPCL_AIR_S,
     OnEnter: (p, w) => {
       const curFrame = w.localFrame;
       const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
@@ -2405,7 +2446,7 @@
         p.Flags.FaceRight();
       }
       const attackComp = p.Attacks;
-      attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_SPCL_GE);
+      attackComp.SetCurrentAttack(GAME_EVENT_IDS.S_SPCL_AIR_GE);
       const atk = attackComp.GetAttack();
       atk.OnEnter(w, p);
     },
@@ -2422,6 +2463,25 @@
       const atkComp = p.Attacks;
       const atk = atkComp.GetAttack();
       atk.OnExit(w, p);
+      atkComp.ZeroCurrentAttack();
+    }
+  };
+  var SideSpecialExtensionAir = {
+    StateName: "SideSpecialExtensionAir",
+    StateId: STATE_IDS.SIDE_SPCL_EX_AIR_S,
+    OnEnter: (p, w) => {
+      const atkComp = p.Attacks;
+      atkComp.SetCurrentAttack(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
+      atkComp.GetAttack().OnEnter(w, p);
+    },
+    OnUpdate: (p, world) => {
+      const attackComp = p.Attacks;
+      const attack = attackComp.GetAttack();
+      attack.OnUpdate(world, p, world.localFrame);
+    },
+    OnExit: (p, w) => {
+      const atkComp = p.Attacks;
+      atkComp.GetAttack().OnExit(w, p);
       atkComp.ZeroCurrentAttack();
     }
   };
@@ -2580,8 +2640,10 @@
   var U_AIR_ATK_RELATIONS = InitUAirRelations();
   var B_AIR_ATK_RELATIONS = InitBAirRelations();
   var D_AIR_ATK_RELATIONS = InitDAirRelations();
-  var SIDE_SPECIAL_RELATIONS = InitSideSpecialRelations();
-  var SIDE_SPECIAL_EX_RELATIONS = InitSideSpecialExtensionRelations();
+  var SIDE_SPCL_RELATIONS = InitSideSpecialRelations();
+  var SIDE_SPCL_EX_RELATIONS = InitSideSpecialExtensionRelations();
+  var SIDE_SPCL_AIR_RELATIONS = InitSideSpecialAirRelations();
+  var SIDE_SPCL_AIR_EX_RELATIONS = InitSideSpecialExAirRelations();
   var DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
   var HIT_STOP_RELATIONS = InitHitStopRelations();
   var TUMBLE_RELATIONS = InitTumbleRelations();
@@ -2591,9 +2653,9 @@
   var UP_CHARGE_EX_RELATIONS = InitiUpChargeExRelations();
   var DOWN_CHARGE_RELATIONS = InitDownChargeRelations();
   var DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
-  var ActionMappings = (/* @__PURE__ */ new Map()).set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings).set(TURN_RELATIONS.stateId, TURN_RELATIONS.mappings).set(WALK_RELATIONS.stateId, WALK_RELATIONS.mappings).set(DASH_RELATIONS.stateId, DASH_RELATIONS.mappings).set(DASH_TURN_RELATIONS.stateId, DASH_TURN_RELATIONS.mappings).set(RUN_RELATIONS.stateId, RUN_RELATIONS.mappings).set(RUN_TURN_RELATIONS.stateId, RUN_TURN_RELATIONS.mappings).set(STOP_RUN_RELATIONS.stateId, STOP_RUN_RELATIONS.mappings).set(JUMP_SQUAT_RELATIONS.stateId, JUMP_SQUAT_RELATIONS.mappings).set(JUMP_RELATIONS.stateId, JUMP_RELATIONS.mappings).set(NFALL_RELATIONS.stateId, NFALL_RELATIONS.mappings).set(LAND_RELATIONS.stateId, LAND_RELATIONS.mappings).set(SOFT_LAND_RELATIONS.stateId, SOFT_LAND_RELATIONS.mappings).set(LEDGE_GRAB_RELATIONS.stateId, LEDGE_GRAB_RELATIONS.mappings).set(AIR_DODGE_RELATIONS.stateId, AIR_DODGE_RELATIONS.mappings).set(HELPESS_RELATIONS.stateId, HELPESS_RELATIONS.mappings).set(ATTACK_RELATIONS.stateId, ATTACK_RELATIONS.mappings).set(SIDE_CHARGE_RELATIONS.stateId, SIDE_CHARGE_RELATIONS.mappings).set(SIDE_CHARGE_EX_RELATIONS.stateId, SIDE_CHARGE_EX_RELATIONS.mappings).set(UP_CHARGE_RELATIONS.stateId, UP_CHARGE_RELATIONS.mappings).set(UP_CHARGE_EX_RELATIONS.stateId, UP_CHARGE_EX_RELATIONS.mappings).set(DOWN_CHARGE_RELATIONS.stateId, DOWN_CHARGE_RELATIONS.mappings).set(DOWN_CHARGE_EX_RELATIONS.stateId, DOWN_CHARGE_EX_RELATIONS.mappings).set(DOWN_TILT_RELATIONS.stateId, DOWN_TILT_RELATIONS.mappings).set(UP_TILT_RELATIONS.stateId, UP_TILT_RELATIONS.mappings).set(SIDE_TILT_RELATIONS.stateId, SIDE_TILT_RELATIONS.mappings).set(DASH_ATK_RELATIONS.stateId, DASH_ATK_RELATIONS.mappings).set(AIR_ATK_RELATIONS.stateId, AIR_ATK_RELATIONS.mappings).set(F_AIR_ATK_RELATIONS.stateId, F_AIR_ATK_RELATIONS.mappings).set(U_AIR_ATK_RELATIONS.stateId, U_AIR_ATK_RELATIONS.mappings).set(B_AIR_ATK_RELATIONS.stateId, B_AIR_ATK_RELATIONS.mappings).set(D_AIR_ATK_RELATIONS.stateId, D_AIR_ATK_RELATIONS.mappings).set(DOWN_SPECIAL_RELATIONS.stateId, DOWN_SPECIAL_RELATIONS.mappings).set(SIDE_SPECIAL_RELATIONS.stateId, SIDE_SPECIAL_RELATIONS.mappings).set(SIDE_SPECIAL_EX_RELATIONS.stateId, SIDE_SPECIAL_EX_RELATIONS.mappings).set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings).set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings).set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings).set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings);
-  var FSMStates = (/* @__PURE__ */ new Map()).set(Idle.StateId, Idle).set(Turn.StateId, Turn).set(Walk.StateId, Walk).set(Run.StateId, Run).set(RunTurn.StateId, RunTurn).set(RunStop.StateId, RunStop).set(Dash.StateId, Dash).set(DashTurn.StateId, DashTurn).set(JumpSquat.StateId, JumpSquat).set(Jump.StateId, Jump).set(NeutralFall.StateId, NeutralFall).set(Land.StateId, Land).set(SoftLand.StateId, SoftLand).set(LedgeGrab.StateId, LedgeGrab).set(AirDodge.StateId, AirDodge).set(Helpess.StateId, Helpess).set(NAttack.StateId, NAttack).set(SideCharge.StateId, SideCharge).set(SideChargeEx.StateId, SideChargeEx).set(SideTilt.StateId, SideTilt).set(UpCharge.StateId, UpCharge).set(UpChargeEx.StateId, UpChargeEx).set(DownCharge.StateId, DownCharge).set(DownChargeEx.StateId, DownChargeEx).set(DashAttack.StateId, DashAttack).set(NAerialAttack.StateId, NAerialAttack).set(FAerialAttack.StateId, FAerialAttack).set(UAirAttack.StateId, UAirAttack).set(BAirAttack.StateId, BAirAttack).set(DAirAttack.StateId, DAirAttack).set(SideSpecial.StateId, SideSpecial).set(SideSpecialExtension.StateId, SideSpecialExtension).set(DownSpecial.StateId, DownSpecial).set(HitStop.StateId, HitStop).set(Tumble.StateId, Tumble).set(Launch.StateId, Launch).set(Crouch.StateId, Crouch).set(DownTilt.StateId, DownTilt).set(UpTilt.StateId, UpTilt);
-  var AttackGameEventMappings = (/* @__PURE__ */ new Map()).set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK).set(GAME_EVENT_IDS.SIDE_CHARGE_GE, ATTACK_IDS.S_CHARGE_ATK).set(GAME_EVENT_IDS.SIDE_CHARGE_EX_GE, ATTACK_IDS.S_CHARGE_EX_ATK).set(GAME_EVENT_IDS.UP_CHARGE_GE, ATTACK_IDS.U_CHARGE_ATK).set(GAME_EVENT_IDS.UP_CHARGE_EX_GE, ATTACK_IDS.U_CHARGE_EX_ATK).set(GAME_EVENT_IDS.DOWN_CHARGE_GE, ATTACK_IDS.D_CHARGE_ATK).set(GAME_EVENT_IDS.DOWN_CHARGE_EX_GE, ATTACK_IDS.D_CHARGE_EX_ATK).set(GAME_EVENT_IDS.DASH_ATTACK_GE, ATTACK_IDS.DASH_ATK).set(GAME_EVENT_IDS.D_TILT_GE, ATTACK_IDS.D_TILT_ATK).set(GAME_EVENT_IDS.S_TILT_GE, ATTACK_IDS.S_TILT_ATK).set(GAME_EVENT_IDS.S_TILT_U_GE, ATTACK_IDS.S_TILT_U_ATK).set(GAME_EVENT_IDS.S_TILT_D_GE, ATTACK_IDS.S_TITL_D_ATK).set(GAME_EVENT_IDS.U_TILT_GE, ATTACK_IDS.U_TILT_ATK).set(GAME_EVENT_IDS.N_AIR_GE, ATTACK_IDS.N_AIR_ATK).set(GAME_EVENT_IDS.F_AIR_GE, ATTACK_IDS.F_AIR_ATK).set(GAME_EVENT_IDS.U_AIR_GE, ATTACK_IDS.U_AIR_ATK).set(GAME_EVENT_IDS.B_AIR_GE, ATTACK_IDS.B_AIR_ATK).set(GAME_EVENT_IDS.D_AIR_GE, ATTACK_IDS.D_AIR_ATK).set(GAME_EVENT_IDS.SIDE_SPCL_GE, ATTACK_IDS.S_SPCL_ATK).set(GAME_EVENT_IDS.SIDE_SPCL_EX_GE, ATTACK_IDS.S_SPCL_EX_ATK).set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK);
+  var ActionMappings = (/* @__PURE__ */ new Map()).set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings).set(TURN_RELATIONS.stateId, TURN_RELATIONS.mappings).set(WALK_RELATIONS.stateId, WALK_RELATIONS.mappings).set(DASH_RELATIONS.stateId, DASH_RELATIONS.mappings).set(DASH_TURN_RELATIONS.stateId, DASH_TURN_RELATIONS.mappings).set(RUN_RELATIONS.stateId, RUN_RELATIONS.mappings).set(RUN_TURN_RELATIONS.stateId, RUN_TURN_RELATIONS.mappings).set(STOP_RUN_RELATIONS.stateId, STOP_RUN_RELATIONS.mappings).set(JUMP_SQUAT_RELATIONS.stateId, JUMP_SQUAT_RELATIONS.mappings).set(JUMP_RELATIONS.stateId, JUMP_RELATIONS.mappings).set(NFALL_RELATIONS.stateId, NFALL_RELATIONS.mappings).set(LAND_RELATIONS.stateId, LAND_RELATIONS.mappings).set(SOFT_LAND_RELATIONS.stateId, SOFT_LAND_RELATIONS.mappings).set(LEDGE_GRAB_RELATIONS.stateId, LEDGE_GRAB_RELATIONS.mappings).set(AIR_DODGE_RELATIONS.stateId, AIR_DODGE_RELATIONS.mappings).set(HELPESS_RELATIONS.stateId, HELPESS_RELATIONS.mappings).set(ATTACK_RELATIONS.stateId, ATTACK_RELATIONS.mappings).set(SIDE_CHARGE_RELATIONS.stateId, SIDE_CHARGE_RELATIONS.mappings).set(SIDE_CHARGE_EX_RELATIONS.stateId, SIDE_CHARGE_EX_RELATIONS.mappings).set(UP_CHARGE_RELATIONS.stateId, UP_CHARGE_RELATIONS.mappings).set(UP_CHARGE_EX_RELATIONS.stateId, UP_CHARGE_EX_RELATIONS.mappings).set(DOWN_CHARGE_RELATIONS.stateId, DOWN_CHARGE_RELATIONS.mappings).set(DOWN_CHARGE_EX_RELATIONS.stateId, DOWN_CHARGE_EX_RELATIONS.mappings).set(DOWN_TILT_RELATIONS.stateId, DOWN_TILT_RELATIONS.mappings).set(UP_TILT_RELATIONS.stateId, UP_TILT_RELATIONS.mappings).set(SIDE_TILT_RELATIONS.stateId, SIDE_TILT_RELATIONS.mappings).set(DASH_ATK_RELATIONS.stateId, DASH_ATK_RELATIONS.mappings).set(AIR_ATK_RELATIONS.stateId, AIR_ATK_RELATIONS.mappings).set(F_AIR_ATK_RELATIONS.stateId, F_AIR_ATK_RELATIONS.mappings).set(U_AIR_ATK_RELATIONS.stateId, U_AIR_ATK_RELATIONS.mappings).set(B_AIR_ATK_RELATIONS.stateId, B_AIR_ATK_RELATIONS.mappings).set(D_AIR_ATK_RELATIONS.stateId, D_AIR_ATK_RELATIONS.mappings).set(DOWN_SPECIAL_RELATIONS.stateId, DOWN_SPECIAL_RELATIONS.mappings).set(SIDE_SPCL_RELATIONS.stateId, SIDE_SPCL_RELATIONS.mappings).set(SIDE_SPCL_EX_RELATIONS.stateId, SIDE_SPCL_EX_RELATIONS.mappings).set(SIDE_SPCL_AIR_RELATIONS.stateId, SIDE_SPCL_AIR_RELATIONS.mappings).set(SIDE_SPCL_AIR_EX_RELATIONS.stateId, SIDE_SPCL_AIR_EX_RELATIONS.mappings).set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings).set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings).set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings).set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings);
+  var FSMStates = (/* @__PURE__ */ new Map()).set(Idle.StateId, Idle).set(Turn.StateId, Turn).set(Walk.StateId, Walk).set(Run.StateId, Run).set(RunTurn.StateId, RunTurn).set(RunStop.StateId, RunStop).set(Dash.StateId, Dash).set(DashTurn.StateId, DashTurn).set(JumpSquat.StateId, JumpSquat).set(Jump.StateId, Jump).set(NeutralFall.StateId, NeutralFall).set(Land.StateId, Land).set(SoftLand.StateId, SoftLand).set(LedgeGrab.StateId, LedgeGrab).set(AirDodge.StateId, AirDodge).set(Helpess.StateId, Helpess).set(NAttack.StateId, NAttack).set(SideCharge.StateId, SideCharge).set(SideChargeEx.StateId, SideChargeEx).set(SideTilt.StateId, SideTilt).set(UpCharge.StateId, UpCharge).set(UpChargeEx.StateId, UpChargeEx).set(DownCharge.StateId, DownCharge).set(DownChargeEx.StateId, DownChargeEx).set(DashAttack.StateId, DashAttack).set(NAerialAttack.StateId, NAerialAttack).set(FAerialAttack.StateId, FAerialAttack).set(UAirAttack.StateId, UAirAttack).set(BAirAttack.StateId, BAirAttack).set(DAirAttack.StateId, DAirAttack).set(SideSpecial.StateId, SideSpecial).set(SideSpecialExtension.StateId, SideSpecialExtension).set(SideSpecialAir.StateId, SideSpecialAir).set(SideSpecialExtensionAir.StateId, SideSpecialExtensionAir).set(DownSpecial.StateId, DownSpecial).set(HitStop.StateId, HitStop).set(Tumble.StateId, Tumble).set(Launch.StateId, Launch).set(Crouch.StateId, Crouch).set(DownTilt.StateId, DownTilt).set(UpTilt.StateId, UpTilt);
+  var AttackGameEventMappings = (/* @__PURE__ */ new Map()).set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK).set(GAME_EVENT_IDS.SIDE_CHARGE_GE, ATTACK_IDS.S_CHARGE_ATK).set(GAME_EVENT_IDS.SIDE_CHARGE_EX_GE, ATTACK_IDS.S_CHARGE_EX_ATK).set(GAME_EVENT_IDS.UP_CHARGE_GE, ATTACK_IDS.U_CHARGE_ATK).set(GAME_EVENT_IDS.UP_CHARGE_EX_GE, ATTACK_IDS.U_CHARGE_EX_ATK).set(GAME_EVENT_IDS.DOWN_CHARGE_GE, ATTACK_IDS.D_CHARGE_ATK).set(GAME_EVENT_IDS.DOWN_CHARGE_EX_GE, ATTACK_IDS.D_CHARGE_EX_ATK).set(GAME_EVENT_IDS.DASH_ATTACK_GE, ATTACK_IDS.DASH_ATK).set(GAME_EVENT_IDS.D_TILT_GE, ATTACK_IDS.D_TILT_ATK).set(GAME_EVENT_IDS.S_TILT_GE, ATTACK_IDS.S_TILT_ATK).set(GAME_EVENT_IDS.S_TILT_U_GE, ATTACK_IDS.S_TILT_U_ATK).set(GAME_EVENT_IDS.S_TILT_D_GE, ATTACK_IDS.S_TITL_D_ATK).set(GAME_EVENT_IDS.U_TILT_GE, ATTACK_IDS.U_TILT_ATK).set(GAME_EVENT_IDS.N_AIR_GE, ATTACK_IDS.N_AIR_ATK).set(GAME_EVENT_IDS.F_AIR_GE, ATTACK_IDS.F_AIR_ATK).set(GAME_EVENT_IDS.U_AIR_GE, ATTACK_IDS.U_AIR_ATK).set(GAME_EVENT_IDS.B_AIR_GE, ATTACK_IDS.B_AIR_ATK).set(GAME_EVENT_IDS.D_AIR_GE, ATTACK_IDS.D_AIR_ATK).set(GAME_EVENT_IDS.SIDE_SPCL_GE, ATTACK_IDS.S_SPCL_ATK).set(GAME_EVENT_IDS.SIDE_SPCL_EX_GE, ATTACK_IDS.S_SPCL_EX_ATK).set(GAME_EVENT_IDS.S_SPCL_AIR_GE, ATTACK_IDS.S_SPCL_AIR_ATK).set(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE, ATTACK_IDS.S_SPCL_EX_AIR_ATK).set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK);
 
   // game/engine/physics/collisions.ts
   function IntersectsPolygons(verticiesA, verticiesB, vecPool, colResPool, projResPool) {
@@ -3622,6 +3684,7 @@
     ImpulseClamp;
     PlayerIdsHit = /* @__PURE__ */ new Set();
     Impulses = /* @__PURE__ */ new Map();
+    CanOnlyFallOffLedgeIfFacingAwayFromIt = false;
     HitBubbles;
     onEnter = (w, p) => {
     };
@@ -3629,11 +3692,12 @@
     };
     onExit = (w, p) => {
     };
-    constructor(name, totalFrameLength, interuptableFrame, baseKb, kbScaling, impulseClamp, hitBubbles, gravityActive = true, impulses = void 0, onEnter, onUpdate, onExit) {
+    constructor(name, totalFrameLength, interuptableFrame, baseKb, kbScaling, impulseClamp, hitBubbles, canOnlyFallOffLedgeWhenFacingAwayFromIt = false, gravityActive = true, impulses = void 0, onEnter, onUpdate, onExit) {
       this.Name = name;
       this.TotalFrameLength = totalFrameLength;
       this.InteruptableFrame = interuptableFrame;
       this.GravityActive = gravityActive;
+      this.CanOnlyFallOffLedgeIfFacingAwayFromIt = canOnlyFallOffLedgeWhenFacingAwayFromIt;
       this.BaseKnockBack = baseKb;
       this.KnockBackScaling = kbScaling;
       this.ImpulseClamp = impulseClamp;
@@ -3696,6 +3760,7 @@
     impulseClamp;
     impulses;
     hitBubbles = [];
+    canOnlyFallOffLedgeIfFacingAwayFromIt = false;
     onEnter;
     onUpdate;
     onExit;
@@ -3717,6 +3782,10 @@
     }
     WithGravity(gravity) {
       this.hasGravtity = gravity;
+      return this;
+    }
+    CanOnlyFallOffLedgeIfFacingIt() {
+      this.canOnlyFallOffLedgeIfFacingAwayFromIt = true;
       return this;
     }
     WithBaseKnockBack(baseKb) {
@@ -3761,6 +3830,7 @@
         this.knockBackScaling,
         this.impulseClamp,
         this.hitBubbles,
+        this.canOnlyFallOffLedgeIfFacingAwayFromIt,
         this.hasGravtity,
         this.impulses,
         this.onEnter,
@@ -4021,13 +4091,15 @@
       const dashAtk = GetDashAttack();
       const sideSpecial = GetSideSpecial();
       const sideSpecialEx = GetSideSpecialExtension();
+      const sideSpecialAir = GetSideSpecialAir();
+      const sideSpecialExAir = GetSideSpecialExtensionAir();
       const DownSpecial2 = GetDownSpecial();
       const neutralAir = GetNeutralAir();
       const fAir = GetFAir();
       const uAir = GetUAir();
       const bAir = GetBAir();
       const dAir = GetDAir();
-      this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4).set(STATE_IDS.TURN_S, 3).set(STATE_IDS.DASH_S, 20).set(STATE_IDS.DASH_TURN_S, 1).set(STATE_IDS.RUN_TURN_S, 20).set(STATE_IDS.STOP_RUN_S, 15).set(STATE_IDS.JUMP_S, 2).set(STATE_IDS.AIR_DODGE_S, 22).set(STATE_IDS.LAND_S, 11).set(STATE_IDS.SOFT_LAND_S, 2).set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength).set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength).set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength).set(STATE_IDS.UP_TILT_S, upTilt.TotalFrameLength).set(STATE_IDS.SIDE_TILT_S, sideTilt.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength).set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength).set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength).set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength).set(STATE_IDS.F_AIR_S, fAir.TotalFrameLength).set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength).set(STATE_IDS.B_AIR_S, bAir.TotalFrameLength).set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength).set(STATE_IDS.DOWN_SPCL_S, DownSpecial2.TotalFrameLength);
+      this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4).set(STATE_IDS.TURN_S, 3).set(STATE_IDS.DASH_S, 20).set(STATE_IDS.DASH_TURN_S, 1).set(STATE_IDS.RUN_TURN_S, 20).set(STATE_IDS.STOP_RUN_S, 15).set(STATE_IDS.JUMP_S, 2).set(STATE_IDS.AIR_DODGE_S, 22).set(STATE_IDS.LAND_S, 11).set(STATE_IDS.SOFT_LAND_S, 2).set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength).set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength).set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength).set(STATE_IDS.UP_TILT_S, upTilt.TotalFrameLength).set(STATE_IDS.SIDE_TILT_S, sideTilt.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength).set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength).set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength).set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength).set(STATE_IDS.F_AIR_S, fAir.TotalFrameLength).set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength).set(STATE_IDS.B_AIR_S, bAir.TotalFrameLength).set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength).set(STATE_IDS.DOWN_SPCL_S, DownSpecial2.TotalFrameLength);
       this.ECBShapes.set(STATE_IDS.N_FALL_S, {
         height: 70,
         width: 70,
@@ -4051,7 +4123,7 @@
       this.LedgeBoxHeight = 35;
       this.LedgeBoxWidth = 80;
       this.ledgeBoxYOffset = -130;
-      this.attacks.set(ATTACK_IDS.N_GRND_ATK, neutralAttack).set(ATTACK_IDS.D_TILT_ATK, downTilt).set(ATTACK_IDS.U_TILT_ATK, upTilt).set(ATTACK_IDS.S_TILT_ATK, sideTilt).set(ATTACK_IDS.S_TILT_U_ATK, sideTiltUp).set(ATTACK_IDS.S_TITL_D_ATK, sideTiltDown).set(ATTACK_IDS.S_CHARGE_ATK, sideCharge).set(ATTACK_IDS.S_CHARGE_EX_ATK, sideChargeExtension).set(ATTACK_IDS.U_CHARGE_ATK, upCharge).set(ATTACK_IDS.U_CHARGE_EX_ATK, UpChargeExtension).set(ATTACK_IDS.D_CHARGE_ATK, downCharge).set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx).set(ATTACK_IDS.S_SPCL_ATK, sideSpecial).set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx).set(ATTACK_IDS.D_SPCL_ATK, DownSpecial2).set(ATTACK_IDS.N_AIR_ATK, neutralAir).set(ATTACK_IDS.F_AIR_ATK, fAir).set(ATTACK_IDS.U_AIR_ATK, uAir).set(ATTACK_IDS.B_AIR_ATK, bAir).set(ATTACK_IDS.D_AIR_ATK, dAir).set(ATTACK_IDS.DASH_ATK, dashAtk);
+      this.attacks.set(ATTACK_IDS.N_GRND_ATK, neutralAttack).set(ATTACK_IDS.D_TILT_ATK, downTilt).set(ATTACK_IDS.U_TILT_ATK, upTilt).set(ATTACK_IDS.S_TILT_ATK, sideTilt).set(ATTACK_IDS.S_TILT_U_ATK, sideTiltUp).set(ATTACK_IDS.S_TITL_D_ATK, sideTiltDown).set(ATTACK_IDS.S_CHARGE_ATK, sideCharge).set(ATTACK_IDS.S_CHARGE_EX_ATK, sideChargeExtension).set(ATTACK_IDS.U_CHARGE_ATK, upCharge).set(ATTACK_IDS.U_CHARGE_EX_ATK, UpChargeExtension).set(ATTACK_IDS.D_CHARGE_ATK, downCharge).set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx).set(ATTACK_IDS.S_SPCL_ATK, sideSpecial).set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx).set(ATTACK_IDS.D_SPCL_ATK, DownSpecial2).set(ATTACK_IDS.N_AIR_ATK, neutralAir).set(ATTACK_IDS.F_AIR_ATK, fAir).set(ATTACK_IDS.U_AIR_ATK, uAir).set(ATTACK_IDS.B_AIR_ATK, bAir).set(ATTACK_IDS.D_AIR_ATK, dAir).set(ATTACK_IDS.S_SPCL_AIR_ATK, sideSpecialAir).set(ATTACK_IDS.S_SPCL_EX_AIR_ATK, sideSpecialExAir).set(ATTACK_IDS.DASH_ATK, dashAtk);
     }
     populateHurtCircles() {
       const body = new HurtCapsule(0, -40, 0, -50, 40);
@@ -4472,6 +4544,53 @@
     }).WithHitBubble(damage, radius, 0, 89, hb1Offsets);
     return bldr.Build();
   }
+  function GetSideSpecialAir() {
+    const activeFrames = 70;
+    const impulses = /* @__PURE__ */ new Map();
+    const reactor = (w, sensorOwner, detectedPlayer) => {
+      const sm = w.PlayerData.StateMachine(sensorOwner.ID);
+      sm.UpdateFromWorld(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
+    };
+    const onEnter = (w, p) => {
+      const vel = p.Velocity;
+      vel.X = 0;
+      vel.Y = 0;
+      p.Sensors.SetSensorReactor(reactor);
+    };
+    const onUpdate = (w, p, fN) => {
+      if (fN === 15) {
+        p.Sensors.ActivateSensor(-15, 45, 30).ActivateSensor(-50, 45, 30).ActivateSensor(-85, 45, 30);
+      }
+      if (fN === 40) {
+        p.Sensors.DeactivateSensors();
+      }
+    };
+    const onExit = (w, p) => {
+      p.Sensors.DeactivateSensors();
+    };
+    for (let i = 14; i < 35; i++) {
+      impulses.set(i, new FlatVec(4, 0));
+    }
+    const bldr = new AttackBuilder("SideSpecialAir");
+    bldr.WithUpdateAction(onUpdate).WithExitAction(onExit).WithEnterAction(onEnter).WithImpulses(impulses, 12).WithTotalFrames(activeFrames).WithGravity(false);
+    return bldr.Build();
+  }
+  function GetSideSpecialExtensionAir() {
+    const totalFrameLength = 25;
+    const hb1Offsets = /* @__PURE__ */ new Map();
+    const damage = 16;
+    const radius = 40;
+    const baseKnockBack = 30;
+    const knockBackScaling = 45;
+    const launchAngle = 270;
+    hb1Offsets.set(3, new FlatVec(25, -125)).set(4, new FlatVec(65, -100)).set(5, new FlatVec(100, -75)).set(6, new FlatVec(90, -50)).set(7, new FlatVec(80, -35));
+    const bldr = new AttackBuilder("SideSpecialExtensionAir");
+    bldr.WithTotalFrames(totalFrameLength).WithBaseKnockBack(baseKnockBack).WithKnockBackScaling(knockBackScaling).WithEnterAction((w, p) => {
+      p.Velocity.X = 0;
+      p.Velocity.Y = 0;
+    }).WithHitBubble(damage, radius, 0, launchAngle, hb1Offsets);
+    return bldr.Build();
+  }
   function GetDownSpecial() {
     const activeFrames = 77;
     const impulses = /* @__PURE__ */ new Map();
@@ -4601,6 +4720,13 @@
     }
     get Attacks() {
       return this.attacks;
+    }
+    CanFallOffLedgeWhenFacingIt() {
+      const a = this.attacks.GetAttack();
+      if (a === void 0) {
+        return false;
+      }
+      return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
     }
     AddWalkImpulseToPlayer(impulse) {
       const velocity = this.velocity;
@@ -4899,7 +5025,7 @@
       }
       const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
       const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
-      const canWalkOffStage = CanPlayerWalkOffStage(p);
+      const canWalkOffStage = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
       if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
         const position = p.Position;
         if (Math.abs(position.X - leftStagePoint.X) < Math.abs(position.X - rightStagePoint.X)) {
@@ -6248,9 +6374,9 @@
       ApplyVelocty(playerData);
       ApplyVeloctyDecay(playerData, stageData);
       PlayerCollisionDetection(playerData, pools);
-      LedgeGrabDetection(playerData, stageData, pools);
       PlatformDetection(playerData, stageData, frame);
       StageCollisionDetection(playerData, stageData, pools);
+      LedgeGrabDetection(playerData, stageData, pools);
       PlayerSensors(world, playerData, pools);
       PlayerAttacks(playerData, historyData, pools, frame);
       OutOfBoundsCheck(playerData, stageData);
