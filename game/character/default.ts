@@ -1011,6 +1011,7 @@ function GetSideSpecial() {
     .WithEnterAction(onEnter)
     .WithImpulses(impulses, 13)
     .WithTotalFrames(activeFrames)
+    .CanOnlyFallOffLedgeIfFacingIt()
     .WithGravity(false);
 
   return bldr.Build();
