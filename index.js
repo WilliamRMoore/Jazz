@@ -324,7 +324,7 @@
     },
     StateId: STATE_IDS.DASH_S
   };
-  var IdleToDashturn = {
+  var IdleToDashTurn = {
     Name: "IdleToTurnDash",
     ConditionFunc: (w, playerIndex) => {
       const inputStore = w.PlayerData.InputStore(playerIndex);
@@ -678,76 +678,6 @@
       return false;
     },
     StateId: STATE_IDS.WALK_S
-  };
-  var defaultWalk = {
-    Name: "Walk",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.WALK_S
-  };
-  var defaultRun = {
-    Name: "Run",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.RUN_S
-  };
-  var defaultIdle = {
-    Name: "Idle",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.IDLE_S
-  };
-  var defaultDash = {
-    Name: "Dash",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.DASH_S
-  };
-  var defaultJump = {
-    Name: "Jump",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.JUMP_S
-  };
-  var defaultNFall = {
-    Name: "NFall",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.N_FALL_S
-  };
-  var defaultHelpess = {
-    Name: "Helpless",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.HELPESS_S
-  };
-  var defaultSideChargeEx = {
-    Name: "DefaultSideChargeEx",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.SIDE_CHARGE_EX_S
-  };
-  var defaultUpChargeEx = {
-    Name: "DefaultUpChargeToEx",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.UP_CHARGE_EX_S
-  };
-  var defaultDownChargeEx = {
-    Name: "DefaultDownChargeEx",
-    ConditionFunc: (w, playerIndex) => {
-      return true;
-    },
-    StateId: STATE_IDS.DOWN_CHARGE_EX_S
   };
   var LandToIdle = {
     Name: "LandToIdle",
@@ -1113,6 +1043,76 @@
     },
     StateId: STATE_IDS.DOWN_CHARGE_EX_S
   };
+  var defaultWalk = {
+    Name: "Walk",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.WALK_S
+  };
+  var defaultRun = {
+    Name: "Run",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.RUN_S
+  };
+  var defaultIdle = {
+    Name: "Idle",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.IDLE_S
+  };
+  var defaultDash = {
+    Name: "Dash",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.DASH_S
+  };
+  var defaultJump = {
+    Name: "Jump",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.JUMP_S
+  };
+  var defaultNFall = {
+    Name: "NFall",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.N_FALL_S
+  };
+  var defaultHelpess = {
+    Name: "Helpless",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.HELPESS_S
+  };
+  var defaultSideChargeEx = {
+    Name: "DefaultSideChargeEx",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.SIDE_CHARGE_EX_S
+  };
+  var defaultUpChargeEx = {
+    Name: "DefaultUpChargeToEx",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.UP_CHARGE_EX_S
+  };
+  var defaultDownChargeEx = {
+    Name: "DefaultDownChargeEx",
+    ConditionFunc: (w, playerIndex) => {
+      return true;
+    },
+    StateId: STATE_IDS.DOWN_CHARGE_EX_S
+  };
   function InitIdleRelations() {
     const idleTranslations = new ActionStateMappings();
     idleTranslations.SetMappings([
@@ -1124,7 +1124,7 @@
     ]);
     const condtions = [
       IdleToDash,
-      IdleToDashturn,
+      IdleToDashTurn,
       IdleToTurn,
       IdleToAttack,
       ToSideCharge,
@@ -1797,20 +1797,10 @@
       p.Flags.FastFallOff();
       jumpComp.IncrementJumps();
       p.ECB.SetECBShape(STATE_IDS.JUMP_S);
-      p.AddToPlayerYPosition(-p.ECB.YOffset - 5);
+      p.AddToPlayerYPosition(-p.ECB.YOffset);
+      p.Velocity.Y = -p.Jump.JumpVelocity;
     },
     OnUpdate: (p, w) => {
-      if (p.FSMInfo.CurrentStateFrame === 1) {
-        p.Velocity.Y = -p.Jump.JumpVelocity;
-      }
-      const inputStore = w.PlayerData.InputStore(p.ID);
-      const curFrame = w.localFrame;
-      const ia = inputStore.GetInputForFrame(curFrame);
-      const speedsComp = p.Speeds;
-      p.Velocity.AddClampedXImpulse(
-        speedsComp.AerialSpeedInpulseLimit,
-        (ia?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
-      );
     },
     OnExit: (p, w) => {
       p.ECB.ResetECBShape();
@@ -4099,7 +4089,7 @@
       const uAir = GetUAir();
       const bAir = GetBAir();
       const dAir = GetDAir();
-      this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4).set(STATE_IDS.TURN_S, 3).set(STATE_IDS.DASH_S, 20).set(STATE_IDS.DASH_TURN_S, 1).set(STATE_IDS.RUN_TURN_S, 20).set(STATE_IDS.STOP_RUN_S, 15).set(STATE_IDS.JUMP_S, 2).set(STATE_IDS.AIR_DODGE_S, 22).set(STATE_IDS.LAND_S, 11).set(STATE_IDS.SOFT_LAND_S, 2).set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength).set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength).set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength).set(STATE_IDS.UP_TILT_S, upTilt.TotalFrameLength).set(STATE_IDS.SIDE_TILT_S, sideTilt.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength).set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength).set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength).set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength).set(STATE_IDS.F_AIR_S, fAir.TotalFrameLength).set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength).set(STATE_IDS.B_AIR_S, bAir.TotalFrameLength).set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength).set(STATE_IDS.DOWN_SPCL_S, DownSpecial2.TotalFrameLength);
+      this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4).set(STATE_IDS.TURN_S, 3).set(STATE_IDS.DASH_S, 20).set(STATE_IDS.DASH_TURN_S, 1).set(STATE_IDS.RUN_TURN_S, 20).set(STATE_IDS.STOP_RUN_S, 15).set(STATE_IDS.JUMP_S, 1).set(STATE_IDS.AIR_DODGE_S, 22).set(STATE_IDS.LAND_S, 11).set(STATE_IDS.SOFT_LAND_S, 2).set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength).set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength).set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength).set(STATE_IDS.UP_TILT_S, upTilt.TotalFrameLength).set(STATE_IDS.SIDE_TILT_S, sideTilt.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength).set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength).set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength).set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength).set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength).set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength).set(STATE_IDS.F_AIR_S, fAir.TotalFrameLength).set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength).set(STATE_IDS.B_AIR_S, bAir.TotalFrameLength).set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength).set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength).set(STATE_IDS.DOWN_SPCL_S, DownSpecial2.TotalFrameLength);
       this.ECBShapes.set(STATE_IDS.N_FALL_S, {
         height: 70,
         width: 70,
@@ -4721,7 +4711,7 @@
     get Attacks() {
       return this.attacks;
     }
-    CanFallOffLedgeWhenFacingIt() {
+    CanOnlyFallOffLedgeWhenFacingAwayFromIt() {
       const a = this.attacks.GetAttack();
       if (a === void 0) {
         return false;
@@ -5025,22 +5015,34 @@
       }
       const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
       const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
-      const canWalkOffStage = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
-      if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
-        const position = p.Position;
-        if (Math.abs(position.X - leftStagePoint.X) < Math.abs(position.X - rightStagePoint.X)) {
-          p.SetPlayerPosition(
-            leftStagePoint.X + cornerJitterCorrection,
-            leftStagePoint.Y
-          );
-        } else {
-          p.SetPlayerPosition(
-            rightStagePoint.X - cornerJitterCorrection,
-            rightStagePoint.Y
-          );
+      if (prvGrnd && !grnd) {
+        let shouldSnapBack = false;
+        if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+          const fellOffLeftLedge = p.Position.X < leftStagePoint.X;
+          const fellOffRightLedge = p.Position.X > rightStagePoint.X;
+          const isFacingRight = p.Flags.IsFacingRight;
+          if (fellOffLeftLedge && isFacingRight || fellOffRightLedge && !isFacingRight) {
+            shouldSnapBack = true;
+          }
+        } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+          shouldSnapBack = true;
         }
-        sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-        continue;
+        if (shouldSnapBack) {
+          const position = p.Position;
+          if (Math.abs(position.X - leftStagePoint.X) < Math.abs(position.X - rightStagePoint.X)) {
+            p.SetPlayerPosition(
+              leftStagePoint.X + cornerJitterCorrection,
+              leftStagePoint.Y
+            );
+          } else {
+            p.SetPlayerPosition(
+              rightStagePoint.X - cornerJitterCorrection,
+              rightStagePoint.Y
+            );
+          }
+          sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+          continue;
+        }
       }
       if (grnd === false && p.FSMInfo.CurrentStatetId != STATE_IDS.LEDGE_GRAB_S) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
@@ -5085,6 +5087,9 @@
       const inputStore = playerData.InputStore(playerIndex);
       const ia = inputStore.GetInputForFrame(currentFrame);
       const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
+      if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+        continue;
+      }
       const ecb = p.ECB;
       const wasOnPlat = PlayerOnPlats(
         stageData.Stage,
@@ -5097,7 +5102,7 @@
         ecb.SensorDepth
       );
       if (wasOnPlat && !isOnPlat) {
-        if (p.CanFallOffLedgeWhenFacingIt()) {
+        if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
           const isFacingRight = p.Flags.IsFacingRight;
           const isMovingRight = p.Velocity.X > 0;
           const canFall = isFacingRight === isMovingRight;
@@ -5132,7 +5137,7 @@
         continue;
       }
       const fsmInfo = p.FSMInfo;
-      if (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
+      if (ia.LYAxis < -0.8 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
         continue;
       }
       const previousBottom = ecb.PrevBottom;
