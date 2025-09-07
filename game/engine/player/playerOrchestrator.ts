@@ -149,7 +149,7 @@ export class Player {
     return this.attacks;
   }
 
-  public CanFallOffLedgeWhenFacingIt(): boolean {
+  public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {
     const a = this.attacks.GetAttack();
 
     if (a === undefined) {

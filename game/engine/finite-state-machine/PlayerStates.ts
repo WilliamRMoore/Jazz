@@ -2196,22 +2196,10 @@ export const Jump: FSMState = {
     p.Flags.FastFallOff();
     jumpComp.IncrementJumps();
     p.ECB.SetECBShape(STATE_IDS.JUMP_S);
-    p.AddToPlayerYPosition(-p.ECB.YOffset - 5);
+    p.AddToPlayerYPosition(-p.ECB.YOffset);
+    p.Velocity.Y = -p.Jump.JumpVelocity;
   },
-  OnUpdate: (p: Player, w: World) => {
-    if (p.FSMInfo.CurrentStateFrame === 1) {
-      p.Velocity.Y = -p.Jump.JumpVelocity;
-    }
-
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const speedsComp = p.Speeds;
-    p.Velocity.AddClampedXImpulse(
-      speedsComp.AerialSpeedInpulseLimit,
-      (ia?.LXAxis ?? 0) * speedsComp.ArielVelocityMultiplier
-    );
-  },
+  OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
   },

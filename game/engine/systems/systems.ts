@@ -140,27 +140,51 @@ export function StageCollisionDetection(
     // --- 3. Grounded check and state update ---
     const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
-    const canWalkOffStage = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
 
-    if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
-      // Snap to nearest ledge regardless of facing
-      const position = p.Position;
-      if (
-        Math.abs(position.X - leftStagePoint.X) <
-        Math.abs(position.X - rightStagePoint.X)
-      ) {
-        p.SetPlayerPosition(
-          leftStagePoint.X + cornerJitterCorrection,
-          leftStagePoint.Y
-        );
-      } else {
-        p.SetPlayerPosition(
-          rightStagePoint.X - cornerJitterCorrection,
-          rightStagePoint.Y
-        );
+    if (prvGrnd && !grnd) {
+      // Player has just walked off the stage. Check if they should be snapped back.
+      let shouldSnapBack = false;
+
+      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+        // This is the high-priority rule for specific attacks.
+        const fellOffLeftLedge = p.Position.X < leftStagePoint.X;
+        const fellOffRightLedge = p.Position.X > rightStagePoint.X;
+        const isFacingRight = p.Flags.IsFacingRight;
+
+        // Snap back ONLY if facing TOWARDS the stage after falling off.
+        if (
+          (fellOffLeftLedge && isFacingRight) ||
+          (fellOffRightLedge && !isFacingRight)
+        ) {
+          shouldSnapBack = true;
+        }
+      } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+        // This is the general rule for states like 'walk'.
+        shouldSnapBack = true;
       }
-      sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-      continue;
+
+      if (shouldSnapBack) {
+        // Player was not allowed to fall. Snap them to the nearest ledge.
+        const position = p.Position;
+        if (
+          Math.abs(position.X - leftStagePoint.X) <
+          Math.abs(position.X - rightStagePoint.X)
+        ) {
+          // Snap to left ledge
+          p.SetPlayerPosition(
+            leftStagePoint.X + cornerJitterCorrection,
+            leftStagePoint.Y
+          );
+        } else {
+          // Snap to right ledge
+          p.SetPlayerPosition(
+            rightStagePoint.X - cornerJitterCorrection,
+            rightStagePoint.Y
+          );
+        }
+        sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+        continue;
+      }
     }
 
     // If not grounded and not grabbing ledge, set to falling
@@ -238,6 +262,13 @@ export function PlatformDetection(
     const inputStore = playerData.InputStore(playerIndex);
     const ia = inputStore.GetInputForFrame(currentFrame);
     const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
+
+    // If a jump was just initiated, skip all platform landing logic for this frame
+    // to allow the jump to properly start.
+    if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+      continue;
+    }
+
     const ecb = p.ECB;
 
     const wasOnPlat = PlayerOnPlats(
@@ -253,7 +284,7 @@ export function PlatformDetection(
 
     if (wasOnPlat && !isOnPlat) {
       // Player has just walked off a platform. Check if they were allowed to.
-      if (p.CanFallOffLedgeWhenFacingIt()) {
+      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
         const isFacingRight = p.Flags.IsFacingRight;
         const isMovingRight = p.Velocity.X > 0;
         const canFall = isFacingRight === isMovingRight;
@@ -302,7 +333,7 @@ export function PlatformDetection(
     const fsmInfo = p.FSMInfo;
 
     //if we are moving downward, and we are holding down, and we are NOT in the airdodge space,
-    if (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
+    if (ia.LYAxis < -0.8 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
       continue;
     }
 

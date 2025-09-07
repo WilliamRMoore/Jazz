@@ -98,7 +98,7 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.DASH_TURN_S, 1)
       .set(STATE_IDS.RUN_TURN_S, 20)
       .set(STATE_IDS.STOP_RUN_S, 15)
-      .set(STATE_IDS.JUMP_S, 2)
+      .set(STATE_IDS.JUMP_S, 1)
       .set(STATE_IDS.AIR_DODGE_S, 22)
       .set(STATE_IDS.LAND_S, 11)
       .set(STATE_IDS.SOFT_LAND_S, 2)
