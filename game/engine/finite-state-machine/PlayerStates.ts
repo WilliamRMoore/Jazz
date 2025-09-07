@@ -319,7 +319,7 @@ const IdleToDash: condition = {
   StateId: STATE_IDS.DASH_S,
 };
 
-const IdleToDashturn: condition = {
+const IdleToDashTurn: condition = {
   Name: 'IdleToTurnDash',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
@@ -778,86 +778,6 @@ const SideTiltToWalk: condition = {
   StateId: STATE_IDS.WALK_S,
 };
 
-const defaultWalk: condition = {
-  Name: 'Walk',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.WALK_S,
-};
-
-const defaultRun: condition = {
-  Name: 'Run',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.RUN_S,
-};
-
-const defaultIdle: condition = {
-  Name: 'Idle',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.IDLE_S,
-};
-
-const defaultDash: condition = {
-  Name: 'Dash',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.DASH_S,
-};
-
-const defaultJump: condition = {
-  Name: 'Jump',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.JUMP_S,
-};
-
-const defaultNFall: condition = {
-  Name: 'NFall',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.N_FALL_S,
-};
-
-const defaultHelpess: condition = {
-  Name: 'Helpless',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.HELPESS_S,
-};
-
-const defaultSideChargeEx: condition = {
-  Name: 'DefaultSideChargeEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
-};
-
-const defaultUpChargeEx: condition = {
-  Name: 'DefaultUpChargeToEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
-};
-
-const defaultDownChargeEx: condition = {
-  Name: 'DefaultDownChargeEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    return true;
-  },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
-};
-
 const LandToIdle: condition = {
   Name: 'LandToIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1300,6 +1220,86 @@ const DownChargeToEx: condition = {
   StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
+const defaultWalk: condition = {
+  Name: 'Walk',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.WALK_S,
+};
+
+const defaultRun: condition = {
+  Name: 'Run',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.RUN_S,
+};
+
+const defaultIdle: condition = {
+  Name: 'Idle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.IDLE_S,
+};
+
+const defaultDash: condition = {
+  Name: 'Dash',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.DASH_S,
+};
+
+const defaultJump: condition = {
+  Name: 'Jump',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.JUMP_S,
+};
+
+const defaultNFall: condition = {
+  Name: 'NFall',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.N_FALL_S,
+};
+
+const defaultHelpess: condition = {
+  Name: 'Helpless',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.HELPESS_S,
+};
+
+const defaultSideChargeEx: condition = {
+  Name: 'DefaultSideChargeEx',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+};
+
+const defaultUpChargeEx: condition = {
+  Name: 'DefaultUpChargeToEx',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.UP_CHARGE_EX_S,
+};
+
+const defaultDownChargeEx: condition = {
+  Name: 'DefaultDownChargeEx',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+};
+
 // StateMapping init functions ====================================================================
 
 function InitIdleRelations(): StateRelation {
@@ -1315,7 +1315,7 @@ function InitIdleRelations(): StateRelation {
 
   const condtions: Array<condition> = [
     IdleToDash,
-    IdleToDashturn,
+    IdleToDashTurn,
     IdleToTurn,
     IdleToAttack,
     ToSideCharge,
