@@ -1599,13 +1599,10 @@
     const translation = new ActionStateMappings();
     translation.SetMappings([
       { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
-      {
-        geId: GAME_EVENT_IDS.D_SPCL_AIR_GE,
-        sId: STATE_IDS.DOWN_SPCL_AIR_S
-      }
+      { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S }
     ]);
     translation.SetDefaults([defaultNFall]);
-    const relation = new StateRelation(STATE_IDS.SIDE_SPCL_AIR_S, translation);
+    const relation = new StateRelation(STATE_IDS.DOWN_SPCL_AIR_S, translation);
     return relation;
   }
   function InitHitStopRelations() {
@@ -2536,6 +2533,7 @@
     OnEnter: (p, w) => {
       const attackComp = p.Attacks;
       attackComp.SetCurrentAttack(GAME_EVENT_IDS.D_SPCL_AIR_GE);
+      attackComp.GetAttack().OnEnter(w, p);
       p.ECB.SetECBShape(STATE_IDS.DOWN_SPCL_AIR_S);
     },
     OnUpdate: (p, w) => {
@@ -2551,6 +2549,7 @@
     },
     OnExit: (p, w) => {
       const attackComp = p.Attacks;
+      attackComp.GetAttack().OnExit(w, p);
       attackComp.ZeroCurrentAttack();
       p.ECB.ResetECBShape();
     }
@@ -4673,7 +4672,13 @@
       hb3offSets.set(i, new FlatVec(20, 0));
     }
     const blrd = new AttackBuilder("DSpecialAir");
-    blrd.WithBaseKnockBack(15).WithKnockBackScaling(66).WithGravity(false).WithTotalFrames(activeFrames).WithHitBubble(15, 20, 0, launchAngle, hb1OffSets).WithHitBubble(13, 19, 1, launchAngle, hb2OffSets).WithHitBubble(12, 18, 3, launchAngle, hb3offSets).WithHitBubble(16, 25, 4, launchAngle, hb4OffSets).WithImpulses(impulses, 12);
+    blrd.WithBaseKnockBack(15).WithKnockBackScaling(66).WithGravity(false).WithTotalFrames(activeFrames).WithHitBubble(15, 20, 0, launchAngle, hb1OffSets).WithHitBubble(13, 19, 1, launchAngle, hb2OffSets).WithHitBubble(12, 18, 3, launchAngle, hb3offSets).WithHitBubble(16, 25, 4, launchAngle, hb4OffSets).WithImpulses(impulses, 8).WithEnterAction((w, p) => {
+      p.Velocity.X = 0;
+      p.Velocity.Y = 0;
+    }).WithExitAction((w, p) => {
+      p.Jump.ResetJumps();
+      p.Jump.IncrementJumps();
+    });
     return blrd.Build();
   }
   function generateArcBubbleOffsets(startAngle, endAngle, frames, distance, inwardRetract, frameStart = 12, invertY = true) {
@@ -5069,7 +5074,7 @@
           move.AddToX(-correctionDepth);
         } else if (normalX === 0 && normalY < 0) {
           move.AddToY(-correctionDepth);
-        } else if (Math.abs(normalX) > 0 && normalY < 0) {
+        } else if (Math.abs(normalX) > 0 && normalY > 0) {
           move.AddToX(move.X <= 0 ? move.Y : -move.Y);
         }
         p.AddToPlayerPosition(move.X, move.Y);
