@@ -130,7 +130,6 @@ function handleSpecial(
     inputAction.Action = GAME_EVENT_IDS.SIDE_SPCL_GE;
     return inputAction;
   }
-
   // It is a nuetral special
   inputAction.Action = GAME_EVENT_IDS.SPCL_GE;
   return inputAction;

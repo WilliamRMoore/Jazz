@@ -111,7 +111,7 @@ export function StageCollisionDetection(
         move.AddToY(-correctionDepth);
       }
       // Corner case (top corners, normalY < 0)
-      else if (Math.abs(normalX) > 0 && normalY < 0) {
+      else if (Math.abs(normalX) > 0 && normalY > 0) {
         move.AddToX(move.X <= 0 ? move.Y : -move.Y);
       }
 
@@ -358,7 +358,6 @@ export function PlatformDetection(
         continue;
       }
 
-      // const ecbBottom = ecb.Bottom;
       const playerIsTooFarRight = currentBottom.X > plat.X2;
       const playerIsTooFarLeft = currentBottom.X < plat.X1;
 
@@ -567,10 +566,10 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   if (attack === undefined) {
     return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
   }
+  // attack is defined, and has gravity set to active
   if (attack.GravityActive === false) {
     return false;
   }
-  // attack is defined, and has gravity set to active
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
   return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
@@ -758,7 +757,7 @@ export function PlayerAttacks(
 function resolveHitResult(
   pA: Player,
   pB: Player,
-  pAlayerData: PlayerData,
+  playerData: PlayerData,
   pAHitsPbResult: AttackResult,
   vecPool: Pool<PooledVector>
 ): void {
@@ -786,7 +785,7 @@ function resolveHitResult(
   pB.HitStop.SetHitStop(hitStop);
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
 
-  const pBSm = pAlayerData.StateMachine(pB.ID);
+  const pBSm = playerData.StateMachine(pB.ID);
 
   pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
 }

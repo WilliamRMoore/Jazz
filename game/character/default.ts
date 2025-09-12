@@ -68,7 +68,7 @@ export class DefaultCharacterConfig {
     const sideCharge = GetSideCharge();
     const sideChargeExtension = GetSideChargeExtension();
     const upCharge = GetUpcharge();
-    const UpChargeExtension = GetUpchargeExt();
+    const upChargeExtension = GetUpchargeExt();
     const downCharge = GetDownCharge();
     const downChargeEx = GetDownChargeExtension();
     const dashAtk = GetDashAttack();
@@ -82,8 +82,8 @@ export class DefaultCharacterConfig {
     const sideSpecialEx = GetSideSpecialExtension();
     const sideSpecialAir = GetSideSpecialAir();
     const sideSpecialExAir = GetSideSpecialExtensionAir();
-    const DownSpecial = GetDownSpecial();
-    // down special aerial
+    const downSpecial = GetDownSpecial();
+    const downSpecialAerial = GetDownSpecialAerial();
     // upSpecial
     // upSpecialExtension
     const neutralAir = GetNeutralAir();
@@ -110,7 +110,7 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.SIDE_CHARGE_S, sideCharge.TotalFrameLength)
       .set(STATE_IDS.SIDE_CHARGE_EX_S, sideChargeExtension.TotalFrameLength)
       .set(STATE_IDS.UP_CHARGE_S, upCharge.TotalFrameLength)
-      .set(STATE_IDS.UP_CHARGE_EX_S, UpChargeExtension.TotalFrameLength)
+      .set(STATE_IDS.UP_CHARGE_EX_S, upChargeExtension.TotalFrameLength)
       .set(STATE_IDS.DOWN_CHARGE_S, downCharge.TotalFrameLength)
       .set(STATE_IDS.DOWN_CHARGE_EX_S, downChargeEx.TotalFrameLength)
       .set(STATE_IDS.N_AIR_S, neutralAir.TotalFrameLength)
@@ -122,7 +122,8 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength)
-      .set(STATE_IDS.DOWN_SPCL_S, DownSpecial.TotalFrameLength);
+      .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
+      .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -140,6 +141,7 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 })
       .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
+      .set(STATE_IDS.DOWN_SPCL_AIR_S, { height: 65, width: 65, yOffset: 0 })
       .set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 })
       .set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 })
       .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
@@ -179,12 +181,13 @@ export class DefaultCharacterConfig {
       .set(ATTACK_IDS.S_CHARGE_ATK, sideCharge)
       .set(ATTACK_IDS.S_CHARGE_EX_ATK, sideChargeExtension)
       .set(ATTACK_IDS.U_CHARGE_ATK, upCharge)
-      .set(ATTACK_IDS.U_CHARGE_EX_ATK, UpChargeExtension)
+      .set(ATTACK_IDS.U_CHARGE_EX_ATK, upChargeExtension)
       .set(ATTACK_IDS.D_CHARGE_ATK, downCharge)
       .set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx)
       .set(ATTACK_IDS.S_SPCL_ATK, sideSpecial)
       .set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx)
-      .set(ATTACK_IDS.D_SPCL_ATK, DownSpecial)
+      .set(ATTACK_IDS.D_SPCL_ATK, downSpecial)
+      .set(ATTACK_IDS.D_SPCL_AIR_ATK, downSpecialAerial)
       .set(ATTACK_IDS.N_AIR_ATK, neutralAir)
       .set(ATTACK_IDS.F_AIR_ATK, fAir)
       .set(ATTACK_IDS.U_AIR_ATK, uAir)
@@ -1159,6 +1162,46 @@ function GetDownSpecial() {
     .WithHitBubble(12, 18, 3, 45, hb3offSets)
     .WithHitBubble(16, 25, 4, 45, hb4OffSets)
     .WithImpulses(impulses, 12);
+
+  return blrd.Build();
+}
+
+function GetDownSpecialAerial() {
+  const activeFrames = 60;
+  const launchAngle = 280;
+  const impulses = new Map<frameNumber, FlatVec>();
+  const hb1OffSets = new Map<frameNumber, FlatVec>();
+  const hb2OffSets = new Map<frameNumber, FlatVec>();
+  const hb3offSets = new Map<frameNumber, FlatVec>();
+  const hb4OffSets = new Map<frameNumber, FlatVec>();
+
+  for (let i = 13; i < activeFrames - 10; i++) {
+    impulses.set(i, new FlatVec(1.5, 1.5));
+    hb1OffSets.set(i, new FlatVec(60, 50));
+    hb2OffSets.set(i, new FlatVec(40, 25));
+    hb3offSets.set(i, new FlatVec(20, 0));
+  }
+
+  const blrd = new AttackBuilder('DSpecialAir');
+
+  blrd
+    .WithBaseKnockBack(15)
+    .WithKnockBackScaling(66)
+    .WithGravity(false)
+    .WithTotalFrames(activeFrames)
+    .WithHitBubble(15, 20, 0, launchAngle, hb1OffSets)
+    .WithHitBubble(13, 19, 1, launchAngle, hb2OffSets)
+    .WithHitBubble(12, 18, 3, launchAngle, hb3offSets)
+    .WithHitBubble(16, 25, 4, launchAngle, hb4OffSets)
+    .WithImpulses(impulses, 8)
+    .WithEnterAction((w: World, p: Player) => {
+      p.Velocity.X = 0;
+      p.Velocity.Y = 0;
+    })
+    .WithExitAction((w: World, p: Player) => {
+      p.Jump.ResetJumps();
+      p.Jump.IncrementJumps();
+    });
 
   return blrd.Build();
 }

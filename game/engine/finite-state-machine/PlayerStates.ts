@@ -713,7 +713,7 @@ const ToBAir: condition = {
 };
 
 const ToUAir: condition = {
-  Name: 'UAir',
+  Name: 'ToUAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
@@ -731,7 +731,7 @@ const ToUAir: condition = {
 };
 
 const ToDAir: condition = {
-  Name: 'UAir',
+  Name: 'ToDAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
@@ -1087,7 +1087,7 @@ const ToSideSpecialAir: condition = {
 };
 
 const ToDownSpecial: condition = {
-  Name: 'IdleToDownSpecial',
+  Name: 'ToDownSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.localFrame;
@@ -1102,6 +1102,23 @@ const ToDownSpecial: condition = {
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_S,
+};
+
+const ToDownSpecialAir: condition = {
+  Name: 'ToDownSpecialAir',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
+    return inputMacthesTargetNotRepeating(
+      GAME_EVENT_IDS.DOWN_SPCL_GE,
+      ia,
+      prevIa
+    );
+  },
+  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
 };
 
 const ToDownTilt: condition = {
@@ -1552,6 +1569,7 @@ function InitNeutralFallRelations(): StateRelation {
     ToFAir,
     ToBAir,
     ToSideSpecialAir,
+    ToDownSpecialAir,
   ]);
 
   const nFallRelations = new StateRelation(
@@ -1945,6 +1963,21 @@ function InitDownSpecialRelations(): StateRelation {
   );
 
   return downSpecRelations;
+}
+
+function InitDownSpecialAirRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
+  ]);
+
+  translation.SetDefaults([defaultNFall]);
+
+  const relation = new StateRelation(STATE_IDS.DOWN_SPCL_AIR_S, translation);
+
+  return relation;
 }
 
 function InitHitStopRelations(): StateRelation {
@@ -2955,6 +2988,36 @@ export const DownSpecial: FSMState = {
   },
 };
 
+export const DownSpecialAerial: FSMState = {
+  StateName: 'DownSpecialAerial',
+  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    attackComp.SetCurrentAttack(GAME_EVENT_IDS.D_SPCL_AIR_GE);
+    attackComp.GetAttack()!.OnEnter(w, p);
+    p.ECB.SetECBShape(STATE_IDS.DOWN_SPCL_AIR_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    const attack = attackComp.GetAttack()!;
+    const impulse = attack?.GetActiveImpulseForFrame(
+      p.FSMInfo.CurrentStateFrame
+    );
+
+    if (impulse === undefined) {
+      return;
+    }
+
+    addAttackImpulseToPlayer(p, impulse, attack);
+  },
+  OnExit: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    attackComp.GetAttack()!.OnExit(w, p);
+    attackComp.ZeroCurrentAttack();
+    p.ECB.ResetECBShape();
+  },
+};
+
 export const HitStop: FSMState = {
   StateName: 'HitStop',
   StateId: STATE_IDS.HIT_STOP_S,
@@ -3136,6 +3199,7 @@ const SIDE_SPCL_EX_RELATIONS = InitSideSpecialExtensionRelations();
 const SIDE_SPCL_AIR_RELATIONS = InitSideSpecialAirRelations();
 const SIDE_SPCL_AIR_EX_RELATIONS = InitSideSpecialExAirRelations();
 const DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
+const DOWN_SPECIAL_AIR_RELATIONS = InitDownSpecialAirRelations();
 const HIT_STOP_RELATIONS = InitHitStopRelations();
 const TUMBLE_RELATIONS = InitTumbleRelations();
 const LAUNCH_RELATIONS = InitLaunchRelations();
@@ -3179,6 +3243,7 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(B_AIR_ATK_RELATIONS.stateId, B_AIR_ATK_RELATIONS.mappings)
   .set(D_AIR_ATK_RELATIONS.stateId, D_AIR_ATK_RELATIONS.mappings)
   .set(DOWN_SPECIAL_RELATIONS.stateId, DOWN_SPECIAL_RELATIONS.mappings)
+  .set(DOWN_SPECIAL_AIR_RELATIONS.stateId, DOWN_SPECIAL_AIR_RELATIONS.mappings)
   .set(SIDE_SPCL_RELATIONS.stateId, SIDE_SPCL_RELATIONS.mappings)
   .set(SIDE_SPCL_EX_RELATIONS.stateId, SIDE_SPCL_EX_RELATIONS.mappings)
   .set(SIDE_SPCL_AIR_RELATIONS.stateId, SIDE_SPCL_AIR_RELATIONS.mappings)
@@ -3224,6 +3289,7 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(SideSpecialAir.StateId, SideSpecialAir)
   .set(SideSpecialExtensionAir.StateId, SideSpecialExtensionAir)
   .set(DownSpecial.StateId, DownSpecial)
+  .set(DownSpecialAerial.StateId, DownSpecialAerial)
   .set(HitStop.StateId, HitStop)
   .set(Tumble.StateId, Tumble)
   .set(Launch.StateId, Launch)
@@ -3254,4 +3320,5 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.SIDE_SPCL_EX_GE, ATTACK_IDS.S_SPCL_EX_ATK)
   .set(GAME_EVENT_IDS.S_SPCL_AIR_GE, ATTACK_IDS.S_SPCL_AIR_ATK)
   .set(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE, ATTACK_IDS.S_SPCL_EX_AIR_ATK)
-  .set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK);
+  .set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK)
+  .set(GAME_EVENT_IDS.D_SPCL_AIR_GE, ATTACK_IDS.D_SPCL_AIR_ATK);
