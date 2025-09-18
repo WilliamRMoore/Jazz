@@ -1,14 +1,11 @@
-import { Circle } from '../engine/physics/circle';
 import { FlatVec, Line } from '../engine/physics/vector';
 import {
-  Attack,
   AttackSnapShot,
   ComponentHistory,
   ECBSnapShot,
   FlagsSnapShot,
   FSMInfoSnapShot,
   HurtCapsule,
-  HurtCirclesSnapShot,
   LedgeDetectorSnapShot,
   SensorSnapShot,
   StaticHistory,

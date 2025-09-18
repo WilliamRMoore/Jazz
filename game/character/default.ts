@@ -39,7 +39,7 @@ export type CharacterConfig = {
   Weight: number;
 };
 
-export class DefaultCharacterConfig {
+export class DefaultCharacterConfig implements CharacterConfig {
   public FrameLengths = new Map<StateId, number>();
   public SCB: SpeedsComponentBuilder;
   public ECBHeight: number;
@@ -84,7 +84,7 @@ export class DefaultCharacterConfig {
     const sideSpecialExAir = GetSideSpecialExtensionAir();
     const downSpecial = GetDownSpecial();
     const downSpecialAerial = GetDownSpecialAerial();
-    // upSpecial
+    const upSpecial = GetUpSpecial();
     // upSpecialExtension
     const neutralAir = GetNeutralAir();
     const fAir = GetFAir();
@@ -123,7 +123,8 @@ export class DefaultCharacterConfig {
       .set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
-      .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength);
+      .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
+      .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -195,7 +196,8 @@ export class DefaultCharacterConfig {
       .set(ATTACK_IDS.D_AIR_ATK, dAir)
       .set(ATTACK_IDS.S_SPCL_AIR_ATK, sideSpecialAir)
       .set(ATTACK_IDS.S_SPCL_EX_AIR_ATK, sideSpecialExAir)
-      .set(ATTACK_IDS.DASH_ATK, dashAtk);
+      .set(ATTACK_IDS.DASH_ATK, dashAtk)
+      .set(ATTACK_IDS.U_SPCL_ATK, upSpecial);
   }
 
   private populateHurtCircles() {
@@ -1057,7 +1059,6 @@ function GetSideSpecialAir() {
   const reactor: SensorReactor = (w, sensorOwner, detectedPlayer) => {
     const sm = w.PlayerData.StateMachine(sensorOwner.ID)!;
     sm.UpdateFromWorld(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
-    // change the state here
   };
 
   const onEnter: AttackOnEnter = (w, p) => {
@@ -1204,6 +1205,27 @@ function GetDownSpecialAerial() {
     });
 
   return blrd.Build();
+}
+
+function GetUpSpecial() {
+  const totalFrameLength = 62;
+  const impulses = new Map<frameNumber, FlatVec>();
+  for (let i = 13; i < 29; i++) {
+    impulses.set(i, new FlatVec(1.2, -2));
+  }
+
+  const bldr = new AttackBuilder('UpSpecial');
+
+  bldr
+    .WithTotalFrames(totalFrameLength)
+    .WithImpulses(impulses, 12)
+    .WithGravity(false)
+    .WithEnterAction((w: World, p: Player) => {
+      p.Velocity.X = 0;
+      p.Velocity.Y = 0;
+    });
+
+  return bldr.Build();
 }
 
 function generateArcBubbleOffsets(

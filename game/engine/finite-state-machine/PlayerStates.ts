@@ -3,7 +3,7 @@ import { EaseIn, Sequencer } from '../utils';
 import { World } from '../world/world';
 import { FSMState } from './PlayerStateMachine';
 import { InputAction } from '../../input/Input';
-import { FlatVec } from '../physics/vector';
+import { FlatVec } from '../physics/vector'; //
 import { Attack } from '../player/playerComponents';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 
@@ -91,7 +91,7 @@ class STATES {
   public readonly SOFT_LAND_S = seq.Next as StateId;
   public readonly LEDGE_GRAB_S = seq.Next as StateId;
   public readonly AIR_DODGE_S = seq.Next as StateId;
-  public readonly HELPESS_S = seq.Next as StateId;
+  public readonly HELPLESS_S = seq.Next as StateId;
   public readonly ATTACK_S = seq.Next as StateId;
   public readonly SIDE_CHARGE_S = seq.Next as StateId;
   public readonly SIDE_CHARGE_EX_S = seq.Next as StateId;
@@ -114,6 +114,7 @@ class STATES {
   public readonly SIDE_SPCL_EX_AIR_S = seq.Next as StateId;
   public readonly DOWN_SPCL_S = seq.Next as StateId;
   public readonly DOWN_SPCL_AIR_S = seq.Next as StateId;
+  public readonly UP_SPCL_S = seq.Next as StateId;
   public readonly HIT_STOP_S = seq.Next as StateId;
   public readonly LAUNCH_S = seq.Next as StateId;
   public readonly TUMBLE_S = seq.Next as StateId;
@@ -235,9 +236,7 @@ export class ActionStateMappings {
   }
 
   public SetDefaults(conditions: Array<condition>) {
-    if (!this.defaultConditions) {
-      this.defaultConditions = conditions;
-    }
+    this.defaultConditions = conditions;
   }
 }
 
@@ -1121,6 +1120,23 @@ const ToDownSpecialAir: condition = {
   StateId: STATE_IDS.DOWN_SPCL_AIR_S,
 };
 
+const ToUpSpecial: condition = {
+  Name: 'ToUpSpecial',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
+    return inputMacthesTargetNotRepeating(
+      GAME_EVENT_IDS.UP_SPCL_GE,
+      ia,
+      prevIa
+    );
+  },
+  StateId: STATE_IDS.UP_SPCL_S,
+};
+
 const ToDownTilt: condition = {
   Name: 'ToDownTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1290,7 +1306,7 @@ const defaultHelpess: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     return true;
   },
-  StateId: STATE_IDS.HELPESS_S,
+  StateId: STATE_IDS.HELPLESS_S,
 };
 
 const defaultSideChargeEx: condition = {
@@ -1341,6 +1357,7 @@ function InitIdleRelations(): StateRelation {
     ToDownCharge,
     ToSideSpecial,
     ToDownSpecial,
+    ToUpSpecial,
   ];
 
   idleTranslations.SetConditions(condtions);
@@ -1411,15 +1428,13 @@ function InitDashRelations(): StateRelation {
   const conditions: Array<condition> = [
     DashToTurn,
     ToSideSpecial,
+    ToUpSpecial,
     RunToDashAttack,
   ];
 
   dashTranslations.SetConditions(conditions);
 
-  const defaultConditions: Array<condition> = [
-    DashDefaultRun,
-    defaultIdle /*DashDefaultIdle*/,
-  ];
+  const defaultConditions: Array<condition> = [DashDefaultRun, defaultIdle];
 
   dashTranslations.SetDefaults(defaultConditions);
 
@@ -1462,6 +1477,7 @@ function InitRunRelations(): StateRelation {
   const conditions: Array<condition> = [
     RunToTurn,
     ToSideSpecial,
+    ToUpSpecial,
     RunToDashAttack,
   ];
 
@@ -1480,7 +1496,8 @@ function InitRunTurnRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
-  runTurnMapping.SetConditions([ToSideSpecial]);
+  runTurnMapping.SetConditions([ToSideSpecial, ToUpSpecial]);
+
   runTurnMapping.SetDefaults([defaultRun]);
 
   const runTurnRelations = new StateRelation(
@@ -1503,7 +1520,7 @@ function InitStopRunRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.SIDE_SPCL_GE, sId: STATE_IDS.SIDE_SPCL_S },
   ]);
 
-  const conditions: Array<condition> = [RunStopToTurn];
+  const conditions: Array<condition> = [RunStopToTurn, ToUpSpecial];
 
   stopRunTranslations.SetConditions(conditions);
 
@@ -1569,6 +1586,7 @@ function InitNeutralFallRelations(): StateRelation {
     ToFAir,
     ToBAir,
     ToSideSpecialAir,
+    ToUpSpecial,
     ToDownSpecialAir,
   ]);
 
@@ -1656,7 +1674,7 @@ function InitHelpessRelations(): StateRelation {
   ]);
 
   const HelplessRelations = new StateRelation(
-    STATE_IDS.HELPESS_S,
+    STATE_IDS.HELPLESS_S,
     helpessTranslations
   );
 
@@ -1882,7 +1900,7 @@ function InitSideSpecialRelations(): StateRelation {
   const sideSpclTranslations = new ActionStateMappings();
 
   sideSpclTranslations.SetMappings([
-    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.HELPESS_S },
+    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.HELPLESS_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     {
       geId: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
@@ -1952,9 +1970,22 @@ function InitSideSpecialExAirRelations(): StateRelation {
   return relations;
 }
 
+function InitUpSpecialRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translation.SetDefaults([defaultHelpess]);
+
+  const relation = new StateRelation(STATE_IDS.UP_SPCL_S, translation);
+
+  return relation;
+}
+
 function InitDownSpecialRelations(): StateRelation {
   const downSpecialTranslations = new ActionStateMappings();
-
   downSpecialTranslations.SetDefaults([defaultIdle]);
 
   const downSpecRelations = new StateRelation(
@@ -2354,9 +2385,9 @@ export const AirDodge: FSMState = {
   },
 };
 
-export const Helpess: FSMState = {
-  StateName: 'Helpess',
-  StateId: STATE_IDS.HELPESS_S,
+export const Helpless: FSMState = {
+  StateName: 'Helpless',
+  StateId: STATE_IDS.HELPLESS_S,
   OnEnter: (p: Player, w: World) => {
     if (p.Jump.OnFirstJump()) {
       p.Jump.IncrementJumps();
@@ -2367,9 +2398,9 @@ export const Helpess: FSMState = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const speeds = p.Speeds;
-    const airSpeed = speeds.AerialSpeedInpulseLimit;
-    const airMult = speeds.ArielVelocityMultiplier;
-    p.Velocity.AddClampedXImpulse(airSpeed, (ia!.LXAxis * airMult) / 2);
+    const airSpeed = speeds.AerialSpeedInpulseLimit * 0.6;
+    const airMult = speeds.ArielVelocityMultiplier * 0.6;
+    p.Velocity.AddClampedXImpulse(airSpeed, ia!.LXAxis * airMult);
   },
   OnExit: (p: Player, w: World) => {},
 };
@@ -3018,6 +3049,35 @@ export const DownSpecialAerial: FSMState = {
   },
 };
 
+export const UpSpecial: FSMState = {
+  StateName: 'UpSpecial',
+  StateId: STATE_IDS.UP_SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    attackComp.SetCurrentAttack(GAME_EVENT_IDS.UP_SPCL_GE);
+    p.ECB.SetECBShape(STATE_IDS.UP_SPCL_S);
+    attackComp.GetAttack()!.OnEnter(w, p);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    const attack = attackComp.GetAttack()!;
+    const impulse = attack?.GetActiveImpulseForFrame(
+      p.FSMInfo.CurrentStateFrame
+    );
+
+    if (impulse === undefined) {
+      return;
+    }
+
+    addAttackImpulseToPlayer(p, impulse, attack);
+  },
+  OnExit: (p: Player, w: World) => {
+    const attackComp = p.Attacks;
+    attackComp.ZeroCurrentAttack();
+    p.ECB.ResetECBShape();
+  },
+};
+
 export const HitStop: FSMState = {
   StateName: 'HitStop',
   StateId: STATE_IDS.HIT_STOP_S,
@@ -3088,7 +3148,6 @@ export const Crouch: FSMState = {
  * TODO
  * neutralSpecial
  * neutralSpecial EX
- * upSpecial
  * upSpecial EX
  * grab
  * runGrab
@@ -3200,6 +3259,7 @@ const SIDE_SPCL_AIR_RELATIONS = InitSideSpecialAirRelations();
 const SIDE_SPCL_AIR_EX_RELATIONS = InitSideSpecialExAirRelations();
 const DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
 const DOWN_SPECIAL_AIR_RELATIONS = InitDownSpecialAirRelations();
+const UP_SPECIAL_RELATIONS = InitUpSpecialRelations();
 const HIT_STOP_RELATIONS = InitHitStopRelations();
 const TUMBLE_RELATIONS = InitTumbleRelations();
 const LAUNCH_RELATIONS = InitLaunchRelations();
@@ -3248,6 +3308,7 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SIDE_SPCL_EX_RELATIONS.stateId, SIDE_SPCL_EX_RELATIONS.mappings)
   .set(SIDE_SPCL_AIR_RELATIONS.stateId, SIDE_SPCL_AIR_RELATIONS.mappings)
   .set(SIDE_SPCL_AIR_EX_RELATIONS.stateId, SIDE_SPCL_AIR_EX_RELATIONS.mappings)
+  .set(UP_SPECIAL_RELATIONS.stateId, UP_SPECIAL_RELATIONS.mappings)
   .set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings)
   .set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings)
   .set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings)
@@ -3269,7 +3330,7 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(SoftLand.StateId, SoftLand)
   .set(LedgeGrab.StateId, LedgeGrab)
   .set(AirDodge.StateId, AirDodge)
-  .set(Helpess.StateId, Helpess)
+  .set(Helpless.StateId, Helpless)
   .set(NAttack.StateId, NAttack)
   .set(SideCharge.StateId, SideCharge)
   .set(SideChargeEx.StateId, SideChargeEx)
@@ -3290,6 +3351,7 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(SideSpecialExtensionAir.StateId, SideSpecialExtensionAir)
   .set(DownSpecial.StateId, DownSpecial)
   .set(DownSpecialAerial.StateId, DownSpecialAerial)
+  .set(UpSpecial.StateId, UpSpecial)
   .set(HitStop.StateId, HitStop)
   .set(Tumble.StateId, Tumble)
   .set(Launch.StateId, Launch)
@@ -3321,4 +3383,5 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.S_SPCL_AIR_GE, ATTACK_IDS.S_SPCL_AIR_ATK)
   .set(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE, ATTACK_IDS.S_SPCL_EX_AIR_ATK)
   .set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK)
-  .set(GAME_EVENT_IDS.D_SPCL_AIR_GE, ATTACK_IDS.D_SPCL_AIR_ATK);
+  .set(GAME_EVENT_IDS.D_SPCL_AIR_GE, ATTACK_IDS.D_SPCL_AIR_ATK)
+  .set(GAME_EVENT_IDS.UP_SPCL_GE, ATTACK_IDS.U_SPCL_ATK);

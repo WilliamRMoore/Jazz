@@ -80,7 +80,7 @@ class PlayerState implements PlayerData {
 }
 
 class StageWorldState implements StageData {
-  public Stage: Stage;
+  public Stage!: Stage;
 }
 
 class PoolContainer implements PoolContainer {

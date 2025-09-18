@@ -259,10 +259,6 @@ export function PlatformDetection(
       continue;
     }
 
-    const inputStore = playerData.InputStore(playerIndex);
-    const ia = inputStore.GetInputForFrame(currentFrame);
-    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
-
     // If a jump was just initiated, skip all platform landing logic for this frame
     // to allow the jump to properly start.
     if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
@@ -316,6 +312,10 @@ export function PlatformDetection(
       ecb.Bottom,
       ecb.SensorDepth
     );
+
+    const inputStore = playerData.InputStore(playerIndex);
+    const ia = inputStore.GetInputForFrame(currentFrame);
+    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
 
     if (landingYCoord != undefined) {
       const sm = playerData.StateMachine(playerIndex);
@@ -761,15 +761,26 @@ function resolveHitResult(
   pAHitsPbResult: AttackResult,
   vecPool: Pool<PooledVector>
 ): void {
-  const damage = pAHitsPbResult.Damage;
-  pB.Points.AddDamage(damage);
+  const atkDamage = pAHitsPbResult.Damage;
+  pB.Points.AddDamage(atkDamage);
 
-  const kb = CalculateKnockback(pB, pAHitsPbResult);
-  const hitStop = CalculateHitStop(damage);
+  const playerDamage = pB.Points.Damage;
+  const weight = pB.Weight.Weight;
+  const scailing = pAHitsPbResult.KnockBackScaling;
+  const baseKnockBack = pAHitsPbResult.BaseKnockBack;
+
+  const kb = CalculateKnockback(
+    playerDamage,
+    atkDamage,
+    weight,
+    scailing,
+    baseKnockBack
+  );
+  const hitStop = CalculateHitStop(atkDamage);
   const hitStunFrames = CalculateHitStun(kb);
   const launchVec = CalculateLaunchVector(
     vecPool,
-    pAHitsPbResult,
+    pAHitsPbResult.LaunchAngle,
     pA.Flags.IsFacingRight,
     kb
   );
@@ -871,6 +882,7 @@ function PAvsPB(
         pBPosition.Y,
         vecPool
       );
+
       const pBEndHurtDto = pBHurtBubble.GetEndPosition(
         pBPosition.X,
         pBPosition.Y,
@@ -934,30 +946,31 @@ function CalculateHitStun(knockBack: number): number {
 
 function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
-  attackRes: AttackResult,
+  launchAngle: number,
   isFacingRight: boolean,
   knockBack: number
 ): PooledVector {
-  const vec = vecPool.Rent();
-  let angleInRadians = attackRes.LaunchAngle * (Math.PI / 180);
+  let angleInRadians = launchAngle * (Math.PI / 180);
 
   if (isFacingRight === false) {
     angleInRadians = Math.PI - angleInRadians;
   }
 
-  return vec.SetXY(
-    Math.cos(angleInRadians) * knockBack,
-    -(Math.sin(angleInRadians) * knockBack) / 2
-  );
+  return vecPool
+    .Rent()
+    .SetXY(
+      Math.cos(angleInRadians) * knockBack,
+      -(Math.sin(angleInRadians) * knockBack) / 2
+    );
 }
 
-function CalculateKnockback(player: Player, attackRes: AttackResult): number {
-  const p = player.Points.Damage;
-  const d = attackRes.Damage;
-  const w = player.Weight.Weight;
-  const s = attackRes.KnockBackScaling;
-  const b = attackRes.BaseKnockBack;
-
+function CalculateKnockback(
+  p: number,
+  d: number,
+  w: number,
+  s: number,
+  b: number
+): number {
   return ((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
 }
 
@@ -1009,7 +1022,7 @@ export function ApplyVeloctyDecay(
         playerVelocity.X += groundedVelocityDecay;
       }
 
-      if (absPvx < 1) {
+      if (absPvx < groundedVelocityDecay) {
         playerVelocity.X = 0;
       }
 
@@ -1039,7 +1052,7 @@ export function ApplyVeloctyDecay(
       playerVelocity.Y += aerialVelocityDecay;
     }
 
-    if (absPvx < 1.5) {
+    if (absPvx < 0.2) {
       playerVelocity.X = 0;
     }
   }
@@ -1124,7 +1137,7 @@ export function RecordHistory(
   w: World,
   playerData: PlayerData,
   historyData: HistoryData,
-  frameNumber
+  frameNumber: number
 ): void {
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
