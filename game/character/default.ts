@@ -72,12 +72,12 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const downCharge = GetDownCharge();
     const downChargeEx = GetDownChargeExtension();
     const dashAtk = GetDashAttack();
+    const nSpecial = GetNSpecial();
     // grab
     // runGrab
     // side throw
     // down throw
     // up throw
-    // nuetralSpecial
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
     const sideSpecialAir = GetSideSpecialAir();
@@ -118,6 +118,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.U_AIR_S, uAir.TotalFrameLength)
       .set(STATE_IDS.B_AIR_S, bAir.TotalFrameLength)
       .set(STATE_IDS.D_AIR_S, dAir.TotalFrameLength)
+      .set(STATE_IDS.SPCL_S, nSpecial.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_S, sideSpecial.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_EX_S, sideSpecialEx.TotalFrameLength)
       .set(STATE_IDS.SIDE_SPCL_AIR_S, sideSpecialAir.TotalFrameLength)
@@ -185,6 +186,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(ATTACK_IDS.U_CHARGE_EX_ATK, upChargeExtension)
       .set(ATTACK_IDS.D_CHARGE_ATK, downCharge)
       .set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx)
+      .set(ATTACK_IDS.N_SPCL_ATK, nSpecial)
       .set(ATTACK_IDS.S_SPCL_ATK, sideSpecial)
       .set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx)
       .set(ATTACK_IDS.D_SPCL_ATK, downSpecial)
@@ -966,6 +968,30 @@ function GetSideChargeExtension() {
     .WithHitBubble(hb1Damage, radius, 0, 50, hitBubbleOffsets1)
     .WithHitBubble(hb2Damage, radius, 1, 50, hitBubbleOffsets2)
     .WithBaseKnockBack(baseKnockBack)
+    .WithKnockBackScaling(knockBackScaling);
+
+  return bldr.Build();
+}
+
+function GetNSpecial() {
+  const activeFrames = 120;
+  const h1Damage = 24;
+  const baseKb = 35;
+  const knockBackScaling = 45;
+  const radius = 25;
+  const h1Offset = new Map<frameNumber, FlatVec>();
+
+  for (let i = 80; i < 100; i++) {
+    h1Offset.set(i, new FlatVec(90, -40));
+  }
+
+  const bldr = new AttackBuilder('NSpecial');
+
+  bldr
+    .WithTotalFrames(activeFrames)
+    .WithGravity(true)
+    .WithHitBubble(h1Damage, radius, 0, 65, h1Offset)
+    .WithBaseKnockBack(baseKb)
     .WithKnockBackScaling(knockBackScaling);
 
   return bldr.Build();

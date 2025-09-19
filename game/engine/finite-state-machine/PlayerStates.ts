@@ -108,6 +108,7 @@ class STATES {
   public readonly B_AIR_S = seq.Next as StateId;
   public readonly U_AIR_S = seq.Next as StateId;
   public readonly D_AIR_S = seq.Next as StateId;
+  public readonly SPCL_S = seq.Next as StateId;
   public readonly SIDE_SPCL_S = seq.Next as StateId;
   public readonly SIDE_SPCL_EX_S = seq.Next as StateId;
   public readonly SIDE_SPCL_AIR_S = seq.Next as StateId;
@@ -1051,6 +1052,19 @@ const ToSideTilt: condition = {
   StateId: STATE_IDS.SIDE_TILT_S,
 };
 
+const ToNSpecial: condition = {
+  Name: 'ToNSpecial',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const prevFrame = w.PreviousFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const prevIa = inputStore.GetInputForFrame(prevFrame);
+    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.SPCL_GE, ia, prevIa);
+  },
+  StateId: STATE_IDS.SPCL_S,
+};
+
 const ToSideSpecial: condition = {
   Name: 'ToSideSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1355,6 +1369,7 @@ function InitIdleRelations(): StateRelation {
     ToUpCharge,
     IdleToUpTilt,
     ToDownCharge,
+    ToNSpecial,
     ToSideSpecial,
     ToDownSpecial,
     ToUpSpecial,
@@ -1896,6 +1911,23 @@ function InitDAirRelations(): StateRelation {
   return bAirRelations;
 }
 
+function InitNSpecialRelations(): StateRelation {
+  const nSpecialTranslations = new ActionStateMappings();
+
+  nSpecialTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  nSpecialTranslations.SetDefaults([defaultIdle]);
+
+  const nSpecialRelations = new StateRelation(
+    STATE_IDS.SPCL_S,
+    nSpecialTranslations
+  );
+
+  return nSpecialRelations;
+}
+
 function InitSideSpecialRelations(): StateRelation {
   const sideSpclTranslations = new ActionStateMappings();
 
@@ -2405,679 +2437,6 @@ export const Helpless: FSMState = {
   OnExit: (p: Player, w: World) => {},
 };
 
-export const NAttack: FSMState = {
-  StateName: 'Attack',
-  StateId: STATE_IDS.ATTACK_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.ATTACK_GE);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack();
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    const x = p.Flags.IsFacingRight ? impulse.X : -impulse.X;
-    const y = impulse.Y;
-    const clamp = attack?.ImpulseClamp;
-    const pVel = p.Velocity;
-    if (clamp !== undefined) {
-      pVel.AddClampedXImpulse(clamp, x);
-      pVel.AddClampedYImpulse(clamp, y);
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-  },
-};
-
-export const DashAttack: FSMState = {
-  StateName: 'DashAttack',
-  StateId: STATE_IDS.DASH_ATTACK_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DASH_ATTACK_GE);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack();
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    const x = p.Flags.IsFacingRight ? impulse.X : -impulse.X;
-    const y = impulse.Y;
-    const clamp = attack?.ImpulseClamp;
-    const pVel = p.Velocity;
-    if (clamp !== undefined) {
-      pVel.AddClampedXImpulse(clamp, x);
-      pVel.AddClampedYImpulse(clamp, y);
-    }
-  },
-  OnExit: (p, w) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-  },
-};
-
-export const DownTilt: FSMState = {
-  StateName: 'DownTilt',
-  StateId: STATE_IDS.DOWN_TILT_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.D_TILT_GE);
-    p.ECB.SetECBShape(STATE_IDS.DOWN_TILT_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack();
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    const x = p.Flags.IsFacingRight ? impulse.X : -impulse.X;
-    const y = impulse.Y;
-    const clamp = attack?.ImpulseClamp;
-    const pVel = p.Velocity;
-    if (clamp !== undefined) {
-      pVel.AddClampedXImpulse(clamp, x);
-      pVel.AddClampedYImpulse(clamp, y);
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const SideTilt: FSMState = {
-  StateName: 'SideTilt',
-  StateId: STATE_IDS.SIDE_TILT_S,
-  OnEnter: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
-    if (ia.LYAxis > 0.15) {
-      p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.S_TILT_U_GE);
-      p.ECB.SetECBShape(STATE_IDS.SIDE_TILT_S);
-      return;
-    }
-
-    if (ia.LYAxis < -0.15) {
-      p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.S_TILT_D_GE);
-      p.ECB.SetECBShape(STATE_IDS.SIDE_TILT_S);
-      return;
-    }
-
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.S_TILT_GE);
-    p.ECB.SetECBShape(STATE_IDS.SIDE_TILT_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const UpTilt: FSMState = {
-  StateName: 'UpTilt',
-  StateId: STATE_IDS.UP_TILT_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.U_TILT_GE);
-    p.ECB.SetECBShape(STATE_IDS.UP_TILT_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const SideCharge: FSMState = {
-  StateName: 'SideChagrge',
-  OnEnter: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const rXAxis = ia.RXAxis;
-
-    if (rXAxis > 0) {
-      p.Flags.FaceRight();
-    }
-
-    if (rXAxis < 0) {
-      p.Flags.FaceLeft();
-    }
-
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_CHARGE_GE);
-    attackComp.GetAttack()!.OnEnter(w, p);
-  },
-  OnUpdate: (p, w) => {
-    // Shake player maybe?
-  },
-  OnExit: (p, w) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.SIDE_CHARGE_S,
-};
-
-export const SideChargeEx: FSMState = {
-  StateName: 'SideChagrgeEx',
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.SIDE_CHARGE_EX_GE);
-    p.ECB.SetECBShape(STATE_IDS.SIDE_CHARGE_EX_S);
-  },
-  OnUpdate: (p, w) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p, w) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
-};
-
-export const UpCharge: FSMState = {
-  StateName: 'UpCharge',
-  OnEnter: (p, w) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const rXAxis = ia.RXAxis;
-    if (rXAxis > 0) {
-      p.Flags.FaceRight();
-    }
-    if (rXAxis < 0) {
-      p.Flags.FaceLeft();
-    }
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.UP_CHARGE_GE);
-    p.ECB.SetECBShape(STATE_IDS.UP_CHARGE_S);
-  },
-  OnUpdate: (p, w) => {},
-  OnExit: (p, w) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.UP_CHARGE_S,
-};
-
-export const UpChargeEx: FSMState = {
-  StateName: 'UpChargeExt',
-  OnEnter: (p, w) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.UP_CHARGE_EX_GE);
-    p.ECB.SetECBShape(STATE_IDS.UP_CHARGE_EX_S);
-  },
-  OnUpdate: (p, w) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p, w) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
-};
-
-export const DownCharge: FSMState = {
-  StateName: 'DownCharge',
-  OnEnter: (p, w) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const rXAxis = ia.RXAxis;
-    if (rXAxis > 0) {
-      p.Flags.FaceRight();
-    }
-    if (rXAxis < 0) {
-      p.Flags.FaceLeft();
-    }
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DOWN_CHARGE_GE);
-    p.ECB.SetECBShape(STATE_IDS.DOWN_CHARGE_S);
-  },
-  OnUpdate: (p, w) => {},
-  OnExit: (p, w) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.DOWN_CHARGE_S,
-};
-
-export const DownChargeEx: FSMState = {
-  StateName: 'DownChargeExt',
-  OnEnter: (p, w) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DOWN_CHARGE_EX_GE);
-    p.ECB.SetECBShape(STATE_IDS.DOWN_CHARGE_EX_S);
-  },
-  OnUpdate: (p, w) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p, w) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
-};
-
-export const NAerialAttack: FSMState = {
-  StateName: 'AerialAttack',
-  StateId: STATE_IDS.N_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.N_AIR_GE);
-    p.ECB.SetECBShape(STATE_IDS.N_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speeds = p.Speeds;
-    const airSpeed = speeds.AerialSpeedInpulseLimit;
-    const airMult = speeds.ArielVelocityMultiplier;
-    p.Velocity.AddClampedXImpulse(airSpeed, ia!.LXAxis * airMult);
-    if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
-      p.Flags.FastFallOn();
-    }
-  },
-  OnExit(p: Player, w: World) {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const FAerialAttack: FSMState = {
-  StateName: 'FAir',
-  StateId: STATE_IDS.F_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.F_AIR_GE);
-    p.ECB.SetECBShape(STATE_IDS.F_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speedsComp = p.Speeds;
-    p.Velocity.AddClampedXImpulse(
-      speedsComp.AerialSpeedInpulseLimit,
-      ia.LXAxis * speedsComp.ArielVelocityMultiplier
-    );
-    if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
-      p.Flags.FastFallOn();
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const UAirAttack: FSMState = {
-  StateName: 'UAir',
-  StateId: STATE_IDS.U_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.U_AIR_GE);
-    p.ECB.SetECBShape(STATE_IDS.U_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speedsComp = p.Speeds;
-    p.Velocity.AddClampedXImpulse(
-      speedsComp.AerialSpeedInpulseLimit,
-      ia.LXAxis * speedsComp.ArielVelocityMultiplier
-    );
-    if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
-      p.Flags.FastFallOn();
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const BAirAttack: FSMState = {
-  StateName: 'BAir',
-  StateId: STATE_IDS.B_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.B_AIR_GE);
-    p.ECB.SetECBShape(STATE_IDS.B_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speedsComp = p.Speeds;
-    p.Velocity.AddClampedXImpulse(
-      speedsComp.AerialSpeedInpulseLimit,
-      ia.LXAxis * speedsComp.ArielVelocityMultiplier
-    );
-    if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
-      p.Flags.FastFallOn();
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const DAirAttack: FSMState = {
-  StateName: 'DAir',
-  StateId: STATE_IDS.D_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.D_AIR_GE);
-    p.ECB.SetECBShape(STATE_IDS.D_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speedsComp = p.Speeds;
-    p.Velocity.AddClampedXImpulse(
-      speedsComp.AerialSpeedInpulseLimit,
-      ia.LXAxis * speedsComp.ArielVelocityMultiplier
-    );
-    if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
-      p.Flags.FastFallOn();
-    }
-  },
-  OnExit: (p: Player, w: World) => {
-    p.Attacks.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const SideSpecial: FSMState = {
-  StateName: 'SideSpecial',
-  StateId: STATE_IDS.SIDE_SPCL_S,
-  OnEnter: (p: Player, w: World) => {
-    const curFrame = w.localFrame;
-    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
-    const lxAxis = ia.LXAxis;
-
-    if (lxAxis < 0) {
-      p.Flags.FaceLeft();
-    }
-    if (lxAxis >= 0) {
-      p.Flags.FaceRight();
-    }
-
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_SPCL_GE);
-    const atk = attackComp.GetAttack()!;
-    atk.OnEnter(w, p);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attack = p.Attacks.GetAttack()!;
-    const currentStateFrame = p.FSMInfo.CurrentStateFrame;
-    const impulse = attack.GetActiveImpulseForFrame(currentStateFrame);
-
-    if (impulse !== undefined) {
-      addAttackImpulseToPlayer(p, impulse, attack);
-    }
-    attack.OnUpdate(w, p, currentStateFrame);
-  },
-  OnExit: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    const atk = atkComp.GetAttack()!;
-    atk.OnExit(w, p);
-    atkComp.ZeroCurrentAttack();
-  },
-};
-
-export const SideSpecialExtension: FSMState = {
-  StateName: 'SideSpecialExtension',
-  StateId: STATE_IDS.SIDE_SPCL_EX_S,
-  OnEnter: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    atkComp.SetCurrentAttack(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
-    atkComp.GetAttack()!.OnEnter(w, p);
-  },
-  OnUpdate: (p, world) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-
-    attack.OnUpdate(world, p, world.localFrame);
-  },
-  OnExit: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    atkComp.GetAttack()!.OnExit(w, p);
-    atkComp.ZeroCurrentAttack();
-  },
-};
-
-export const SideSpecialAir: FSMState = {
-  StateName: 'SideSpecialAir',
-  StateId: STATE_IDS.SIDE_SPCL_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    const curFrame = w.localFrame;
-    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
-    const lxAxis = ia.LXAxis;
-
-    if (lxAxis < 0) {
-      p.Flags.FaceLeft();
-    }
-    if (lxAxis >= 0) {
-      p.Flags.FaceRight();
-    }
-
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.S_SPCL_AIR_GE);
-    const atk = attackComp.GetAttack()!;
-    atk.OnEnter(w, p);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attack = p.Attacks.GetAttack()!;
-    const currentStateFrame = p.FSMInfo.CurrentStateFrame;
-    const impulse = attack.GetActiveImpulseForFrame(currentStateFrame);
-
-    if (impulse !== undefined) {
-      addAttackImpulseToPlayer(p, impulse, attack);
-    }
-    attack.OnUpdate(w, p, currentStateFrame);
-  },
-  OnExit: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    const atk = atkComp.GetAttack()!;
-    atk.OnExit(w, p);
-    atkComp.ZeroCurrentAttack();
-  },
-};
-
-export const SideSpecialExtensionAir: FSMState = {
-  StateName: 'SideSpecialExtensionAir',
-  StateId: STATE_IDS.SIDE_SPCL_EX_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    atkComp.SetCurrentAttack(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
-    atkComp.GetAttack()!.OnEnter(w, p);
-  },
-  OnUpdate: (p, world) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-
-    attack.OnUpdate(world, p, world.localFrame);
-  },
-  OnExit: (p: Player, w: World) => {
-    const atkComp = p.Attacks;
-    atkComp.GetAttack()!.OnExit(w, p);
-    atkComp.ZeroCurrentAttack();
-  },
-};
-
-export const DownSpecial: FSMState = {
-  StateName: 'DownSpecial',
-  StateId: STATE_IDS.DOWN_SPCL_S,
-  OnEnter: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.DOWN_SPCL_GE);
-    p.ECB.SetECBShape(STATE_IDS.DOWN_SPCL_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const DownSpecialAerial: FSMState = {
-  StateName: 'DownSpecialAerial',
-  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
-  OnEnter: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.D_SPCL_AIR_GE);
-    attackComp.GetAttack()!.OnEnter(w, p);
-    p.ECB.SetECBShape(STATE_IDS.DOWN_SPCL_AIR_S);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.GetAttack()!.OnExit(w, p);
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
-export const UpSpecial: FSMState = {
-  StateName: 'UpSpecial',
-  StateId: STATE_IDS.UP_SPCL_S,
-  OnEnter: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.SetCurrentAttack(GAME_EVENT_IDS.UP_SPCL_GE);
-    p.ECB.SetECBShape(STATE_IDS.UP_SPCL_S);
-    attackComp.GetAttack()!.OnEnter(w, p);
-  },
-  OnUpdate: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    const attack = attackComp.GetAttack()!;
-    const impulse = attack?.GetActiveImpulseForFrame(
-      p.FSMInfo.CurrentStateFrame
-    );
-
-    if (impulse === undefined) {
-      return;
-    }
-
-    addAttackImpulseToPlayer(p, impulse, attack);
-  },
-  OnExit: (p: Player, w: World) => {
-    const attackComp = p.Attacks;
-    attackComp.ZeroCurrentAttack();
-    p.ECB.ResetECBShape();
-  },
-};
-
 export const HitStop: FSMState = {
   StateName: 'HitStop',
   StateId: STATE_IDS.HIT_STOP_S,
@@ -3144,6 +2503,348 @@ export const Crouch: FSMState = {
   },
 };
 
+export const NAttack: FSMState = {
+  StateName: 'Attack',
+  StateId: STATE_IDS.ATTACK_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.ATTACK_GE;
+    const stateId = STATE_IDS.ATTACK_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DashAttack: FSMState = {
+  StateName: 'DashAttack',
+  StateId: STATE_IDS.DASH_ATTACK_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DASH_ATTACK_GE);
+    const geId = GAME_EVENT_IDS.DASH_ATTACK_GE;
+    const stateId = STATE_IDS.DASH_ATTACK_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DownTilt: FSMState = {
+  StateName: 'DownTilt',
+  StateId: STATE_IDS.DOWN_TILT_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.D_TILT_GE;
+    const stateId = STATE_IDS.DOWN_TILT_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideTilt: FSMState = {
+  StateName: 'SideTilt',
+  StateId: STATE_IDS.SIDE_TILT_S,
+  OnEnter: (p: Player, w: World) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const stateId = STATE_IDS.SIDE_TILT_S;
+    if (ia.LYAxis > 0.15) {
+      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_U_GE, stateId);
+      return;
+    }
+    if (ia.LYAxis < -0.15) {
+      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_D_GE, stateId);
+      return;
+    }
+    attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_GE, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const UpTilt: FSMState = {
+  StateName: 'UpTilt',
+  StateId: STATE_IDS.UP_TILT_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.U_TILT_GE;
+    const stateId = STATE_IDS.UP_TILT_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideCharge: FSMState = {
+  StateName: 'SideChagrge',
+  StateId: STATE_IDS.SIDE_CHARGE_S,
+  OnEnter: (p: Player, w: World) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    const rXAxis = ia.RXAxis;
+    if (rXAxis > 0) {
+      p.Flags.FaceRight();
+    }
+    if (rXAxis < 0) {
+      p.Flags.FaceLeft();
+    }
+    const geId = GAME_EVENT_IDS.SIDE_CHARGE_GE;
+    const stateId = STATE_IDS.SIDE_CHARGE_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideChargeEx: FSMState = {
+  StateName: 'SideChagrgeEx',
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.SIDE_CHARGE_EX_GE;
+    const stateId = STATE_IDS.SIDE_CHARGE_EX_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const UpCharge: FSMState = {
+  StateName: 'UpCharge',
+  StateId: STATE_IDS.UP_CHARGE_S,
+  OnEnter: (p, w) => {
+    const geId = GAME_EVENT_IDS.UP_CHARGE_GE;
+    const stateId = STATE_IDS.UP_CHARGE_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const UpChargeEx: FSMState = {
+  StateName: 'UpChargeExt',
+  StateId: STATE_IDS.UP_CHARGE_EX_S,
+  OnEnter: (p, w) => {
+    const geId = GAME_EVENT_IDS.UP_CHARGE_EX_GE;
+    const stateId = STATE_IDS.UP_CHARGE_EX_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DownCharge: FSMState = {
+  StateName: 'DownCharge',
+  StateId: STATE_IDS.DOWN_CHARGE_S,
+  OnEnter: (p, w) => {
+    const geId = GAME_EVENT_IDS.DOWN_CHARGE_GE;
+    const stateId = STATE_IDS.DOWN_CHARGE_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DownChargeEx: FSMState = {
+  StateName: 'DownChargeExt',
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+  OnEnter: (p, w) => {
+    const geId = GAME_EVENT_IDS.DOWN_CHARGE_EX_GE;
+    const stateId = STATE_IDS.DOWN_CHARGE_EX_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const NAerialAttack: FSMState = {
+  StateName: 'AerialAttack',
+  StateId: STATE_IDS.N_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.N_AIR_GE;
+    const stateId = STATE_IDS.N_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    fastFallCheck(p, w);
+    attackOnUpdate(p, w);
+  },
+  OnExit: attackOnExit,
+};
+
+export const FAerialAttack: FSMState = {
+  StateName: 'FAir',
+  StateId: STATE_IDS.F_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.F_AIR_GE;
+    const stateId = STATE_IDS.F_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    fastFallCheck(p, w);
+    attackOnUpdate(p, w);
+  },
+  OnExit: attackOnExit,
+};
+
+export const UAirAttack: FSMState = {
+  StateName: 'UAir',
+  StateId: STATE_IDS.U_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.U_AIR_GE;
+    const stateId = STATE_IDS.U_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    fastFallCheck(p, w);
+    attackOnUpdate(p, w);
+  },
+  OnExit: attackOnExit,
+};
+
+export const BAirAttack: FSMState = {
+  StateName: 'BAir',
+  StateId: STATE_IDS.B_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.B_AIR_GE;
+    const stateId = STATE_IDS.B_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    fastFallCheck(p, w);
+    attackOnUpdate(p, w);
+  },
+  OnExit: attackOnExit,
+};
+
+export const DAirAttack: FSMState = {
+  StateName: 'DAir',
+  StateId: STATE_IDS.D_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.D_AIR_GE;
+    const stateId = STATE_IDS.D_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    fastFallCheck(p, w);
+    attackOnUpdate(p, w);
+  },
+  OnExit: attackOnExit,
+};
+
+export const NeutralSpecial: FSMState = {
+  StateName: 'NSpecial',
+  StateId: STATE_IDS.SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.SPCL_GE;
+    const stateId = STATE_IDS.SPCL_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideSpecial: FSMState = {
+  StateName: 'SideSpecial',
+  StateId: STATE_IDS.SIDE_SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const curFrame = w.localFrame;
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
+    const lxAxis = ia.LXAxis;
+    if (lxAxis < 0) {
+      p.Flags.FaceLeft();
+    }
+    if (lxAxis >= 0) {
+      p.Flags.FaceRight();
+    }
+    const geId = GAME_EVENT_IDS.SIDE_SPCL_GE;
+    const stateId = STATE_IDS.SIDE_SPCL_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideSpecialExtension: FSMState = {
+  StateName: 'SideSpecialExtension',
+  StateId: STATE_IDS.SIDE_SPCL_EX_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.SIDE_SPCL_EX_GE;
+    const stateId = STATE_IDS.SIDE_SPCL_EX_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideSpecialAir: FSMState = {
+  StateName: 'SideSpecialAir',
+  StateId: STATE_IDS.SIDE_SPCL_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const curFrame = w.localFrame;
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
+    const lxAxis = ia.LXAxis;
+    if (lxAxis < 0) {
+      p.Flags.FaceLeft();
+    }
+    if (lxAxis >= 0) {
+      p.Flags.FaceRight();
+    }
+    const geId = GAME_EVENT_IDS.S_SPCL_AIR_GE;
+    const stateId = STATE_IDS.SIDE_SPCL_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const SideSpecialExtensionAir: FSMState = {
+  StateName: 'SideSpecialExtensionAir',
+  StateId: STATE_IDS.SIDE_SPCL_EX_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.S_SPCL_EX_AIR_GE;
+    const stateId = STATE_IDS.SIDE_SPCL_EX_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DownSpecial: FSMState = {
+  StateName: 'DownSpecial',
+  StateId: STATE_IDS.DOWN_SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.DOWN_SPCL_GE;
+    const stateId = STATE_IDS.DOWN_SPCL_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const DownSpecialAerial: FSMState = {
+  StateName: 'DownSpecialAerial',
+  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.D_SPCL_AIR_GE;
+    const stateId = STATE_IDS.DOWN_SPCL_AIR_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
+export const UpSpecial: FSMState = {
+  StateName: 'UpSpecial',
+  StateId: STATE_IDS.UP_SPCL_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.UP_SPCL_GE;
+    const stateId = STATE_IDS.UP_SPCL_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
 /**
  * TODO
  * neutralSpecial
@@ -3167,6 +2868,62 @@ export const Crouch: FSMState = {
  */
 
 //==================== Utils =====================
+
+function fastFallCheck(p: Player, w: World) {
+  const inputStore = w.PlayerData.InputStore(p.ID);
+  const curFrame = w.localFrame;
+  const prevFrame = w.PreviousFrame;
+  const ia = inputStore.GetInputForFrame(curFrame);
+  const prevIa = inputStore.GetInputForFrame(prevFrame);
+  const speedsComp = p.Speeds;
+  p.Velocity.AddClampedXImpulse(
+    speedsComp.AerialSpeedInpulseLimit,
+    ia.LXAxis * speedsComp.ArielVelocityMultiplier
+  );
+  if (prevIa !== undefined && ShouldFastFall(ia.LYAxis, prevIa.LYAxis)) {
+    p.Flags.FastFallOn();
+  }
+}
+
+function attackOnEnter(
+  p: Player,
+  w: World,
+  gameEventId: GameEventId,
+  stateId: StateId
+) {
+  const attackComp = p.Attacks;
+  attackComp.SetCurrentAttack(gameEventId);
+  p.ECB.SetECBShape(stateId);
+  attackComp.GetAttack()!.OnEnter(w, p);
+}
+
+function attackOnUpdate(p: Player, w: World) {
+  const attack = p.Attacks.GetAttack();
+
+  if (attack === undefined) {
+    return;
+  }
+
+  const currentStateFrame = p.FSMInfo.CurrentStateFrame;
+  const impulse = attack.GetActiveImpulseForFrame(currentStateFrame);
+
+  if (impulse !== undefined) {
+    addAttackImpulseToPlayer(p, impulse, attack);
+  }
+
+  attack.OnUpdate(w, p, currentStateFrame);
+}
+
+function attackOnExit(p: Player, w: World) {
+  const attackComp = p.Attacks;
+  const atk = attackComp.GetAttack();
+  if (atk === undefined) {
+    return;
+  }
+  atk.OnExit(w, p);
+  attackComp.ZeroCurrentAttack();
+  p.ECB.ResetECBShape();
+}
 
 function ShouldFastFall(curLYAxsis: number, prevLYAxsis: number): boolean {
   return curLYAxsis < -0.8 && prevLYAxsis > -0.8;
@@ -3253,6 +3010,7 @@ const F_AIR_ATK_RELATIONS = InitFAirAttackRelations();
 const U_AIR_ATK_RELATIONS = InitUAirRelations();
 const B_AIR_ATK_RELATIONS = InitBAirRelations();
 const D_AIR_ATK_RELATIONS = InitDAirRelations();
+const N_SPECIAL_ATK_RELATIONS = InitNSpecialRelations();
 const SIDE_SPCL_RELATIONS = InitSideSpecialRelations();
 const SIDE_SPCL_EX_RELATIONS = InitSideSpecialExtensionRelations();
 const SIDE_SPCL_AIR_RELATIONS = InitSideSpecialAirRelations();
@@ -3304,6 +3062,7 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(D_AIR_ATK_RELATIONS.stateId, D_AIR_ATK_RELATIONS.mappings)
   .set(DOWN_SPECIAL_RELATIONS.stateId, DOWN_SPECIAL_RELATIONS.mappings)
   .set(DOWN_SPECIAL_AIR_RELATIONS.stateId, DOWN_SPECIAL_AIR_RELATIONS.mappings)
+  .set(N_SPECIAL_ATK_RELATIONS.stateId, N_SPECIAL_ATK_RELATIONS.mappings)
   .set(SIDE_SPCL_RELATIONS.stateId, SIDE_SPCL_RELATIONS.mappings)
   .set(SIDE_SPCL_EX_RELATIONS.stateId, SIDE_SPCL_EX_RELATIONS.mappings)
   .set(SIDE_SPCL_AIR_RELATIONS.stateId, SIDE_SPCL_AIR_RELATIONS.mappings)
@@ -3345,6 +3104,7 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(UAirAttack.StateId, UAirAttack)
   .set(BAirAttack.StateId, BAirAttack)
   .set(DAirAttack.StateId, DAirAttack)
+  .set(NeutralSpecial.StateId, NeutralSpecial)
   .set(SideSpecial.StateId, SideSpecial)
   .set(SideSpecialExtension.StateId, SideSpecialExtension)
   .set(SideSpecialAir.StateId, SideSpecialAir)
@@ -3378,6 +3138,7 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.U_AIR_GE, ATTACK_IDS.U_AIR_ATK)
   .set(GAME_EVENT_IDS.B_AIR_GE, ATTACK_IDS.B_AIR_ATK)
   .set(GAME_EVENT_IDS.D_AIR_GE, ATTACK_IDS.D_AIR_ATK)
+  .set(GAME_EVENT_IDS.SPCL_GE, ATTACK_IDS.N_SPCL_ATK)
   .set(GAME_EVENT_IDS.SIDE_SPCL_GE, ATTACK_IDS.S_SPCL_ATK)
   .set(GAME_EVENT_IDS.SIDE_SPCL_EX_GE, ATTACK_IDS.S_SPCL_EX_ATK)
   .set(GAME_EVENT_IDS.S_SPCL_AIR_GE, ATTACK_IDS.S_SPCL_AIR_ATK)
