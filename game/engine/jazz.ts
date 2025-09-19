@@ -23,8 +23,8 @@ import { World } from './world/world';
 export interface IJazz {
   get World(): World | undefined;
   Init(numberOfPlayers: number, positions: Array<FlatVec>): void;
-  Tick(): void;
   UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void;
+  Tick(): void;
 }
 
 export class Jazz implements IJazz {
@@ -50,10 +50,14 @@ export class Jazz implements IJazz {
     this.world.SetStage(s);
   }
 
+  public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
+    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(this.world.localFrame, ia);
+  }
+
   public Tick() {
     let frameTimeStart = performance.now();
 
-    this.tick();
+    this.logic();
 
     let frameTimeDelta = performance.now() - frameTimeStart;
 
@@ -64,22 +68,7 @@ export class Jazz implements IJazz {
     world.localFrame++;
   }
 
-  public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
-    this.UpdateInput(pIndex, ia, this.world.localFrame);
-  }
-
-  private UpdateInput(
-    pIndex: number,
-    inputAction: InputAction,
-    frameNumber: number
-  ) {
-    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
-      frameNumber,
-      inputAction
-    );
-  }
-
-  private tick() {
+  private logic() {
     const world = this.world;
     const frame = world.localFrame;
     const playerData = world.PlayerData;
@@ -93,6 +82,8 @@ export class Jazz implements IJazz {
       player?.ECB.UpdatePreviousECB();
     }
 
+    TimedFlags(playerData);
+
     PlayerInput(playerData, world);
 
     Gravity(playerData, stageData);
@@ -103,19 +94,17 @@ export class Jazz implements IJazz {
 
     PlayerCollisionDetection(playerData, pools);
 
-    LedgeGrabDetection(playerData, stageData, pools);
+    PlatformDetection(playerData, stageData, frame);
 
     StageCollisionDetection(playerData, stageData, pools);
 
-    PlatformDetection(playerData, stageData, frame);
+    LedgeGrabDetection(playerData, stageData, pools);
 
     PlayerSensors(world, playerData, pools);
 
     PlayerAttacks(playerData, historyData, pools, frame);
 
     OutOfBoundsCheck(playerData, stageData);
-
-    TimedFlags(playerData);
 
     RecordHistory(world, playerData, historyData, frame);
   }
@@ -131,7 +120,7 @@ export class JazzDebugger implements IJazz {
     this.jazz = new Jazz();
   }
 
-  UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void {
+  public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void {
     this.togglePause(ia);
 
     if (this.paused) {

@@ -23,7 +23,7 @@ export class Pool<T extends IPooledObject> {
     const pLength = p.length;
 
     if (pi < pLength) {
-      let item = p[pi];
+      const item = p[pi];
       item.Zero();
       this.poolIndex++;
       return item;

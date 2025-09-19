@@ -5,7 +5,7 @@ import {
   LineSegmentIntersection,
 } from '../physics/collisions';
 import {
-  CanPlayerWalkOffStage,
+  CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
@@ -36,7 +36,6 @@ import { Stage } from '../stage/stageMain';
 /**
  * TODO:
  * Add Projectile Systems
- * Add Grab Systems
  */
 
 const correctionDepth: number = 0.1;
@@ -112,7 +111,7 @@ export function StageCollisionDetection(
         move.AddToY(-correctionDepth);
       }
       // Corner case (top corners, normalY < 0)
-      else if (Math.abs(normalX) > 0 && normalY < 0) {
+      else if (Math.abs(normalX) > 0 && normalY > 0) {
         move.AddToX(move.X <= 0 ? move.Y : -move.Y);
       }
 
@@ -141,27 +140,51 @@ export function StageCollisionDetection(
     // --- 3. Grounded check and state update ---
     const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
-    const canWalkOffStage = CanPlayerWalkOffStage(p);
 
-    if (grnd === false && prvGrnd === true && canWalkOffStage === false) {
-      // Snap to nearest ledge regardless of facing
-      const position = p.Position;
-      if (
-        Math.abs(position.X - leftStagePoint.X) <
-        Math.abs(position.X - rightStagePoint.X)
-      ) {
-        p.SetPlayerPosition(
-          leftStagePoint.X + cornerJitterCorrection,
-          leftStagePoint.Y
-        );
-      } else {
-        p.SetPlayerPosition(
-          rightStagePoint.X - cornerJitterCorrection,
-          rightStagePoint.Y
-        );
+    if (prvGrnd && !grnd) {
+      // Player has just walked off the stage. Check if they should be snapped back.
+      let shouldSnapBack = false;
+
+      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+        // This is the high-priority rule for specific attacks.
+        const fellOffLeftLedge = p.Position.X < leftStagePoint.X;
+        const fellOffRightLedge = p.Position.X > rightStagePoint.X;
+        const isFacingRight = p.Flags.IsFacingRight;
+
+        // Snap back ONLY if facing TOWARDS the stage after falling off.
+        if (
+          (fellOffLeftLedge && isFacingRight) ||
+          (fellOffRightLedge && !isFacingRight)
+        ) {
+          shouldSnapBack = true;
+        }
+      } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+        // This is the general rule for states like 'walk'.
+        shouldSnapBack = true;
       }
-      sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-      continue;
+
+      if (shouldSnapBack) {
+        // Player was not allowed to fall. Snap them to the nearest ledge.
+        const position = p.Position;
+        if (
+          Math.abs(position.X - leftStagePoint.X) <
+          Math.abs(position.X - rightStagePoint.X)
+        ) {
+          // Snap to left ledge
+          p.SetPlayerPosition(
+            leftStagePoint.X + cornerJitterCorrection,
+            leftStagePoint.Y
+          );
+        } else {
+          // Snap to right ledge
+          p.SetPlayerPosition(
+            rightStagePoint.X - cornerJitterCorrection,
+            rightStagePoint.Y
+          );
+        }
+        sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+        continue;
+      }
     }
 
     // If not grounded and not grabbing ledge, set to falling
@@ -194,6 +217,20 @@ function shouldSoftland(yVelocity: number) {
   return yVelocity < hardLandVelocty;
 }
 
+function handlePlatformLanding(
+  p: Player,
+  sm: StateMachine,
+  yCoord: number,
+  xCoord: number
+) {
+  const landId = shouldSoftland(p.Velocity.Y)
+    ? GAME_EVENT_IDS.SOFT_LAND_GE
+    : GAME_EVENT_IDS.LAND_GE;
+  sm.UpdateFromWorld(landId);
+  const newYOffset = p.ECB.YOffset;
+  p.SetPlayerPosition(xCoord, yCoord + correctionDepth - newYOffset);
+}
+
 export function PlatformDetection(
   playerData: PlayerData,
   stageData: StageData,
@@ -222,39 +259,81 @@ export function PlatformDetection(
       continue;
     }
 
-    const inputStore = playerData.InputStore(playerIndex);
-    const ia = inputStore.GetInputForFrame(currentFrame);
-    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
+    // If a jump was just initiated, skip all platform landing logic for this frame
+    // to allow the jump to properly start.
+    if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+      continue;
+    }
+
     const ecb = p.ECB;
 
-    const yCoord = PlayerOnPlatsReturnsYCoord(
+    const wasOnPlat = PlayerOnPlats(
+      stageData.Stage,
+      ecb.PrevBottom,
+      ecb.SensorDepth
+    );
+    const isOnPlat = PlayerOnPlats(
       stageData.Stage,
       ecb.Bottom,
       ecb.SensorDepth
     );
 
-    if (yCoord != undefined) {
+    if (wasOnPlat && !isOnPlat) {
+      // Player has just walked off a platform. Check if they were allowed to.
+      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+        const isFacingRight = p.Flags.IsFacingRight;
+        const isMovingRight = p.Velocity.X > 0;
+        const canFall = isFacingRight === isMovingRight;
+
+        if (!canFall) {
+          // Snap player back to the platform edge they fell from.
+          // This is a simplified snap-back. A more robust solution might find the *actual* platform.
+          p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          playerData
+            .StateMachine(playerIndex)
+            .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+          continue;
+        }
+      } else {
+        const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
+        if (!canWalkOff) {
+          // Player was not allowed to walk off in this state at all. Snap them back.
+          p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          playerData
+            .StateMachine(playerIndex)
+            .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+          continue;
+        }
+      }
+    }
+
+    const landingYCoord = PlayerOnPlatsReturnsYCoord(
+      stageData.Stage,
+      ecb.Bottom,
+      ecb.SensorDepth
+    );
+
+    const inputStore = playerData.InputStore(playerIndex);
+    const ia = inputStore.GetInputForFrame(currentFrame);
+    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
+
+    if (landingYCoord != undefined) {
       const sm = playerData.StateMachine(playerIndex);
+      // Check for a fast downward flick on the left stick to fall through the platform.
       const checkValue = -(prevIa.LYAxis - ia.LYAxis);
       if (checkValue <= -0.5) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         flags.SetDisablePlatFrames(11);
         continue;
       }
-
-      const landId = shouldSoftland(velocity.Y)
-        ? GAME_EVENT_IDS.SOFT_LAND_GE
-        : GAME_EVENT_IDS.LAND_GE;
-      sm.UpdateFromWorld(landId);
-      const newYOffset = ecb.YOffset;
-      p.SetPlayerPosition(ecb.Bottom.X, yCoord - correctionDepth - newYOffset);
+      handlePlatformLanding(p, sm, landingYCoord, ecb.Bottom.X);
       continue;
     }
 
     const fsmInfo = p.FSMInfo;
 
     //if we are moving downward, and we are holding down, and we are NOT in the airdodge space,
-    if (ia.LYAxis < -0.5 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
+    if (ia.LYAxis < -0.8 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
       continue;
     }
 
@@ -279,39 +358,35 @@ export function PlatformDetection(
         continue;
       }
 
-      // const ecbBottom = ecb.Bottom;
       const playerIsTooFarRight = currentBottom.X > plat.X2;
       const playerIsTooFarLeft = currentBottom.X < plat.X1;
 
       if (playerIsTooFarRight) {
-        const landId = shouldSoftland(velocity.Y)
-          ? GAME_EVENT_IDS.SOFT_LAND_GE
-          : GAME_EVENT_IDS.LAND_GE;
-        playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-        const newYOffset = ecb.YOffset;
-        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
-        p.SetPlayerPosition(plat.X2, desiredPlayerY);
+        handlePlatformLanding(
+          p,
+          playerData.StateMachine(playerIndex),
+          plat.Y1,
+          plat.X2
+        );
         break;
       }
 
       if (playerIsTooFarLeft) {
-        const landId = shouldSoftland(velocity.Y)
-          ? GAME_EVENT_IDS.SOFT_LAND_GE
-          : GAME_EVENT_IDS.LAND_GE;
-        playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-        const newYOffset = ecb.YOffset;
-        const desiredPlayerY = plat.Y1 - correctionDepth - newYOffset;
-        p.SetPlayerPosition(plat.X1, desiredPlayerY);
+        handlePlatformLanding(
+          p,
+          playerData.StateMachine(playerIndex),
+          plat.Y1,
+          plat.X1
+        );
         break;
       }
 
-      const landId = shouldSoftland(velocity.Y)
-        ? GAME_EVENT_IDS.SOFT_LAND_GE
-        : GAME_EVENT_IDS.LAND_GE;
-      playerData.StateMachine(playerIndex).UpdateFromWorld(landId);
-      const newYOffset = ecb.YOffset;
-      const desiredPlayerY = plat.Y2 - correctionDepth - newYOffset;
-      p.SetPlayerPosition(currentBottom.X, desiredPlayerY);
+      handlePlatformLanding(
+        p,
+        playerData.StateMachine(playerIndex),
+        plat.Y2,
+        currentBottom.X
+      );
     }
   }
 }
@@ -491,10 +566,10 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   if (attack === undefined) {
     return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
   }
+  // attack is defined, and has gravity set to active
   if (attack.GravityActive === false) {
     return false;
   }
-  // attack is defined, and has gravity set to active
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
   return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
@@ -682,19 +757,30 @@ export function PlayerAttacks(
 function resolveHitResult(
   pA: Player,
   pB: Player,
-  pAlayerData: PlayerData,
+  playerData: PlayerData,
   pAHitsPbResult: AttackResult,
   vecPool: Pool<PooledVector>
 ): void {
-  const damage = pAHitsPbResult.Damage;
-  pB.Points.AddDamage(damage);
+  const atkDamage = pAHitsPbResult.Damage;
+  pB.Points.AddDamage(atkDamage);
 
-  const kb = CalculateKnockback(pB, pAHitsPbResult);
-  const hitStop = CalculateHitStop(damage);
+  const playerDamage = pB.Points.Damage;
+  const weight = pB.Weight.Weight;
+  const scailing = pAHitsPbResult.KnockBackScaling;
+  const baseKnockBack = pAHitsPbResult.BaseKnockBack;
+
+  const kb = CalculateKnockback(
+    playerDamage,
+    atkDamage,
+    weight,
+    scailing,
+    baseKnockBack
+  );
+  const hitStop = CalculateHitStop(atkDamage);
   const hitStunFrames = CalculateHitStun(kb);
   const launchVec = CalculateLaunchVector(
     vecPool,
-    pAHitsPbResult,
+    pAHitsPbResult.LaunchAngle,
     pA.Flags.IsFacingRight,
     kb
   );
@@ -710,7 +796,7 @@ function resolveHitResult(
   pB.HitStop.SetHitStop(hitStop);
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
 
-  const pBSm = pAlayerData.StateMachine(pB.ID);
+  const pBSm = playerData.StateMachine(pB.ID);
 
   pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
 }
@@ -796,6 +882,7 @@ function PAvsPB(
         pBPosition.Y,
         vecPool
       );
+
       const pBEndHurtDto = pBHurtBubble.GetEndPosition(
         pBPosition.X,
         pBPosition.Y,
@@ -859,30 +946,31 @@ function CalculateHitStun(knockBack: number): number {
 
 function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
-  attackRes: AttackResult,
+  launchAngle: number,
   isFacingRight: boolean,
   knockBack: number
 ): PooledVector {
-  const vec = vecPool.Rent();
-  let angleInRadians = attackRes.LaunchAngle * (Math.PI / 180);
+  let angleInRadians = launchAngle * (Math.PI / 180);
 
   if (isFacingRight === false) {
     angleInRadians = Math.PI - angleInRadians;
   }
 
-  return vec.SetXY(
-    Math.cos(angleInRadians) * knockBack,
-    -(Math.sin(angleInRadians) * knockBack) / 2
-  );
+  return vecPool
+    .Rent()
+    .SetXY(
+      Math.cos(angleInRadians) * knockBack,
+      -(Math.sin(angleInRadians) * knockBack) / 2
+    );
 }
 
-function CalculateKnockback(player: Player, attackRes: AttackResult): number {
-  const p = player.Points.Damage;
-  const d = attackRes.Damage;
-  const w = player.Weight.Weight;
-  const s = attackRes.KnockBackScaling;
-  const b = attackRes.BaseKnockBack;
-
+function CalculateKnockback(
+  p: number,
+  d: number,
+  w: number,
+  s: number,
+  b: number
+): number {
   return ((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
 }
 
@@ -934,7 +1022,7 @@ export function ApplyVeloctyDecay(
         playerVelocity.X += groundedVelocityDecay;
       }
 
-      if (absPvx < 1) {
+      if (absPvx < groundedVelocityDecay) {
         playerVelocity.X = 0;
       }
 
@@ -964,7 +1052,7 @@ export function ApplyVeloctyDecay(
       playerVelocity.Y += aerialVelocityDecay;
     }
 
-    if (absPvx < 1.5) {
+    if (absPvx < 0.2) {
       playerVelocity.X = 0;
     }
   }
@@ -1011,16 +1099,19 @@ export function OutOfBoundsCheck(
     if (pY > deathBoundry.bottomBoundry) {
       // kill player?
       KillPlayer(p, sm);
+      return;
     }
 
     if (pX < deathBoundry.leftBoundry) {
       // kill Player?
       KillPlayer(p, sm);
+      return;
     }
 
     if (pX > deathBoundry.rightBoundry) {
       // kill player?
       KillPlayer(p, sm);
+      return;
     }
   }
 }
@@ -1046,7 +1137,7 @@ export function RecordHistory(
   w: World,
   playerData: PlayerData,
   historyData: HistoryData,
-  frameNumber
+  frameNumber: number
 ): void {
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {

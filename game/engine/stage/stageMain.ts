@@ -16,7 +16,11 @@ export function defaultStage() {
   const sl = new Ledges(leftLedgePoint, rightLedgePoint);
   const db = new DeathBoundry(-100, 1180, -100, 2020);
   const plats = new Array<Line>();
-  plats.push(new Line(950, 450, 1150, 450));
+  plats.push(
+    new Line(950, 300, 1150, 300),
+    new Line(700, 475, 900, 475),
+    new Line(1200, 475, 1400, 475)
+  );
   return new Stage(sv, sl, db, plats);
 }
 
