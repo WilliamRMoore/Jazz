@@ -49,7 +49,6 @@ export function StageCollisionDetection(
 ): void {
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
-  const stageVerts = stage.StageVerticies.GetVerts();
   const stageGround = stage.StageVerticies.GetGround();
   const leftMostPiece = stageGround[0];
   const rightMostPiece = stageGround[stageGround.length - 1];
@@ -76,6 +75,8 @@ export function StageCollisionDetection(
     if (playerOnPlats) {
       continue;
     }
+
+    const stageVerts = stage.StageVerticies.GetVerts();
 
     // --- 1. Always resolve collision first ---
     const collisionResult = IntersectsPolygons(

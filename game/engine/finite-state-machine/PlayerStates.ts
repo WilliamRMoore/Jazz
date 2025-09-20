@@ -1442,6 +1442,7 @@ function InitShieldRelations(): StateRelation {
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
   translations.SetConditions([shieldToShieldDrop]);
@@ -2145,6 +2146,7 @@ function InitTumbleRelations(): StateRelation {
   TumbleTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.LAND_S },
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
   TumbleTranslations.SetConditions([ToJump]);
@@ -2946,6 +2948,13 @@ export const UpSpecial: FSMState = {
   StateName: 'UpSpecial',
   StateId: STATE_IDS.UP_SPCL_S,
   OnEnter: (p: Player, w: World) => {
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(w.localFrame);
+    if (ia.LXAxis > 0) {
+      p.Flags.FaceRight();
+    }
+    if (ia.LXAxis < 0) {
+      p.Flags.FaceLeft();
+    }
     const geId = GAME_EVENT_IDS.UP_SPCL_GE;
     const stateId = STATE_IDS.UP_SPCL_S;
     attackOnEnter(p, w, geId, stateId);
@@ -2956,12 +2965,10 @@ export const UpSpecial: FSMState = {
 
 /**
  * TODO
- * neutralSpecial
  * neutralSpecial EX
  * upSpecial EX
  * grab
  * runGrab
- * shield
  * shieldBreak
  * dodgeRoll
  * tech
@@ -2972,6 +2979,8 @@ export const UpSpecial: FSMState = {
  * dirtNap
  * groundRecover
  * ledgeRecover
+ * getUpAttack
+ * ledgeGetupAttack
  * flinch
  * clang
  */
@@ -3002,8 +3011,12 @@ function attackOnEnter(
 ) {
   const attackComp = p.Attacks;
   attackComp.SetCurrentAttack(gameEventId);
+  const atk = attackComp.GetAttack();
+  if (atk === undefined) {
+    return;
+  }
   p.ECB.SetECBShape(stateId);
-  attackComp.GetAttack()!.OnEnter(w, p);
+  atk.OnEnter(w, p);
 }
 
 function attackOnUpdate(p: Player, w: World) {

@@ -4,7 +4,6 @@ import {
   GameEventId,
   Idle,
   StateId,
-  STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
 import { FSMState } from '../finite-state-machine/PlayerStateMachine';
 import { FlatVec } from '../physics/vector';
@@ -260,7 +259,6 @@ export type FSMInfoSnapShot = {
 
 export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   private currentState: FSMState = Idle;
-  private currentStateId: StateId = STATE_IDS.IDLE_S;
   private currentStateFrame: number = 0;
   private readonly frameLengths: Map<StateId, number>;
 
@@ -277,12 +275,11 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   }
 
   public get CurrentStatetId(): StateId {
-    return this.currentStateId;
+    return this.currentState.StateId;
   }
 
   public SetCurrentState(s: FSMState) {
     this.currentState = s;
-    this.currentStateId = s.StateId;
   }
 
   public IncrementStateFrame(): void {
@@ -298,7 +295,7 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   }
 
   public GetCurrentStateFrameLength(): number | undefined {
-    return this.frameLengths.get(this.currentStateId);
+    return this.frameLengths.get(this.CurrentState.StateId);
   }
 
   public SetFrameLength(stateId: StateId, frameLength: number): void {
