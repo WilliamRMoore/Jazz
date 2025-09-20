@@ -92,7 +92,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const bAir = GetBAir();
     const dAir = GetDAir();
 
-    this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4)
+    this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 10)
+      .set(STATE_IDS.SHIELD_DROP_S, 10)
+      .set(STATE_IDS.JUMP_SQUAT_S, 4)
       .set(STATE_IDS.TURN_S, 3)
       .set(STATE_IDS.DASH_S, 20)
       .set(STATE_IDS.DASH_TURN_S, 1)

@@ -589,6 +589,21 @@ export function PlayerInput(playerData: PlayerData, world: World): void {
   }
 }
 
+export function PlayerShields(pd: PlayerData) {
+  const playerCount = pd.PlayerCount;
+  for (let i = 0; i < playerCount; i++) {
+    const p = pd.Player(i);
+    const shield = p.Shield;
+
+    if (shield.Active) {
+      shield.Shrink();
+      return;
+    }
+
+    shield.Grow();
+  }
+}
+
 export function PlayerSensors(
   world: World,
   playerData: PlayerData,
@@ -831,6 +846,8 @@ function PAvsPB(
   if (pAHitBubbles.Length === 0) {
     return atkResPool.Rent();
   }
+
+  // Check shield impact
 
   const pBHurtBubbles = pB.HurtBubbles.HurtCapsules;
 
@@ -1129,6 +1146,7 @@ function KillPlayer(p: Player, sm: StateMachine): void {
   p.Flags.FastFallOff();
   p.Flags.ZeroIntangabilityFrames();
   p.Flags.ZeroHitPauseFrames();
+  p.Shield.Reset();
   sm.ForceState(STATE_IDS.N_FALL_S);
   // reduce stock count
 }

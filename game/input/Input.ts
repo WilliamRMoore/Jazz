@@ -10,6 +10,8 @@ export type InputAction = {
   LYAxis: number;
   RXAxis: number;
   RYAxis: number;
+  LTVal: number;
+  RTVal: number;
   Start: boolean;
   Select: boolean;
 };
@@ -27,6 +29,8 @@ export class GamePadInput {
   rb: boolean = false;
   lt: boolean = false;
   rt: boolean = false;
+  ltVal: number = 0;
+  rtVal: number = 0;
 
   dpUp: boolean = false;
   dpDown: boolean = false;
@@ -49,6 +53,8 @@ export class GamePadInput {
     this.rb = false;
     this.lt = false;
     this.rt = false;
+    this.ltVal = 0;
+    this.rtVal = 0;
 
     this.dpUp = false;
     this.dpDown = false;
@@ -93,6 +99,8 @@ function readInput(gamePad: Gamepad): void {
   currentInput.rb = gamePad.buttons[5].pressed;
   currentInput.lt = gamePad.buttons[6].pressed;
   currentInput.rt = gamePad.buttons[7].pressed;
+  currentInput.ltVal = gamePad.buttons[6].value;
+  currentInput.rtVal = gamePad.buttons[7].value;
 
   currentInput.dpUp = gamePad.buttons[12].pressed;
   currentInput.dpDown = gamePad.buttons[13].pressed;
@@ -174,6 +182,8 @@ function transcribeInput(input: GamePadInput): InputAction {
   inputAction.LYAxis = LYAxis;
   inputAction.RXAxis = RXAxis;
   inputAction.RYAxis = RYAxis;
+  inputAction.LTVal = input.ltVal;
+  inputAction.RTVal = input.rtVal;
   inputAction.Start = input.start;
   inputAction.Select = input.select;
 

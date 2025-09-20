@@ -120,6 +120,9 @@ class STATES {
   public readonly LAUNCH_S = seq.Next as StateId;
   public readonly TUMBLE_S = seq.Next as StateId;
   public readonly CROUCH_S = seq.Next as StateId;
+  public readonly SHIELD_RAISE_S = seq.Next as StateId;
+  public readonly SHIELD_S = seq.Next as StateId;
+  public readonly SHIELD_DROP_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -352,6 +355,22 @@ const IdleToDashTurn: condition = {
     return false;
   },
   StateId: STATE_IDS.DASH_TURN_S,
+};
+
+const shieldToShieldDrop: condition = {
+  Name: 'ToShieldDrop',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const inputStore = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+
+    if (ia.LTVal === 0 && ia.RTVal === 0) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.SHIELD_DROP_S,
 };
 
 const WalkToDash: condition = {
@@ -1307,6 +1326,14 @@ const defaultJump: condition = {
   StateId: STATE_IDS.JUMP_S,
 };
 
+const defaultShield: condition = {
+  Name: 'Shield',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.SHIELD_S,
+};
+
 const defaultNFall: condition = {
   Name: 'NFall',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1358,6 +1385,7 @@ function InitIdleRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
+    { geId: GAME_EVENT_IDS.GUARD_GE, sId: STATE_IDS.SHIELD_RAISE_S },
   ]);
 
   const condtions: Array<condition> = [
@@ -1379,6 +1407,42 @@ function InitIdleRelations(): StateRelation {
 
   const idle = new StateRelation(STATE_IDS.IDLE_S, idleTranslations);
   return idle;
+}
+
+function InitShieldRaiseRelations(): StateRelation {
+  const shieldRaiseTranslations = new ActionStateMappings();
+
+  shieldRaiseTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  shieldRaiseTranslations.SetDefaults([defaultShield]);
+
+  return new StateRelation(STATE_IDS.SHIELD_RAISE_S, shieldRaiseTranslations);
+}
+
+function InitShieldRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
+  ]);
+
+  translations.SetConditions([shieldToShieldDrop]);
+
+  return new StateRelation(STATE_IDS.SHIELD_S, translations);
+}
+
+function InitShieldDropRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translations.SetDefaults([defaultIdle]);
+
+  return new StateRelation(STATE_IDS.SHIELD_DROP_S, translations);
 }
 
 function InitTurnRelations(): StateRelation {
@@ -2503,6 +2567,34 @@ export const Crouch: FSMState = {
   },
 };
 
+export const ShieldRaise: FSMState = {
+  StateName: 'ShieldRaise',
+  StateId: STATE_IDS.SHIELD_RAISE_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p, w) => {},
+};
+
+export const Shield: FSMState = {
+  StateName: 'Shield',
+  StateId: STATE_IDS.SHIELD_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Shield.Active = true;
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p, w) => {
+    p.Shield.Active = false;
+  },
+};
+
+export const ShieldDrop: FSMState = {
+  StateName: 'ShieldDrop',
+  StateId: STATE_IDS.SHIELD_DROP_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p, w) => {},
+};
+
 export const NAttack: FSMState = {
   StateName: 'Attack',
   StateId: STATE_IDS.ATTACK_S,
@@ -2983,6 +3075,9 @@ function addAttackImpulseToPlayer(p: Player, impulse: FlatVec, attack: Attack) {
 //================================================
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
+const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();
+const SHIELD_RELATIONS = InitShieldRelations();
+const SHIELD_DROP_RELATIONS = InitShieldDropRelations();
 const TURN_RELATIONS = InitTurnRelations();
 const WALK_RELATIONS = InitWalkRelations();
 const DASH_RELATIONS = InitDashRelations();
@@ -3029,6 +3124,9 @@ const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
+  .set(SHIELD_RAISE_RELATIONS.stateId, SHIELD_RAISE_RELATIONS.mappings)
+  .set(SHIELD_RELATIONS.stateId, SHIELD_RELATIONS.mappings)
+  .set(SHIELD_DROP_RELATIONS.stateId, SHIELD_DROP_RELATIONS.mappings)
   .set(TURN_RELATIONS.stateId, TURN_RELATIONS.mappings)
   .set(WALK_RELATIONS.stateId, WALK_RELATIONS.mappings)
   .set(DASH_RELATIONS.stateId, DASH_RELATIONS.mappings)
@@ -3075,6 +3173,9 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
+  .set(ShieldRaise.StateId, ShieldRaise)
+  .set(Shield.StateId, Shield)
+  .set(ShieldDrop.StateId, ShieldDrop)
   .set(Turn.StateId, Turn)
   .set(Walk.StateId, Walk)
   .set(Run.StateId, Run)
