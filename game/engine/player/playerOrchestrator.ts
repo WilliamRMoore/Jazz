@@ -13,6 +13,7 @@ import {
   PlayerPointsComponent,
   PositionComponent,
   SensorComponent,
+  ShieldComponent,
   SpeedsComponent,
   SpeedsComponentBuilder,
   VelocityComponent,
@@ -52,6 +53,7 @@ export class Player {
   private readonly ledgeDetector: LedgeDetectorComponent;
   private readonly sensors: SensorComponent;
   private readonly attacks: AttackComponment;
+  private readonly shield: ShieldComponent;
   public readonly ID: number = 0;
 
   constructor(Id: number, CharacterConfig: CharacterConfig) {
@@ -87,6 +89,10 @@ export class Player {
     );
     this.sensors = new SensorComponent();
     this.attacks = new AttackComponment(CharacterConfig.attacks);
+    this.shield = new ShieldComponent(
+      CharacterConfig.ShieldRadius,
+      CharacterConfig.ShieldYOffset
+    );
   }
 
   public get ECB(): ECBComponent {
@@ -139,6 +145,10 @@ export class Player {
 
   public get LedgeDetector(): LedgeDetectorComponent {
     return this.ledgeDetector;
+  }
+
+  public get Shield(): ShieldComponent {
+    return this.shield;
   }
 
   public get Sensors(): SensorComponent {

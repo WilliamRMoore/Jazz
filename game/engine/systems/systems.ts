@@ -49,7 +49,6 @@ export function StageCollisionDetection(
 ): void {
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
-  const stageVerts = stage.StageVerticies.GetVerts();
   const stageGround = stage.StageVerticies.GetGround();
   const leftMostPiece = stageGround[0];
   const rightMostPiece = stageGround[stageGround.length - 1];
@@ -76,6 +75,8 @@ export function StageCollisionDetection(
     if (playerOnPlats) {
       continue;
     }
+
+    const stageVerts = stage.StageVerticies.GetVerts();
 
     // --- 1. Always resolve collision first ---
     const collisionResult = IntersectsPolygons(
@@ -589,6 +590,25 @@ export function PlayerInput(playerData: PlayerData, world: World): void {
   }
 }
 
+export function PlayerShields(pd: PlayerData, localFrame: number) {
+  const playerCount = pd.PlayerCount;
+  for (let i = 0; i < playerCount; i++) {
+    const p = pd.Player(i);
+    const shield = p.Shield;
+
+    if (shield.Active) {
+      const inputStore = pd.InputStore(i);
+      const input = inputStore.GetInputForFrame(localFrame);
+      const triggerValue =
+        input.LTVal >= input.RTVal ? input.LTVal : input.RTVal;
+      shield.Shrink(triggerValue);
+      return;
+    }
+
+    shield.Grow();
+  }
+}
+
 export function PlayerSensors(
   world: World,
   playerData: PlayerData,
@@ -747,8 +767,16 @@ export function PlayerAttacks(
         resolveHitResult(p1, p2, playerData, p1HitsP2Result, pools.VecPool);
       }
 
+      if (p1HitsP2Result.ShieldHit) {
+        resolveShieldHitResult(p1, p2, p1HitsP2Result);
+      }
+
       if (p2HitsP1Result.Hit) {
         resolveHitResult(p2, p1, playerData, p2HitsP1Result, pools.VecPool);
+      }
+
+      if (p2HitsP1Result.ShieldHit) {
+        resolveShieldHitResult(p2, p1, p2HitsP1Result);
       }
     }
   }
@@ -801,6 +829,21 @@ function resolveHitResult(
   pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
 }
 
+function resolveShieldHitResult(
+  pA: Player,
+  pB: Player,
+  pAHitsPbResult: AttackResult
+): void {
+  const atkDamage = pAHitsPbResult.Damage;
+
+  const hitStop = CalculateHitStop(atkDamage);
+
+  pA.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
+  pB.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
+
+  pB.Shield.Damage(atkDamage);
+}
+
 function PAvsPB(
   currentFrame: number,
   activeHbPool: Pool<ActiveHitBubblesDTO>,
@@ -832,10 +875,98 @@ function PAvsPB(
     return atkResPool.Rent();
   }
 
+  const hitLength = pAHitBubbles.Length;
+  // Check shield impact
+
+  if (pB.Shield.Active) {
+    const pBShield = pB.Shield;
+    const radius = pBShield.CurrentRadius;
+    const shieldYOffset = pBShield.YOffset;
+    const shieldPos = vecPool
+      .Rent()
+      .SetXY(pB.Position.X, pB.Position.Y + shieldYOffset);
+
+    for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
+      const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
+      const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
+      const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
+      const pAPrevPositionDto = vecPool
+        .Rent()
+        .SetFromFlatVec(pAPositionHistory[previousWorldFrame]);
+      const pACurPositionDto = vecPool
+        .Rent()
+        .SetXY(pA.Position.X, pA.Position.Y);
+      const currentStateFrame = pAstateFrame;
+      const pAFacingRight = pA.Flags.IsFacingRight;
+
+      const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
+        vecPool,
+        pACurPositionDto.X,
+        pACurPositionDto.Y,
+        pAFacingRight,
+        currentStateFrame
+      );
+
+      if (pAhitBubbleCurrentPos === undefined) {
+        continue;
+      }
+
+      let pAHitBubblePreviousPos =
+        pAHitBubble?.GetGlobalPosition(
+          vecPool,
+          pAPrevPositionDto.X,
+          pAPrevPositionDto.Y,
+          pAFacingRight,
+          currentStateFrame - 1 < 0 ? 0 : currentStateFrame - 1
+        ) ??
+        vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+
+      let closestPoints = ClosestPointsBetweenSegments(
+        shieldPos,
+        shieldPos,
+        pAHitBubblePreviousPos,
+        pAhitBubbleCurrentPos,
+        vecPool,
+        clstsPntsResPool
+      );
+
+      const testPoint1 = vecPool
+        .Rent()
+        .SetXY(closestPoints.C1X, closestPoints.C1Y);
+      const testPoint2 = vecPool
+        .Rent()
+        .SetXY(closestPoints.C2X, closestPoints.C2Y);
+
+      const collision = IntersectsCircles(
+        colResPool,
+        testPoint1,
+        testPoint2,
+        radius,
+        pAHitBubble.Radius
+      );
+
+      if (collision.Collision) {
+        pAAttack.HitPlayer(pB.ID);
+        let attackResult = atkResPool.Rent();
+        attackResult.SetShieldHitTrue(
+          pB.ID,
+          pAHitBubble.Damage,
+          pAHitBubble.Priority,
+          collision.NormX,
+          collision.NormY,
+          collision.Depth,
+          pAAttack.BaseKnockBack,
+          pAAttack.KnockBackScaling,
+          pAHitBubble.launchAngle
+        );
+        return attackResult;
+      }
+    }
+  }
+
   const pBHurtBubbles = pB.HurtBubbles.HurtCapsules;
 
   const hurtLength = pBHurtBubbles.length;
-  const hitLength = pAHitBubbles.Length;
 
   for (let hurtIndex = 0; hurtIndex < hurtLength; hurtIndex++) {
     const pBHurtBubble = pBHurtBubbles[hurtIndex];
@@ -918,7 +1049,7 @@ function PAvsPB(
       if (collision.Collision) {
         pAAttack.HitPlayer(pB.ID);
         let attackResult = atkResPool.Rent();
-        attackResult.SetTrue(
+        attackResult.SetHitTrue(
           pB.ID,
           pAHitBubble.Damage,
           pAHitBubble.Priority,
@@ -1129,6 +1260,7 @@ function KillPlayer(p: Player, sm: StateMachine): void {
   p.Flags.FastFallOff();
   p.Flags.ZeroIntangabilityFrames();
   p.Flags.ZeroHitPauseFrames();
+  p.Shield.Reset();
   sm.ForceState(STATE_IDS.N_FALL_S);
   // reduce stock count
 }
@@ -1143,6 +1275,7 @@ export function RecordHistory(
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const history = historyData.PlayerComponentHistories[playerIndex];
+    history.ShieldHistory[frameNumber] = p.Shield.SnapShot();
     history.PositionHistory[frameNumber] = p.Position.SnapShot();
     history.FsmInfoHistory[frameNumber] = p.FSMInfo.SnapShot();
     history.PlayerPointsHistory[frameNumber] = p.Points.SnapShot();

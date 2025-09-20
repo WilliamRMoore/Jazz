@@ -1,3 +1,4 @@
+import { Shield } from '../engine/finite-state-machine/PlayerStates';
 import { FlatVec, Line } from '../engine/physics/vector';
 import {
   AttackSnapShot,
@@ -8,6 +9,7 @@ import {
   HurtCapsule,
   LedgeDetectorSnapShot,
   SensorSnapShot,
+  ShieldSnapShot,
   StaticHistory,
 } from '../engine/player/playerComponents';
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackHitBubbles';
@@ -114,8 +116,22 @@ export class DebugRenderer {
       210
     );
 
+    ctx.fillText(
+      `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
+      10,
+      240
+    );
+
+    ctx.fillText(
+      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
+        localFrame
+      )}`,
+      10,
+      270
+    );
+
     if (currentAttackString !== undefined) {
-      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 240);
+      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 300);
     }
 
     this.lastFrame = localFrame;
@@ -195,6 +211,9 @@ function drawPlayer(
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
   for (let i = 0; i < playerCount; i++) {
     const playerHistory = world.GetComponentHistory(i);
+    const shield = playerHistory!.ShieldHistory[currentFrame];
+    const lastShield = playerHistory!.ShieldHistory[lastFrame];
+    const shieldYOffset = playerHistory!.StaticPlayerHistory.ShieldOffset;
     const pos = playerHistory!.PositionHistory[currentFrame];
     const lastPos = playerHistory!.PositionHistory[lastFrame];
     const circlesHistory = playerHistory!.StaticPlayerHistory.HurtCapsules;
@@ -206,8 +225,6 @@ function drawPlayer(
     const lastLd = playerHistory!.LedgeDetectorHistory[lastFrame];
     const facingRight = flags.FacingRight;
     const lastFacingRight = lastFlags?.FacingRight;
-    const attack = playerHistory!.AttackHistory[currentFrame];
-    const fsm = playerHistory!.FsmInfoHistory[currentFrame];
 
     //drawHull(ctx, player);
     drawPrevEcb(ctx, ecb, lastEcb, alpha);
@@ -216,6 +233,13 @@ function drawPlayer(
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
     drawDirectionMarker(ctx, lerpDirection, ecb, lastEcb, alpha);
+
+    const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
+
+    if (isShieldActive) {
+      drawShield(ctx, pos, lastPos, shield, shieldYOffset, alpha);
+    }
+
     drawLedgeDetectors(
       ctx,
       facingRight,
@@ -279,6 +303,29 @@ function drawSensors(
     ctx.closePath();
   }
 
+  ctx.globalAlpha = 1.0;
+}
+
+function drawShield(
+  ctx: CanvasRenderingContext2D,
+  curPosition: FlatVec,
+  lastPosition: FlatVec,
+  shield: ShieldSnapShot,
+  shieldYOffset: number,
+  alpha: number
+) {
+  const x = Lerp(lastPosition.X, curPosition.X, alpha);
+  const y = Lerp(lastPosition.Y, curPosition.Y, alpha) + shieldYOffset;
+  const radius = shield.CurrentRadius;
+  ctx.strokeStyle = 'blue';
+  ctx.fillStyle = 'blue';
+  ctx.globalAlpha = 0.4;
+
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.closePath();
   ctx.globalAlpha = 1.0;
 }
 

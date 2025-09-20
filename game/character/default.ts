@@ -37,6 +37,8 @@ export type CharacterConfig = {
   ledgeBoxYOffset: number;
   attacks: Map<AttackId, Attack>;
   Weight: number;
+  ShieldRadius: number;
+  ShieldYOffset: number;
 };
 
 export class DefaultCharacterConfig implements CharacterConfig {
@@ -57,6 +59,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ledgeBoxYOffset: number;
   public attacks: Map<AttackId, Attack> = new Map<AttackId, Attack>();
   public Weight: number;
+  public ShieldRadius: number;
+  public ShieldYOffset: number;
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -92,7 +96,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const bAir = GetBAir();
     const dAir = GetDAir();
 
-    this.FrameLengths.set(STATE_IDS.JUMP_SQUAT_S, 4)
+    this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 10)
+      .set(STATE_IDS.SHIELD_DROP_S, 10)
+      .set(STATE_IDS.JUMP_SQUAT_S, 4)
       .set(STATE_IDS.TURN_S, 3)
       .set(STATE_IDS.DASH_S, 20)
       .set(STATE_IDS.DASH_TURN_S, 1)
@@ -148,7 +154,15 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 })
       .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
       .set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 })
+      .set(STATE_IDS.SIDE_SPCL_S, { height: 80, width: 100, yOffset: 0 })
+      .set(STATE_IDS.UP_CHARGE_S, { height: 90, width: 100, yOffset: 0 })
+      .set(STATE_IDS.UP_CHARGE_EX_S, { height: 110, width: 85, yOffset: 0 })
+      .set(STATE_IDS.SIDE_CHARGE_S, { height: 100, width: 85, yOffset: 0 })
+      .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
       .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+
+    this.ShieldRadius = 75;
+    this.ShieldYOffset = -50;
 
     this.SCB = new SpeedsComponentBuilder();
     this.SCB.SetWalkSpeeds(6, 1.6);
@@ -416,7 +430,7 @@ function GetFAir() {
   const fairFramesActive = fairActiveEnd - fairActiveStart + 1;
   const fairRadius = 25;
   const fairDamage = 17;
-  const fairBaseKnockback = 55;
+  const fairBaseKnockback = 15;
   const fairLaunchAngle = 30;
 
   // Bubble 1: closer to player, rotates from above to below, retracts inward
@@ -456,7 +470,7 @@ function GetFAir() {
     .WithTotalFrames(fairTotalFrames)
     .WithInteruptableFrame(fairTotalFrames)
     .WithBaseKnockBack(fairBaseKnockback)
-    .WithKnockBackScaling(65)
+    .WithKnockBackScaling(45)
     .WithGravity(true)
     .WithHitBubble(fairDamage, fairRadius, 2, fairLaunchAngle, bubble1Offsets)
     .WithHitBubble(fairDamage, fairRadius, 1, fairLaunchAngle, bubble2Offsets)

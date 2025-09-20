@@ -150,6 +150,7 @@ export class World {
     const compHist = new ComponentHistory();
     compHist.StaticPlayerHistory.LedgeDetectorWidth = p.LedgeDetector.Width;
     compHist.StaticPlayerHistory.ledgDetecorHeight = p.LedgeDetector.Height;
+    compHist.StaticPlayerHistory.ShieldOffset = p.Shield.YOffset;
     p.HurtBubbles.HurtCapsules.forEach((hc) =>
       compHist.StaticPlayerHistory.HurtCapsules.push(hc)
     );

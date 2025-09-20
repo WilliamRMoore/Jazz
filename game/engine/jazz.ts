@@ -17,6 +17,7 @@ import {
   PlayerSensors,
   ApplyVeloctyDecay,
   PlatformDetection,
+  PlayerShields,
 } from './systems/systems';
 import { World } from './world/world';
 
@@ -51,7 +52,10 @@ export class Jazz implements IJazz {
   }
 
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
-    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(this.world.localFrame, ia);
+    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
+      this.world.localFrame,
+      ia
+    );
   }
 
   public Tick() {
@@ -81,6 +85,8 @@ export class Jazz implements IJazz {
       const player = playerData.Player(playerIndex);
       player?.ECB.UpdatePreviousECB();
     }
+
+    PlayerShields(playerData, frame);
 
     TimedFlags(playerData);
 

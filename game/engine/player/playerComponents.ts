@@ -4,7 +4,6 @@ import {
   GameEventId,
   Idle,
   StateId,
-  STATE_IDS,
 } from '../finite-state-machine/PlayerStates';
 import { FSMState } from '../finite-state-machine/PlayerStateMachine';
 import { FlatVec } from '../physics/vector';
@@ -46,10 +45,12 @@ export class StaticHistory {
   public ledgDetecorHeight: number = 0;
   public LedgeDetectorWidth: number = 0;
   public HurtCapsules: Array<HurtCapsule> = [];
+  public ShieldOffset: number = 0;
 }
 
 export class ComponentHistory {
   public readonly StaticPlayerHistory = new StaticHistory();
+  readonly ShieldHistory: Array<ShieldSnapShot> = [];
   readonly PositionHistory: Array<FlatVec> = [];
   readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
   readonly PlayerPointsHistory: Array<PlayerPointsSnapShot> = [];
@@ -64,6 +65,7 @@ export class ComponentHistory {
   readonly AttackHistory: Array<AttackSnapShot> = [];
 
   public SetPlayerToFrame(p: Player, frameNumber: number) {
+    p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
     p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
     p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
     p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
@@ -257,7 +259,6 @@ export type FSMInfoSnapShot = {
 
 export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   private currentState: FSMState = Idle;
-  private currentStateId: StateId = STATE_IDS.IDLE_S;
   private currentStateFrame: number = 0;
   private readonly frameLengths: Map<StateId, number>;
 
@@ -274,12 +275,11 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   }
 
   public get CurrentStatetId(): StateId {
-    return this.currentStateId;
+    return this.currentState.StateId;
   }
 
   public SetCurrentState(s: FSMState) {
     this.currentState = s;
-    this.currentStateId = s.StateId;
   }
 
   public IncrementStateFrame(): void {
@@ -295,7 +295,7 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
   }
 
   public GetCurrentStateFrameLength(): number | undefined {
-    return this.frameLengths.get(this.currentStateId);
+    return this.frameLengths.get(this.CurrentState.StateId);
   }
 
   public SetFrameLength(stateId: StateId, frameLength: number): void {
@@ -935,6 +935,74 @@ export class HurtCapsulesComponent {
 
   constructor(hurtCapsules: Array<HurtCapsule>) {
     this.HurtCapsules = hurtCapsules;
+  }
+}
+
+export type ShieldSnapShot = {
+  CurrentRadius: number;
+  Active: boolean;
+};
+
+export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
+  public readonly InitialRadius: number;
+  public readonly YOffset: number;
+  public Active: boolean = false;
+  private curRadius: number;
+  private readonly step: number;
+
+  constructor(radius: number, yOffset: number) {
+    this.curRadius = radius;
+    this.InitialRadius = radius;
+    this.YOffset = yOffset;
+    this.step = radius / 300;
+  }
+
+  public SnapShot(): ShieldSnapShot {
+    return {
+      CurrentRadius: this.curRadius,
+      Active: this.Active,
+    } as ShieldSnapShot;
+  }
+
+  public SetFromSnapShot(snapShot: ShieldSnapShot): void {
+    this.Active = snapShot.Active;
+    this.curRadius = snapShot.CurrentRadius;
+  }
+
+  public get CurrentRadius(): number {
+    return this.curRadius;
+  }
+
+  public Grow(): void {
+    if (this.curRadius < this.InitialRadius) {
+      this.curRadius += this.step;
+    }
+
+    if (this.curRadius > this.InitialRadius) {
+      this.curRadius = this.InitialRadius;
+    }
+  }
+
+  public Shrink(intensity: number): void {
+    if (this.curRadius > 0) {
+      this.curRadius -= this.step * intensity;
+    }
+
+    if (this.curRadius < 0) {
+      this.curRadius = 0;
+    }
+  }
+
+  public Damage(d: number) {
+    const damageMod = d * 1.5;
+    this.curRadius -= damageMod;
+    if (this.curRadius < 0) {
+      this.curRadius = 0;
+    }
+  }
+
+  public Reset() {
+    this.curRadius = this.InitialRadius;
   }
 }
 
