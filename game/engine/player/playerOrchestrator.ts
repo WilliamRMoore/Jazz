@@ -89,7 +89,10 @@ export class Player {
     );
     this.sensors = new SensorComponent();
     this.attacks = new AttackComponment(CharacterConfig.attacks);
-    this.shield = new ShieldComponent(50, -50);
+    this.shield = new ShieldComponent(
+      CharacterConfig.ShieldRadius,
+      CharacterConfig.ShieldYOffset
+    );
   }
 
   public get ECB(): ECBComponent {

@@ -37,6 +37,8 @@ export type CharacterConfig = {
   ledgeBoxYOffset: number;
   attacks: Map<AttackId, Attack>;
   Weight: number;
+  ShieldRadius: number;
+  ShieldYOffset: number;
 };
 
 export class DefaultCharacterConfig implements CharacterConfig {
@@ -57,6 +59,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ledgeBoxYOffset: number;
   public attacks: Map<AttackId, Attack> = new Map<AttackId, Attack>();
   public Weight: number;
+  public ShieldRadius: number;
+  public ShieldYOffset: number;
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -151,6 +155,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
       .set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 })
       .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+
+    this.ShieldRadius = 75;
+    this.ShieldYOffset = -50;
 
     this.SCB = new SpeedsComponentBuilder();
     this.SCB.SetWalkSpeeds(6, 1.6);

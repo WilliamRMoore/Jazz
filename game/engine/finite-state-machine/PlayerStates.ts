@@ -447,6 +447,22 @@ const WalkToTurn: condition = {
   StateId: STATE_IDS.TURN_S,
 };
 
+const RunToRunStopByGuard: condition = {
+  Name: 'RunToRunStopByGuard',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const pd = w.PlayerData;
+    const inputStore = pd.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+
+    if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.STOP_RUN_S,
+};
+
 const RunToTurn: condition = {
   Name: 'RunToTurn',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1558,6 +1574,7 @@ function InitRunRelations(): StateRelation {
     ToSideSpecial,
     ToUpSpecial,
     RunToDashAttack,
+    RunToRunStopByGuard,
   ];
 
   runTranslations.SetConditions(conditions);

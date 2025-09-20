@@ -116,8 +116,22 @@ export class DebugRenderer {
       210
     );
 
+    ctx.fillText(
+      `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
+      10,
+      240
+    );
+
+    ctx.fillText(
+      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
+        localFrame
+      )}`,
+      10,
+      270
+    );
+
     if (currentAttackString !== undefined) {
-      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 240);
+      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 300);
     }
 
     this.lastFrame = localFrame;

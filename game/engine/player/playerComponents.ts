@@ -986,11 +986,19 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     }
   }
 
-  public Shrink(): void {
+  public Shrink(intensity: number): void {
     if (this.curRadius > 0) {
-      this.curRadius -= this.step;
+      this.curRadius -= this.step * intensity;
     }
 
+    if (this.curRadius < 0) {
+      this.curRadius = 0;
+    }
+  }
+
+  public Damage(d: number) {
+    const damageMod = d * 1.5;
+    this.curRadius -= damageMod;
     if (this.curRadius < 0) {
       this.curRadius = 0;
     }

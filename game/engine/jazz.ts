@@ -86,7 +86,7 @@ export class Jazz implements IJazz {
       player?.ECB.UpdatePreviousECB();
     }
 
-    PlayerShields(playerData);
+    PlayerShields(playerData, frame);
 
     TimedFlags(playerData);
 
