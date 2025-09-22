@@ -21,7 +21,6 @@ import {
 } from './playerComponents';
 import { LineSegmentIntersection } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
-import { CanStateWalkOffLedge } from '../finite-state-machine/PlayerStates';
 
 export type speedBuilderOptions = (scb: SpeedsComponentBuilder) => void;
 

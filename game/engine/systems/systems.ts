@@ -40,7 +40,7 @@ import { Stage } from '../stage/stageMain';
 
 const correctionDepth: number = 0.1;
 const cornerJitterCorrection = 2;
-const hardLandVelocty = 8;
+const hardLandVelocty = 5;
 
 export function StageCollisionDetection(
   playerData: PlayerData,
@@ -63,12 +63,7 @@ export function StageCollisionDetection(
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
-    const sm = playerData.StateMachine(playerIndex);
     const ecb = p.ECB;
-    const playerVerts = ecb.GetHull();
-    const fsmIno = p.FSMInfo;
-    const preResolutionStateId = fsmIno.CurrentStatetId;
-    const preResolutionYOffset = ecb.YOffset;
 
     const playerOnPlats = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
 
@@ -76,6 +71,11 @@ export function StageCollisionDetection(
       continue;
     }
 
+    const sm = playerData.StateMachine(playerIndex);
+    const playerVerts = ecb.GetHull();
+    const fsmIno = p.FSMInfo;
+    const preResolutionStateId = fsmIno.CurrentStatetId;
+    const preResolutionYOffset = ecb.YOffset;
     const stageVerts = stage.StageVerticies.GetVerts();
 
     // --- 1. Always resolve collision first ---
@@ -322,7 +322,12 @@ export function PlatformDetection(
       const sm = playerData.StateMachine(playerIndex);
       // Check for a fast downward flick on the left stick to fall through the platform.
       const checkValue = -(prevIa.LYAxis - ia.LYAxis);
-      if (checkValue <= -0.5) {
+
+      const inLanding =
+        p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
+        p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
+
+      if (checkValue <= -0.5 && !inLanding) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         flags.SetDisablePlatFrames(11);
         continue;
@@ -859,6 +864,10 @@ function PAvsPB(
   const pAAttack = pA.Attacks.GetAttack();
 
   if (pAAttack === undefined) {
+    return atkResPool.Rent();
+  }
+
+  if (pB.Flags.IsIntangible) {
     return atkResPool.Rent();
   }
 

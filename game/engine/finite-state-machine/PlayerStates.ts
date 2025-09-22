@@ -123,6 +123,8 @@ class STATES {
   public readonly SHIELD_RAISE_S = seq.Next as StateId;
   public readonly SHIELD_S = seq.Next as StateId;
   public readonly SHIELD_DROP_S = seq.Next as StateId;
+  public readonly SPOT_DOGE_S = seq.Next as StateId;
+  public readonly ROLL_DODGE_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -1302,6 +1304,26 @@ const DownChargeToEx: condition = {
   StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
+const ToSpotDodge: condition = {
+  Name: 'ToSpotDodge',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const ips = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = ips.GetInputForFrame(curFrame);
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+
+    if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
+      const lyAxisDiff = prevIa.LYAxis - ia.LYAxis;
+      if (ia.LYAxis < 0 && ia.LYAxis < prevIa.LYAxis && lyAxisDiff >= 0.25) {
+        return true;
+      }
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.SPOT_DOGE_S,
+};
+
 const defaultWalk: condition = {
   Name: 'Walk',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1432,6 +1454,8 @@ function InitShieldRaiseRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
+  shieldRaiseTranslations.SetConditions([ToSpotDodge]);
+
   shieldRaiseTranslations.SetDefaults([defaultShield]);
 
   return new StateRelation(STATE_IDS.SHIELD_RAISE_S, shieldRaiseTranslations);
@@ -1445,7 +1469,7 @@ function InitShieldRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
-  translations.SetConditions([shieldToShieldDrop]);
+  translations.SetConditions([shieldToShieldDrop, ToSpotDodge]);
 
   return new StateRelation(STATE_IDS.SHIELD_S, translations);
 }
@@ -1460,6 +1484,18 @@ function InitShieldDropRelations(): StateRelation {
   translations.SetDefaults([defaultIdle]);
 
   return new StateRelation(STATE_IDS.SHIELD_DROP_S, translations);
+}
+
+function InitSpotDodgeRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translations.SetDefaults([defaultIdle]);
+
+  return new StateRelation(STATE_IDS.SPOT_DOGE_S, translations);
 }
 
 function InitTurnRelations(): StateRelation {
@@ -2479,7 +2515,11 @@ export const AirDodge: FSMState = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const angle = Math.atan2(ia?.LYAxis, ia?.LXAxis);
-    const speed = p.Speeds.AirDogeSpeed;
+    let speed = p.Speeds.AirDogeSpeed;
+    if (ia.LXAxis === 0 && ia.LYAxis === 0) {
+      speed = 0;
+    }
+
     pVel.X = Math.cos(angle) * speed;
     pVel.Y = -Math.sin(angle) * speed;
     ecb.SetECBShape(STATE_IDS.AIR_DODGE_S);
@@ -2494,9 +2534,14 @@ export const AirDodge: FSMState = {
     const pVel = p.Velocity;
     pVel.X *= 1 - ease;
     pVel.Y *= 1 - ease;
+
+    if (currentFrameForState === 2) {
+      p.Flags.SetIntangabilityFrames(15);
+    }
   },
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
+    p.Flags.ZeroIntangabilityFrames();
   },
 };
 
@@ -2604,6 +2649,24 @@ export const Shield: FSMState = {
   OnExit: (p, w) => {
     p.Shield.Active = false;
   },
+};
+
+export const SpotDodge: FSMState = {
+  StateName: 'SpotDodge',
+  StateId: STATE_IDS.SPOT_DOGE_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Flags.SetIntangabilityFrames(20);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p, w) => {},
+};
+
+export const RollDodge: FSMState = {
+  StateName: 'RollDodge',
+  StateId: STATE_IDS.ROLL_DODGE_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p, w) => {},
 };
 
 export const ShieldDrop: FSMState = {
@@ -3108,6 +3171,7 @@ const IDLE_STATE_RELATIONS = InitIdleRelations();
 const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();
 const SHIELD_RELATIONS = InitShieldRelations();
 const SHIELD_DROP_RELATIONS = InitShieldDropRelations();
+const SPOT_DODGE_RELATIONS = InitSpotDodgeRelations();
 const TURN_RELATIONS = InitTurnRelations();
 const WALK_RELATIONS = InitWalkRelations();
 const DASH_RELATIONS = InitDashRelations();
@@ -3154,6 +3218,7 @@ const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
+  .set(SPOT_DODGE_RELATIONS.stateId, SPOT_DODGE_RELATIONS.mappings)
   .set(SHIELD_RAISE_RELATIONS.stateId, SHIELD_RAISE_RELATIONS.mappings)
   .set(SHIELD_RELATIONS.stateId, SHIELD_RELATIONS.mappings)
   .set(SHIELD_DROP_RELATIONS.stateId, SHIELD_DROP_RELATIONS.mappings)
@@ -3203,6 +3268,7 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
+  .set(SpotDodge.StateId, SpotDodge)
   .set(ShieldRaise.StateId, ShieldRaise)
   .set(Shield.StateId, Shield)
   .set(ShieldDrop.StateId, ShieldDrop)

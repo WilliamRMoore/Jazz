@@ -96,8 +96,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const bAir = GetBAir();
     const dAir = GetDAir();
 
-    this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 10)
-      .set(STATE_IDS.SHIELD_DROP_S, 10)
+    this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
+      .set(STATE_IDS.SHIELD_DROP_S, 6)
       .set(STATE_IDS.JUMP_SQUAT_S, 4)
       .set(STATE_IDS.TURN_S, 3)
       .set(STATE_IDS.DASH_S, 20)
@@ -108,6 +108,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.AIR_DODGE_S, 22)
       .set(STATE_IDS.LAND_S, 11)
       .set(STATE_IDS.SOFT_LAND_S, 2)
+      .set(STATE_IDS.SPOT_DOGE_S, 43)
       .set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength)
       .set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength)
       .set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength)
