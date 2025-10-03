@@ -108,7 +108,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.AIR_DODGE_S, 22)
       .set(STATE_IDS.LAND_S, 11)
       .set(STATE_IDS.SOFT_LAND_S, 2)
-      .set(STATE_IDS.SPOT_DOGE_S, 43)
+      .set(STATE_IDS.SPOT_DODGE_S, 43)
+      .set(STATE_IDS.ROLL_DODGE_S, 40)
       .set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength)
       .set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength)
       .set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength)
@@ -171,7 +172,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.SCB.SetFallSpeeds(16, 9, 0.6);
     this.SCB.SetAerialSpeeds(0.7, 9, 1.8);
     this.SCB.SetDashSpeeds(3, 13);
-    this.SCB.SetAirDodgeSpeed(20);
+    this.SCB.SetDodgeSpeeds(20, 23);
     this.SCB.SetGroundedVelocityDecay(0.8);
 
     this.ECBOffset = 0;

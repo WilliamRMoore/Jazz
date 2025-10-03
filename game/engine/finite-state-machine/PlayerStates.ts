@@ -1,5 +1,5 @@
 import { Player } from '../player/playerOrchestrator';
-import { EaseIn, Sequencer } from '../utils';
+import { EaseIn, Sequencer, EaseInOut } from '../utils';
 import { World } from '../world/world';
 import { FSMState } from './PlayerStateMachine';
 import { InputAction } from '../../input/Input';
@@ -123,7 +123,7 @@ class STATES {
   public readonly SHIELD_RAISE_S = seq.Next as StateId;
   public readonly SHIELD_S = seq.Next as StateId;
   public readonly SHIELD_DROP_S = seq.Next as StateId;
-  public readonly SPOT_DOGE_S = seq.Next as StateId;
+  public readonly SPOT_DODGE_S = seq.Next as StateId;
   public readonly ROLL_DODGE_S = seq.Next as StateId;
 }
 
@@ -168,34 +168,21 @@ export const ATTACK_IDS = new ATTACKS();
 export function CanStateWalkOffLedge(stateId: StateId): boolean {
   switch (stateId) {
     case STATE_IDS.IDLE_S:
-      return false;
     case STATE_IDS.WALK_S:
-      return false;
     case STATE_IDS.RUN_TURN_S:
-      return false;
     case STATE_IDS.STOP_RUN_S:
-      return false;
     case STATE_IDS.DASH_ATTACK_S:
-      return false;
     case STATE_IDS.ATTACK_S:
-      return false;
     case STATE_IDS.SIDE_TILT_S:
-      return false;
     case STATE_IDS.UP_TILT_S:
-      return false;
     case STATE_IDS.DOWN_TILT_S:
-      return false;
     case STATE_IDS.SIDE_CHARGE_S:
-      return false;
     case STATE_IDS.SIDE_CHARGE_EX_S:
-      return false;
     case STATE_IDS.UP_CHARGE_S:
-      return false;
     case STATE_IDS.UP_CHARGE_EX_S:
-      return false;
     case STATE_IDS.CROUCH_S:
-      return false;
     case STATE_IDS.LEDGE_GRAB_S:
+    case STATE_IDS.ROLL_DODGE_S:
       return false;
     default:
       return true;
@@ -1321,7 +1308,34 @@ const ToSpotDodge: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.SPOT_DOGE_S,
+  StateId: STATE_IDS.SPOT_DODGE_S,
+};
+
+const ToRollDodge: condition = {
+  Name: 'ToRollDodge',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const ips = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.localFrame;
+    const ia = ips.GetInputForFrame(curFrame);
+
+    if (ia.Action !== GAME_EVENT_IDS.GUARD_GE) {
+      return false;
+    }
+
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    const lxAxisDiff = prevIa.LXAxis - ia.LXAxis;
+
+    if (ia.LXAxis > 0 && ia.LXAxis > prevIa.LXAxis && lxAxisDiff <= -0.25) {
+      return true;
+    }
+
+    if (ia.LXAxis < 0 && ia.LXAxis < prevIa.LXAxis && lxAxisDiff >= 0.25) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.ROLL_DODGE_S,
 };
 
 const defaultWalk: condition = {
@@ -1452,9 +1466,10 @@ function InitShieldRaiseRelations(): StateRelation {
 
   shieldRaiseTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
   ]);
 
-  shieldRaiseTranslations.SetConditions([ToSpotDodge]);
+  shieldRaiseTranslations.SetConditions([ToSpotDodge, ToRollDodge]);
 
   shieldRaiseTranslations.SetDefaults([defaultShield]);
 
@@ -1465,11 +1480,11 @@ function InitShieldRelations(): StateRelation {
   const translations = new ActionStateMappings();
 
   translations.SetMappings([
-    { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
   ]);
 
-  translations.SetConditions([shieldToShieldDrop, ToSpotDodge]);
+  translations.SetConditions([shieldToShieldDrop, ToSpotDodge, ToRollDodge]);
 
   return new StateRelation(STATE_IDS.SHIELD_S, translations);
 }
@@ -1479,6 +1494,7 @@ function InitShieldDropRelations(): StateRelation {
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -1495,7 +1511,18 @@ function InitSpotDodgeRelations(): StateRelation {
 
   translations.SetDefaults([defaultIdle]);
 
-  return new StateRelation(STATE_IDS.SPOT_DOGE_S, translations);
+  return new StateRelation(STATE_IDS.SPOT_DODGE_S, translations);
+}
+
+function InitRollDodgeRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+
+  translations.SetDefaults([defaultIdle]);
+
+  return new StateRelation(STATE_IDS.ROLL_DODGE_S, translations);
 }
 
 function InitTurnRelations(): StateRelation {
@@ -1529,6 +1556,7 @@ function InitWalkRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
+    { geId: GAME_EVENT_IDS.GUARD_GE, sId: STATE_IDS.SHIELD_RAISE_S },
   ]);
 
   const conditions: Array<condition> = [
@@ -2523,6 +2551,7 @@ export const AirDodge: FSMState = {
     pVel.X = Math.cos(angle) * speed;
     pVel.Y = -Math.sin(angle) * speed;
     ecb.SetECBShape(STATE_IDS.AIR_DODGE_S);
+    p.Flags.VelocityDecayOff();
   },
   OnUpdate: (p: Player, w: World) => {
     const frameLength = p.FSMInfo.GetFrameLengthForState(
@@ -2541,6 +2570,7 @@ export const AirDodge: FSMState = {
   },
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
+    p.Flags.VelocityDecayOn();
     p.Flags.ZeroIntangabilityFrames();
   },
 };
@@ -2653,7 +2683,7 @@ export const Shield: FSMState = {
 
 export const SpotDodge: FSMState = {
   StateName: 'SpotDodge',
-  StateId: STATE_IDS.SPOT_DOGE_S,
+  StateId: STATE_IDS.SPOT_DODGE_S,
   OnEnter: (p: Player, w: World) => {
     p.Flags.SetIntangabilityFrames(20);
   },
@@ -2664,9 +2694,40 @@ export const SpotDodge: FSMState = {
 export const RollDodge: FSMState = {
   StateName: 'RollDodge',
   StateId: STATE_IDS.ROLL_DODGE_S,
-  OnEnter: (p: Player, w: World) => {},
-  OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p, w) => {},
+  OnEnter: (p: Player, w: World) => {
+    const pd = w.PlayerData;
+    const inputStore = pd.InputStore(p.ID);
+    const curFrame = w.localFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+
+    // The roll direction is determined by the player's facing direction,
+    // which should be set by the input that triggered the roll.
+    if (ia.LXAxis > 0) {
+      p.Flags.FaceLeft();
+    } else if (ia.LXAxis < 0) {
+      p.Flags.FaceRight();
+    }
+
+    p.Flags.SetIntangabilityFrames(20);
+    p.Flags.VelocityDecayOff();
+    p.ECB.SetECBShape(STATE_IDS.ROLL_DODGE_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const fsmInfo = p.FSMInfo;
+    const totalFrames = fsmInfo.GetFrameLengthForState(STATE_IDS.ROLL_DODGE_S)!;
+    const currentFrame = fsmInfo.CurrentStateFrame;
+    const normalizedTime = currentFrame / totalFrames;
+    const easedValue = EaseInOut(normalizedTime);
+    const maxSpeed = p.Speeds.DodeRollSpeed;
+    const direction = p.Flags.IsFacingRight ? -1 : 1;
+    p.Velocity.X = direction * maxSpeed * easedValue;
+  },
+  OnExit: (p, w) => {
+    p.ECB.ResetECBShape();
+    p.Flags.VelocityDecayOn();
+    p.Flags.ZeroIntangabilityFrames();
+    p.Velocity.X = 0;
+  },
 };
 
 export const ShieldDrop: FSMState = {
@@ -3172,6 +3233,7 @@ const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();
 const SHIELD_RELATIONS = InitShieldRelations();
 const SHIELD_DROP_RELATIONS = InitShieldDropRelations();
 const SPOT_DODGE_RELATIONS = InitSpotDodgeRelations();
+const ROLL_DODGE_RELATIONS = InitRollDodgeRelations();
 const TURN_RELATIONS = InitTurnRelations();
 const WALK_RELATIONS = InitWalkRelations();
 const DASH_RELATIONS = InitDashRelations();
@@ -3219,6 +3281,7 @@ const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
   .set(SPOT_DODGE_RELATIONS.stateId, SPOT_DODGE_RELATIONS.mappings)
+  .set(ROLL_DODGE_RELATIONS.stateId, ROLL_DODGE_RELATIONS.mappings)
   .set(SHIELD_RAISE_RELATIONS.stateId, SHIELD_RAISE_RELATIONS.mappings)
   .set(SHIELD_RELATIONS.stateId, SHIELD_RELATIONS.mappings)
   .set(SHIELD_DROP_RELATIONS.stateId, SHIELD_DROP_RELATIONS.mappings)
@@ -3269,6 +3332,7 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
   .set(SpotDodge.StateId, SpotDodge)
+  .set(RollDodge.StateId, RollDodge)
   .set(ShieldRaise.StateId, ShieldRaise)
   .set(Shield.StateId, Shield)
   .set(ShieldDrop.StateId, ShieldDrop)

@@ -32,7 +32,7 @@ const defaultSpeedsBuilderOptions: speedBuilderOptions = (
   scb.SetFallSpeeds(22, 15, 0.7);
   scb.SetAerialSpeeds(0.5, 13, 1.8);
   scb.SetDashSpeeds(3, 17);
-  scb.SetAirDodgeSpeed(25);
+  scb.SetDodgeSpeeds(25, 25);
   scb.SetGroundedVelocityDecay(0.8);
 };
 

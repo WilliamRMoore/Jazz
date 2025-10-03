@@ -338,7 +338,7 @@ export function PlatformDetection(
 
     const fsmInfo = p.FSMInfo;
 
-    //if we are moving downward, and we are holding down, and we are NOT in the airdodge space,
+    //if we are moving downward, and we are holding down, and we are NOT in the airdodge state,
     if (ia.LYAxis < -0.8 && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
       continue;
     }
@@ -541,7 +541,7 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
     const p = playerData.Player(playerIndex);
     const stage = stageData.Stage;
 
-    if (p.Flags.IsInHitPause === true || playerHasGravity(p, stage) === false) {
+    if (playerHasGravity(p, stage) === false) {
       continue;
     }
     const speeds = p.Speeds;
@@ -556,9 +556,7 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
 function playerHasGravity(p: Player, stage: Stage): boolean {
   switch (p.FSMInfo.CurrentStatetId) {
     case STATE_IDS.AIR_DODGE_S:
-      return false;
     case STATE_IDS.LEDGE_GRAB_S:
-      return false;
     case STATE_IDS.HIT_STOP_S:
       return false;
     default:
@@ -1139,7 +1137,7 @@ export function ApplyVeloctyDecay(
     const p = playerData.Player(playerIndex)!;
     const flags = p.Flags;
 
-    if (flags.IsInHitPause) {
+    if (flags.IsInHitPause || !flags.IsVelocityDecayActive) {
       continue;
     }
 
