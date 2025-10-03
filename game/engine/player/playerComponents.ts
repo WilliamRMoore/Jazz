@@ -407,6 +407,7 @@ export class SpeedsComponent {
   public readonly GroundedVelocityDecay: number;
   public readonly AerialVelocityDecay: number;
   public readonly AirDogeSpeed: number;
+  public readonly DodeRollSpeed: number;
   public readonly ArielVelocityMultiplier: number;
   public readonly AerialSpeedInpulseLimit: number;
   public readonly MaxWalkSpeed: number;
@@ -426,6 +427,7 @@ export class SpeedsComponent {
     aerialSpeedInpulseLimit: number,
     aerialVelocityMultiplier: number,
     airDodgeSpeed: number,
+    dodgeRollSpeed: number,
     maxWalkSpeed: number,
     maxRunSpeed: number,
     walkSpeedMultiplier: number,
@@ -441,6 +443,7 @@ export class SpeedsComponent {
     this.AerialSpeedInpulseLimit = aerialSpeedInpulseLimit;
     this.ArielVelocityMultiplier = aerialVelocityMultiplier;
     this.AirDogeSpeed = airDodgeSpeed;
+    this.DodeRollSpeed = dodgeRollSpeed;
     this.MaxWalkSpeed = maxWalkSpeed;
     this.MaxRunSpeed = maxRunSpeed;
     this.WalkSpeedMulitplier = walkSpeedMultiplier;
@@ -516,6 +519,7 @@ export type FlagsSnapShot = {
   HitPauseFrames: number;
   IntangabilityFrames: number;
   DisablePlatDetection: number;
+  VeloctyDecay: boolean;
 };
 
 export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
@@ -524,6 +528,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   private hitPauseFrames: number = 0;
   private intangabilityFrames: number = 0;
   private disablePlatformDetection: number = 0;
+  private velocityDecayActive: boolean = true;
 
   public FaceRight(): void {
     this.facingRight = true;
@@ -531,6 +536,10 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
 
   public FaceLeft(): void {
     this.facingRight = false;
+  }
+
+  public ChangeDirections(): void {
+    this.facingRight = !this.facingRight;
   }
 
   public FastFallOn(): void {
@@ -541,8 +550,12 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.fastFalling = false;
   }
 
-  public ChangeDirections(): void {
-    this.facingRight = !this.facingRight;
+  public VelocityDecayOff(): void {
+    this.velocityDecayActive = false;
+  }
+
+  public VelocityDecayOn(): void {
+    this.velocityDecayActive = true;
   }
 
   public SetHitPauseFrames(frames: number): void {
@@ -593,6 +606,10 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return !this.facingRight;
   }
 
+  public get IsVelocityDecayActive(): boolean {
+    return this.velocityDecayActive;
+  }
+
   public get IsInHitPause(): boolean {
     return this.hitPauseFrames > 0;
   }
@@ -612,6 +629,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
       HitPauseFrames: this.hitPauseFrames,
       IntangabilityFrames: this.intangabilityFrames,
       DisablePlatDetection: this.disablePlatformDetection,
+      VeloctyDecay: this.velocityDecayActive,
     } as FlagsSnapShot;
   }
 
@@ -621,6 +639,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.hitPauseFrames = snapShot.HitPauseFrames;
     this.intangabilityFrames = snapShot.IntangabilityFrames;
     this.disablePlatformDetection = snapShot.DisablePlatDetection;
+    this.velocityDecayActive = snapShot.VeloctyDecay;
   }
 }
 
@@ -1696,6 +1715,7 @@ export class SpeedsComponentBuilder {
   private aerialSpeedInpulseLimit: number = 0;
   private aerialSpeedMultiplier: number = 0;
   private airDodgeSpeed: number = 0;
+  private dodgeRollSpeed: number = 0;
   private maxWalkSpeed: number = 0;
   private maxRunSpeed: number = 0;
   private dashMutiplier: number = 0;
@@ -1716,8 +1736,9 @@ export class SpeedsComponentBuilder {
     this.aerialSpeedMultiplier = aerialSpeedMultiplier;
   }
 
-  SetAirDodgeSpeed(airDodgeSpeed: number): void {
+  SetDodgeSpeeds(airDodgeSpeed: number, dodgeRollSpeed: number): void {
     this.airDodgeSpeed = airDodgeSpeed;
+    this.dodgeRollSpeed = dodgeRollSpeed;
   }
 
   SetFallSpeeds(
@@ -1756,6 +1777,7 @@ export class SpeedsComponentBuilder {
       this.aerialSpeedInpulseLimit,
       this.aerialSpeedMultiplier,
       this.airDodgeSpeed,
+      this.dodgeRollSpeed,
       this.maxWalkSpeed,
       this.maxRunSpeed,
       this.walkSpeedMulitplier,

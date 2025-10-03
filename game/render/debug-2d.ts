@@ -225,11 +225,22 @@ function drawPlayer(
     const lastLd = playerHistory!.LedgeDetectorHistory[lastFrame];
     const facingRight = flags.FacingRight;
     const lastFacingRight = lastFlags?.FacingRight;
+    const isIntangible = flags.IntangabilityFrames > 0;
+    const wasIntangible = lastFlags.IntangabilityFrames > 0;
+    const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
 
     //drawHull(ctx, player);
     drawPrevEcb(ctx, ecb, lastEcb, alpha);
     drawCurrentECB(ctx, ecb, lastEcb, alpha);
-    drawHurtCircles(ctx, pos, lastPos, circlesHistory, alpha);
+    drawHurtCircles(
+      ctx,
+      currentFrame,
+      pos,
+      lastPos,
+      circlesHistory,
+      intangible,
+      alpha
+    );
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
     drawDirectionMarker(ctx, lerpDirection, ecb, lastEcb, alpha);
@@ -630,13 +641,25 @@ function drawHitCircles(
 
 function drawHurtCircles(
   ctx: CanvasRenderingContext2D,
+  frame: number,
   curPositon: FlatVec,
   lasPosition: FlatVec,
   hurtCapsules: Array<HurtCapsule>,
+  instangible: boolean,
   alpha: number
 ) {
   ctx.strokeStyle = 'yellow'; // Set the stroke color for the circles
   ctx.fillStyle = 'yellow'; // Set the fill color for the circles
+
+  if (instangible) {
+    ctx.strokeStyle = 'white';
+    ctx.fillStyle = 'white';
+    if (frame % 2 === 0) {
+      ctx.strokeStyle = 'lightgray';
+      ctx.fillStyle = 'lightgray';
+    }
+  }
+
   ctx.lineWidth = 2; // Set the line width
   ctx.globalAlpha = 0.5; // Set transparency (50%)
 
