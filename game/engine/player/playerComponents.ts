@@ -16,6 +16,7 @@ import { Pool } from '../pools/Pool';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { World } from '../world/world';
 import { CreateConvexHull } from '../physics/collisions';
+import { FixedPoint } from '../../math/fixedPoint';
 
 /***
  * TODO:
@@ -51,12 +52,12 @@ export class StaticHistory {
 export class ComponentHistory {
   public readonly StaticPlayerHistory = new StaticHistory();
   readonly ShieldHistory: Array<ShieldSnapShot> = [];
-  readonly PositionHistory: Array<FlatVec> = [];
+  readonly PositionHistory: Array<PositionSnapShot> = [];
   readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
   readonly PlayerPointsHistory: Array<PlayerPointsSnapShot> = [];
   readonly PlayerHitStunHistory: Array<hitStunSnapShot> = [];
   readonly PlayerHitStopHistory: Array<hitStopSnapShot> = [];
-  readonly VelocityHistory: Array<FlatVec> = [];
+  readonly VelocityHistory: Array<VelocitySnapShot> = [];
   readonly FlagsHistory: Array<FlagsSnapShot> = [];
   readonly EcbHistory: Array<ECBSnapShot> = [];
   readonly JumpHistroy: Array<number> = [];
@@ -150,104 +151,98 @@ interface IHistoryEnabled<T> {
   SetFromSnapShot(snapShot: T): void;
 }
 
-// Player Components
-export class PositionComponent implements IHistoryEnabled<FlatVec> {
-  private x: number;
-  private y: number;
+export type PositionSnapShot = { readonly X: number; readonly Y: number };
 
-  constructor(x: number = 0, y: number = 0) {
-    this.x = x;
-    this.y = y;
+// Player Components
+export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
+  private readonly x: FixedPoint = new FixedPoint();
+  private readonly y: FixedPoint = new FixedPoint();
+
+  public SnapShot(): PositionSnapShot {
+    return {
+      X: this.x.AsNumber,
+      Y: this.y.AsNumber,
+    };
   }
 
-  public get X(): number {
+  public SetFromSnapShot(snapShot: PositionSnapShot): void {
+    this.x.setFromNumber(snapShot.X);
+    this.y.setFromNumber(snapShot.Y);
+  }
+
+  public get X(): FixedPoint {
     return this.x;
   }
 
-  public get Y(): number {
+  public get Y(): FixedPoint {
     return this.y;
   }
 
-  public set X(val: number) {
-    this.x = val;
+  public set X(val: FixedPoint) {
+    this.x.setFromFp(val);
   }
 
-  public set Y(val: number) {
-    this.y = val;
-  }
-
-  public SnapShot(): FlatVec {
-    return new FlatVec(this.x, this.y);
-  }
-
-  public SetFromSnapShot(snapShot: FlatVec): void {
-    this.x = snapShot.X;
-    this.y = snapShot.Y;
+  public set Y(val: FixedPoint) {
+    this.y.setFromFp(val);
   }
 }
 
 export class WeightComponent {
-  public readonly Weight: number;
+  public readonly Weight: FixedPoint = new FixedPoint();
 
-  constructor(weight: number) {
-    this.Weight = weight;
+  constructor(weight: FixedPoint) {
+    this.Weight.setFromFp(weight);
   }
 }
 
-export class VelocityComponent implements IHistoryEnabled<FlatVec> {
-  private x: number;
-  private y: number;
+export type VelocitySnapShot = { readonly X: number; readonly Y: number };
 
-  constructor(x: number = 0, y: number = 0) {
-    this.x = x;
-    this.y = y;
-  }
+export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
+  private readonly x: FixedPoint = new FixedPoint();
+  private readonly y: FixedPoint = new FixedPoint();
 
-  public AddClampedXImpulse(clamp: number, x: number): void {
-    const upperBound: number = Math.abs(clamp);
-    const vel: number = this.x;
+  public AddClampedXImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
+    const clampValue = Math.abs(clamp.AsNumber);
+    const currentVelocity = this.x.AsNumber;
 
-    if (Math.abs(vel) > upperBound) {
+    // Don't add impulse if we are already at or beyond the clamp limit.
+    if (Math.abs(currentVelocity) >= clampValue) {
       return;
     }
 
-    this.x = Clamp(vel + x, upperBound);
+    const newVelocity = currentVelocity + impulse.AsNumber;
+    this.x.setFromNumber(Clamp(newVelocity, clampValue));
   }
 
-  public AddClampedYImpulse(clamp: number, y: number): void {
-    const upperBound: number = Math.abs(clamp);
-    const vel: number = this.y;
-
-    if (Math.abs(vel) > clamp) {
-      return;
-    }
-
-    this.y = Clamp(vel + y, upperBound);
+  public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
+    const clampValue = Math.abs(clamp.AsNumber);
+    const newVelocity = this.y.AsNumber + impulse.AsNumber;
+    this.y.setFromNumber(Clamp(newVelocity, clampValue));
   }
 
-  public SnapShot(): FlatVec {
-    return new FlatVec(this.x, this.y);
+  public SnapShot(): VelocitySnapShot {
+    return { X: this.x.AsNumber, Y: this.y.AsNumber } as VelocitySnapShot;
   }
 
-  public SetFromSnapShot(snapShot: FlatVec): void {
-    this.x = snapShot.X;
-    this.y = snapShot.Y;
+  public SetFromSnapShot(snapShot: VelocitySnapShot): void {
+    this.x.setFromNumber(snapShot.X);
+    this.y.setFromNumber(snapShot.Y);
   }
 
-  public get X(): number {
+  public get X(): FixedPoint {
     return this.x;
   }
 
-  public get Y(): number {
+  public get Y(): FixedPoint {
     return this.y;
   }
 
-  public set X(val: number) {
-    this.x = val;
+  public set X(val: FixedPoint) {
+    this.x.setFromFp(val);
   }
 
-  public set Y(val: number) {
-    this.y = val;
+  public set Y(val: FixedPoint) {
+    this.y.setFromFp(val);
   }
 }
 
@@ -350,32 +345,36 @@ export class HitStopComponent implements IHistoryEnabled<hitStopSnapShot> {
 }
 
 type hitStunSnapShot = {
-  hitStunFrames: number;
-  vx: number;
-  vy: number;
+  readonly hitStunFrames: number;
+  readonly vx: number;
+  readonly vy: number;
 };
 
 export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
   private framesOfHitStun: number = 0;
-  private xVelocity: number = 0;
-  private yVelocity: number = 0;
+  private readonly xVelocity: FixedPoint = new FixedPoint(0);
+  private readonly yVelocity: FixedPoint = new FixedPoint(0);
 
   public set FramesOfHitStun(hitStunFrames: number) {
     this.framesOfHitStun = hitStunFrames;
   }
 
-  public get VX(): number {
+  public get VX(): FixedPoint {
     return this.xVelocity;
   }
 
-  public get VY(): number {
+  public get VY(): FixedPoint {
     return this.yVelocity;
   }
 
-  public SetHitStun(hitStunFrames: number, vx: number, vy: number): void {
+  public SetHitStun(
+    hitStunFrames: number,
+    vx: FixedPoint,
+    vy: FixedPoint
+  ): void {
     this.framesOfHitStun = hitStunFrames;
-    this.xVelocity = vx;
-    this.yVelocity = vy;
+    this.xVelocity.setFromFp(vx);
+    this.yVelocity.setFromFp(vy);
   }
 
   public DecrementHitStun(): void {
@@ -384,75 +383,75 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
 
   public Zero(): void {
     this.framesOfHitStun = 0;
-    this.xVelocity = 0;
-    this.yVelocity = 0;
+    this.xVelocity.setFromNumber(0);
+    this.yVelocity.setFromNumber(0);
   }
 
   public SnapShot(): hitStunSnapShot {
     return {
       hitStunFrames: this.framesOfHitStun,
-      vx: this.xVelocity,
-      vy: this.yVelocity,
+      vx: this.xVelocity.AsNumber,
+      vy: this.yVelocity.AsNumber,
     } as hitStunSnapShot;
   }
 
   public SetFromSnapShot(snapShot: hitStunSnapShot): void {
     this.framesOfHitStun = snapShot.hitStunFrames;
-    this.xVelocity = snapShot.vx;
-    this.yVelocity = snapShot.vy;
+    this.xVelocity.setFromNumber(snapShot.vx);
+    this.yVelocity.setFromNumber(snapShot.vy);
   }
 }
 
 export class SpeedsComponent {
-  public readonly GroundedVelocityDecay: number;
-  public readonly AerialVelocityDecay: number;
-  public readonly AirDogeSpeed: number;
-  public readonly DodeRollSpeed: number;
-  public readonly ArielVelocityMultiplier: number;
-  public readonly AerialSpeedInpulseLimit: number;
-  public readonly MaxWalkSpeed: number;
-  public readonly MaxRunSpeed: number;
-  public readonly WalkSpeedMulitplier: number;
-  public readonly RunSpeedMultiplier: number;
-  public readonly FastFallSpeed: number;
-  public readonly FallSpeed: number;
-  public readonly Gravity: number;
-  public readonly DashMultiplier: number;
-  public readonly MaxDashSpeed: number;
+  public readonly GroundedVelocityDecay: FixedPoint = new FixedPoint(0);
+  public readonly AerialVelocityDecay: FixedPoint = new FixedPoint(0);
+  public readonly AirDogeSpeed: FixedPoint = new FixedPoint(0);
+  public readonly DodeRollSpeed: FixedPoint = new FixedPoint(0);
+  public readonly ArielVelocityMultiplier: FixedPoint = new FixedPoint(0);
+  public readonly AerialSpeedInpulseLimit: FixedPoint = new FixedPoint(0);
+  public readonly MaxWalkSpeed: FixedPoint = new FixedPoint(0);
+  public readonly MaxRunSpeed: FixedPoint = new FixedPoint(0);
+  public readonly WalkSpeedMulitplier: FixedPoint = new FixedPoint(0);
+  public readonly RunSpeedMultiplier: FixedPoint = new FixedPoint(0);
+  public readonly FastFallSpeed: FixedPoint = new FixedPoint(0);
+  public readonly FallSpeed: FixedPoint = new FixedPoint(0);
+  public readonly Gravity: FixedPoint = new FixedPoint(0);
+  public readonly DashMultiplier: FixedPoint = new FixedPoint(0);
+  public readonly MaxDashSpeed: FixedPoint = new FixedPoint(0);
   // Might need a general Aerial speed limit for each character
 
   constructor(
-    grndSpeedVelDecay: number,
-    aerialVelocityDecay: number,
-    aerialSpeedInpulseLimit: number,
-    aerialVelocityMultiplier: number,
-    airDodgeSpeed: number,
-    dodgeRollSpeed: number,
-    maxWalkSpeed: number,
-    maxRunSpeed: number,
-    walkSpeedMultiplier: number,
-    runSpeedMultiplier: number,
-    fastFallSpeed: number,
-    fallSpeed: number,
-    dashMultiplier: number,
-    maxDashSpeed: number,
-    gravity: number
+    grndSpeedVelDecay: FixedPoint,
+    aerialVelocityDecay: FixedPoint,
+    aerialSpeedInpulseLimit: FixedPoint,
+    aerialVelocityMultiplier: FixedPoint,
+    airDodgeSpeed: FixedPoint,
+    dodgeRollSpeed: FixedPoint,
+    maxWalkSpeed: FixedPoint,
+    maxRunSpeed: FixedPoint,
+    walkSpeedMultiplier: FixedPoint,
+    runSpeedMultiplier: FixedPoint,
+    fastFallSpeed: FixedPoint,
+    fallSpeed: FixedPoint,
+    dashMultiplier: FixedPoint,
+    maxDashSpeed: FixedPoint,
+    gravity: FixedPoint
   ) {
-    this.GroundedVelocityDecay = grndSpeedVelDecay;
-    this.AerialVelocityDecay = aerialVelocityDecay;
-    this.AerialSpeedInpulseLimit = aerialSpeedInpulseLimit;
-    this.ArielVelocityMultiplier = aerialVelocityMultiplier;
-    this.AirDogeSpeed = airDodgeSpeed;
-    this.DodeRollSpeed = dodgeRollSpeed;
-    this.MaxWalkSpeed = maxWalkSpeed;
-    this.MaxRunSpeed = maxRunSpeed;
-    this.WalkSpeedMulitplier = walkSpeedMultiplier;
-    this.RunSpeedMultiplier = runSpeedMultiplier;
-    this.FastFallSpeed = fastFallSpeed;
-    this.FallSpeed = fallSpeed;
-    this.DashMultiplier = dashMultiplier;
-    this.MaxDashSpeed = maxDashSpeed;
-    this.Gravity = gravity;
+    this.GroundedVelocityDecay.setFromFp(grndSpeedVelDecay);
+    this.AerialVelocityDecay.setFromFp(aerialVelocityDecay);
+    this.AerialSpeedInpulseLimit.setFromFp(aerialSpeedInpulseLimit);
+    this.ArielVelocityMultiplier.setFromFp(aerialVelocityMultiplier);
+    this.AirDogeSpeed.setFromFp(airDodgeSpeed);
+    this.DodeRollSpeed.setFromFp(dodgeRollSpeed);
+    this.MaxWalkSpeed.setFromFp(maxWalkSpeed);
+    this.MaxRunSpeed.setFromFp(maxRunSpeed);
+    this.WalkSpeedMulitplier.setFromFp(walkSpeedMultiplier);
+    this.RunSpeedMultiplier.setFromFp(runSpeedMultiplier);
+    this.FastFallSpeed.setFromFp(fastFallSpeed);
+    this.FallSpeed.setFromFp(fallSpeed);
+    this.DashMultiplier.setFromFp(dashMultiplier);
+    this.MaxDashSpeed.setFromFp(maxDashSpeed);
+    this.Gravity.setFromFp(gravity);
   }
 }
 
@@ -464,7 +463,7 @@ type PlayerPointsSnapShot = {
 export class PlayerPointsComponent
   implements IHistoryEnabled<PlayerPointsSnapShot>
 {
-  private damagePoints: number = 0;
+  private readonly damagePoints: FixedPoint = new FixedPoint(0);
   private matchPoints: number = 0;
   private defaultMatchPoints: number;
 
@@ -472,12 +471,12 @@ export class PlayerPointsComponent
     this.defaultMatchPoints = defaultMatchPoints;
   }
 
-  public AddDamage(number: number): void {
-    this.damagePoints += number;
+  public AddDamage(number: FixedPoint): void {
+    this.damagePoints.add(number);
   }
 
-  public SubtractDamage(number: number): void {
-    this.damagePoints -= number;
+  public SubtractDamage(number: FixedPoint): void {
+    this.damagePoints.subtract(number);
   }
 
   public AddMatchPoints(number: number): void {
@@ -493,22 +492,22 @@ export class PlayerPointsComponent
   }
 
   public ResetDamagePoints(): void {
-    this.damagePoints = 0;
+    this.damagePoints.Zero();
   }
 
-  public get Damage(): number {
+  public get Damage(): FixedPoint {
     return this.damagePoints;
   }
 
   public SnapShot(): PlayerPointsSnapShot {
     return {
-      damagePoints: this.damagePoints,
+      damagePoints: this.damagePoints.AsNumber,
       matchPoints: this.matchPoints,
     } as PlayerPointsSnapShot;
   }
 
   public SetFromSnapShot(snapShot: PlayerPointsSnapShot): void {
-    this.damagePoints = snapShot.damagePoints;
+    this.damagePoints.setFromNumber(snapShot.damagePoints);
     this.matchPoints = snapShot.matchPoints;
   }
 }
@@ -644,53 +643,59 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
 }
 
 export type ECBSnapShot = {
-  posX: number;
-  posY: number;
-  prevPosX: number;
-  prevPosY: number;
-  YOffset: number;
-  Height: number;
-  Width: number;
+  readonly posX: number;
+  readonly posY: number;
+  readonly prevPosX: number;
+  readonly prevPosY: number;
+  readonly YOffset: number;
+  readonly Height: number;
+  readonly Width: number;
 };
 
-export type ECBShape = { height: number; width: number; yOffset: number };
+export type ECBShape = {
+  readonly height: FixedPoint;
+  readonly width: FixedPoint;
+  readonly yOffset: FixedPoint;
+};
 
 export type ECBShapes = Map<StateId, ECBShape>;
 
 export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
-  public readonly SensorDepth: number = 1;
-  private yOffset: number;
-  private x: number = 0;
-  private y: number = 0;
-  private prevX: number = 0;
-  private prevY: number = 0;
-  private color: string;
-  private height: number;
-  private width: number;
-  private readonly originalHeight: number;
-  private readonly originalWidth: number;
-  private readonly originalYOffset: number;
+  public readonly SensorDepth: FixedPoint = new FixedPoint(1);
+  private readonly yOffset: FixedPoint = new FixedPoint(0);
+  private readonly x: FixedPoint = new FixedPoint(0);
+  private readonly y: FixedPoint = new FixedPoint(0);
+  private readonly prevX: FixedPoint = new FixedPoint(0);
+  private readonly prevY: FixedPoint = new FixedPoint(0);
+  private readonly height: FixedPoint = new FixedPoint(0);
+  private readonly width: FixedPoint = new FixedPoint(0);
+  private readonly originalHeight: FixedPoint = new FixedPoint(0);
+  private readonly originalWidth: FixedPoint = new FixedPoint(0);
+  private readonly originalYOffset: FixedPoint = new FixedPoint(0);
   private readonly curVerts = new Array<FlatVec>(4);
   private readonly prevVerts = new Array<FlatVec>(4);
   private readonly allVerts = new Array<FlatVec>(8);
   private readonly ecbStateShapes: ECBShapes;
+  private readonly fpp: Pool<FixedPoint>;
 
   constructor(
+    fpp: Pool<FixedPoint>,
     shapes: ECBShapes,
-    height: number = 100,
-    width: number = 100,
-    yOffset: number = 0
+    height: FixedPoint = new FixedPoint(100),
+    width: FixedPoint = new FixedPoint(100),
+    yOffset: FixedPoint = new FixedPoint(0)
   ) {
-    this.color = 'orange';
-    this.height = height;
-    this.width = width;
-    this.originalHeight = height;
-    this.originalWidth = width;
-    this.originalYOffset = yOffset;
-    this.yOffset = yOffset;
+    // The constructor was missing the fpp pool parameter, which is needed for the initial update.
+    this.height.setFromFp(height);
+    this.width.setFromFp(width);
+    this.originalHeight.setFromFp(height);
+    this.originalWidth.setFromFp(width);
+    this.originalYOffset.setFromFp(yOffset);
+    this.yOffset.setFromFp(yOffset);
     this.ecbStateShapes = shapes;
     FillArrayWithFlatVec(this.curVerts);
     FillArrayWithFlatVec(this.prevVerts);
+    this.fpp = fpp;
     this.loadAllVerts();
     this.update();
   }
@@ -704,78 +709,84 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public UpdatePreviousECB(): void {
-    this.prevX = this.x;
-    this.prevY = this.y;
+    this.prevX.setFromFp(this.x);
+    this.prevY.setFromFp(this.y);
 
     const prevVert: FlatVec[] = this.prevVerts;
     const curVert: FlatVec[] = this.curVerts;
-    prevVert[0].X = curVert[0].X;
-    prevVert[0].Y = curVert[0].Y;
-    prevVert[1].X = curVert[1].X;
-    prevVert[1].Y = curVert[1].Y;
-    prevVert[2].X = curVert[2].X;
-    prevVert[2].Y = curVert[2].Y;
-    prevVert[3].X = curVert[3].X;
-    prevVert[3].Y = curVert[3].Y;
+    prevVert[0].X.setFromFp(curVert[0].X);
+    prevVert[0].Y.setFromFp(curVert[0].Y);
+    prevVert[1].X.setFromFp(curVert[1].X);
+    prevVert[1].Y.setFromFp(curVert[1].Y);
+    prevVert[2].X.setFromFp(curVert[2].X);
+    prevVert[2].Y.setFromFp(curVert[2].Y);
+    prevVert[3].X.setFromFp(curVert[3].X);
+    prevVert[3].Y.setFromFp(curVert[3].Y);
   }
 
-  public SetInitialPosition(x: number, y: number): void {
+  public SetInitialPosition(x: FixedPoint, y: FixedPoint): void {
     this.MoveToPosition(x, y);
     this.UpdatePreviousECB();
   }
 
-  public MoveToPosition(x: number, y: number): void {
-    this.x = x;
-    this.y = y;
+  public MoveToPosition(x: FixedPoint, y: FixedPoint): void {
+    this.x.setFromFp(x);
+    this.y.setFromFp(y);
     this.update();
   }
 
   public SetECBShape(stateId: StateId): void {
     const shape: ECBShape | undefined = this.ecbStateShapes.get(stateId);
     if (shape === undefined) {
-      this.yOffset = this.originalYOffset;
-      this.height = this.originalHeight;
-      this.width = this.originalWidth;
+      this.yOffset.setFromFp(this.originalYOffset);
+      this.height.setFromFp(this.originalHeight);
+      this.width.setFromFp(this.originalWidth);
       this.update();
       return;
     }
 
-    this.yOffset = shape.yOffset;
-    this.height = shape.height;
-    this.width = shape.width;
+    this.yOffset.setFromFp(shape.yOffset);
+    this.height.setFromFp(shape.height);
+    this.width.setFromFp(shape.width);
     this.update();
   }
 
   private update(): void {
+    // Rent temporary FixedPoint objects from the pool for calculations
+    const fpp = this.fpp;
+    const half = fpp.Rent().setFromNumber(0.5);
     const px = this.x;
     const py = this.y;
     const height = this.height;
     const width = this.width;
     const yOffset = this.yOffset;
 
-    const bottomX = px;
-    const bottomY = py + yOffset;
+    const bottomX = fpp.Rent().setFromFp(px);
+    const bottomY = fpp.Rent().setAdd(py, yOffset);
 
-    const topX = px;
-    const topY = bottomY - height;
+    const topX = fpp.Rent().setFromFp(px);
+    const topY = fpp.Rent().setSubtract(bottomY, height);
 
-    const leftX = bottomX - width / 2;
-    const leftY = bottomY - height / 2;
+    const halfWidth = fpp.Rent().setMultiply(width, half);
+    const halfHeight = fpp.Rent().setMultiply(height, half);
 
-    const rightX = bottomX + width / 2;
-    const rightY = leftY;
+    const leftX = fpp.Rent().setSubtract(bottomX, halfWidth);
+    const leftY = fpp.Rent().setSubtract(bottomY, halfHeight);
 
-    this.curVerts[0].X = bottomX;
-    this.curVerts[0].Y = bottomY;
+    const rightX = fpp.Rent().setAdd(bottomX, halfWidth);
+    const rightY = fpp.Rent().setFromFp(leftY);
 
-    this.curVerts[1].X = leftX;
-    this.curVerts[1].Y = leftY;
+    this.curVerts[0].X.setFromFp(bottomX);
+    this.curVerts[0].Y.setFromFp(bottomY);
 
-    this.curVerts[2].X = topX;
-    this.curVerts[2].Y = topY;
+    this.curVerts[1].X.setFromFp(leftX);
+    this.curVerts[1].Y.setFromFp(leftY);
 
-    this.curVerts[3].X = rightX;
-    this.curVerts[3].Y = rightY;
+    this.curVerts[2].X.setFromFp(topX);
+    this.curVerts[2].Y.setFromFp(topY);
+
+    this.curVerts[3].X.setFromFp(rightX);
+    this.curVerts[3].Y.setFromFp(rightY);
   }
 
   public get Bottom(): FlatVec {
@@ -810,87 +821,83 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.prevVerts[3];
   }
 
-  public get Height(): number {
+  public get Height(): FixedPoint {
     return this.height;
   }
 
-  public get Width(): number {
+  public get Width(): FixedPoint {
     return this.width;
   }
 
-  public get YOffset(): number {
+  public get YOffset(): FixedPoint {
     return this.yOffset;
   }
 
-  public GetColor(): string {
-    return this.color;
-  }
-
-  public SetColor(color: string): void {
-    this.color = color;
-  }
-
   public ResetECBShape(): void {
-    this.height = this.originalHeight;
-    this.width = this.originalWidth;
-    this.yOffset = this.originalYOffset;
+    this.height.setFromFp(this.originalHeight);
+    this.width.setFromFp(this.originalWidth);
+    this.yOffset.setFromFp(this.originalYOffset);
     this.update();
   }
 
   public SnapShot(): ECBSnapShot {
     return {
-      posX: this.x,
-      posY: this.y,
-      prevPosX: this.prevX,
-      prevPosY: this.prevY,
-      YOffset: this.yOffset,
-      Height: this.height,
-      Width: this.width,
+      posX: this.x.AsNumber,
+      posY: this.y.AsNumber,
+      prevPosX: this.prevX.AsNumber,
+      prevPosY: this.prevY.AsNumber,
+      YOffset: this.yOffset.AsNumber,
+      Height: this.height.AsNumber,
+      Width: this.width.AsNumber,
     } as ECBSnapShot;
   }
 
   public SetFromSnapShot(snapShot: ECBSnapShot): void {
-    this.x = snapShot.posX;
-    this.y = snapShot.posY;
-    this.prevX = snapShot.prevPosX;
-    this.prevY = snapShot.prevPosY;
-    this.yOffset = snapShot.YOffset;
-    this.height = snapShot.Height;
-    this.width = snapShot.Width;
+    const fpp = this.fpp;
+    this.x.setFromNumber(snapShot.posX);
+    this.y.setFromNumber(snapShot.posY);
+    this.prevX.setFromNumber(snapShot.prevPosX);
+    this.prevY.setFromNumber(snapShot.prevPosY);
+    this.yOffset.setFromNumber(snapShot.YOffset);
+    this.height.setFromNumber(snapShot.Height);
+    this.width.setFromNumber(snapShot.Width);
 
     this.update();
 
     // Update prevVerts
-
+    const half = fpp.Rent().setFromNumber(0.5);
     const px = this.prevX;
     const py = this.prevY;
     const height = this.height;
     const width = this.width;
     const yOffset = this.yOffset;
 
-    const bottomX = px;
-    const bottomY = py + yOffset;
+    const bottomX = fpp.Rent().setFromFp(px);
+    const bottomY = fpp.Rent().setAdd(py, yOffset);
 
-    const topX = px;
-    const topY = bottomY - height;
+    const topX = fpp.Rent().setFromFp(px);
+    const topY = fpp.Rent().setSubtract(bottomY, height);
 
-    const leftX = bottomX - width / 2;
-    const leftY = bottomY - height / 2;
+    const halfWidth = fpp.Rent().setFromFp(width).multiply(half);
+    const halfHeight = fpp.Rent().setFromFp(height).multiply(half);
 
-    const rightX = bottomX + width / 2;
+    const leftX = fpp.Rent().setFromFp(bottomX).subtract(halfWidth);
+    const leftY = fpp.Rent().setFromFp(bottomY).subtract(halfHeight);
+
+    const rightX = fpp.Rent().setFromFp(bottomX).add(halfWidth);
     const rightY = leftY;
 
-    this.prevVerts[0].X = bottomX;
-    this.prevVerts[0].Y = bottomY;
+    this.prevVerts[0].X.setFromFp(bottomX);
+    this.prevVerts[0].Y.setFromFp(bottomY);
 
-    this.prevVerts[1].X = leftX;
-    this.prevVerts[1].Y = leftY;
+    this.prevVerts[1].X.setFromFp(leftX);
+    this.prevVerts[1].Y.setFromFp(leftY);
 
-    this.prevVerts[2].X = topX;
-    this.prevVerts[2].Y = topY;
+    this.prevVerts[2].X.setFromFp(topX);
+    this.prevVerts[2].Y.setFromFp(topY);
 
-    this.prevVerts[3].X = rightX;
-    this.prevVerts[3].Y = rightY;
+    this.prevVerts[3].X.setFromFp(rightX);
+    this.prevVerts[3].Y.setFromFp(rightY);
   }
 
   private loadAllVerts(): void {
@@ -912,40 +919,52 @@ export type HurtCirclesSnapShot = {
 };
 
 export class HurtCapsule {
-  public readonly StartOffsetX: number;
-  public readonly StartOffsetY: number;
-  public readonly EndOffsetX: number;
-  public readonly EndOffsetY: number;
-  public readonly Radius: number;
+  public readonly StartOffsetX: FixedPoint = new FixedPoint();
+  public readonly StartOffsetY: FixedPoint = new FixedPoint();
+  public readonly EndOffsetX: FixedPoint = new FixedPoint();
+  public readonly EndOffsetY: FixedPoint = new FixedPoint();
+  public readonly Radius: FixedPoint = new FixedPoint();
 
   constructor(
-    startOffsetX: number,
-    startOffsetY: number,
-    endOffsetX: number,
-    endOffsetY: number,
-    radius: number
+    startOffsetX: FixedPoint,
+    startOffsetY: FixedPoint,
+    endOffsetX: FixedPoint,
+    endOffsetY: FixedPoint,
+    radius: FixedPoint
   ) {
-    this.StartOffsetX = startOffsetX;
-    this.StartOffsetY = startOffsetY;
-    this.EndOffsetX = endOffsetX;
-    this.EndOffsetY = endOffsetY;
-    this.Radius = radius;
+    this.StartOffsetX.setFromFp(startOffsetX);
+    this.StartOffsetY.setFromFp(startOffsetY);
+    this.EndOffsetX.setFromFp(endOffsetX);
+    this.EndOffsetY.setFromFp(endOffsetY);
+    this.Radius.setFromFp(radius);
   }
 
   public GetStartPosition(
-    x: number,
-    y: number,
+    fpp: Pool<FixedPoint>,
+    x: FixedPoint,
+    y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    return vecPool.Rent().SetXY(this.StartOffsetX + x, this.StartOffsetY + y);
+    return vecPool
+      .Rent()
+      .SetXY(
+        fpp.Rent().setAdd(this.StartOffsetX, x),
+        fpp.Rent().setAdd(this.StartOffsetY, y)
+      );
   }
 
   public GetEndPosition(
-    x: number,
-    y: number,
+    fpp: Pool<FixedPoint>,
+    x: FixedPoint,
+    y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    return vecPool.Rent().SetXY(this.EndOffsetX + x, this.EndOffsetY + y);
+    return vecPool
+      .Rent()
+      .SetXY(
+        fpp.Rent().setAdd(this.EndOffsetX, x),
+        fpp.Rent().setAdd(this.EndOffsetY, y)
+      );
   }
 }
 
@@ -958,77 +977,83 @@ export class HurtCapsulesComponent {
 }
 
 export type ShieldSnapShot = {
-  CurrentRadius: number;
-  Active: boolean;
+  readonly CurrentRadius: number;
+  readonly Active: boolean;
 };
 
 export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
-  public readonly InitialRadius: number;
-  public readonly YOffset: number;
+  public readonly InitialRadius = new FixedPoint(0);
+  public readonly YOffset = new FixedPoint(0);
   public Active: boolean = false;
-  private curRadius: number;
-  private readonly step: number;
+  private readonly curRadius = new FixedPoint(0);
+  private readonly step = new FixedPoint(0);
+  private readonly framesToFulll = new FixedPoint(300);
+  private readonly fpp: Pool<FixedPoint>;
+  private readonly damageMult = new FixedPoint(1.5);
 
-  constructor(radius: number, yOffset: number) {
+  constructor(fpp: Pool<FixedPoint>, radius: FixedPoint, yOffset: FixedPoint) {
     this.curRadius = radius;
     this.InitialRadius = radius;
     this.YOffset = yOffset;
-    this.step = radius / 300;
+    this.step.setDivide(radius, this.framesToFulll);
+    this.fpp = fpp;
   }
 
   public SnapShot(): ShieldSnapShot {
     return {
-      CurrentRadius: this.curRadius,
+      CurrentRadius: this.curRadius.AsNumber,
       Active: this.Active,
     } as ShieldSnapShot;
   }
 
   public SetFromSnapShot(snapShot: ShieldSnapShot): void {
     this.Active = snapShot.Active;
-    this.curRadius = snapShot.CurrentRadius;
+    this.curRadius.setFromNumber(snapShot.CurrentRadius);
   }
 
-  public get CurrentRadius(): number {
+  public get CurrentRadius(): FixedPoint {
     return this.curRadius;
   }
 
   public Grow(): void {
-    if (this.curRadius < this.InitialRadius) {
-      this.curRadius += this.step;
+    if (this.curRadius.lessThan(this.InitialRadius)) {
+      this.curRadius.add(this.step);
     }
 
-    if (this.curRadius > this.InitialRadius) {
-      this.curRadius = this.InitialRadius;
-    }
-  }
-
-  public Shrink(intensity: number): void {
-    if (this.curRadius > 0) {
-      this.curRadius -= this.step * intensity;
-    }
-
-    if (this.curRadius < 0) {
-      this.curRadius = 0;
+    if (this.curRadius.greaterThan(this.InitialRadius)) {
+      this.curRadius.setFromFp(this.InitialRadius);
     }
   }
 
-  public Damage(d: number) {
-    const damageMod = d * 1.5;
-    this.curRadius -= damageMod;
-    if (this.curRadius < 0) {
-      this.curRadius = 0;
+  public Shrink(intensity: FixedPoint): void {
+    if (this.curRadius.graterThanZero) {
+      this.curRadius.subtract(
+        this.fpp.Rent().setMultiply(this.step, intensity)
+      );
+    }
+
+    if (this.curRadius.lessThanZero) {
+      this.curRadius.setFromNumber(0);
+    }
+  }
+
+  public Damage(d: FixedPoint) {
+    const damageMod = this.fpp.Rent().setMultiply(d, this.damageMult);
+    this.curRadius.subtract(damageMod);
+    if (this.curRadius.lessThanZero) {
+      this.curRadius.setFromNumber(0);
     }
   }
 
   public Reset() {
-    this.curRadius = this.InitialRadius;
+    this.curRadius.setFromFp(this.InitialRadius);
   }
 }
 
 export type LedgeDetectorSnapShot = {
-  middleX: number;
-  middleY: number;
-  numberOfLedgeGrabs: number;
+  readonly middleX: number;
+  readonly middleY: number;
+  readonly numberOfLedgeGrabs: number;
 };
 
 export class LedgeDetectorComponent
@@ -1036,21 +1061,24 @@ export class LedgeDetectorComponent
 {
   private maxGrabs: number = 15;
   private numberOfLedgeGrabs: number = 0;
-  private yOffset: number;
-  private x: number = 0;
-  private y: number = 0;
-  private width: number;
-  private height: number;
-  private rightSide: Array<FlatVec> = new Array<FlatVec>(4);
-  private leftSide: Array<FlatVec> = new Array<FlatVec>(4);
+  private readonly yOffset: FixedPoint;
+  private readonly x: FixedPoint = new FixedPoint(0);
+  private readonly y: FixedPoint = new FixedPoint(0);
+  private readonly width: FixedPoint = new FixedPoint(0);
+  private readonly height: FixedPoint = new FixedPoint(0);
+  private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
+  private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
+  private readonly fpp: Pool<FixedPoint>;
 
   constructor(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    yOffset = -130
+    fpp: Pool<FixedPoint>,
+    x: FixedPoint,
+    y: FixedPoint,
+    width: FixedPoint,
+    height: FixedPoint,
+    yOffset = new FixedPoint(-130)
   ) {
+    this.fpp = fpp;
     this.height = height;
     this.width = width;
     this.yOffset = yOffset;
@@ -1059,9 +1087,9 @@ export class LedgeDetectorComponent
     this.MoveTo(x, y);
   }
 
-  public MoveTo(x: number, y: number): void {
-    this.x = x;
-    this.y = y + this.yOffset;
+  public MoveTo(x: FixedPoint, y: FixedPoint): void {
+    this.x.setFromFp(x);
+    this.y.setAdd(y, this.yOffset);
     this.update();
   }
 
@@ -1073,11 +1101,11 @@ export class LedgeDetectorComponent
     return this.rightSide;
   }
 
-  public get Width(): number {
+  public get Width(): FixedPoint {
     return this.width;
   }
 
-  public get Height(): number {
+  public get Height(): FixedPoint {
     return this.height;
   }
 
@@ -1092,41 +1120,41 @@ export class LedgeDetectorComponent
     const leftTopRight = this.leftSide[2];
     const leftBottomRight = this.leftSide[3];
 
-    const widthRight = this.x + this.width;
-    const widthLeft = this.x - this.width;
-    const bottomHeight = this.y + this.height;
+    const widthRight = this.fpp.Rent().setAdd(this.x, this.width);
+    const widthLeft = this.fpp.Rent().setSubtract(this.x, this.width);
+    const bottomHeight = this.fpp.Rent().setAdd(this.y, this.height);
 
     //bottom left
-    rightBottomLeft.X = this.x;
-    rightBottomLeft.Y = bottomHeight;
+    rightBottomLeft.X.setFromFp(this.x);
+    rightBottomLeft.Y.setFromFp(bottomHeight);
     //top left
-    rightTopLeft.X = this.x;
-    rightTopLeft.Y = this.y;
+    rightTopLeft.X.setFromFp(this.x);
+    rightTopLeft.Y.setFromFp(this.y);
     // top right
-    rightTopRight.X = widthRight;
-    rightTopRight.Y = this.y;
+    rightTopRight.X.setFromFp(widthRight);
+    rightTopRight.Y.setFromFp(this.y);
     // bottom right
-    rightBottomRight.X = widthRight;
-    rightBottomRight.Y = bottomHeight;
+    rightBottomRight.X.setFromFp(widthRight);
+    rightBottomRight.Y.setFromFp(bottomHeight);
 
     //bottom left
-    leftBottomLeft.X = widthLeft;
-    leftBottomLeft.Y = bottomHeight;
+    leftBottomLeft.X.setFromFp(widthLeft);
+    leftBottomLeft.Y.setFromFp(bottomHeight);
     // top left
-    leftTopLeft.X = widthLeft;
-    leftTopLeft.Y = this.y;
+    leftTopLeft.X.setFromFp(widthLeft);
+    leftTopLeft.Y.setFromFp(this.y);
     // top right
-    leftTopRight.X = this.x;
-    leftTopRight.Y = this.y;
+    leftTopRight.X.setFromFp(this.x);
+    leftTopRight.Y.setFromFp(this.y);
     // bottom right
-    leftBottomRight.X = this.x;
-    leftBottomRight.Y = bottomHeight;
+    leftBottomRight.X.setFromFp(this.x);
+    leftBottomRight.Y.setFromFp(bottomHeight);
   }
 
   public SnapShot(): LedgeDetectorSnapShot {
     return {
-      middleX: this.x,
-      middleY: this.y,
+      middleX: this.x.AsNumber,
+      middleY: this.y.AsNumber,
       numberOfLedgeGrabs: this.numberOfLedgeGrabs,
     } as LedgeDetectorSnapShot;
   }
@@ -1144,7 +1172,10 @@ export class LedgeDetectorComponent
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    this.MoveTo(snapShot.middleX, snapShot.middleY);
+    this.MoveTo(
+      this.fpp.Rent().setFromNumber(snapShot.middleX),
+      this.fpp.Rent().setFromNumber(snapShot.middleY)
+    );
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
   }
 }
@@ -1152,10 +1183,10 @@ export class LedgeDetectorComponent
 export class JumpComponent implements IHistoryEnabled<number> {
   private readonly numberOfJumps: number = 2;
   private jumpCount: number = 0;
-  public readonly JumpVelocity: number;
+  public readonly JumpVelocity: FixedPoint = new FixedPoint(0);
 
-  constructor(jumpVelocity: number, numberOfJumps: number = 2) {
-    this.JumpVelocity = jumpVelocity;
+  constructor(jumpVelocity: FixedPoint, numberOfJumps: number = 2) {
+    this.JumpVelocity.setFromFp(jumpVelocity);
     this.numberOfJumps = numberOfJumps;
   }
 
@@ -1193,27 +1224,27 @@ type frameNumber = number;
 
 export class HitBubble {
   public readonly BubbleId: bubbleId;
-  public readonly Damage: number;
+  public readonly Damage: FixedPoint = new FixedPoint(0);
   public readonly Priority: number;
-  public readonly Radius: number;
-  public readonly launchAngle: number;
+  public readonly Radius: FixedPoint = new FixedPoint(0);
+  public readonly launchAngle: FixedPoint = new FixedPoint(0);
   public readonly activeStartFrame: frameNumber;
   public readonly activeEndFrame: frameNumber;
   public readonly frameOffsets: Map<frameNumber, FlatVec>;
 
   constructor(
     id: bubbleId,
-    damage: number,
+    damage: FixedPoint,
     priority: number,
-    radius: number,
-    launchAngle: number,
+    radius: FixedPoint,
+    launchAngle: FixedPoint,
     frameOffsets: Map<frameNumber, FlatVec>
   ) {
     this.BubbleId = id;
-    this.Damage = damage;
+    this.Damage.setFromFp(damage);
     this.Priority = priority;
-    this.Radius = radius;
-    this.launchAngle = launchAngle;
+    this.Radius.setFromFp(radius);
+    this.launchAngle.setFromFp(launchAngle);
     const activeframes = Array.from(frameOffsets.keys()).sort((a, b) => a - b);
     this.activeStartFrame = activeframes[0];
     this.activeEndFrame = activeframes[activeframes.length - 1];
@@ -1234,9 +1265,10 @@ export class HitBubble {
   }
 
   public GetGlobalPosition(
+    fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
-    playerX: number,
-    playerY: number,
+    playerX: FixedPoint,
+    playerY: FixedPoint,
     facinRight: boolean,
     attackFrameNumber: frameNumber
   ): PooledVector | undefined {
@@ -1246,8 +1278,10 @@ export class HitBubble {
       return undefined;
     }
 
-    const globalX = facinRight ? playerX + offset.X : playerX - offset.X;
-    const globalY = playerY + offset.Y;
+    const globalX = facinRight
+      ? fpp.Rent().setAdd(playerX, offset.X)
+      : fpp.Rent().setSubtract(playerX, offset.X);
+    const globalY = fpp.Rent().setAdd(playerY, offset.Y);
 
     return vecPool.Rent().SetXY(globalX, globalY);
   }
@@ -1262,9 +1296,9 @@ export class Attack {
   public readonly TotalFrameLength: number;
   public readonly InteruptableFrame: number;
   public readonly GravityActive: boolean;
-  public readonly BaseKnockBack: number;
-  public readonly KnockBackScaling: number;
-  public readonly ImpulseClamp: number | undefined;
+  public readonly BaseKnockBack: FixedPoint = new FixedPoint(0);
+  public readonly KnockBackScaling: FixedPoint = new FixedPoint(0);
+  public readonly ImpulseClamp: FixedPoint | undefined;
   public readonly PlayerIdsHit: Set<number> = new Set<number>();
   public readonly Impulses: Map<frameNumber, FlatVec> = new Map<
     frameNumber,
@@ -1280,9 +1314,9 @@ export class Attack {
     name: string,
     totalFrameLength: number,
     interuptableFrame: number,
-    baseKb: number,
-    kbScaling: number,
-    impulseClamp: number | undefined,
+    baseKb: FixedPoint,
+    kbScaling: FixedPoint,
+    impulseClamp: FixedPoint | undefined,
     hitBubbles: Array<HitBubble>,
     canOnlyFallOffLedgeWhenFacingAwayFromIt: boolean = false,
     gravityActive: boolean = true,
@@ -1297,9 +1331,13 @@ export class Attack {
     this.GravityActive = gravityActive;
     this.CanOnlyFallOffLedgeIfFacingAwayFromIt =
       canOnlyFallOffLedgeWhenFacingAwayFromIt;
-    this.BaseKnockBack = baseKb;
-    this.KnockBackScaling = kbScaling;
-    this.ImpulseClamp = impulseClamp;
+    this.BaseKnockBack.setFromFp(baseKb);
+    this.KnockBackScaling.setFromFp(kbScaling);
+
+    if (impulseClamp != undefined) {
+      this.ImpulseClamp = new FixedPoint().setFromFp(impulseClamp);
+    }
+
     this.HitBubbles = hitBubbles.sort((a, b) => a.Priority - b.Priority);
 
     if (impulses !== undefined) {
@@ -1373,9 +1411,9 @@ export class AttackBuilder {
   private totalFrames: number = 0;
   private interuptableFrame: number = 0;
   private hasGravtity: boolean = true;
-  private baseKnockBack: number = 0;
-  private knockBackScaling: number = 0;
-  private impulseClamp: number | undefined;
+  private readonly baseKnockBack: FixedPoint = new FixedPoint();
+  private readonly knockBackScaling: FixedPoint = new FixedPoint();
+  private impulseClamp: FixedPoint | undefined;
   private impulses: Map<frameNumber, FlatVec> | undefined;
   private hitBubbles: Array<HitBubble> = [];
   private canOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
@@ -1394,10 +1432,13 @@ export class AttackBuilder {
 
   public WithImpulses(
     impulses: Map<frameNumber, FlatVec>,
-    impulseClamp: number | undefined
+    impulseClamp: FixedPoint | undefined
   ): AttackBuilder {
     this.impulses = impulses;
-    this.impulseClamp = impulseClamp;
+    this.impulseClamp =
+      impulseClamp !== undefined
+        ? new FixedPoint().setFromFp(impulseClamp)
+        : undefined;
     return this;
   }
 
@@ -1416,13 +1457,13 @@ export class AttackBuilder {
     return this;
   }
 
-  public WithBaseKnockBack(baseKb: number): AttackBuilder {
-    this.baseKnockBack = baseKb;
+  public WithBaseKnockBack(baseKb: FixedPoint): AttackBuilder {
+    this.baseKnockBack.setFromFp(baseKb);
     return this;
   }
 
-  public WithKnockBackScaling(kbScaling: number): AttackBuilder {
-    this.knockBackScaling = kbScaling;
+  public WithKnockBackScaling(kbScaling: FixedPoint): AttackBuilder {
+    this.knockBackScaling.setFromFp(kbScaling);
     return this;
   }
 
@@ -1442,10 +1483,10 @@ export class AttackBuilder {
   }
 
   public WithHitBubble(
-    damage: number,
-    radius: number,
+    damage: FixedPoint,
+    radius: FixedPoint,
     priority: number,
-    launchAngle: number,
+    launchAngle: FixedPoint,
     frameOffsets: Map<frameNumber, FlatVec>
   ): AttackBuilder {
     const hitBubId = this.hitBubbles.length;
@@ -1525,43 +1566,34 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
 }
 
 class Sensor {
-  private xOffset: number = 0;
-  private yOffset: number = 0;
-  private radius: number = 0;
+  private readonly xOffset: FixedPoint = new FixedPoint();
+  private readonly yOffset: FixedPoint = new FixedPoint();
+  private readonly radius: FixedPoint = new FixedPoint();
   private active: boolean = false;
 
   public GetGlobalPosition(
+    fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
-    globalX: number,
-    globalY: number,
+    globalX: FixedPoint,
+    globalY: FixedPoint,
     facingRight: boolean
   ): PooledVector {
-    const x = facingRight ? globalX + this.xOffset : globalX - this.xOffset;
-    const y = globalY + this.yOffset;
+    const x = facingRight
+      ? fpp.Rent().setAdd(globalX, this.xOffset)
+      : fpp.Rent().setMultiply(globalX, this.xOffset);
+    const y = fpp.Rent().setAdd(globalY, this.yOffset);
     return vecPool.Rent().SetXY(x, y);
   }
 
-  public set Radius(value: number) {
-    this.radius = value;
-  }
-
-  public set XOffset(value: number) {
-    this.xOffset = value;
-  }
-
-  public set YOffset(value: number) {
-    this.yOffset = value;
-  }
-
-  public get Radius(): number {
+  public get Radius(): FixedPoint {
     return this.radius;
   }
 
-  public get XOffset(): number {
+  public get XOffset(): FixedPoint {
     return this.xOffset;
   }
 
-  public get YOffset(): number {
+  public get YOffset(): FixedPoint {
     return this.yOffset;
   }
 
@@ -1574,9 +1606,9 @@ class Sensor {
   }
 
   public Deactivate(): void {
-    this.xOffset = 0;
-    this.yOffset = 0;
-    this.radius = 0;
+    this.xOffset.Zero();
+    this.yOffset.Zero();
+    this.radius.Zero();
     this.active = false;
   }
 }
@@ -1606,8 +1638,10 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   private currentSensorIdx: number = 0;
   private readonly sensors: Array<Sensor> = new Array<Sensor>(10);
   private sensorReactor: SensorReactor = defaultReactor;
+  private readonly fpp: Pool<FixedPoint>;
 
-  constructor() {
+  constructor(fpp: Pool<FixedPoint>) {
+    this.fpp = fpp;
     for (let i = 0; i < this.sensors.length; i++) {
       this.sensors[i] = new Sensor();
     }
@@ -1626,9 +1660,9 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   }
 
   public ActivateSensor(
-    yOffset: number,
-    xOffset: number,
-    radius: number
+    yOffset: FixedPoint,
+    xOffset: FixedPoint,
+    radius: FixedPoint
   ): SensorComponent {
     if (this.currentSensorIdx >= this.sensors.length) {
       throw new Error('No more sensors available to activate.');
@@ -1638,14 +1672,14 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   }
 
   private activateSensor(
-    yOffset: number,
-    xOffset: number,
-    radius: number
+    yOffset: FixedPoint,
+    xOffset: FixedPoint,
+    radius: FixedPoint
   ): void {
     const sensor = this.sensors[this.currentSensorIdx];
-    sensor.XOffset = xOffset;
-    sensor.YOffset = yOffset;
-    sensor.Radius = radius;
+    sensor.XOffset.setFromFp(xOffset);
+    sensor.YOffset.setFromFp(yOffset);
+    sensor.Radius.setFromFp(radius);
     sensor.Activate();
     this.currentSensorIdx++;
   }
@@ -1681,9 +1715,9 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
       const sensor = this.sensors[i];
       if (sensor.IsActive) {
         snapShot.sensors.push({
-          yOffset: sensor.YOffset,
-          xOffset: sensor.XOffset,
-          radius: sensor.Radius,
+          yOffset: sensor.YOffset.AsNumber,
+          xOffset: sensor.XOffset.AsNumber,
+          radius: sensor.Radius.AsNumber,
         });
       }
     }
@@ -1697,9 +1731,9 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     for (let i = 0; i < snapShotSensorLength; i++) {
       const snapShotSensor = snapShot.sensors[i];
       this.activateSensor(
-        snapShotSensor.yOffset,
-        snapShotSensor.xOffset,
-        snapShotSensor.radius
+        this.fpp.Rent().setFromNumber(snapShotSensor.yOffset),
+        this.fpp.Rent().setFromNumber(snapShotSensor.xOffset),
+        this.fpp.Rent().setFromNumber(snapShotSensor.radius)
       );
     }
     this.sensorReactor = snapShot.reactor || defaultReactor;
@@ -1710,64 +1744,67 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
 // builder ================================================
 
 export class SpeedsComponentBuilder {
-  private groundedVelocityDecay: number = 0;
-  private aerialVelocityDecay: number = 0;
-  private aerialSpeedInpulseLimit: number = 0;
-  private aerialSpeedMultiplier: number = 0;
-  private airDodgeSpeed: number = 0;
-  private dodgeRollSpeed: number = 0;
-  private maxWalkSpeed: number = 0;
-  private maxRunSpeed: number = 0;
-  private dashMutiplier: number = 0;
-  private maxDashSpeed: number = 0;
-  private walkSpeedMulitplier: number = 0;
-  private runSpeedMultiplier: number = 0;
-  private fastFallSpeed: number = 0;
-  private fallSpeed: number = 0;
-  private gravity: number = 0;
+  private readonly groundedVelocityDecay: FixedPoint = new FixedPoint();
+  private readonly aerialVelocityDecay: FixedPoint = new FixedPoint();
+  private readonly aerialSpeedInpulseLimit: FixedPoint = new FixedPoint();
+  private readonly aerialSpeedMultiplier: FixedPoint = new FixedPoint();
+  private readonly airDodgeSpeed: FixedPoint = new FixedPoint();
+  private readonly dodgeRollSpeed: FixedPoint = new FixedPoint();
+  private readonly maxWalkSpeed: FixedPoint = new FixedPoint();
+  private readonly maxRunSpeed: FixedPoint = new FixedPoint();
+  private readonly dashMutiplier: FixedPoint = new FixedPoint();
+  private readonly maxDashSpeed: FixedPoint = new FixedPoint();
+  private readonly walkSpeedMulitplier: FixedPoint = new FixedPoint();
+  private readonly runSpeedMultiplier: FixedPoint = new FixedPoint();
+  private readonly fastFallSpeed: FixedPoint = new FixedPoint();
+  private readonly fallSpeed: FixedPoint = new FixedPoint();
+  private readonly gravity: FixedPoint = new FixedPoint();
 
   SetAerialSpeeds(
-    aerialVelocityDecay: number,
-    aerialSpeedImpulseLimit: number,
-    aerialSpeedMultiplier: number
+    aerialVelocityDecay: FixedPoint,
+    aerialSpeedImpulseLimit: FixedPoint,
+    aerialSpeedMultiplier: FixedPoint
   ) {
-    this.aerialVelocityDecay = aerialVelocityDecay;
-    this.aerialSpeedInpulseLimit = aerialSpeedImpulseLimit;
-    this.aerialSpeedMultiplier = aerialSpeedMultiplier;
+    this.aerialVelocityDecay.setFromFp(aerialVelocityDecay);
+    this.aerialSpeedInpulseLimit.setFromFp(aerialSpeedImpulseLimit);
+    this.aerialSpeedMultiplier.setFromFp(aerialSpeedMultiplier);
   }
 
-  SetDodgeSpeeds(airDodgeSpeed: number, dodgeRollSpeed: number): void {
-    this.airDodgeSpeed = airDodgeSpeed;
-    this.dodgeRollSpeed = dodgeRollSpeed;
+  SetDodgeSpeeds(airDodgeSpeed: FixedPoint, dodgeRollSpeed: FixedPoint): void {
+    this.airDodgeSpeed.setFromFp(airDodgeSpeed);
+    this.dodgeRollSpeed.setFromFp(dodgeRollSpeed);
   }
 
   SetFallSpeeds(
-    fastFallSpeed: number,
-    fallSpeed: number,
-    gravity: number = 1
+    fastFallSpeed: FixedPoint,
+    fallSpeed: FixedPoint,
+    gravity: FixedPoint = new FixedPoint(1)
   ): void {
-    this.fallSpeed = fallSpeed;
-    this.fastFallSpeed = fastFallSpeed;
-    this.gravity = gravity;
+    this.fallSpeed.setFromFp(fallSpeed);
+    this.fastFallSpeed.setFromFp(fastFallSpeed);
+    this.gravity.setFromFp(gravity);
   }
 
-  SetWalkSpeeds(maxWalkSpeed: number, walkSpeedMultiplier: number): void {
-    this.maxWalkSpeed = maxWalkSpeed;
-    this.walkSpeedMulitplier = walkSpeedMultiplier;
+  SetWalkSpeeds(
+    maxWalkSpeed: FixedPoint,
+    walkSpeedMultiplier: FixedPoint
+  ): void {
+    this.maxWalkSpeed.setFromFp(maxWalkSpeed);
+    this.walkSpeedMulitplier.setFromFp(walkSpeedMultiplier);
   }
 
-  SetRunSpeeds(maxRunSpeed: number, runSpeedMultiplier: number): void {
-    this.runSpeedMultiplier = runSpeedMultiplier;
-    this.maxRunSpeed = maxRunSpeed;
+  SetRunSpeeds(maxRunSpeed: FixedPoint, runSpeedMultiplier: FixedPoint): void {
+    this.runSpeedMultiplier.setFromFp(runSpeedMultiplier);
+    this.maxRunSpeed.setFromFp(maxRunSpeed);
   }
 
-  SetDashSpeeds(dashMultiplier: number, maxDashSpeed: number): void {
-    this.dashMutiplier = dashMultiplier;
-    this.maxDashSpeed = maxDashSpeed;
+  SetDashSpeeds(dashMultiplier: FixedPoint, maxDashSpeed: FixedPoint): void {
+    this.dashMutiplier.setFromFp(dashMultiplier);
+    this.maxDashSpeed.setFromFp(maxDashSpeed);
   }
 
-  SetGroundedVelocityDecay(groundedVelocityDecay: number): void {
-    this.groundedVelocityDecay = groundedVelocityDecay;
+  SetGroundedVelocityDecay(groundedVelocityDecay: FixedPoint): void {
+    this.groundedVelocityDecay.setFromFp(groundedVelocityDecay);
   }
 
   Build(): SpeedsComponent {

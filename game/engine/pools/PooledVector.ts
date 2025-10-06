@@ -1,143 +1,131 @@
+import { FixedPoint } from '../../math/fixedPoint';
 import { FlatVec } from '../physics/vector';
-import { IPooledObject } from './Pool';
+import { IPooledObject, Pool } from './Pool';
 
-export interface IPooledVector {
-  AddVec(vec: IPooledVector): IPooledVector;
-  SubtractVec(vec: IPooledVector): IPooledVector;
-  Multiply(s: number): IPooledVector;
-  Negate(): IPooledVector;
-  Divide(s: number): IPooledVector;
-  Length(): number;
-  Distance(vec: IPooledVector): number;
-  Normalize(): IPooledVector;
-  DotProduct(vec: IPooledVector): number;
-  CrossProduct(vec: IPooledVector): number;
-  SetFromFlatVec(vec: FlatVec): IPooledVector;
-  get X(): number;
-  get Y(): number;
-  AddToX(x: number): void;
-  AddToY(y: number): void;
-  SetX(x: number): IPooledVector;
-  SetY(y: number): IPooledVector;
-  SetXY(x: number, y: number): IPooledVector;
-}
-
-export class PooledVector implements IPooledVector, IPooledObject {
-  private x: number;
-  private y: number;
-
-  constructor(x: number = 0, y: number = 0) {
-    this.x = x;
-    this.y = y;
-  }
+export class PooledVector implements IPooledObject {
+  private readonly x: FixedPoint = new FixedPoint(0);
+  private readonly y: FixedPoint = new FixedPoint(0);
 
   public AddVec(vec: PooledVector): PooledVector {
-    this.x += vec.X;
-    this.y += vec.Y;
+    this.x.add(vec.X);
+    this.y.add(vec.Y);
     return this;
   }
 
-  public AddXY(x: number, y: number): PooledVector {
-    this.x += x;
-    this.y += y;
+  public AddXY(x: FixedPoint, y: FixedPoint): PooledVector {
+    this.x.add(x);
+    this.y.add(y);
     return this;
   }
 
   public SubtractVec(vec: PooledVector): PooledVector {
-    this.x -= vec.X;
-    this.y -= vec.Y;
+    this.x.subtract(vec.X);
+    this.y.subtract(vec.Y);
     return this;
   }
 
-  public SubtractXY(x: number, y: number): PooledVector {
-    this.x -= x;
-    this.y -= y;
+  public SubtractXY(x: FixedPoint, y: FixedPoint): PooledVector {
+    this.x.subtract(x);
+    this.y.subtract(y);
     return this;
   }
 
-  public Multiply(s: number): PooledVector {
-    this.x *= s;
-    this.y *= s;
+  public Multiply(s: FixedPoint): PooledVector {
+    this.x.multiply(s);
+    this.y.multiply(s);
     return this;
   }
 
   public Negate(): PooledVector {
-    this.x = -this.x;
-    this.y = -this.y;
+    this.x.negate();
+    this.y.negate();
     return this;
   }
 
-  public Divide(s: number): PooledVector {
-    this.x /= s;
-    this.y /= s;
+  public Divide(s: FixedPoint): PooledVector {
+    this.x.divide(s);
+    this.y.divide(s);
     return this;
   }
 
-  public Length(): number {
-    return Math.sqrt(this.x * this.x + this.y * this.y);
+  public Length(pool: Pool<FixedPoint>): FixedPoint {
+    const fp = pool
+      .Rent()
+      .setMultiply(this.x, this.x)
+      .add(pool.Rent().setMultiply(this.y, this.y));
+    return FixedPoint.sqrt(fp, pool);
   }
 
-  public Distance(vec: PooledVector): number {
-    const dx = this.x - vec.X;
-    const dy = this.y - vec.Y;
-    return Math.sqrt(dx * dx + dy * dy);
+  public Distance(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
+    const dx = fpp.Rent().setSubtract(this.x, other.X);
+    const dy = fpp.Rent().setSubtract(this.y, other.Y);
+    const dx2 = fpp.Rent().setMultiply(dx, dx);
+    const dy2 = fpp.Rent().setMultiply(dy, dy);
+    const sum = fpp.Rent().setAdd(dx2, dy2);
+    return FixedPoint.sqrt(sum, fpp);
   }
 
-  public Normalize(): PooledVector {
-    const length = Math.sqrt(this.x * this.x + this.y * this.y);
-    this.x /= length;
-    this.y /= length;
+  public Normalize(fpp: Pool<FixedPoint>): PooledVector {
+    const length = this.Length(fpp);
+    if (length.graterThanZero) {
+      this.x.divide(length);
+      this.y.divide(length);
+    }
     return this;
   }
 
-  public DotProduct(vec: PooledVector): number {
-    return this.x * vec.X + this.y * vec.Y;
+  public DotProduct(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
+    const x_prod = fpp.Rent().setMultiply(this.x, other.X);
+    const y_prod = fpp.Rent().setMultiply(this.y, other.Y);
+    return x_prod.add(y_prod);
   }
 
-  public CrossProduct(vec: PooledVector) {
-    return this.x * vec.Y - this.y * vec.X;
+  public CrossProduct(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
+    const x_prod = fpp.Rent().setMultiply(this.x, other.Y);
+    const y_prod = fpp.Rent().setMultiply(this.y, other.X);
+    return x_prod.subtract(y_prod);
   }
 
   public SetFromFlatVec(vec: FlatVec): PooledVector {
-    this.x = vec.X;
-    this.y = vec.Y;
+    this.x.setFromFp(vec.X);
+    this.y.setFromFp(vec.Y);
     return this;
   }
 
-  public AddToX(x: number): void {
-    this.x += x;
+  public AddToX(x: FixedPoint): void {
+    this.x.add(x);
   }
 
-  public AddToY(y: number): void {
-    this.y += y;
+  public AddToY(y: FixedPoint): void {
+    this.y.add(y);
   }
 
-  get X(): number {
+  get X(): FixedPoint {
     return this.x;
   }
 
-  get Y(): number {
+  get Y(): FixedPoint {
     return this.y;
   }
 
-  public SetX(x: number): PooledVector {
-    this.x = x;
+  public SetX(x: FixedPoint): PooledVector {
+    this.x.setFromFp(x);
     return this;
   }
 
-  public SetY(y: number): PooledVector {
-    this.y = y;
+  public SetY(y: FixedPoint): PooledVector {
+    this.y.setFromFp(y);
     return this;
   }
 
-  public SetXY(x: number, y: number): PooledVector {
-    this.x = x;
-    this.y = y;
+  public SetXY(x: FixedPoint, y: FixedPoint): PooledVector {
+    this.x.setFromFp(x);
+    this.y.setFromFp(y);
     return this;
   }
 
   public Zero(): void {
-    this.x = 0;
-    this.y = 0;
+    this.x.setFromNumber(0);
+    this.y.setFromNumber(0);
   }
 }

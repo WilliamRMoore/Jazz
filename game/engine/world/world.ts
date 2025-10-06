@@ -11,6 +11,7 @@ import { ProjectionResult } from '../pools/ProjectResult';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { FixedPoint } from '../../math/fixedPoint';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -27,6 +28,7 @@ export type StageData = {
 };
 
 export type Pools = {
+  Fpp: Pool<FixedPoint>;
   ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
   VecPool: Pool<PooledVector>;
   ColResPool: Pool<CollisionResult>;
@@ -83,7 +85,8 @@ class StageWorldState implements StageData {
   public Stage!: Stage;
 }
 
-class PoolContainer implements PoolContainer {
+class PoolContainer implements Pools {
+  public readonly Fpp: Pool<FixedPoint>;
   public readonly ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
   public readonly VecPool: Pool<PooledVector>;
   public readonly ColResPool: Pool<CollisionResult>;
@@ -92,6 +95,7 @@ class PoolContainer implements PoolContainer {
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
 
   constructor() {
+    this.Fpp = new Pool<FixedPoint>(10000, () => new FixedPoint());
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
       20,
       () => new ActiveHitBubblesDTO()
@@ -148,9 +152,11 @@ export class World {
     this.PlayerData.AddStateMachine(new StateMachine(p, this));
     this.PlayerData.AddInputStore(new InputStoreLocal<InputAction>());
     const compHist = new ComponentHistory();
-    compHist.StaticPlayerHistory.LedgeDetectorWidth = p.LedgeDetector.Width;
-    compHist.StaticPlayerHistory.ledgDetecorHeight = p.LedgeDetector.Height;
-    compHist.StaticPlayerHistory.ShieldOffset = p.Shield.YOffset;
+    compHist.StaticPlayerHistory.LedgeDetectorWidth =
+      p.LedgeDetector.Width.AsNumber;
+    compHist.StaticPlayerHistory.ledgDetecorHeight =
+      p.LedgeDetector.Height.AsNumber;
+    compHist.StaticPlayerHistory.ShieldOffset = p.Shield.YOffset.AsNumber;
     p.HurtBubbles.HurtCapsules.forEach((hc) =>
       compHist.StaticPlayerHistory.HurtCapsules.push(hc)
     );

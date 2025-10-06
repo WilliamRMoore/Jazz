@@ -21,6 +21,7 @@ import {
 } from './playerComponents';
 import { LineSegmentIntersection } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
+import { FixedPoint } from '../../math/fixedPoint';
 
 export type speedBuilderOptions = (scb: SpeedsComponentBuilder) => void;
 
@@ -240,7 +241,7 @@ export function PlayerOnStage(
 export function PlayerOnPlats(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: number
+  ecbSensorDepth: FixedPoint
 ): boolean {
   const plats = s.Platforms;
   if (plats === undefined) {

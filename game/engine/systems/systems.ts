@@ -47,6 +47,7 @@ export function StageCollisionDetection(
   stageData: StageData,
   pools: Pools
 ): void {
+  const fpp = pools.Fpp;
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
   const stageGround = stage.StageVerticies.GetGround();
