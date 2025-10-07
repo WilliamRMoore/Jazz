@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "build": "esbuild game/index.ts --bundle --outfile=public/index.js && node -e \"require('fs').copyFileSync('index.html', 'public/index.html')\"",
     "start": "esbuild game/index.ts --bundle --outfile=public/index.js --servedir=public --watch",
     "deploy": "npm run build && gh-pages -d public"
@@ -21,8 +21,12 @@
   },
   "homepage": "https://github.com/WilliamRMoore/Jazz#readme",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "esbuild": "^0.25.9",
+    "esbuild-jest": "^0.5.0",
     "gh-pages": "^6.3.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.4",
     "typescript": "^5.9.2"
   }
 }

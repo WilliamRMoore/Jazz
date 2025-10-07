@@ -701,7 +701,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public GetHull(): FlatVec[] {
-    return CreateConvexHull(this.allVerts);
+    return CreateConvexHull(this.allVerts, this.fpp);
   }
 
   public GetActiveVerts(): FlatVec[] {

@@ -1,8 +1,9 @@
+import { FixedPoint } from '../math/fixedPoint';
 import { FlatVec } from './physics/vector';
 
 export function FillArrayWithFlatVec(fvArr: FlatVec[]): void {
   for (let index = 0; index < fvArr.length; index++) {
-    fvArr[index] = new FlatVec(0, 0);
+    fvArr[index] = new FlatVec(new FixedPoint(), new FixedPoint());
   }
 }
 

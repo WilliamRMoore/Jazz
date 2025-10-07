@@ -27,13 +27,15 @@ export function IntersectsPolygons(
     const vb = verticiesA[(i + 1) % verticiesA.length];
     verticiesAVec.SetXY(va.X, va.Y);
     verticiesBVec.SetXY(vb.X, vb.Y);
-    const negatedY = fpp
-      .Rent()
-      .setMultiply(fpp.Rent().setFromNumber(-1), verticiesBVec.Y);
-    let axis = verticiesBVec
-      .SubtractVec(verticiesAVec)
-      .SetY(negatedY)
-      .Normalize(fpp);
+
+    // Get edge vector
+    const edge = verticiesBVec.SubtractVec(verticiesAVec);
+
+    // Get perpendicular axis.
+    const tempX = fpp.Rent().setFromFp(edge.X);
+    edge.SetX(edge.Y.negate());
+    edge.SetY(tempX);
+    let axis = edge.Normalize(fpp);
     // Project verticies for both polygons.
     const vaProj = projectVerticies(
       verticiesA,
@@ -119,11 +121,6 @@ export function IntersectsPolygons(
 
     const axisDepth = FixedPoint.Min(vbVaDepth, vaVbDepth);
 
-    // const axisDepth = Math.min(
-    //   vbProj.Max - vaProj.Min,
-    //   vaProj.Max - vbProj.Min
-    // );
-
     if (axisDepth.lessThan(depth)) {
       depth = axisDepth;
       normal.SetX(axis.X).SetY(axis.Y);
@@ -170,11 +167,11 @@ export function IntersectsCircles(
 }
 
 export function ClosestPointsBetweenSegments(
-  fpp: Pool<FixedPoint>,
   p1: PooledVector,
   q1: PooledVector,
   p2: PooledVector,
   q2: PooledVector,
+  fpp: Pool<FixedPoint>,
   vecPool: Pool<PooledVector>,
   ClosestPointsPool: Pool<ClosestPointsResult>
 ): ClosestPointsResult {
@@ -190,12 +187,26 @@ export function ClosestPointsBetweenSegments(
 
   if (isSegment1Point) {
     // Segment 1 is a point
-    return closestPointOnSegmentToPoint(p2, q2, p1, vecPool, ClosestPointsPool);
+    return closestPointOnSegmentToPoint(
+      p2,
+      q2,
+      p1,
+      fpp,
+      vecPool,
+      ClosestPointsPool
+    );
   }
 
   if (isSegment2Point) {
     // Segment 2 is a point
-    return closestPointOnSegmentToPoint(p1, q1, p2, vecPool, ClosestPointsPool);
+    return closestPointOnSegmentToPoint(
+      p1,
+      q1,
+      p2,
+      fpp,
+      vecPool,
+      ClosestPointsPool
+    );
   }
 
   const p1Dto = vecPool.Rent().SetXY(p1.X, p1.Y);
@@ -260,15 +271,12 @@ export function ClosestPointsBetweenSegments(
   // let c2X = p2Dto.X + t * d2.X;
   // let c2Y = p2Dto.Y + t * d2.Y;
 
-  const c1XAdd = fpp.Rent().setAdd(p1.X, fpp.Rent().setMultiply(s, d1.X));
-  const c1YAdd = fpp.Rent().setAdd(p1.Y, fpp.Rent().setMultiply(s, d1.Y));
-  const c2XAdd = fpp.Rent().setAdd(p2Dto.X, fpp.Rent().setMultiply(t, d2.X));
-  const c2YAdd = fpp.Rent().setAdd(p2Dto.Y, fpp.Rent().setMultiply(t, d2.Y));
-
-  const c1X = fpp.Rent().setAdd(p1.X, c1XAdd);
-  const c1Y = fpp.Rent().setAdd(p1.Y, c1YAdd);
-  const c2X = fpp.Rent().setAdd(p2Dto.X, c2XAdd);
-  const c2Y = fpp.Rent().setAdd(p2Dto.Y, c2YAdd);
+  // c1 = p1 + s * d1
+  const c1X = fpp.Rent().setAdd(p1.X, fpp.Rent().setMultiply(s, d1.X));
+  const c1Y = fpp.Rent().setAdd(p1.Y, fpp.Rent().setMultiply(s, d1.Y));
+  // c2 = p2 + t * d2 (p2Dto is p2 as a PooledVector)
+  const c2X = fpp.Rent().setAdd(p2Dto.X, fpp.Rent().setMultiply(t, d2.X));
+  const c2Y = fpp.Rent().setAdd(p2Dto.Y, fpp.Rent().setMultiply(t, d2.Y));
 
   const closestPoints = ClosestPointsPool.Rent();
 
@@ -302,26 +310,40 @@ function closestPointOnSegmentToPoint(
   segStart: FlatVec,
   segEnd: FlatVec,
   point: FlatVec,
+  fpp: Pool<FixedPoint>,
   vecPool: Pool<PooledVector>,
   ClosestPointsPool: Pool<ClosestPointsResult>
 ): ClosestPointsResult {
-  const segVec = vecPool
-    .Rent()
-    .SetXY(segEnd.X - segStart.X, segEnd.Y - segStart.Y);
-  const pointVec = vecPool
-    .Rent()
-    .SetXY(point.X - segStart.X, point.Y - segStart.Y);
+  const segVecT1 = fpp.Rent().setSubtract(segEnd.X, segStart.X);
+  const segVecT2 = fpp.Rent().setSubtract(segEnd.Y, segStart.Y);
+  const segVec = vecPool.Rent().SetXY(segVecT1, segVecT2);
 
-  const segLengthSquared = segVec.X * segVec.X + segVec.Y * segVec.Y;
+  const pointVecT1 = fpp.Rent().setSubtract(point.X, segStart.X);
+  const pointVecT2 = fpp.Rent().setSubtract(point.Y, segStart.Y);
+  const pointVec = vecPool.Rent().SetXY(pointVecT1, pointVecT2);
 
-  let t = 0;
-  if (segLengthSquared > 0) {
-    t = (pointVec.X * segVec.X + pointVec.Y * segVec.Y) / segLengthSquared;
-    t = Math.max(0, Math.min(1, t)); // Clamp t to [0, 1]
+  const xLength = fpp.Rent().setMultiply(segVec.X, segVec.X);
+  const yLength = fpp.Rent().setMultiply(segVec.Y, segVec.Y);
+  const segLengthSquared = fpp.Rent().setAdd(xLength, yLength); //segVec.X * segVec.X + segVec.Y * segVec.Y;
+
+  const zero = fpp.Rent().setFromNumber(0);
+
+  const t = fpp.Rent().setFromNumber(0);
+  if (segLengthSquared.greaterThan(zero)) {
+    const tT1 = fpp.Rent().setMultiply(pointVec.X, segVec.X);
+    const tT2 = fpp.Rent().setMultiply(pointVec.Y, segVec.Y);
+    const tNumerator = fpp.Rent().setAdd(tT1, tT2);
+    t.setDivide(tNumerator, segLengthSquared);
+
+    //t = (pointVec.X * segVec.X + pointVec.Y * segVec.Y) / segLengthSquared;
+    t.setFromNumber(Math.max(0, Math.min(1, t.AsNumber))); // Clamp t to [0, 1]
   }
 
-  const closestX = segStart.X + t * segVec.X;
-  const closestY = segStart.Y + t * segVec.Y;
+  const segXT = fpp.Rent().setMultiply(segVec.X, t);
+  const segYT = fpp.Rent().setMultiply(segVec.Y, t);
+  // closest = segStart + t * segVec
+  const closestX = fpp.Rent().setAdd(segStart.X, segXT); // segStart.X + t * segVec.X
+  const closestY = fpp.Rent().setAdd(segStart.Y, segYT); // segStart.Y + t * segVec.Y
 
   const ret = ClosestPointsPool.Rent();
   ret.Set(closestX, closestY, point.X, point.Y);
@@ -428,21 +450,41 @@ export function LineSegmentIntersection(
 }
 
 // Function to compute the cross product of two vectors
-function cross(o: FlatVec, a: FlatVec, b: FlatVec): number {
-  return (a.X - o.X) * (b.Y - o.Y) - (a.Y - o.Y) * (b.X - o.X);
+function cross(
+  o: FlatVec,
+  a: FlatVec,
+  b: FlatVec,
+  fpp: Pool<FixedPoint>
+): FixedPoint {
+  const term1_part1 = fpp.Rent().setSubtract(a.X, o.X);
+  const term1_part2 = fpp.Rent().setSubtract(b.Y, o.Y);
+  const term1 = term1_part1.multiply(term1_part2); // term1_part1 is now term1
+
+  const term2_part1 = fpp.Rent().setSubtract(a.Y, o.Y);
+  const term2_part2 = fpp.Rent().setSubtract(b.X, o.X);
+  const term2 = term2_part1.multiply(term2_part2); // term2_part1 is now term2
+
+  return term1.subtract(term2); // term1 is now the result
 }
 
+let fpp: Pool<FixedPoint> = new Pool<FixedPoint>(100, () => new FixedPoint());
+
 function comparePointsXY(a: FlatVec, b: FlatVec): number {
-  if (a.X === b.X) {
-    return a.Y - b.Y;
+  if (a.X.equals(b.X)) {
+    const diff = fpp.Rent().setSubtract(a.Y, b.Y);
+    return diff.getRaw();
   }
-  return a.X - b.X;
+  const diff = fpp.Rent().setSubtract(a.X, b.X);
+  return diff.getRaw();
 }
 
 const lower: Array<FlatVec> = [];
 const upper: Array<FlatVec> = [];
 
-export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
+export function CreateConvexHull(
+  points: Array<FlatVec>,
+  fpp: Pool<FixedPoint>
+): Array<FlatVec> {
   if (points.length < 3) {
     // A convex hull is not possible with fewer than 3 points
     lower.length = 0; // Clear the lower array
@@ -451,6 +493,8 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
     }
     return lower;
   }
+
+  fpp = fpp;
 
   // Sort points lexicographically (by X, then by Y)
   points.sort(comparePointsXY);
@@ -464,7 +508,8 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
     const p = points[i];
     while (
       lower.length >= 2 &&
-      cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+      cross(lower[lower.length - 2], lower[lower.length - 1], p, fpp)
+        .AsNumber <= 0
     ) {
       lower.pop();
     }
@@ -476,7 +521,8 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
     const p = points[i];
     while (
       upper.length >= 2 &&
-      cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+      cross(upper[upper.length - 2], upper[upper.length - 1], p, fpp)
+        .AsNumber <= 0
     ) {
       upper.pop();
     }
