@@ -19,7 +19,7 @@ import {
   VelocityComponent,
   WeightComponent,
 } from './playerComponents';
-import { LineSegmentIntersection } from '../physics/collisions';
+import { LineSegmentIntersectionFp } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
 import { FixedPoint } from '../../math/fixedPoint';
 
@@ -220,7 +220,7 @@ export function PlayerOnStage(
   for (let i = 0; i < grndLoopLength; i++) {
     const gP = grnd[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         gP.X1,
         gP.Y1,
         gP.X2,
@@ -252,7 +252,7 @@ export function PlayerOnPlats(
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         ecbBottom.X,
         ecbBottom.Y,
         ecbBottom.X,
@@ -283,7 +283,7 @@ export function PlayerOnPlatsReturnsYCoord(
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         ecbBottom.X,
         ecbBottom.Y,
         ecbBottom.X,
@@ -322,7 +322,7 @@ export function PlayerTouchingStageLeftWall(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         lP.X1,
         lP.Y1,
         lP.X2,
@@ -351,7 +351,7 @@ export function PlayerTouchingStageRightWall(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         lP.X1,
         lP.Y1,
         lP.X2,
@@ -380,7 +380,7 @@ export function PlayerTouchingStageCeiling(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersection(
+      LineSegmentIntersectionFp(
         lP.X1,
         lP.Y1,
         lP.X2,

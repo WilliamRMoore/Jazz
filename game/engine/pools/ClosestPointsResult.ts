@@ -26,6 +26,18 @@ export class ClosestPointsResult implements IPooledObject {
     this.c2Y.setFromFp(c2Y);
   }
 
+  public SetRaw(
+    c1XRaw: number,
+    c1YRaw: number,
+    c2XRaw: number,
+    c2YRaw: number
+  ) {
+    this.c1X.setFromRaw(c1XRaw);
+    this.c1Y.setFromRaw(c1YRaw);
+    this.c2X.setFromRaw(c2XRaw);
+    this.c2Y.setFromRaw(c2YRaw);
+  }
+
   public get C1X(): FixedPoint {
     return this.c1X;
   }

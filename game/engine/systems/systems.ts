@@ -2,7 +2,7 @@ import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
   IntersectsPolygons,
-  LineSegmentIntersection,
+  LineSegmentIntersectionFp,
 } from '../physics/collisions';
 import {
   CanStateWalkOffLedge,
@@ -350,7 +350,7 @@ export function PlatformDetection(
     for (let platIndex = 0; platIndex < platCount; platIndex++) {
       const plat = plats[platIndex];
 
-      const intersected = LineSegmentIntersection(
+      const intersected = LineSegmentIntersectionFp(
         previousBottom.X,
         previousBottom.Y,
         currentBottom.X,

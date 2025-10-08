@@ -2,7 +2,8 @@ import {
   FindArithemticMean,
   IntersectsPolygons,
   ClosestPointsBetweenSegments,
-  LineSegmentIntersection,
+  LineSegmentIntersectionFp,
+  IntersectsCircles,
 } from '../game/engine/physics/collisions';
 import { FixedPoint } from '../game/math/fixedPoint';
 import { Pool } from '../game/engine/pools/Pool';
@@ -25,7 +26,7 @@ describe('FindArithemticMean', () => {
     ];
 
     // 2. Act
-    const mean = FindArithemticMean(vertices, fpp, pooledVec);
+    const mean = FindArithemticMean(vertices, pooledVec);
 
     // 3. Assert
     // Expected mean: X = (10 + 30 + 50) / 3 = 30, Y = (20 + 40 + 60) / 3 = 40
@@ -44,10 +45,7 @@ describe('IntersectsPolygons', () => {
     fpp = new Pool<FixedPoint>(1, () => new FixedPoint(0));
     vecPool = new Pool<PooledVector>(1, () => new PooledVector());
     colResPool = new Pool<CollisionResult>(1, () => new CollisionResult());
-    projResPool = new Pool<ProjectionResult>(
-      1000,
-      () => new ProjectionResult()
-    );
+    projResPool = new Pool<ProjectionResult>(1, () => new ProjectionResult());
   });
 
   const polyA: FlatVec[] = [
@@ -68,7 +66,6 @@ describe('IntersectsPolygons', () => {
     const result = IntersectsPolygons(
       polyA,
       polyB,
-      fpp,
       vecPool,
       colResPool,
       projResPool
@@ -88,7 +85,6 @@ describe('IntersectsPolygons', () => {
     const result = IntersectsPolygons(
       polyA,
       polyC,
-      fpp,
       vecPool,
       colResPool,
       projResPool
@@ -118,7 +114,7 @@ describe('LineSegmentIntersection', () => {
     const line = new Line(ax1, ay1, ax2, ay2);
     const line2 = new Line(bx3, by3, bx4, by4);
 
-    const intersects = LineSegmentIntersection(
+    const intersects = LineSegmentIntersectionFp(
       fpp,
       line.X1,
       line.Y1,
@@ -146,7 +142,7 @@ describe('LineSegmentIntersection', () => {
     const line = new Line(ax1, ay1, ax2, ay2);
     const line2 = new Line(bx3, by3, bx4, by4);
 
-    const intersects = LineSegmentIntersection(
+    const intersects = LineSegmentIntersectionFp(
       fpp,
       line.X1,
       line.Y1,
@@ -159,6 +155,29 @@ describe('LineSegmentIntersection', () => {
     );
 
     expect(intersects).toBe(false);
+  });
+});
+
+describe('InteresectCircles', () => {
+  let fpp: Pool<FixedPoint>;
+  let vecPool: Pool<PooledVector>;
+  let colResPool: Pool<CollisionResult>;
+
+  beforeEach(() => {
+    fpp = new Pool<FixedPoint>(1, () => new FixedPoint(0));
+    vecPool = new Pool<PooledVector>(1, () => new PooledVector());
+    colResPool = new Pool<CollisionResult>(1, () => new CollisionResult());
+  });
+
+  test('Should return true when circles intersect', () => {
+    const v1 = new PooledVector().SetXY(new FixedPoint(0), new FixedPoint(0));
+    const v2 = new PooledVector().SetXY(new FixedPoint(5), new FixedPoint(0));
+    const r1 = new FixedPoint(3);
+    const r2 = new FixedPoint(3);
+
+    const result = IntersectsCircles(colResPool, v1, v2, r1, r2);
+
+    expect(result.Collision).toBe(true);
   });
 });
 

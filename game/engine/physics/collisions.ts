@@ -5,18 +5,26 @@ import { PooledVector } from '../pools/PooledVector';
 import { FlatVec } from './vector';
 import { ClampWithMin } from '../utils';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { FixedPoint } from '../../math/fixedPoint';
+import {
+  ClampRaw,
+  DivideRaw,
+  DotProductVectorRaw,
+  FixedPoint,
+  MAX_RAW_VALUE,
+  MIN_RAW_VALUE,
+  MultiplyRaw,
+  NumberToRaw,
+} from '../../math/fixedPoint';
 
 export function IntersectsPolygons(
   verticiesA: Array<FlatVec>,
   verticiesB: Array<FlatVec>,
-  fpp: Pool<FixedPoint>,
   vecPool: Pool<PooledVector>,
   colResPool: Pool<CollisionResult>,
   projResPool: Pool<ProjectionResult>
 ): ICollisionResult {
   let normal = vecPool.Rent();
-  let depth = FixedPoint.MAX_VALUE; //Number.MAX_SAFE_INTEGER;
+  let depthRaw = MAX_RAW_VALUE;
 
   const verticiesAVec = vecPool.Rent();
   const verticiesBVec = vecPool.Rent();
@@ -32,44 +40,31 @@ export function IntersectsPolygons(
     const edge = verticiesBVec.SubtractVec(verticiesAVec);
 
     // Get perpendicular axis.
-    const tempX = fpp.Rent().setFromFp(edge.X);
+    const tempX = edge.X.Raw(); //fpp.Rent().setFromFp(edge.X);
     edge.SetX(edge.Y.negate());
-    edge.SetY(tempX);
-    let axis = edge.Normalize(fpp);
+    edge.SetYRaw(tempX);
+
+    let axis = edge.Normalize();
+
     // Project verticies for both polygons.
-    const vaProj = projectVerticies(
-      verticiesA,
-      axis,
-      fpp,
-      vecPool,
-      projResPool
-    );
-    const vbProj = projectVerticies(
-      verticiesB,
-      axis,
-      fpp,
-      vecPool,
-      projResPool
-    );
+
+    const vaProj = projectVerticies(verticiesA, axis, projResPool);
+    const vbProj = projectVerticies(verticiesB, axis, projResPool);
 
     if (
-      vaProj.Min.greatherThanOrEqualTo(vbProj.Max) ||
-      vbProj.Min.greatherThanOrEqualTo(vaProj.Max)
+      vaProj.Min.greaterThanOrEqualTo(vbProj.Max) ||
+      vbProj.Min.greaterThanOrEqualTo(vaProj.Max)
     ) {
       return colResPool.Rent();
     }
 
-    const vbVaDepth = fpp.Rent().setSubtract(vbProj.Max, vaProj.Min);
-    const vaVbDepth = fpp.Rent().setSubtract(vaProj.Max, vbProj.Min);
-    const axisDepth = FixedPoint.Min(vbVaDepth, vaVbDepth);
-    // const axisDepth = Math.min(
-    //   vbProj.Max - vaProj.Min,
-    //   vaProj.Max - vbProj.Min
-    // );
+    const vbVaDepthRaw = vbProj.Max.Raw() - vaProj.Min.Raw();
+    const vaVbDepthRaw = vaProj.Max.Raw() - vbProj.Max.Raw();
+    const axisDepthRaw = Math.min(vbVaDepthRaw, vaVbDepthRaw);
 
-    if (axisDepth.lessThan(depth)) {
-      depth = axisDepth;
-      normal.SetX(axis.X).SetY(axis.Y);
+    if (axisDepthRaw < depthRaw) {
+      depthRaw = axisDepthRaw;
+      normal.SetXY(axis.X, axis.Y);
     }
   }
 
@@ -82,86 +77,78 @@ export function IntersectsPolygons(
     verticiesAVec.SetXY(va.X, va.Y);
     verticiesBVec.SetXY(vb.X, vb.Y);
 
-    const negatedY = fpp
-      .Rent()
-      .setMultiply(fpp.Rent().setFromNumber(-1), verticiesBVec.Y);
+    const edge = verticiesBVec.SubtractVec(verticiesAVec);
+    const tempX = edge.X.Raw();
+    edge.SetX(edge.Y.negate());
+    edge.SetYRaw(tempX);
 
-    const axis = verticiesBVec
-      .SubtractVec(verticiesAVec)
-      .SetY(negatedY)
-      .Normalize(fpp);
+    let axis = edge.Normalize();
 
     // Project verticies for both polygons.
 
-    const vaProj = projectVerticies(
-      verticiesA,
-      axis,
-      fpp,
-      vecPool,
-      projResPool
-    );
+    const vaProj = projectVerticies(verticiesA, axis, projResPool);
 
-    const vbProj = projectVerticies(
-      verticiesB,
-      axis,
-      fpp,
-      vecPool,
-      projResPool
-    );
+    const vbProj = projectVerticies(verticiesB, axis, projResPool);
 
     if (
-      vaProj.Min.greatherThanOrEqualTo(vbProj.Max) ||
-      vbProj.Min.greatherThanOrEqualTo(vaProj.Max)
+      vaProj.Min.greaterThanOrEqualTo(vbProj.Max) ||
+      vbProj.Min.greaterThanOrEqualTo(vaProj.Max)
     ) {
       return colResPool.Rent();
     }
 
-    const vbVaDepth = fpp.Rent().setSubtract(vbProj.Max, vaProj.Min);
-    const vaVbDepth = fpp.Rent().setSubtract(vaProj.Max, vbProj.Min);
+    const vbVaDepthRaw = vbProj.Max.Raw() - vaProj.Min.Raw();
+    const vaVbDepthRaw = vaProj.Max.Raw() - vbProj.Min.Raw();
 
-    const axisDepth = FixedPoint.Min(vbVaDepth, vaVbDepth);
+    const axisDepthRaw = Math.min(vbVaDepthRaw, vaVbDepthRaw);
 
-    if (axisDepth.lessThan(depth)) {
-      depth = axisDepth;
-      normal.SetX(axis.X).SetY(axis.Y);
+    if (axisDepthRaw < depthRaw) {
+      depthRaw = axisDepthRaw;
+      normal.SetXY(axis.X, axis.Y);
     }
   }
 
-  const centerA = FindArithemticMean(verticiesA, fpp, vecPool.Rent());
-  const centerB = FindArithemticMean(verticiesB, fpp, vecPool.Rent());
+  const centerA = FindArithemticMean(verticiesA, vecPool.Rent());
+  const centerB = FindArithemticMean(verticiesB, vecPool.Rent());
 
   const direction = centerB.SubtractVec(centerA);
 
-  if (direction.DotProduct(normal, fpp).lessThanZero) {
+  const dp = DotProductVectorRaw(
+    direction.X.Raw(),
+    direction.Y.Raw(),
+    normal.X.Raw(),
+    normal.Y.Raw()
+  );
+
+  if (dp < 0) {
     normal.Negate();
   }
 
   const res = colResPool.Rent();
-  res.SetCollisionTrue(normal.X, normal.Y, depth);
+  res.SetCollisionTrueRaw(normal.X.Raw(), normal.Y.Raw(), depthRaw);
   return res;
 }
 
 export function IntersectsCircles(
-  fpp: Pool<FixedPoint>,
   colResPool: Pool<CollisionResult>,
   v1: PooledVector,
   v2: PooledVector,
   r1: FixedPoint,
   r2: FixedPoint
 ): CollisionResult {
-  const dist = v1.Distance(v2, fpp);
-  const raddi = fpp.Rent().setAdd(r1, r2);
+  const distRaw = v1.DistanceRaw(v2);
+  const raddiRaw = r1.Raw() + r2.Raw();
 
-  if (dist.greaterThan(raddi)) {
+  if (distRaw > raddiRaw) {
     // false, comes from pool in zeroed state.
     return colResPool.Rent();
   }
 
-  const norm = v2.SubtractVec(v1).Normalize(fpp);
-  const depth = raddi.subtract(dist);
+  const norm = v2.SubtractVec(v1).Normalize();
+  const depthRaw = raddiRaw - distRaw;
   const returnValue = colResPool.Rent();
 
-  returnValue.SetCollisionTrue(norm.X, norm.Y, depth);
+  returnValue.SetCollisionTrueRaw(norm.X.Raw(), norm.Y.Raw(), depthRaw);
 
   return returnValue;
 }
@@ -187,26 +174,12 @@ export function ClosestPointsBetweenSegments(
 
   if (isSegment1Point) {
     // Segment 1 is a point
-    return closestPointOnSegmentToPoint(
-      p2,
-      q2,
-      p1,
-      fpp,
-      vecPool,
-      ClosestPointsPool
-    );
+    return closestPointOnSegmentToPoint(p2, q2, p1, ClosestPointsPool);
   }
 
   if (isSegment2Point) {
     // Segment 2 is a point
-    return closestPointOnSegmentToPoint(
-      p1,
-      q1,
-      p2,
-      fpp,
-      vecPool,
-      ClosestPointsPool
-    );
+    return closestPointOnSegmentToPoint(p1, q1, p2, ClosestPointsPool);
   }
 
   const p1Dto = vecPool.Rent().SetXY(p1.X, p1.Y);
@@ -233,7 +206,7 @@ export function ClosestPointsBetweenSegments(
   const denom = fpp.Rent().setSubtract(denomT1, denomT2);
 
   // Check for parallel or near-parallel lines
-  if (denom.getRaw() !== 0) {
+  if (denom.Raw() !== 0) {
     // Use a small epsilon to handle near-parallel cases
     const sNumeT1 = fpp.Rent().setMultiply(b, f);
     const sNumeT2 = fpp.Rent().setMultiply(c, a);
@@ -289,102 +262,141 @@ export function ClosestPointsBetweenSegments(
 
 export function FindArithemticMean(
   verticies: Array<FlatVec>,
-  fpp: Pool<FixedPoint>,
   pooledVec: PooledVector
 ): PooledVector {
-  const sumX = fpp.Rent();
-  const sumY = fpp.Rent();
+  let sumX = 0;
+  let sumY = 0;
   const vertLength = verticies.length;
-  const vertLengthFp = fpp.Rent().setFromNumber(vertLength);
 
   for (let index = 0; index < vertLength; index++) {
     const v = verticies[index];
-    sumX.add(v.X);
-    sumY.add(v.Y);
+    sumX += v.X.Raw();
+    sumY += v.Y.Raw();
   }
 
-  return pooledVec.SetXY(sumX, sumY).Divide(vertLengthFp);
+  const lengthRaw = NumberToRaw(vertLength);
+  sumX = DivideRaw(sumX, lengthRaw);
+  sumY = DivideRaw(sumY, lengthRaw);
+  return pooledVec.SetXYRaw(sumX, sumY);
 }
 
 function closestPointOnSegmentToPoint(
   segStart: FlatVec,
   segEnd: FlatVec,
   point: FlatVec,
-  fpp: Pool<FixedPoint>,
-  vecPool: Pool<PooledVector>,
   ClosestPointsPool: Pool<ClosestPointsResult>
 ): ClosestPointsResult {
-  const segVecT1 = fpp.Rent().setSubtract(segEnd.X, segStart.X);
-  const segVecT2 = fpp.Rent().setSubtract(segEnd.Y, segStart.Y);
-  const segVec = vecPool.Rent().SetXY(segVecT1, segVecT2);
+  const segStartXRaw = segStart.X.Raw();
+  const segStartYRaw = segStart.Y.Raw();
+  const segEndXRaw = segEnd.X.Raw();
+  const segEndYRaw = segEnd.Y.Raw();
+  const pointXRaw = point.X.Raw();
+  const pointYRaw = point.Y.Raw();
 
-  const pointVecT1 = fpp.Rent().setSubtract(point.X, segStart.X);
-  const pointVecT2 = fpp.Rent().setSubtract(point.Y, segStart.Y);
-  const pointVec = vecPool.Rent().SetXY(pointVecT1, pointVecT2);
+  const segVecXRaw = segEndXRaw - segStartXRaw;
+  const segVecYRaw = segEndYRaw - segStartYRaw;
 
-  const xLength = fpp.Rent().setMultiply(segVec.X, segVec.X);
-  const yLength = fpp.Rent().setMultiply(segVec.Y, segVec.Y);
-  const segLengthSquared = fpp.Rent().setAdd(xLength, yLength); //segVec.X * segVec.X + segVec.Y * segVec.Y;
+  const pointVecXRaw = pointXRaw - segStartXRaw;
+  const pointVecYRaw = pointYRaw - segStartYRaw;
 
-  const zero = fpp.Rent().setFromNumber(0);
+  const xLengthRaw = MultiplyRaw(segVecXRaw, segVecXRaw);
+  const yLengthRaw = MultiplyRaw(segVecYRaw, segVecYRaw);
+  const segLengthSquaredRaw = xLengthRaw + yLengthRaw;
 
-  const t = fpp.Rent().setFromNumber(0);
-  if (segLengthSquared.greaterThan(zero)) {
-    const tT1 = fpp.Rent().setMultiply(pointVec.X, segVec.X);
-    const tT2 = fpp.Rent().setMultiply(pointVec.Y, segVec.Y);
-    const tNumerator = fpp.Rent().setAdd(tT1, tT2);
-    t.setDivide(tNumerator, segLengthSquared);
-
-    //t = (pointVec.X * segVec.X + pointVec.Y * segVec.Y) / segLengthSquared;
-    t.setFromNumber(Math.max(0, Math.min(1, t.AsNumber))); // Clamp t to [0, 1]
+  let tRaw = 0;
+  if (segLengthSquaredRaw > 0) {
+    const tT1Raw = MultiplyRaw(pointVecXRaw, segVecXRaw);
+    const tT2Raw = MultiplyRaw(pointVecYRaw, segVecYRaw);
+    const tNumeratorRaw = tT1Raw + tT2Raw;
+    tRaw = DivideRaw(tNumeratorRaw, segLengthSquaredRaw);
+    // t = (pointVec · segVec) / |seg|^2  (tRaw is in scaled raw units)
+    // Clamp tRaw to [0, 1] in raw (scaled) space so the closest point lies on the segment
+    const oneRaw = NumberToRaw(1);
+    if (tRaw < 0) {
+      tRaw = 0;
+    } else if (tRaw > oneRaw) {
+      tRaw = oneRaw;
+    }
   }
 
-  const segXT = fpp.Rent().setMultiply(segVec.X, t);
-  const segYT = fpp.Rent().setMultiply(segVec.Y, t);
-  // closest = segStart + t * segVec
-  const closestX = fpp.Rent().setAdd(segStart.X, segXT); // segStart.X + t * segVec.X
-  const closestY = fpp.Rent().setAdd(segStart.Y, segYT); // segStart.Y + t * segVec.Y
+  const segXTRaw = MultiplyRaw(segVecXRaw, tRaw);
+  const segYTRaw = MultiplyRaw(segVecYRaw, tRaw);
+  const closestX = segStartXRaw + segXTRaw;
+  const closestY = segStartYRaw + segYTRaw;
 
   const ret = ClosestPointsPool.Rent();
-  ret.Set(closestX, closestY, point.X, point.Y);
+  ret.SetRaw(closestX, closestY, pointXRaw, pointYRaw);
   return ret;
 }
 
 function projectVerticies(
   verticies: Array<FlatVec>,
   axis: PooledVector,
-  fpp: Pool<FixedPoint>,
-  vecPool: Pool<PooledVector>,
   projResPool: Pool<ProjectionResult>
 ): IProjectionResult {
-  let min = FixedPoint.MAX_VALUE; //Number.MAX_SAFE_INTEGER;
-  let max = FixedPoint.MIN_VALUE; //Number.MIN_SAFE_INTEGER;
-
-  const vRes = vecPool.Rent();
+  let min = MAX_RAW_VALUE;
+  let max = MIN_RAW_VALUE;
 
   for (let i = 0; i < verticies.length; i++) {
     const v = verticies[i];
-    vRes.SetXY(v.X, v.Y);
 
     // get the projection for the given axis
-    const projection = vRes.DotProduct(axis, fpp);
+    const projection = DotProductVectorRaw(
+      v.X.Raw(),
+      v.Y.Raw(),
+      axis.X.Raw(),
+      axis.Y.Raw()
+    );
 
     // set the minimum projection
-    if (projection.lessThan(min)) {
+    if (projection < min) {
       min = projection;
     }
     //set the maximum projection
-    if (projection.greaterThan(max)) {
+    if (projection > max) {
       max = projection;
     }
   }
 
   let result = projResPool.Rent();
-  result.SetMinMax(min, max);
+  result.SetMinMaxRaw(min, max);
   return result;
 }
 
-export function LineSegmentIntersection(
+export function LineSegmentIntersectionRaw(
+  ax1: number,
+  ay1: number,
+  ax2: number,
+  ay2: number,
+  bx3: number,
+  by3: number,
+  bx4: number,
+  by4: number
+): boolean {
+  const denom =
+    MultiplyRaw(by4 - by3, ax2 - ax1) - MultiplyRaw(bx4 - bx3, ay2 - ay1);
+  if (denom === 0) {
+    return false;
+  }
+
+  const numeA =
+    MultiplyRaw(bx4 - bx3, ay1 - by3) - MultiplyRaw(by4 - by3, ax1 - bx3);
+  const numeB =
+    MultiplyRaw(ax2 - ax1, ay1 - by3) - MultiplyRaw(ay2 - ay1, ax1 - bx3);
+
+  const uA = DivideRaw(numeA, denom);
+  const uB = DivideRaw(numeB, denom);
+
+  const one = NumberToRaw(1);
+
+  if (uA >= 0 && uA <= one && uB >= 0 && uB <= one) {
+    return true;
+  }
+
+  return false;
+}
+
+export function LineSegmentIntersectionFp(
   fpp: Pool<FixedPoint>,
   ax1: FixedPoint,
   ay1: FixedPoint,
@@ -406,7 +418,7 @@ export function LineSegmentIntersection(
     .multiply(fpp.Rent().setSubtract(ay2, ay1));
   const denom = fpp.Rent().setSubtract(term1, term2);
 
-  if (denom.getRaw() === 0) {
+  if (denom.Raw() === 0) {
     return false;
   }
 
@@ -436,11 +448,12 @@ export function LineSegmentIntersection(
   const uB = fpp.Rent().setDivide(numeB, denom);
 
   const one = fpp.Rent().setFromNumber(1);
+  const zero = fpp.Rent().setFromNumber(0);
 
   if (
-    uA.greaterThanOrEqualZero &&
+    uA.greaterThanOrEqualTo(zero) &&
     uA.lessThanOrEqualTo(one) &&
-    uB.greaterThanOrEqualZero &&
+    uB.greaterThanOrEqualTo(zero) &&
     uB.lessThanOrEqualTo(one)
   ) {
     return true;
@@ -467,15 +480,18 @@ function cross(
   return term1.subtract(term2); // term1 is now the result
 }
 
-let fpp: Pool<FixedPoint> = new Pool<FixedPoint>(100, () => new FixedPoint());
+// let fppLoc: Pool<FixedPoint> = new Pool<FixedPoint>(
+//   100,
+//   () => new FixedPoint()
+// );
 
 function comparePointsXY(a: FlatVec, b: FlatVec): number {
   if (a.X.equals(b.X)) {
-    const diff = fpp.Rent().setSubtract(a.Y, b.Y);
-    return diff.getRaw();
+    const diff = a.Y.Raw() - b.Y.Raw(); //fppLoc.Rent().setSubtract(a.Y, b.Y);
+    return diff;
   }
-  const diff = fpp.Rent().setSubtract(a.X, b.X);
-  return diff.getRaw();
+  const diff = a.X.Raw() - b.X.Raw(); //fppLoc.Rent().setSubtract(a.X, b.X);
+  return diff;
 }
 
 const lower: Array<FlatVec> = [];
@@ -493,8 +509,6 @@ export function CreateConvexHull(
     }
     return lower;
   }
-
-  fpp = fpp;
 
   // Sort points lexicographically (by X, then by Y)
   points.sort(comparePointsXY);

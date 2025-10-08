@@ -18,6 +18,11 @@ export class ProjectionResult implements IProjectionResult, IPooledObject {
     this.max.setFromFp(max);
   }
 
+  public SetMinMaxRaw(min: number, max: number): void {
+    this.min.setFromRaw(min);
+    this.max.setFromRaw(max);
+  }
+
   public Zero() {
     this.min.Zero();
     this.max.Zero();

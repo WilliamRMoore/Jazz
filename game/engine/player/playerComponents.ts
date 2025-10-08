@@ -1026,13 +1026,13 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   }
 
   public Shrink(intensity: FixedPoint): void {
-    if (this.curRadius.graterThanZero) {
+    if (this.curRadius.Raw() > 0) {
       this.curRadius.subtract(
         this.fpp.Rent().setMultiply(this.step, intensity)
       );
     }
 
-    if (this.curRadius.lessThanZero) {
+    if (this.curRadius.Raw() < 0) {
       this.curRadius.setFromNumber(0);
     }
   }
@@ -1040,7 +1040,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   public Damage(d: FixedPoint) {
     const damageMod = this.fpp.Rent().setMultiply(d, this.damageMult);
     this.curRadius.subtract(damageMod);
-    if (this.curRadius.lessThanZero) {
+    if (this.curRadius.Raw() < 0) {
       this.curRadius.setFromNumber(0);
     }
   }

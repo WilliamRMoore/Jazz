@@ -27,6 +27,17 @@ export class CollisionResult implements ICollisionResult, IPooledObject {
     this.depth.setFromFp(depth);
   }
 
+  public SetCollisionTrueRaw(
+    xRaw: number,
+    yRaw: number,
+    depthRaw: number
+  ): void {
+    this.collision = true;
+    this.normX.setFromRaw(xRaw);
+    this.normY.setFromRaw(yRaw);
+    this.depth.setFromRaw(depthRaw);
+  }
+
   public SetCollisionFalse(): void {
     this.collision = false;
     this.normX.Zero();
