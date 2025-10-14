@@ -18,11 +18,18 @@ import {
 } from '../world/world';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import {
+  AddToPlayerPositionFp,
+  AddToPlayerPositionVec,
+  AddToPlayerYPositionRaw,
+  CanOnlyFallOffLedgeWhenFacingAwayFromIt,
   Player,
   PlayerOnPlats,
   PlayerOnPlatsReturnsYCoord,
   PlayerOnStage,
   PlayerOnStageOrPlats,
+  SetPlayerInitialPositionRaw,
+  SetPlayerPosition,
+  SetPlayerPositionRaw,
 } from '../player/playerOrchestrator';
 import { AttackResult } from '../pools/AttackResult';
 import { PooledVector } from '../pools/PooledVector';
@@ -32,15 +39,25 @@ import { ComponentHistory } from '../player/playerComponents';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { Stage } from '../stage/stageMain';
+import {
+  DivideRaw,
+  FixedPoint,
+  MultiplyRaw,
+  NumberToRaw,
+  RawToNumber,
+} from '../../math/fixedPoint';
 
 /**
  * TODO:
  * Add Projectile Systems
  */
 
-const correctionDepth: number = 0.1;
-const cornerJitterCorrection = 2;
-const hardLandVelocty = 5;
+const CORRECTION_DEPTH_RAW = NumberToRaw(0.1); //= 0.1;
+const CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
+const HARD_LAND_VELOCITY_RAW = NumberToRaw(5);
+const CORRECTION_DEPTH_FP = new FixedPoint(0.1); //NumberToRaw(0.1); //= 0.1;
+const CORNER_JITTER_CORRECTION_FP = new FixedPoint(2); //NumberToRaw(2);
+const HARD_LAND_VELOCITY_FP = new FixedPoint(5); //NumberToRaw(5);
 
 export function StageCollisionDetection(
   playerData: PlayerData,
@@ -89,53 +106,65 @@ export function StageCollisionDetection(
     );
 
     if (collisionResult.Collision) {
-      const normalX = collisionResult.NormX;
-      const normalY = collisionResult.NormY;
+      const normalXRaw = collisionResult.NormX.Raw;
+      const normalYRaw = collisionResult.NormY.Raw;
       const move = pools.VecPool.Rent()
-        .SetXY(normalX, normalY)
+        .SetXYRaw(normalXRaw, normalYRaw)
         .Negate()
         .Multiply(collisionResult.Depth);
 
       // Ground correction
-      if (normalX === 0 && normalY > 0) {
-        move.AddToY(correctionDepth);
+      if (normalXRaw === 0 && normalYRaw > 0) {
+        move.AddToYRaw(CORRECTION_DEPTH_RAW);
       }
       // Right wall correction
-      else if (normalX > 0 && normalY === 0) {
-        move.AddToX(correctionDepth);
+      else if (normalXRaw > 0 && normalYRaw === 0) {
+        move.AddToXRaw(CORRECTION_DEPTH_RAW);
       }
       // Left wall correction
-      else if (normalX < 0 && normalY === 0) {
-        move.AddToX(-correctionDepth);
+      else if (normalXRaw < 0 && normalYRaw === 0) {
+        move.AddToXRaw(-CORRECTION_DEPTH_RAW);
       }
       // Ceiling
-      else if (normalX === 0 && normalY < 0) {
-        move.AddToY(-correctionDepth);
+      else if (normalXRaw === 0 && normalYRaw < 0) {
+        move.AddToYRaw(-CORRECTION_DEPTH_RAW);
       }
       // Corner case (top corners, normalY < 0)
-      else if (Math.abs(normalX) > 0 && normalY > 0) {
-        move.AddToX(move.X <= 0 ? move.Y : -move.Y);
+      else if (Math.abs(normalXRaw) > 0 && normalYRaw > 0) {
+        move.AddToXRaw(move.X.Raw <= 0 ? move.Y.Raw : -move.Y.Raw);
       }
 
-      p.AddToPlayerPosition(move.X, move.Y);
+      AddToPlayerPositionVec(p, move); //p.AddToPlayerPosition(move.X, move.Y);
     }
 
     // --- 2. Jitter correction after collision resolution ---
     const onStage = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
     const standingOnLeftLedge =
-      Math.abs(p.Position.X - leftStagePoint.X) <= cornerJitterCorrection;
+      Math.abs(p.Position.X.Raw - leftStagePoint.X.Raw) <=
+      CORNER_JITTER_CORRECTION_RAW;
     const standingOnRightLedge =
-      Math.abs(p.Position.X - rightStagePoint.X) <= cornerJitterCorrection;
+      Math.abs(p.Position.X.Raw - rightStagePoint.X.Raw) <=
+      CORNER_JITTER_CORRECTION_RAW;
 
     if (standingOnLeftLedge && onStage) {
-      p.SetPlayerPosition(
-        leftStagePoint.X + cornerJitterCorrection,
-        p.Position.Y
+      // p.SetPlayerPosition(
+      //   leftStagePoint.X + CORNER_JITTER_CORRECTION_RAW,
+      //   p.Position.Y
+      // );
+      SetPlayerInitialPositionRaw(
+        p,
+        leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
+        p.Position.Y.Raw
       );
     } else if (standingOnRightLedge && onStage) {
-      p.SetPlayerPosition(
-        rightStagePoint.X - cornerJitterCorrection,
-        p.Position.Y
+      // p.SetPlayerPosition(
+      //   rightStagePoint.X - CORNER_JITTER_CORRECTION_RAW,
+      //   p.Position.Y
+      // );
+      SetPlayerInitialPositionRaw(
+        p,
+        rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
+        p.Position.Y.Raw
       );
     }
 
@@ -147,7 +176,7 @@ export function StageCollisionDetection(
       // Player has just walked off the stage. Check if they should be snapped back.
       let shouldSnapBack = false;
 
-      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+      if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
         // This is the high-priority rule for specific attacks.
         const fellOffLeftLedge = p.Position.X < leftStagePoint.X;
         const fellOffRightLedge = p.Position.X > rightStagePoint.X;
@@ -169,19 +198,29 @@ export function StageCollisionDetection(
         // Player was not allowed to fall. Snap them to the nearest ledge.
         const position = p.Position;
         if (
-          Math.abs(position.X - leftStagePoint.X) <
-          Math.abs(position.X - rightStagePoint.X)
+          Math.abs(position.X.Raw - leftStagePoint.X.Raw) <
+          Math.abs(position.X.Raw - rightStagePoint.X.Raw)
         ) {
           // Snap to left ledge
-          p.SetPlayerPosition(
-            leftStagePoint.X + cornerJitterCorrection,
-            leftStagePoint.Y
+          // p.SetPlayerPosition(
+          //   leftStagePoint.X + CORNER_JITTER_CORRECTION_RAW,
+          //   leftStagePoint.Y
+          // );
+          SetPlayerPositionRaw(
+            p,
+            leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
+            leftStagePoint.Y.Raw
           );
         } else {
           // Snap to right ledge
-          p.SetPlayerPosition(
-            rightStagePoint.X - cornerJitterCorrection,
-            rightStagePoint.Y
+          // p.SetPlayerPosition(
+          //   rightStagePoint.X - CORNER_JITTER_CORRECTION_RAW,
+          //   rightStagePoint.Y
+          // );
+          SetPlayerPositionRaw(
+            p,
+            rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
+            rightStagePoint.Y.Raw
           );
         }
         sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -198,7 +237,7 @@ export function StageCollisionDetection(
     // If grounded and had a collision, set landing state (soft/hard)
     if (grnd === true && collisionResult.Collision) {
       sm.UpdateFromWorld(
-        shouldSoftland(p.Velocity.Y)
+        shouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE
       );
@@ -210,27 +249,31 @@ export function StageCollisionDetection(
       (fsmIno.CurrentStatetId === STATE_IDS.LAND_S ||
         fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
     ) {
-      p.AddToPlayerYPosition(preResolutionYOffset);
+      AddToPlayerYPositionRaw(p, preResolutionYOffset.Raw);
     }
   }
 }
 
-function shouldSoftland(yVelocity: number) {
-  return yVelocity < hardLandVelocty;
+function shouldSoftlandRaw(yVelocityRaw: number) {
+  return yVelocityRaw < HARD_LAND_VELOCITY_RAW;
 }
 
 function handlePlatformLanding(
   p: Player,
   sm: StateMachine,
-  yCoord: number,
-  xCoord: number
+  yCoord: FixedPoint,
+  xCoord: FixedPoint
 ) {
-  const landId = shouldSoftland(p.Velocity.Y)
+  const landId = shouldSoftlandRaw(p.Velocity.Y.Raw)
     ? GAME_EVENT_IDS.SOFT_LAND_GE
     : GAME_EVENT_IDS.LAND_GE;
   sm.UpdateFromWorld(landId);
   const newYOffset = p.ECB.YOffset;
-  p.SetPlayerPosition(xCoord, yCoord + correctionDepth - newYOffset);
+  SetPlayerPositionRaw(
+    p,
+    xCoord.Raw,
+    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw
+  );
 }
 
 export function PlatformDetection(
@@ -257,7 +300,7 @@ export function PlatformDetection(
 
     const velocity = p.Velocity;
 
-    if (velocity.Y < 0) {
+    if (velocity.Y.Raw < 0) {
       continue;
     }
 
@@ -282,15 +325,15 @@ export function PlatformDetection(
 
     if (wasOnPlat && !isOnPlat) {
       // Player has just walked off a platform. Check if they were allowed to.
-      if (p.CanOnlyFallOffLedgeWhenFacingAwayFromIt()) {
+      if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
         const isFacingRight = p.Flags.IsFacingRight;
-        const isMovingRight = p.Velocity.X > 0;
+        const isMovingRight = p.Velocity.X.Raw > 0;
         const canFall = isFacingRight === isMovingRight;
 
         if (!canFall) {
           // Snap player back to the platform edge they fell from.
           // This is a simplified snap-back. A more robust solution might find the *actual* platform.
-          p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -300,7 +343,7 @@ export function PlatformDetection(
         const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
         if (!canWalkOff) {
           // Player was not allowed to walk off in this state at all. Snap them back.
-          p.SetPlayerPosition(ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -426,7 +469,10 @@ export function LedgeGrabDetection(
     const flags = p.Flags;
     const ecb = p.ECB;
 
-    if (p.Velocity.Y < 0 || p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+    if (
+      p.Velocity.Y.Raw < 0 ||
+      p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S
+    ) {
       continue;
     }
 
@@ -439,6 +485,8 @@ export function LedgeGrabDetection(
     const front =
       isFacingRight === true ? ledgeDetector.RightSide : ledgeDetector.LeftSide;
 
+    const twoRaw = NumberToRaw(2);
+
     if (isFacingRight) {
       const intersectsLeftLedge = IntersectsPolygons(
         leftLedge,
@@ -450,7 +498,11 @@ export function LedgeGrabDetection(
 
       if (intersectsLeftLedge.Collision) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
-        p.SetPlayerPosition(leftLedge[0].X - ecb.Width / 2, p.Position.Y);
+        SetPlayerPositionRaw(
+          p,
+          DivideRaw(leftLedge[0].X.Raw - ecb.Width.Raw, twoRaw),
+          p.Position.Y.Raw
+        );
       }
 
       continue;
@@ -466,7 +518,11 @@ export function LedgeGrabDetection(
 
     if (intersectsRightLedge.Collision) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
-      p.SetPlayerPosition(rightLedge[0].X + ecb.Width / 2, p.Position.Y);
+      SetPlayerPositionRaw(
+        p,
+        DivideRaw(rightLedge[0].X.Raw + ecb.Width.Raw, twoRaw),
+        p.Position.Y.Raw
+      );
     }
   }
 }
@@ -516,21 +572,54 @@ export function PlayerCollisionDetection(
       if (collision.Collision) {
         const checkPlayerPos = checkPlayer.Position;
         const otherPlayerPos = otherPlayer.Position;
-        const checkPlayerX = checkPlayerPos.X;
-        const checkPlayerY = checkPlayerPos.Y;
-        const otherPlayerX = otherPlayerPos.X;
-        const otherPlayerY = otherPlayerPos.Y;
+        const checkPlayerXRaw = checkPlayerPos.X.Raw;
+        const checkPlayerYRaw = checkPlayerPos.Y.Raw;
+        const otherPlayerXRaw = otherPlayerPos.X.Raw;
+        const otherPlayerYRaw = otherPlayerPos.Y.Raw;
 
-        const moveX = 1.5;
+        const moveX = NumberToRaw(1.5);
+        const twoRaw = NumberToRaw(2);
 
-        if (checkPlayerX >= otherPlayerX) {
-          checkPlayer.SetPlayerPosition(checkPlayerX + moveX / 2, checkPlayerY);
-          otherPlayer.SetPlayerPosition(otherPlayerX - moveX / 2, otherPlayerY);
+        if (checkPlayerXRaw >= otherPlayerXRaw) {
+          //checkPlayer.SetPlayerPosition(checkPlayerXRaw + moveX / 2, checkPlayerYRaw);
+          SetPlayerPositionRaw(
+            checkPlayer,
+            DivideRaw(checkPlayerXRaw + moveX, twoRaw),
+            checkPlayerYRaw
+          );
+          // otherPlayer.SetPlayerPosition(
+          //   otherPlayerXRaw - moveX / 2,
+          //   otherPlayerYRaw
+          // );
+          SetPlayerPositionRaw(
+            otherPlayer,
+            DivideRaw(otherPlayerXRaw - moveX, twoRaw),
+            otherPlayerYRaw
+          );
           continue;
         }
 
-        checkPlayer.SetPlayerPosition(checkPlayerX - moveX / 2, checkPlayerY);
-        otherPlayer.SetPlayerPosition(otherPlayerX + moveX / 2, otherPlayerY);
+        // checkPlayer.SetPlayerPosition(
+        //   checkPlayerXRaw - moveX / 2,
+        //   checkPlayerYRaw
+        // );
+
+        // otherPlayer.SetPlayerPosition(
+        //   otherPlayerXRaw + moveX / 2,
+        //   otherPlayerYRaw
+        // );
+
+        SetPlayerPositionRaw(
+          checkPlayer,
+          DivideRaw(checkPlayerXRaw - moveX, twoRaw),
+          checkPlayerYRaw
+        );
+
+        SetPlayerPositionRaw(
+          otherPlayer,
+          DivideRaw(otherPlayerXRaw - moveX, twoRaw),
+          otherPlayerYRaw
+        );
       }
     }
   }
@@ -546,11 +635,14 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
       continue;
     }
     const speeds = p.Speeds;
-    const grav = speeds.Gravity;
+    const grav = speeds.Gravity.Raw;
     const isFF = p.Flags.IsFastFalling;
-    const fallSpeed = isFF ? speeds.FastFallSpeed : speeds.FallSpeed;
-    const GravMutliplier = isFF ? 2 : 1;
-    p.Velocity.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
+    const fallSpeed = isFF ? speeds.FastFallSpeed.Raw : speeds.FallSpeed.Raw;
+    const gravMutliplier = NumberToRaw(isFF ? 2 : 1);
+    p.Velocity.AddClampedYImpulseRaw(
+      fallSpeed,
+      MultiplyRaw(grav, gravMutliplier)
+    ); //.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
   }
 }
 
@@ -605,7 +697,7 @@ export function PlayerShields(pd: PlayerData, localFrame: number) {
       const input = inputStore.GetInputForFrame(localFrame);
       const triggerValue =
         input.LTVal >= input.RTVal ? input.LTVal : input.RTVal;
-      shield.Shrink(triggerValue);
+      shield.ShrinkRaw(NumberToRaw(triggerValue));
       return;
     }
 
@@ -764,7 +856,8 @@ export function PlayerAttacks(
       if (p1HitsP2Result.Hit && p2HitsP1Result.Hit) {
         //check for clang
         const clang =
-          Math.abs(p1HitsP2Result.Damage - p2HitsP1Result.Damage) < 3;
+          Math.abs(p1HitsP2Result.Damage.Raw - p2HitsP1Result.Damage.Raw) <
+          NumberToRaw(3);
       }
 
       if (p1HitsP2Result.Hit) {
@@ -801,20 +894,21 @@ function resolveHitResult(
   const scailing = pAHitsPbResult.KnockBackScaling;
   const baseKnockBack = pAHitsPbResult.BaseKnockBack;
 
-  const kb = CalculateKnockback(
+  const kbRaw = CalculateKnockback(
     playerDamage,
     atkDamage,
     weight,
     scailing,
     baseKnockBack
   );
+
   const hitStop = CalculateHitStop(atkDamage);
-  const hitStunFrames = CalculateHitStun(kb);
+  const hitStunFrames = CalculateHitStun(kbRaw);
   const launchVec = CalculateLaunchVector(
     vecPool,
     pAHitsPbResult.LaunchAngle,
     pA.Flags.IsFacingRight,
-    kb
+    kbRaw
   );
 
   pA.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
@@ -892,15 +986,17 @@ function PAvsPB(
     const shieldYOffset = pBShield.YOffset;
     const shieldPos = vecPool
       .Rent()
-      .SetXY(pB.Position.X, pB.Position.Y + shieldYOffset);
+      .SetXYRaw(pB.Position.X.Raw, pB.Position.Y.Raw + shieldYOffset.Raw);
 
     for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
       const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
       const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
-      const pAPrevPositionDto = vecPool
-        .Rent()
-        .SetFromFlatVec(pAPositionHistory[previousWorldFrame]);
+      const prevPos = pAPositionHistory[previousWorldFrame];
+      const xRaw = NumberToRaw(prevPos.X);
+      const yRaw = NumberToRaw(prevPos.Y);
+
+      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
       const pACurPositionDto = vecPool
         .Rent()
         .SetXY(pA.Position.X, pA.Position.Y);
@@ -983,12 +1079,15 @@ function PAvsPB(
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
       const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
       const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
-      const pAPrevPositionDto = vecPool
-        .Rent()
-        .SetFromFlatVec(pAPositionHistory[previousWorldFrame]);
+      const prevPos = pAPositionHistory[previousWorldFrame];
+      const xRaw = NumberToRaw(prevPos.X);
+      const yRaw = NumberToRaw(prevPos.Y);
+
+      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
       const pACurPositionDto = vecPool
         .Rent()
         .SetXY(pA.Position.X, pA.Position.Y);
+
       const currentStateFrame = pAstateFrame;
       const pAFacingRight = pA.Flags.IsFacingRight;
 
@@ -1075,42 +1174,96 @@ function PAvsPB(
   return atkResPool.Rent();
 }
 
-function CalculateHitStop(damage: number): number {
-  return Math.floor(damage / 3 + 3);
+function CalculateHitStop(damage: FixedPoint): number {
+  const three = NumberToRaw(3);
+  return RawToNumber(Math.floor(DivideRaw(damage.Raw, three) + three));
 }
 
 function CalculateHitStun(knockBack: number): number {
   return Math.ceil(knockBack) * 0.4;
 }
 
+import { SIN_LUT, COS_LUT, LUT_SIZE } from './LUTS';
+
 function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
-  launchAngle: number,
+  launchAngle: FixedPoint,
   isFacingRight: boolean,
-  knockBack: number
+  knockBackRaw: number
 ): PooledVector {
-  let angleInRadians = launchAngle * (Math.PI / 180);
+  // Represent 360 and 180 degrees as fixed-point numbers
+  const fullCircleRaw = NumberToRaw(360);
+  const halfCircleRaw = NumberToRaw(180);
 
-  if (isFacingRight === false) {
-    angleInRadians = Math.PI - angleInRadians;
+  let angleRaw = launchAngle.Raw;
+
+  if (!isFacingRight) {
+    angleRaw = halfCircleRaw - angleRaw;
   }
 
-  return vecPool
-    .Rent()
-    .SetXY(
-      Math.cos(angleInRadians) * knockBack,
-      -(Math.sin(angleInRadians) * knockBack) / 2
-    );
+  // Normalize angle to be within [0, 360) using fixed-point arithmetic
+  angleRaw = angleRaw % fullCircleRaw;
+  if (angleRaw < 0) {
+    angleRaw += fullCircleRaw;
+  }
+
+  // Calculate LUT index using deterministic fixed-point math
+  const lutIndex = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), fullCircleRaw);
+
+  const cosValue = COS_LUT[lutIndex];
+  const sinValue = SIN_LUT[lutIndex];
+
+  const x = MultiplyRaw(cosValue, knockBackRaw);
+  const y = -DivideRaw(MultiplyRaw(sinValue, knockBackRaw), NumberToRaw(2));
+
+  return vecPool.Rent().SetXYRaw(x, y);
 }
 
 function CalculateKnockback(
-  p: number,
-  d: number,
-  w: number,
-  s: number,
-  b: number
+  p: FixedPoint,
+  d: FixedPoint,
+  w: FixedPoint,
+  s: FixedPoint,
+  b: FixedPoint
 ): number {
-  return ((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
+  return CalculateKnockbackRaw(p.Raw, d.Raw, w.Raw, s.Raw, b.Raw);
+}
+
+function CalculateKnockbackRaw(
+  pRaw: number,
+  dRaw: number,
+  wRaw: number,
+  sRaw: number,
+  brAW: number
+): number {
+  //((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
+  // Convert floating-point and integer constants to raw fixed-point values
+  const TEN_RAW = NumberToRaw(10);
+  const TWENTY_RAW = NumberToRaw(20);
+  const TWO_HUNDRED_RAW = NumberToRaw(200);
+  const ONE_HUNDRED_RAW = NumberToRaw(100);
+  const ONE_POINT_FOUR_RAW = NumberToRaw(1.4);
+  const ZERO_POINT_ZERO_ONE_THREE_RAW = NumberToRaw(0.013);
+
+  // term1 = pRaw / 10
+  const term1 = DivideRaw(pRaw, TEN_RAW);
+
+  // term2 = (pRaw * dRaw) / 20
+  const p_x_d = MultiplyRaw(pRaw, dRaw);
+  const term2 = DivideRaw(p_x_d, TWENTY_RAW);
+
+  // term3 = term1 + term2
+  const term3 = term1 + term2;
+
+  // term4 = 200 / (wRaw + 100)
+  const w_plus_100 = wRaw + ONE_HUNDRED_RAW;
+  const term4 = DivideRaw(TWO_HUNDRED_RAW, w_plus_100);
+
+  // ((...)*term4 * 1.4 + bkb) * s
+  const temp_kb =
+    MultiplyRaw(MultiplyRaw(term3, term4), ONE_POINT_FOUR_RAW) + brAW;
+
+  return MultiplyRaw(MultiplyRaw(temp_kb, sRaw), ZERO_POINT_ZERO_ONE_THREE_RAW);
 }
 
 export function ApplyVelocty(playerData: PlayerData): void {
@@ -1124,7 +1277,7 @@ export function ApplyVelocty(playerData: PlayerData): void {
 
     const playerVelocity = p.Velocity;
 
-    p.AddToPlayerPosition(playerVelocity.X, playerVelocity.Y);
+    AddToPlayerPositionFp(p, playerVelocity.X, playerVelocity.Y);
   }
 }
 
@@ -1148,25 +1301,25 @@ export function ApplyVeloctyDecay(
       p.ECB.SensorDepth
     );
     const playerVelocity = p.Velocity;
-    const pvx = playerVelocity.X;
-    const pvy = playerVelocity.Y;
+    const pvxRaw = playerVelocity.X.Raw;
+    const pvyRaw = playerVelocity.Y.Raw;
     const speeds = p.Speeds;
-    const absPvx = Math.abs(pvx);
+    const absPvxRaw = Math.abs(pvxRaw);
 
     if (grounded) {
       const groundedVelocityDecay = speeds.GroundedVelocityDecay;
-      if (pvx > 0) {
-        playerVelocity.X -= groundedVelocityDecay;
-      } else if (pvx < 0) {
-        playerVelocity.X += groundedVelocityDecay;
+      if (pvxRaw > 0) {
+        playerVelocity.X.Subtract(groundedVelocityDecay);
+      } else if (pvxRaw < 0) {
+        playerVelocity.X.Add(groundedVelocityDecay);
       }
 
-      if (absPvx < groundedVelocityDecay) {
-        playerVelocity.X = 0;
+      if (absPvxRaw < groundedVelocityDecay.Raw) {
+        playerVelocity.X.Zero();
       }
 
-      if (pvy > 0) {
-        playerVelocity.Y = 0;
+      if (pvyRaw > 0) {
+        playerVelocity.Y.Zero;
       }
 
       continue;
@@ -1177,22 +1330,22 @@ export function ApplyVeloctyDecay(
       ? speeds.FastFallSpeed
       : speeds.FallSpeed;
 
-    if (pvx > 0) {
-      playerVelocity.X -= aerialVelocityDecay;
-    } else if (pvx < 0) {
-      playerVelocity.X += aerialVelocityDecay;
+    if (pvxRaw > 0) {
+      playerVelocity.X.Subtract(aerialVelocityDecay); //-= aerialVelocityDecay;
+    } else if (pvxRaw < 0) {
+      playerVelocity.X.Add(aerialVelocityDecay); //+= aerialVelocityDecay;
     }
 
-    if (pvy > fallSpeed) {
-      playerVelocity.Y -= aerialVelocityDecay;
+    if (pvyRaw > fallSpeed.Raw) {
+      playerVelocity.Y.Subtract(aerialVelocityDecay); //-= aerialVelocityDecay;
     }
 
-    if (pvy < 0) {
-      playerVelocity.Y += aerialVelocityDecay;
+    if (pvyRaw < 0) {
+      playerVelocity.Y.Add(aerialVelocityDecay);
     }
 
-    if (absPvx < 0.2) {
-      playerVelocity.X = 0;
+    if (absPvxRaw < NumberToRaw(0.2)) {
+      playerVelocity.X.Zero(); //= 0;
     }
   }
 }
@@ -1257,12 +1410,12 @@ export function OutOfBoundsCheck(
 
 function KillPlayer(p: Player, sm: StateMachine): void {
   // reset player to spawn point
-  p.SetPlayerInitialPosition(610, 300);
+  SetPlayerInitialPositionRaw(p, NumberToRaw(610), NumberToRaw(300)); //(610, 300);
   // reset any stats
   p.Jump.ResetJumps();
   p.Jump.IncrementJumps();
-  p.Velocity.X = 0;
-  p.Velocity.Y = 0;
+  p.Velocity.X.Zero();
+  p.Velocity.Y.Zero();
   p.Points.SubtractMatchPoints(1);
   p.Points.ResetDamagePoints();
   p.Flags.FastFallOff();

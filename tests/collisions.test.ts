@@ -4,6 +4,8 @@ import {
   ClosestPointsBetweenSegments,
   LineSegmentIntersectionFp,
   IntersectsCircles,
+  LineSegmentIntersectionLine,
+  CreateConvexHull,
 } from '../game/engine/physics/collisions';
 import { FixedPoint } from '../game/math/fixedPoint';
 import { Pool } from '../game/engine/pools/Pool';
@@ -115,7 +117,6 @@ describe('LineSegmentIntersection', () => {
     const line2 = new Line(bx3, by3, bx4, by4);
 
     const intersects = LineSegmentIntersectionFp(
-      fpp,
       line.X1,
       line.Y1,
       line.X2,
@@ -142,17 +143,7 @@ describe('LineSegmentIntersection', () => {
     const line = new Line(ax1, ay1, ax2, ay2);
     const line2 = new Line(bx3, by3, bx4, by4);
 
-    const intersects = LineSegmentIntersectionFp(
-      fpp,
-      line.X1,
-      line.Y1,
-      line.X2,
-      line.Y2,
-      line2.X1,
-      line2.Y1,
-      line2.X2,
-      line2.Y2
-    );
+    const intersects = LineSegmentIntersectionLine(line, line2);
 
     expect(intersects).toBe(false);
   });
@@ -190,7 +181,7 @@ describe('ClosestPointsBetweenSegments', () => {
     fpp = new Pool<FixedPoint>(1, () => new FixedPoint(0));
     vecPool = new Pool<PooledVector>(1, () => new PooledVector());
     closestPool = new Pool<ClosestPointsResult>(
-      1000,
+      1,
       () => new ClosestPointsResult()
     );
   });
@@ -207,7 +198,6 @@ describe('ClosestPointsBetweenSegments', () => {
       q1,
       p2,
       q2,
-      fpp,
       vecPool,
       closestPool
     );
@@ -232,7 +222,6 @@ describe('ClosestPointsBetweenSegments', () => {
       q1,
       p2,
       q2,
-      fpp,
       vecPool,
       closestPool
     );
@@ -256,7 +245,6 @@ describe('ClosestPointsBetweenSegments', () => {
       q1,
       p2,
       q2,
-      fpp,
       vecPool,
       closestPool
     );
@@ -265,5 +253,99 @@ describe('ClosestPointsBetweenSegments', () => {
     expect(res.C1Y.AsNumber).toBeCloseTo(0, 5);
     expect(res.C2X.AsNumber).toBeCloseTo(3, 5);
     expect(res.C2Y.AsNumber).toBeCloseTo(4, 5);
+  });
+
+  test('should trigger tRaw > ONE_RAW condition', () => {
+    // p1=(0,0), q1=(1,0)
+    const p1 = new PooledVector().SetXY(new FixedPoint(0), new FixedPoint(0));
+    const q1 = new PooledVector().SetXY(new FixedPoint(1), new FixedPoint(0));
+
+    // p2=(5,0), q2=(4,0)
+    const p2 = new PooledVector().SetXY(new FixedPoint(5), new FixedPoint(0));
+    const q2 = new PooledVector().SetXY(new FixedPoint(4), new FixedPoint(0));
+
+    const res = ClosestPointsBetweenSegments(
+      p1,
+      q1,
+      p2,
+      q2,
+      vecPool,
+      closestPool
+    );
+
+    // c1 should be (1,0) and c2 should be (4,0)
+    expect(res.C1X.AsNumber).toBeCloseTo(1, 6);
+    expect(res.C1Y.AsNumber).toBeCloseTo(0, 6);
+    expect(res.C2X.AsNumber).toBeCloseTo(4, 6);
+    expect(res.C2Y.AsNumber).toBeCloseTo(0, 6);
+  });
+});
+
+describe('CreateConvexHull', () => {
+  let fpp: Pool<FixedPoint>;
+
+  beforeEach(() => {
+    fpp = new Pool<FixedPoint>(100, () => new FixedPoint());
+  });
+
+  test('should form a square', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(0), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(10) },
+      { X: new FixedPoint(0), Y: new FixedPoint(10) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(4);
+  });
+
+  test('should form a hull pointing in the positive X direction', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(0), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(5) },
+      { X: new FixedPoint(0), Y: new FixedPoint(10) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(3);
+  });
+
+  test('should form a hull pointing in the positive Y direction', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(0), Y: new FixedPoint(0) },
+      { X: new FixedPoint(5), Y: new FixedPoint(10) },
+      { X: new FixedPoint(10), Y: new FixedPoint(0) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(3);
+  });
+
+  test('should form a hull pointing in the negative X direction', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(10), Y: new FixedPoint(0) },
+      { X: new FixedPoint(0), Y: new FixedPoint(5) },
+      { X: new FixedPoint(10), Y: new FixedPoint(10) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(3);
+  });
+
+  test('should form a hull pointing in the negative Y direction', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(0), Y: new FixedPoint(10) },
+      { X: new FixedPoint(5), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(10) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(3);
   });
 });

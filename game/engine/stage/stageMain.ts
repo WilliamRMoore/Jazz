@@ -1,3 +1,4 @@
+import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { FlatVec, Line, VertArrayContainsFlatVec } from '../physics/vector';
 
 //TODO: Add Platforms
@@ -17,9 +18,9 @@ export function defaultStage() {
   const db = new DeathBoundry(-100, 1180, -100, 2020);
   const plats = new Array<Line>();
   plats.push(
-    new Line(950, 300, 1150, 300),
-    new Line(700, 475, 900, 475),
-    new Line(1200, 475, 1400, 475)
+    Line.FromNumbers(950, 300, 1150, 300),
+    Line.FromNumbers(700, 475, 900, 475),
+    Line.FromNumbers(1200, 475, 1400, 475)
   );
   return new Stage(sv, sl, db, plats);
 }
@@ -51,10 +52,12 @@ export class StageVerticies {
   private Ceiling: Array<Line>;
 
   public constructor() {
-    const groundPeices: Array<Line> = [new Line(500, 650, 1600, 650)];
-    const leftFacingWalls: Array<Line> = [new Line(500, 650, 500, 700)];
-    const rightFacingWalls: Array<Line> = [new Line(1600, 650, 1600, 700)];
-    const ceilingPeices: Array<Line> = [new Line(500, 700, 1600, 700)];
+    const groundPeices: Array<Line> = [Line.FromNumbers(500, 650, 1600, 650)];
+    const leftFacingWalls: Array<Line> = [Line.FromNumbers(500, 650, 500, 700)];
+    const rightFacingWalls: Array<Line> = [
+      Line.FromNumbers(1600, 650, 1600, 700),
+    ];
+    const ceilingPeices: Array<Line> = [Line.FromNumbers(500, 700, 1600, 700)];
 
     this.Ground = groundPeices;
     this.leftWall = leftFacingWalls;
@@ -109,21 +112,27 @@ export class Ledges {
   constructor(
     topLeft: FlatVec,
     topRight: FlatVec,
-    width: number = 50,
-    height: number = 20
+    widthRaw: number = NumberToRaw(50),
+    heightRaw: number = NumberToRaw(20)
   ) {
     const leftLedge = [] as FlatVec[];
     const rightLedge = [] as FlatVec[];
 
     leftLedge.push(topLeft); //
-    leftLedge.push(new FlatVec(topLeft.X + width, topLeft.Y));
-    leftLedge.push(new FlatVec(topLeft.X + width, topLeft.Y + height));
-    leftLedge.push(new FlatVec(topLeft.X, topLeft.Y + height));
+    leftLedge.push(FlatVec.FromRaw(topLeft.X.Raw + widthRaw, topLeft.Y.Raw));
+    leftLedge.push(
+      FlatVec.FromRaw(topLeft.X.Raw + widthRaw, topLeft.Y.Raw + heightRaw)
+    );
+    leftLedge.push(FlatVec.FromRaw(topLeft.X.Raw, topLeft.Y.Raw + heightRaw));
 
     rightLedge.push(topRight);
-    rightLedge.push(new FlatVec(topRight.X, topRight.Y + height));
-    rightLedge.push(new FlatVec(topRight.X - width, topRight.Y + height));
-    rightLedge.push(new FlatVec(topRight.X - width, topRight.Y)); //
+    rightLedge.push(
+      FlatVec.FromRaw(topRight.X.Raw, topRight.Y.Raw + heightRaw)
+    );
+    rightLedge.push(
+      FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw + heightRaw)
+    );
+    rightLedge.push(FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw)); //
 
     this.leftLedge = leftLedge;
     this.rightLedge = rightLedge;
@@ -139,16 +148,16 @@ export class Ledges {
 }
 
 export class DeathBoundry {
-  public readonly topBoundry: number;
-  public readonly bottomBoundry: number;
-  public readonly leftBoundry: number;
-  public readonly rightBoundry: number;
+  public readonly topBoundry: FixedPoint;
+  public readonly bottomBoundry: FixedPoint;
+  public readonly leftBoundry: FixedPoint;
+  public readonly rightBoundry: FixedPoint;
 
   constructor(t: number, b: number, l: number, r: number) {
-    this.topBoundry = t;
-    this.bottomBoundry = b;
-    this.leftBoundry = l;
-    this.rightBoundry = r;
+    this.topBoundry = new FixedPoint(t);
+    this.bottomBoundry = new FixedPoint(b);
+    this.leftBoundry = new FixedPoint(l);
+    this.rightBoundry = new FixedPoint(r);
   }
 }
 

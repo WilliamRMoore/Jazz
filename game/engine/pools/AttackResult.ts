@@ -1,3 +1,4 @@
+import { FixedPoint } from '../../math/fixedPoint';
 import { IPooledObject } from './Pool';
 
 type playerIndex = number;
@@ -5,40 +6,40 @@ type playerIndex = number;
 export class AttackResult implements IPooledObject {
   private hit: boolean = false;
   private shieldHit: boolean = false;
-  private damage: number = 0;
-  private baseKnockBack: number = 0;
-  private knockBackScaling: number = 1;
-  private launchAngle: number = 0;
+  private damage = new FixedPoint();
+  private baseKnockBack = new FixedPoint();
+  private knockBackScaling = new FixedPoint();
+  private launchAngle = new FixedPoint();
   private priority: number = Number.MAX_SAFE_INTEGER;
-  private normX: number = 0;
-  private normY: number = 0;
-  private depth: number = 0;
+  private normX = new FixedPoint();
+  private normY = new FixedPoint();
+  private depth = new FixedPoint();
   private playerIndexOfPlayerHit: playerIndex = -1;
 
   public Zero(): void {
     this.hit = false;
     this.shieldHit = false;
-    this.damage = 0;
-    this.baseKnockBack = 0;
-    this.knockBackScaling = 1;
-    this.launchAngle = 0;
+    this.damage.Zero();
+    this.baseKnockBack.Zero();
+    this.knockBackScaling.Zero();
+    this.launchAngle.Zero();
     this.priority = Number.MAX_SAFE_INTEGER;
-    this.normX = 0;
-    this.normY = 0;
-    this.depth = 0;
+    this.normX.Zero();
+    this.normY.Zero();
+    this.depth.Zero();
     this.playerIndexOfPlayerHit = -1;
   }
 
   public SetHitTrue(
     playerIndex: number,
-    damage: number,
+    damage: FixedPoint,
     priority: number,
-    normX: number,
-    normY: number,
-    depth: number,
-    baseKnockBack: number,
-    knockBackScaling: number,
-    launchAngle: number
+    normX: FixedPoint,
+    normY: FixedPoint,
+    depth: FixedPoint,
+    baseKnockBack: FixedPoint,
+    knockBackScaling: FixedPoint,
+    launchAngle: FixedPoint
   ) {
     this.hit = true;
     this.playerIndexOfPlayerHit = playerIndex;
@@ -54,14 +55,14 @@ export class AttackResult implements IPooledObject {
 
   public SetShieldHitTrue(
     playerIndex: number,
-    damage: number,
+    damage: FixedPoint,
     priority: number,
-    normX: number,
-    normY: number,
-    depth: number,
-    baseKnockBack: number,
-    knockBackScaling: number,
-    launchAngle: number
+    normX: FixedPoint,
+    normY: FixedPoint,
+    depth: FixedPoint,
+    baseKnockBack: FixedPoint,
+    knockBackScaling: FixedPoint,
+    launchAngle: FixedPoint
   ) {
     this.shieldHit = true;
     this.playerIndexOfPlayerHit = playerIndex;
@@ -83,7 +84,7 @@ export class AttackResult implements IPooledObject {
     return this.shieldHit;
   }
 
-  public get Damage(): number {
+  public get Damage(): FixedPoint {
     return this.damage;
   }
 
@@ -91,27 +92,27 @@ export class AttackResult implements IPooledObject {
     return this.priority;
   }
 
-  public get NormX(): number {
+  public get NormX(): FixedPoint {
     return this.normX;
   }
 
-  public get NormY(): number {
+  public get NormY(): FixedPoint {
     return this.normY;
   }
 
-  public get Depth(): number {
+  public get Depth(): FixedPoint {
     return this.depth;
   }
 
-  public get BaseKnockBack(): number {
+  public get BaseKnockBack(): FixedPoint {
     return this.baseKnockBack;
   }
 
-  public get LaunchAngle(): number {
+  public get LaunchAngle(): FixedPoint {
     return this.launchAngle;
   }
 
-  public get KnockBackScaling(): number {
+  public get KnockBackScaling(): FixedPoint {
     return this.knockBackScaling;
   }
 

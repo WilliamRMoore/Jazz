@@ -16,7 +16,7 @@ import { Pool } from '../pools/Pool';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { World } from '../world/world';
 import { CreateConvexHull } from '../physics/collisions';
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
 
 /***
  * TODO:
@@ -166,8 +166,8 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
   }
 
   public SetFromSnapShot(snapShot: PositionSnapShot): void {
-    this.x.setFromNumber(snapShot.X);
-    this.y.setFromNumber(snapShot.Y);
+    this.x.SetFromNumber(snapShot.X);
+    this.y.SetFromNumber(snapShot.Y);
   }
 
   public get X(): FixedPoint {
@@ -179,11 +179,11 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
   }
 
   public set X(val: FixedPoint) {
-    this.x.setFromFp(val);
+    this.x.SetFromFp(val);
   }
 
   public set Y(val: FixedPoint) {
-    this.y.setFromFp(val);
+    this.y.SetFromFp(val);
   }
 }
 
@@ -191,7 +191,7 @@ export class WeightComponent {
   public readonly Weight: FixedPoint = new FixedPoint();
 
   constructor(weight: FixedPoint) {
-    this.Weight.setFromFp(weight);
+    this.Weight.SetFromFp(weight);
   }
 }
 
@@ -202,22 +202,42 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   private readonly y: FixedPoint = new FixedPoint();
 
   public AddClampedXImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    const clampValue = Math.abs(clamp.AsNumber);
-    const currentVelocity = this.x.AsNumber;
+    // const clampValueRaw = Math.abs(clamp.Raw); //Math.abs(clamp.AsNumber);
+    // const currentVelocityRaw = this.x.Raw;
+
+    // // Don't add impulse if we are already at or beyond the clamp limit.
+    // if (Math.abs(currentVelocityRaw) >= clampValueRaw) {
+    //   return;
+    // }
+
+    // //const newVelocityRaw = currentVelocityRaw + impulse.Raw; //currentVelocity + impulse.AsNumber;
+    // this.x.SetFromRaw(currentVelocityRaw + impulse.Raw);
+    this.AddClampedXImpulseRaw(clamp.Raw, impulse.Raw);
+  }
+
+  public AddClampedXImpulseRaw(clampRaw: number, impulseRaw: number): void {
+    const clampValueRaw = Math.abs(clampRaw); //Math.abs(clamp.AsNumber);
+    const currentVelocityRaw = this.x.Raw;
 
     // Don't add impulse if we are already at or beyond the clamp limit.
-    if (Math.abs(currentVelocity) >= clampValue) {
+    if (Math.abs(currentVelocityRaw) >= clampValueRaw) {
       return;
     }
 
-    const newVelocity = currentVelocity + impulse.AsNumber;
-    this.x.setFromNumber(Clamp(newVelocity, clampValue));
+    //const newVelocityRaw = currentVelocityRaw + impulse.Raw; //currentVelocity + impulse.AsNumber;
+    this.x.SetFromRaw(currentVelocityRaw + impulseRaw);
   }
 
   public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    const clampValue = Math.abs(clamp.AsNumber);
-    const newVelocity = this.y.AsNumber + impulse.AsNumber;
-    this.y.setFromNumber(Clamp(newVelocity, clampValue));
+    const clampValueRaw = Math.abs(clamp.Raw); //Math.abs(clamp.AsNumber);
+    const newVelocityRaw = this.y.Raw + impulse.Raw; //this.y.AsNumber + impulse.AsNumber;
+    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw)); //this.y.SetFromNumber(Clamp(newVelocityRaw, clampValueRaw));
+  }
+
+  public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {
+    const clampValueRaw = Math.abs(clampRaw); //Math.abs(clamp.AsNumber);
+    const newVelocityRaw = this.y.Raw + impulse; //this.y.AsNumber + impulse.AsNumber;
+    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw)); //this.y.SetFromNumber(Clamp(newVelocityRaw, clampValueRaw));
   }
 
   public SnapShot(): VelocitySnapShot {
@@ -225,8 +245,8 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   }
 
   public SetFromSnapShot(snapShot: VelocitySnapShot): void {
-    this.x.setFromNumber(snapShot.X);
-    this.y.setFromNumber(snapShot.Y);
+    this.x.SetFromNumber(snapShot.X);
+    this.y.SetFromNumber(snapShot.Y);
   }
 
   public get X(): FixedPoint {
@@ -238,11 +258,11 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   }
 
   public set X(val: FixedPoint) {
-    this.x.setFromFp(val);
+    this.x.SetFromFp(val);
   }
 
   public set Y(val: FixedPoint) {
-    this.y.setFromFp(val);
+    this.y.SetFromFp(val);
   }
 }
 
@@ -373,8 +393,8 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
     vy: FixedPoint
   ): void {
     this.framesOfHitStun = hitStunFrames;
-    this.xVelocity.setFromFp(vx);
-    this.yVelocity.setFromFp(vy);
+    this.xVelocity.SetFromFp(vx);
+    this.yVelocity.SetFromFp(vy);
   }
 
   public DecrementHitStun(): void {
@@ -383,8 +403,8 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
 
   public Zero(): void {
     this.framesOfHitStun = 0;
-    this.xVelocity.setFromNumber(0);
-    this.yVelocity.setFromNumber(0);
+    this.xVelocity.SetFromNumber(0);
+    this.yVelocity.SetFromNumber(0);
   }
 
   public SnapShot(): hitStunSnapShot {
@@ -397,8 +417,8 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
 
   public SetFromSnapShot(snapShot: hitStunSnapShot): void {
     this.framesOfHitStun = snapShot.hitStunFrames;
-    this.xVelocity.setFromNumber(snapShot.vx);
-    this.yVelocity.setFromNumber(snapShot.vy);
+    this.xVelocity.SetFromNumber(snapShot.vx);
+    this.yVelocity.SetFromNumber(snapShot.vy);
   }
 }
 
@@ -437,21 +457,21 @@ export class SpeedsComponent {
     maxDashSpeed: FixedPoint,
     gravity: FixedPoint
   ) {
-    this.GroundedVelocityDecay.setFromFp(grndSpeedVelDecay);
-    this.AerialVelocityDecay.setFromFp(aerialVelocityDecay);
-    this.AerialSpeedInpulseLimit.setFromFp(aerialSpeedInpulseLimit);
-    this.ArielVelocityMultiplier.setFromFp(aerialVelocityMultiplier);
-    this.AirDogeSpeed.setFromFp(airDodgeSpeed);
-    this.DodeRollSpeed.setFromFp(dodgeRollSpeed);
-    this.MaxWalkSpeed.setFromFp(maxWalkSpeed);
-    this.MaxRunSpeed.setFromFp(maxRunSpeed);
-    this.WalkSpeedMulitplier.setFromFp(walkSpeedMultiplier);
-    this.RunSpeedMultiplier.setFromFp(runSpeedMultiplier);
-    this.FastFallSpeed.setFromFp(fastFallSpeed);
-    this.FallSpeed.setFromFp(fallSpeed);
-    this.DashMultiplier.setFromFp(dashMultiplier);
-    this.MaxDashSpeed.setFromFp(maxDashSpeed);
-    this.Gravity.setFromFp(gravity);
+    this.GroundedVelocityDecay.SetFromFp(grndSpeedVelDecay);
+    this.AerialVelocityDecay.SetFromFp(aerialVelocityDecay);
+    this.AerialSpeedInpulseLimit.SetFromFp(aerialSpeedInpulseLimit);
+    this.ArielVelocityMultiplier.SetFromFp(aerialVelocityMultiplier);
+    this.AirDogeSpeed.SetFromFp(airDodgeSpeed);
+    this.DodeRollSpeed.SetFromFp(dodgeRollSpeed);
+    this.MaxWalkSpeed.SetFromFp(maxWalkSpeed);
+    this.MaxRunSpeed.SetFromFp(maxRunSpeed);
+    this.WalkSpeedMulitplier.SetFromFp(walkSpeedMultiplier);
+    this.RunSpeedMultiplier.SetFromFp(runSpeedMultiplier);
+    this.FastFallSpeed.SetFromFp(fastFallSpeed);
+    this.FallSpeed.SetFromFp(fallSpeed);
+    this.DashMultiplier.SetFromFp(dashMultiplier);
+    this.MaxDashSpeed.SetFromFp(maxDashSpeed);
+    this.Gravity.SetFromFp(gravity);
   }
 }
 
@@ -472,11 +492,11 @@ export class PlayerPointsComponent
   }
 
   public AddDamage(number: FixedPoint): void {
-    this.damagePoints.add(number);
+    this.damagePoints.Add(number);
   }
 
   public SubtractDamage(number: FixedPoint): void {
-    this.damagePoints.subtract(number);
+    this.damagePoints.Subtract(number);
   }
 
   public AddMatchPoints(number: number): void {
@@ -507,7 +527,7 @@ export class PlayerPointsComponent
   }
 
   public SetFromSnapShot(snapShot: PlayerPointsSnapShot): void {
-    this.damagePoints.setFromNumber(snapShot.damagePoints);
+    this.damagePoints.SetFromNumber(snapShot.damagePoints);
     this.matchPoints = snapShot.matchPoints;
   }
 }
@@ -676,32 +696,31 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   private readonly prevVerts = new Array<FlatVec>(4);
   private readonly allVerts = new Array<FlatVec>(8);
   private readonly ecbStateShapes: ECBShapes;
-  private readonly fpp: Pool<FixedPoint>;
+  // private readonly fpp: Pool<FixedPoint>;
 
   constructor(
-    fpp: Pool<FixedPoint>,
     shapes: ECBShapes,
     height: FixedPoint = new FixedPoint(100),
     width: FixedPoint = new FixedPoint(100),
     yOffset: FixedPoint = new FixedPoint(0)
   ) {
     // The constructor was missing the fpp pool parameter, which is needed for the initial update.
-    this.height.setFromFp(height);
-    this.width.setFromFp(width);
-    this.originalHeight.setFromFp(height);
-    this.originalWidth.setFromFp(width);
-    this.originalYOffset.setFromFp(yOffset);
-    this.yOffset.setFromFp(yOffset);
+    this.height.SetFromFp(height);
+    this.width.SetFromFp(width);
+    this.originalHeight.SetFromFp(height);
+    this.originalWidth.SetFromFp(width);
+    this.originalYOffset.SetFromFp(yOffset);
+    this.yOffset.SetFromFp(yOffset);
     this.ecbStateShapes = shapes;
     FillArrayWithFlatVec(this.curVerts);
     FillArrayWithFlatVec(this.prevVerts);
-    this.fpp = fpp;
+    //this.fpp = fpp;
     this.loadAllVerts();
     this.update();
   }
 
   public GetHull(): FlatVec[] {
-    return CreateConvexHull(this.allVerts, this.fpp);
+    return CreateConvexHull(this.allVerts);
   }
 
   public GetActiveVerts(): FlatVec[] {
@@ -709,19 +728,19 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public UpdatePreviousECB(): void {
-    this.prevX.setFromFp(this.x);
-    this.prevY.setFromFp(this.y);
+    this.prevX.SetFromFp(this.x);
+    this.prevY.SetFromFp(this.y);
 
     const prevVert: FlatVec[] = this.prevVerts;
     const curVert: FlatVec[] = this.curVerts;
-    prevVert[0].X.setFromFp(curVert[0].X);
-    prevVert[0].Y.setFromFp(curVert[0].Y);
-    prevVert[1].X.setFromFp(curVert[1].X);
-    prevVert[1].Y.setFromFp(curVert[1].Y);
-    prevVert[2].X.setFromFp(curVert[2].X);
-    prevVert[2].Y.setFromFp(curVert[2].Y);
-    prevVert[3].X.setFromFp(curVert[3].X);
-    prevVert[3].Y.setFromFp(curVert[3].Y);
+    prevVert[0].X.SetFromFp(curVert[0].X);
+    prevVert[0].Y.SetFromFp(curVert[0].Y);
+    prevVert[1].X.SetFromFp(curVert[1].X);
+    prevVert[1].Y.SetFromFp(curVert[1].Y);
+    prevVert[2].X.SetFromFp(curVert[2].X);
+    prevVert[2].Y.SetFromFp(curVert[2].Y);
+    prevVert[3].X.SetFromFp(curVert[3].X);
+    prevVert[3].Y.SetFromFp(curVert[3].Y);
   }
 
   public SetInitialPosition(x: FixedPoint, y: FixedPoint): void {
@@ -729,64 +748,76 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.UpdatePreviousECB();
   }
 
+  public SetInitialPositionRaw(xRaw: number, yRaw: number): void {
+    this.x.SetFromRaw(xRaw);
+    this.y.SetFromRaw(yRaw);
+    this.UpdatePreviousECB();
+  }
+
   public MoveToPosition(x: FixedPoint, y: FixedPoint): void {
-    this.x.setFromFp(x);
-    this.y.setFromFp(y);
+    this.x.SetFromFp(x);
+    this.y.SetFromFp(y);
+    this.update();
+  }
+
+  public MoveToPositionRaw(xRaw: number, yRaw: number): void {
+    this.x.SetFromRaw(xRaw);
+    this.y.SetFromRaw(yRaw);
     this.update();
   }
 
   public SetECBShape(stateId: StateId): void {
     const shape: ECBShape | undefined = this.ecbStateShapes.get(stateId);
     if (shape === undefined) {
-      this.yOffset.setFromFp(this.originalYOffset);
-      this.height.setFromFp(this.originalHeight);
-      this.width.setFromFp(this.originalWidth);
+      this.yOffset.SetFromFp(this.originalYOffset);
+      this.height.SetFromFp(this.originalHeight);
+      this.width.SetFromFp(this.originalWidth);
       this.update();
       return;
     }
 
-    this.yOffset.setFromFp(shape.yOffset);
-    this.height.setFromFp(shape.height);
-    this.width.setFromFp(shape.width);
+    this.yOffset.SetFromFp(shape.yOffset);
+    this.height.SetFromFp(shape.height);
+    this.width.SetFromFp(shape.width);
     this.update();
   }
 
   private update(): void {
     // Rent temporary FixedPoint objects from the pool for calculations
-    const fpp = this.fpp;
-    const half = fpp.Rent().setFromNumber(0.5);
-    const px = this.x;
-    const py = this.y;
-    const height = this.height;
-    const width = this.width;
-    const yOffset = this.yOffset;
+    //const fpp = this.fpp;
+    const half = NumberToRaw(0.5); //fpp.Rent().SetFromNumber(0.5);
+    const px = this.x.Raw;
+    const py = this.y.Raw;
+    const height = this.height.Raw;
+    const width = this.width.Raw;
+    const yOffset = this.yOffset.Raw;
 
-    const bottomX = fpp.Rent().setFromFp(px);
-    const bottomY = fpp.Rent().setAdd(py, yOffset);
+    const bottomX = px; //fpp.Rent().SetFromFp(px);
+    const bottomY = py + yOffset; //fpp.Rent().SetAdd(py, yOffset);
 
-    const topX = fpp.Rent().setFromFp(px);
-    const topY = fpp.Rent().setSubtract(bottomY, height);
+    const topX = px; //fpp.Rent().SetFromFp(px);
+    const topY = bottomY - height; //fpp.Rent().SetSubtract(bottomY, height);
 
-    const halfWidth = fpp.Rent().setMultiply(width, half);
-    const halfHeight = fpp.Rent().setMultiply(height, half);
+    const halfWidth = MultiplyRaw(width, half); //fpp.Rent().SetMultiply(width, half);
+    const halfHeight = MultiplyRaw(height, half); //fpp.Rent().SetMultiply(height, half);
 
-    const leftX = fpp.Rent().setSubtract(bottomX, halfWidth);
-    const leftY = fpp.Rent().setSubtract(bottomY, halfHeight);
+    const leftX = bottomX - halfWidth; //fpp.Rent().SetSubtract(bottomX, halfWidth);
+    const leftY = bottomY - halfHeight; //fpp.Rent().SetSubtract(bottomY, halfHeight);
 
-    const rightX = fpp.Rent().setAdd(bottomX, halfWidth);
-    const rightY = fpp.Rent().setFromFp(leftY);
+    const rightX = bottomX + halfWidth; //fpp.Rent().SetAdd(bottomX, halfWidth);
+    const rightY = leftY; //fpp.Rent().SetFromFp(leftY);
 
-    this.curVerts[0].X.setFromFp(bottomX);
-    this.curVerts[0].Y.setFromFp(bottomY);
+    this.curVerts[0].X.SetFromRaw(bottomX);
+    this.curVerts[0].Y.SetFromRaw(bottomY);
 
-    this.curVerts[1].X.setFromFp(leftX);
-    this.curVerts[1].Y.setFromFp(leftY);
+    this.curVerts[1].X.SetFromRaw(leftX);
+    this.curVerts[1].Y.SetFromRaw(leftY);
 
-    this.curVerts[2].X.setFromFp(topX);
-    this.curVerts[2].Y.setFromFp(topY);
+    this.curVerts[2].X.SetFromRaw(topX);
+    this.curVerts[2].Y.SetFromRaw(topY);
 
-    this.curVerts[3].X.setFromFp(rightX);
-    this.curVerts[3].Y.setFromFp(rightY);
+    this.curVerts[3].X.SetFromRaw(rightX);
+    this.curVerts[3].Y.SetFromRaw(rightY);
   }
 
   public get Bottom(): FlatVec {
@@ -834,9 +865,9 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public ResetECBShape(): void {
-    this.height.setFromFp(this.originalHeight);
-    this.width.setFromFp(this.originalWidth);
-    this.yOffset.setFromFp(this.originalYOffset);
+    this.height.SetFromFp(this.originalHeight);
+    this.width.SetFromFp(this.originalWidth);
+    this.yOffset.SetFromFp(this.originalYOffset);
     this.update();
   }
 
@@ -853,51 +884,51 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public SetFromSnapShot(snapShot: ECBSnapShot): void {
-    const fpp = this.fpp;
-    this.x.setFromNumber(snapShot.posX);
-    this.y.setFromNumber(snapShot.posY);
-    this.prevX.setFromNumber(snapShot.prevPosX);
-    this.prevY.setFromNumber(snapShot.prevPosY);
-    this.yOffset.setFromNumber(snapShot.YOffset);
-    this.height.setFromNumber(snapShot.Height);
-    this.width.setFromNumber(snapShot.Width);
+    //const fpp = this.fpp;
+    this.x.SetFromNumber(snapShot.posX);
+    this.y.SetFromNumber(snapShot.posY);
+    this.prevX.SetFromNumber(snapShot.prevPosX);
+    this.prevY.SetFromNumber(snapShot.prevPosY);
+    this.yOffset.SetFromNumber(snapShot.YOffset);
+    this.height.SetFromNumber(snapShot.Height);
+    this.width.SetFromNumber(snapShot.Width);
 
     this.update();
 
     // Update prevVerts
-    const half = fpp.Rent().setFromNumber(0.5);
-    const px = this.prevX;
-    const py = this.prevY;
-    const height = this.height;
-    const width = this.width;
-    const yOffset = this.yOffset;
+    const half = NumberToRaw(0.5); //fpp.Rent().SetFromNumber(0.5);
+    const px = this.prevX.Raw;
+    const py = this.prevY.Raw;
+    const height = this.height.Raw;
+    const width = this.width.Raw;
+    const yOffset = this.yOffset.Raw;
 
-    const bottomX = fpp.Rent().setFromFp(px);
-    const bottomY = fpp.Rent().setAdd(py, yOffset);
+    const bottomX = px; //fpp.Rent().SetFromFp(px);
+    const bottomY = py + yOffset; // fpp.Rent().SetAdd(py, yOffset);
 
-    const topX = fpp.Rent().setFromFp(px);
-    const topY = fpp.Rent().setSubtract(bottomY, height);
+    const topX = px; //fpp.Rent().SetFromFp(px);
+    const topY = bottomY - height; //fpp.Rent().SetSubtract(bottomY, height);
 
-    const halfWidth = fpp.Rent().setFromFp(width).multiply(half);
-    const halfHeight = fpp.Rent().setFromFp(height).multiply(half);
+    const halfWidth = MultiplyRaw(width, half); // fpp.Rent().SetFromFp(width).Multiply(half);
+    const halfHeight = MultiplyRaw(height, half); //fpp.Rent().SetFromFp(height).Multiply(half);
 
-    const leftX = fpp.Rent().setFromFp(bottomX).subtract(halfWidth);
-    const leftY = fpp.Rent().setFromFp(bottomY).subtract(halfHeight);
+    const leftX = bottomX - halfWidth; //fpp.Rent().SetFromFp(bottomX).Subtract(halfWidth);
+    const leftY = bottomY - halfHeight; //fpp.Rent().SetFromFp(bottomY).Subtract(halfHeight);
 
-    const rightX = fpp.Rent().setFromFp(bottomX).add(halfWidth);
+    const rightX = bottomX + halfWidth; //fpp.Rent().SetFromFp(bottomX).Add(halfWidth);
     const rightY = leftY;
 
-    this.prevVerts[0].X.setFromFp(bottomX);
-    this.prevVerts[0].Y.setFromFp(bottomY);
+    this.prevVerts[0].X.SetFromRaw(bottomX);
+    this.prevVerts[0].Y.SetFromRaw(bottomY);
 
-    this.prevVerts[1].X.setFromFp(leftX);
-    this.prevVerts[1].Y.setFromFp(leftY);
+    this.prevVerts[1].X.SetFromRaw(leftX);
+    this.prevVerts[1].Y.SetFromRaw(leftY);
 
-    this.prevVerts[2].X.setFromFp(topX);
-    this.prevVerts[2].Y.setFromFp(topY);
+    this.prevVerts[2].X.SetFromRaw(topX);
+    this.prevVerts[2].Y.SetFromRaw(topY);
 
-    this.prevVerts[3].X.setFromFp(rightX);
-    this.prevVerts[3].Y.setFromFp(rightY);
+    this.prevVerts[3].X.SetFromRaw(rightX);
+    this.prevVerts[3].Y.SetFromRaw(rightY);
   }
 
   private loadAllVerts(): void {
@@ -932,39 +963,47 @@ export class HurtCapsule {
     endOffsetY: FixedPoint,
     radius: FixedPoint
   ) {
-    this.StartOffsetX.setFromFp(startOffsetX);
-    this.StartOffsetY.setFromFp(startOffsetY);
-    this.EndOffsetX.setFromFp(endOffsetX);
-    this.EndOffsetY.setFromFp(endOffsetY);
-    this.Radius.setFromFp(radius);
+    this.StartOffsetX.SetFromFp(startOffsetX);
+    this.StartOffsetY.SetFromFp(startOffsetY);
+    this.EndOffsetX.SetFromFp(endOffsetX);
+    this.EndOffsetY.SetFromFp(endOffsetY);
+    this.Radius.SetFromFp(radius);
   }
 
   public GetStartPosition(
-    fpp: Pool<FixedPoint>,
+    //fpp: Pool<FixedPoint>,
     x: FixedPoint,
     y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    return vecPool
-      .Rent()
-      .SetXY(
-        fpp.Rent().setAdd(this.StartOffsetX, x),
-        fpp.Rent().setAdd(this.StartOffsetY, y)
-      );
+    // return vecPool
+    //   .Rent()
+    //   .SetXY(
+    //     fpp.Rent().SetAdd(this.StartOffsetX, x),
+    //     fpp.Rent().SetAdd(this.StartOffsetY, y)
+    //   );
+
+    const xsRaw = this.StartOffsetX.Raw + x.Raw;
+    const ysRaw = this.StartOffsetY.Raw + y.Raw;
+    return vecPool.Rent().SetXYRaw(xsRaw, ysRaw);
   }
 
   public GetEndPosition(
-    fpp: Pool<FixedPoint>,
+    // fpp: Pool<FixedPoint>,
     x: FixedPoint,
     y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    return vecPool
-      .Rent()
-      .SetXY(
-        fpp.Rent().setAdd(this.EndOffsetX, x),
-        fpp.Rent().setAdd(this.EndOffsetY, y)
-      );
+    // return vecPool
+    //   .Rent()
+    //   .SetXY(
+    //     fpp.Rent().SetAdd(this.EndOffsetX, x),
+    //     fpp.Rent().SetAdd(this.EndOffsetY, y)
+    //   );
+
+    const xeRaw = this.EndOffsetX.Raw + x.Raw;
+    const yeRaw = this.EndOffsetY.Raw + y.Raw;
+    return vecPool.Rent().SetXYRaw(xeRaw, yeRaw);
   }
 }
 
@@ -988,15 +1027,15 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   private readonly curRadius = new FixedPoint(0);
   private readonly step = new FixedPoint(0);
   private readonly framesToFulll = new FixedPoint(300);
-  private readonly fpp: Pool<FixedPoint>;
+  //private readonly fpp: Pool<FixedPoint>;
   private readonly damageMult = new FixedPoint(1.5);
 
   constructor(fpp: Pool<FixedPoint>, radius: FixedPoint, yOffset: FixedPoint) {
     this.curRadius = radius;
     this.InitialRadius = radius;
     this.YOffset = yOffset;
-    this.step.setDivide(radius, this.framesToFulll);
-    this.fpp = fpp;
+    this.step.SetDivide(radius, this.framesToFulll);
+    //this.fpp = fpp;
   }
 
   public SnapShot(): ShieldSnapShot {
@@ -1008,7 +1047,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
 
   public SetFromSnapShot(snapShot: ShieldSnapShot): void {
     this.Active = snapShot.Active;
-    this.curRadius.setFromNumber(snapShot.CurrentRadius);
+    this.curRadius.SetFromNumber(snapShot.CurrentRadius);
   }
 
   public get CurrentRadius(): FixedPoint {
@@ -1016,37 +1055,39 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   }
 
   public Grow(): void {
-    if (this.curRadius.lessThan(this.InitialRadius)) {
-      this.curRadius.add(this.step);
+    if (this.curRadius.LessThan(this.InitialRadius)) {
+      this.curRadius.Add(this.step);
     }
 
-    if (this.curRadius.greaterThan(this.InitialRadius)) {
-      this.curRadius.setFromFp(this.InitialRadius);
+    if (this.curRadius.GreaterThan(this.InitialRadius)) {
+      this.curRadius.SetFromFp(this.InitialRadius);
     }
   }
 
-  public Shrink(intensity: FixedPoint): void {
-    if (this.curRadius.Raw() > 0) {
-      this.curRadius.subtract(
-        this.fpp.Rent().setMultiply(this.step, intensity)
-      );
+  public ShrinkRaw(intensityRaw: number): void {
+    if (this.curRadius.Raw > 0) {
+      // this.curRadius.Subtract(
+      //   this.fpp.Rent().SetMultiply(this.step, intensity)
+      // );
+      this.curRadius.SetFromRaw(MultiplyRaw(this.step.Raw, intensityRaw));
     }
 
-    if (this.curRadius.Raw() < 0) {
-      this.curRadius.setFromNumber(0);
+    if (this.curRadius.Raw < 0) {
+      this.curRadius.SetFromRaw(0); //.SetFromNumber(0);
     }
   }
 
   public Damage(d: FixedPoint) {
-    const damageMod = this.fpp.Rent().setMultiply(d, this.damageMult);
-    this.curRadius.subtract(damageMod);
-    if (this.curRadius.Raw() < 0) {
-      this.curRadius.setFromNumber(0);
+    const damageMod = MultiplyRaw(d.Raw, this.damageMult.Raw); //this.fpp.Rent().SetMultiply(d, this.damageMult);
+    const curRadius = this.curRadius;
+    this.curRadius.SetFromRaw(curRadius.Raw - damageMod); //.Subtract(damageMod);
+    if (curRadius.Raw < 0) {
+      this.curRadius.SetFromRaw(0); //.SetFromNumber(0);
     }
   }
 
   public Reset() {
-    this.curRadius.setFromFp(this.InitialRadius);
+    this.curRadius.SetFromFp(this.InitialRadius);
   }
 }
 
@@ -1068,7 +1109,7 @@ export class LedgeDetectorComponent
   private readonly height: FixedPoint = new FixedPoint(0);
   private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
   private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
-  private readonly fpp: Pool<FixedPoint>;
+  //private readonly fpp: Pool<FixedPoint>;
 
   constructor(
     fpp: Pool<FixedPoint>,
@@ -1078,7 +1119,7 @@ export class LedgeDetectorComponent
     height: FixedPoint,
     yOffset = new FixedPoint(-130)
   ) {
-    this.fpp = fpp;
+    //this.fpp = fpp;
     this.height = height;
     this.width = width;
     this.yOffset = yOffset;
@@ -1088,8 +1129,14 @@ export class LedgeDetectorComponent
   }
 
   public MoveTo(x: FixedPoint, y: FixedPoint): void {
-    this.x.setFromFp(x);
-    this.y.setAdd(y, this.yOffset);
+    this.x.SetFromFp(x);
+    this.y.SetAdd(y, this.yOffset);
+    this.update();
+  }
+
+  public MoveToRaw(xRaw: number, yRaw: number): void {
+    this.x.SetFromRaw(xRaw);
+    this.y.SetFromRaw(yRaw);
     this.update();
   }
 
@@ -1120,35 +1167,40 @@ export class LedgeDetectorComponent
     const leftTopRight = this.leftSide[2];
     const leftBottomRight = this.leftSide[3];
 
-    const widthRight = this.fpp.Rent().setAdd(this.x, this.width);
-    const widthLeft = this.fpp.Rent().setSubtract(this.x, this.width);
-    const bottomHeight = this.fpp.Rent().setAdd(this.y, this.height);
+    const widthRaw = this.width.Raw;
+    const heightRaw = this.height.Raw;
+    const xRaw = this.x.Raw;
+    const yRaw = this.y.Raw;
+
+    const widthRightRaw = xRaw + widthRaw; //this.fpp.Rent().SetAdd(this.x, this.width);
+    const widthLeftRaw = xRaw - widthRaw; //this.fpp.Rent().SetSubtract(this.x, this.width);
+    const bottomHeightRaw = yRaw + heightRaw; //this.fpp.Rent().SetAdd(this.y, this.height);
 
     //bottom left
-    rightBottomLeft.X.setFromFp(this.x);
-    rightBottomLeft.Y.setFromFp(bottomHeight);
+    rightBottomLeft.X.SetFromRaw(xRaw);
+    rightBottomLeft.Y.SetFromRaw(bottomHeightRaw);
     //top left
-    rightTopLeft.X.setFromFp(this.x);
-    rightTopLeft.Y.setFromFp(this.y);
+    rightTopLeft.X.SetFromRaw(xRaw);
+    rightTopLeft.Y.SetFromRaw(yRaw);
     // top right
-    rightTopRight.X.setFromFp(widthRight);
-    rightTopRight.Y.setFromFp(this.y);
+    rightTopRight.X.SetFromRaw(widthRightRaw);
+    rightTopRight.Y.SetFromRaw(yRaw);
     // bottom right
-    rightBottomRight.X.setFromFp(widthRight);
-    rightBottomRight.Y.setFromFp(bottomHeight);
+    rightBottomRight.X.SetFromRaw(widthRightRaw);
+    rightBottomRight.Y.SetFromRaw(bottomHeightRaw);
 
     //bottom left
-    leftBottomLeft.X.setFromFp(widthLeft);
-    leftBottomLeft.Y.setFromFp(bottomHeight);
+    leftBottomLeft.X.SetFromRaw(widthLeftRaw);
+    leftBottomLeft.Y.SetFromRaw(bottomHeightRaw);
     // top left
-    leftTopLeft.X.setFromFp(widthLeft);
-    leftTopLeft.Y.setFromFp(this.y);
+    leftTopLeft.X.SetFromRaw(widthLeftRaw);
+    leftTopLeft.Y.SetFromRaw(yRaw);
     // top right
-    leftTopRight.X.setFromFp(this.x);
-    leftTopRight.Y.setFromFp(this.y);
+    leftTopRight.X.SetFromRaw(xRaw);
+    leftTopRight.Y.SetFromRaw(yRaw);
     // bottom right
-    leftBottomRight.X.setFromFp(this.x);
-    leftBottomRight.Y.setFromFp(bottomHeight);
+    leftBottomRight.X.SetFromRaw(xRaw);
+    leftBottomRight.Y.SetFromRaw(bottomHeightRaw);
   }
 
   public SnapShot(): LedgeDetectorSnapShot {
@@ -1172,10 +1224,14 @@ export class LedgeDetectorComponent
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    this.MoveTo(
-      this.fpp.Rent().setFromNumber(snapShot.middleX),
-      this.fpp.Rent().setFromNumber(snapShot.middleY)
-    );
+    // this.MoveTo(
+    //   this.fpp.Rent().SetFromNumber(snapShot.middleX),
+    //   this.fpp.Rent().SetFromNumber(snapShot.middleY)
+    // );
+    const middleXRaw = NumberToRaw(snapShot.middleX);
+    const middleYRaw = NumberToRaw(snapShot.middleY);
+    this.MoveToRaw(middleXRaw, middleYRaw);
+    //this.numberOfLedgeGrabs)
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
   }
 }
@@ -1186,7 +1242,7 @@ export class JumpComponent implements IHistoryEnabled<number> {
   public readonly JumpVelocity: FixedPoint = new FixedPoint(0);
 
   constructor(jumpVelocity: FixedPoint, numberOfJumps: number = 2) {
-    this.JumpVelocity.setFromFp(jumpVelocity);
+    this.JumpVelocity.SetFromFp(jumpVelocity);
     this.numberOfJumps = numberOfJumps;
   }
 
@@ -1241,10 +1297,10 @@ export class HitBubble {
     frameOffsets: Map<frameNumber, FlatVec>
   ) {
     this.BubbleId = id;
-    this.Damage.setFromFp(damage);
+    this.Damage.SetFromFp(damage);
     this.Priority = priority;
-    this.Radius.setFromFp(radius);
-    this.launchAngle.setFromFp(launchAngle);
+    this.Radius.SetFromFp(radius);
+    this.launchAngle.SetFromFp(launchAngle);
     const activeframes = Array.from(frameOffsets.keys()).sort((a, b) => a - b);
     this.activeStartFrame = activeframes[0];
     this.activeEndFrame = activeframes[activeframes.length - 1];
@@ -1265,7 +1321,7 @@ export class HitBubble {
   }
 
   public GetGlobalPosition(
-    fpp: Pool<FixedPoint>,
+    //fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
     playerX: FixedPoint,
     playerY: FixedPoint,
@@ -1278,12 +1334,15 @@ export class HitBubble {
       return undefined;
     }
 
-    const globalX = facinRight
-      ? fpp.Rent().setAdd(playerX, offset.X)
-      : fpp.Rent().setSubtract(playerX, offset.X);
-    const globalY = fpp.Rent().setAdd(playerY, offset.Y);
+    const xRaw = playerX.Raw;
+    const yRaw = playerY.Raw;
 
-    return vecPool.Rent().SetXY(globalX, globalY);
+    const globalXRaw = facinRight
+      ? xRaw + offset.X.Raw //fpp.Rent().SetAdd(playerX, offset.X)
+      : xRaw - offset.X.Raw; //fpp.Rent().SetSubtract(playerX, offset.X);
+    const globalYRaw = yRaw + offset.Y.Raw; //fpp.Rent().SetAdd(playerY, offset.Y);
+
+    return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
 }
 
@@ -1331,11 +1390,11 @@ export class Attack {
     this.GravityActive = gravityActive;
     this.CanOnlyFallOffLedgeIfFacingAwayFromIt =
       canOnlyFallOffLedgeWhenFacingAwayFromIt;
-    this.BaseKnockBack.setFromFp(baseKb);
-    this.KnockBackScaling.setFromFp(kbScaling);
+    this.BaseKnockBack.SetFromFp(baseKb);
+    this.KnockBackScaling.SetFromFp(kbScaling);
 
     if (impulseClamp != undefined) {
-      this.ImpulseClamp = new FixedPoint().setFromFp(impulseClamp);
+      this.ImpulseClamp = new FixedPoint().SetFromFp(impulseClamp);
     }
 
     this.HitBubbles = hitBubbles.sort((a, b) => a.Priority - b.Priority);
@@ -1437,7 +1496,7 @@ export class AttackBuilder {
     this.impulses = impulses;
     this.impulseClamp =
       impulseClamp !== undefined
-        ? new FixedPoint().setFromFp(impulseClamp)
+        ? new FixedPoint().SetFromFp(impulseClamp)
         : undefined;
     return this;
   }
@@ -1458,12 +1517,12 @@ export class AttackBuilder {
   }
 
   public WithBaseKnockBack(baseKb: FixedPoint): AttackBuilder {
-    this.baseKnockBack.setFromFp(baseKb);
+    this.baseKnockBack.SetFromFp(baseKb);
     return this;
   }
 
   public WithKnockBackScaling(kbScaling: FixedPoint): AttackBuilder {
-    this.knockBackScaling.setFromFp(kbScaling);
+    this.knockBackScaling.SetFromFp(kbScaling);
     return this;
   }
 
@@ -1572,17 +1631,22 @@ class Sensor {
   private active: boolean = false;
 
   public GetGlobalPosition(
-    fpp: Pool<FixedPoint>,
+    //fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
     globalX: FixedPoint,
     globalY: FixedPoint,
     facingRight: boolean
   ): PooledVector {
-    const x = facingRight
-      ? fpp.Rent().setAdd(globalX, this.xOffset)
-      : fpp.Rent().setMultiply(globalX, this.xOffset);
-    const y = fpp.Rent().setAdd(globalY, this.yOffset);
-    return vecPool.Rent().SetXY(x, y);
+    const xOffsetRaw = this.XOffset.Raw;
+    const yOffsetRaw = this.YOffset.Raw;
+    const globalXRaw = globalX.Raw;
+    const globalYRaw = globalY.Raw;
+
+    const xRaw = facingRight
+      ? globalXRaw + xOffsetRaw //fpp.Rent().SetAdd(globalX, this.xOffset)
+      : MultiplyRaw(globalXRaw, xOffsetRaw); //fpp.Rent().SetMultiply(globalX, this.xOffset);
+    const yRaw = globalYRaw + yOffsetRaw; //fpp.Rent().SetAdd(globalY, this.yOffset);
+    return vecPool.Rent().SetXYRaw(xRaw, yRaw);
   }
 
   public get Radius(): FixedPoint {
@@ -1677,9 +1741,9 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     radius: FixedPoint
   ): void {
     const sensor = this.sensors[this.currentSensorIdx];
-    sensor.XOffset.setFromFp(xOffset);
-    sensor.YOffset.setFromFp(yOffset);
-    sensor.Radius.setFromFp(radius);
+    sensor.XOffset.SetFromFp(xOffset);
+    sensor.YOffset.SetFromFp(yOffset);
+    sensor.Radius.SetFromFp(radius);
     sensor.Activate();
     this.currentSensorIdx++;
   }
@@ -1731,9 +1795,9 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     for (let i = 0; i < snapShotSensorLength; i++) {
       const snapShotSensor = snapShot.sensors[i];
       this.activateSensor(
-        this.fpp.Rent().setFromNumber(snapShotSensor.yOffset),
-        this.fpp.Rent().setFromNumber(snapShotSensor.xOffset),
-        this.fpp.Rent().setFromNumber(snapShotSensor.radius)
+        this.fpp.Rent().SetFromNumber(snapShotSensor.yOffset),
+        this.fpp.Rent().SetFromNumber(snapShotSensor.xOffset),
+        this.fpp.Rent().SetFromNumber(snapShotSensor.radius)
       );
     }
     this.sensorReactor = snapShot.reactor || defaultReactor;
@@ -1765,14 +1829,14 @@ export class SpeedsComponentBuilder {
     aerialSpeedImpulseLimit: FixedPoint,
     aerialSpeedMultiplier: FixedPoint
   ) {
-    this.aerialVelocityDecay.setFromFp(aerialVelocityDecay);
-    this.aerialSpeedInpulseLimit.setFromFp(aerialSpeedImpulseLimit);
-    this.aerialSpeedMultiplier.setFromFp(aerialSpeedMultiplier);
+    this.aerialVelocityDecay.SetFromFp(aerialVelocityDecay);
+    this.aerialSpeedInpulseLimit.SetFromFp(aerialSpeedImpulseLimit);
+    this.aerialSpeedMultiplier.SetFromFp(aerialSpeedMultiplier);
   }
 
   SetDodgeSpeeds(airDodgeSpeed: FixedPoint, dodgeRollSpeed: FixedPoint): void {
-    this.airDodgeSpeed.setFromFp(airDodgeSpeed);
-    this.dodgeRollSpeed.setFromFp(dodgeRollSpeed);
+    this.airDodgeSpeed.SetFromFp(airDodgeSpeed);
+    this.dodgeRollSpeed.SetFromFp(dodgeRollSpeed);
   }
 
   SetFallSpeeds(
@@ -1780,31 +1844,31 @@ export class SpeedsComponentBuilder {
     fallSpeed: FixedPoint,
     gravity: FixedPoint = new FixedPoint(1)
   ): void {
-    this.fallSpeed.setFromFp(fallSpeed);
-    this.fastFallSpeed.setFromFp(fastFallSpeed);
-    this.gravity.setFromFp(gravity);
+    this.fallSpeed.SetFromFp(fallSpeed);
+    this.fastFallSpeed.SetFromFp(fastFallSpeed);
+    this.gravity.SetFromFp(gravity);
   }
 
   SetWalkSpeeds(
     maxWalkSpeed: FixedPoint,
     walkSpeedMultiplier: FixedPoint
   ): void {
-    this.maxWalkSpeed.setFromFp(maxWalkSpeed);
-    this.walkSpeedMulitplier.setFromFp(walkSpeedMultiplier);
+    this.maxWalkSpeed.SetFromFp(maxWalkSpeed);
+    this.walkSpeedMulitplier.SetFromFp(walkSpeedMultiplier);
   }
 
   SetRunSpeeds(maxRunSpeed: FixedPoint, runSpeedMultiplier: FixedPoint): void {
-    this.runSpeedMultiplier.setFromFp(runSpeedMultiplier);
-    this.maxRunSpeed.setFromFp(maxRunSpeed);
+    this.runSpeedMultiplier.SetFromFp(runSpeedMultiplier);
+    this.maxRunSpeed.SetFromFp(maxRunSpeed);
   }
 
   SetDashSpeeds(dashMultiplier: FixedPoint, maxDashSpeed: FixedPoint): void {
-    this.dashMutiplier.setFromFp(dashMultiplier);
-    this.maxDashSpeed.setFromFp(maxDashSpeed);
+    this.dashMutiplier.SetFromFp(dashMultiplier);
+    this.maxDashSpeed.SetFromFp(maxDashSpeed);
   }
 
   SetGroundedVelocityDecay(groundedVelocityDecay: FixedPoint): void {
-    this.groundedVelocityDecay.setFromFp(groundedVelocityDecay);
+    this.groundedVelocityDecay.SetFromFp(groundedVelocityDecay);
   }
 
   Build(): SpeedsComponent {

@@ -19,48 +19,51 @@ import {
 } from '../engine/player/playerComponents';
 import { Player } from '../engine/player/playerOrchestrator';
 import { World } from '../engine/world/world';
+import { FixedPoint } from '../math/fixedPoint';
 
 type frameNumber = number;
 
 export type CharacterConfig = {
   FrameLengths: Map<StateId, number>;
   SCB: SpeedsComponentBuilder;
-  ECBHeight: number;
-  ECBWidth: number;
-  ECBOffset: number;
+  ECBHeight: FixedPoint;
+  ECBWidth: FixedPoint;
+  ECBOffset: FixedPoint;
   ECBShapes: ECBShapes;
   HurtCapsules: Array<HurtCapsule>;
-  JumpVelocity: number;
+  JumpVelocity: FixedPoint;
   NumberOfJumps: number;
-  LedgeBoxHeight: number;
-  LedgeBoxWidth: number;
-  ledgeBoxYOffset: number;
+  LedgeBoxHeight: FixedPoint;
+  LedgeBoxWidth: FixedPoint;
+  ledgeBoxYOffset: FixedPoint;
   attacks: Map<AttackId, Attack>;
-  Weight: number;
-  ShieldRadius: number;
-  ShieldYOffset: number;
+  Weight: FixedPoint;
+  ShieldRadius: FixedPoint;
+  ShieldYOffset: FixedPoint;
 };
+
+const toFp = (num: number) => new FixedPoint(num);
 
 export class DefaultCharacterConfig implements CharacterConfig {
   public FrameLengths = new Map<StateId, number>();
   public SCB: SpeedsComponentBuilder;
-  public ECBHeight: number;
-  public ECBWidth: number;
-  public ECBOffset: number;
+  public ECBHeight = new FixedPoint();
+  public ECBWidth = new FixedPoint();
+  public ECBOffset = new FixedPoint();
   public ECBShapes: ECBShapes = new Map<
     StateId,
-    { height: number; width: number; yOffset: number }
+    { height: FixedPoint; width: FixedPoint; yOffset: FixedPoint }
   >();
   public HurtCapsules: Array<HurtCapsule> = [];
-  public JumpVelocity: number;
+  public JumpVelocity = new FixedPoint();
   public NumberOfJumps: number;
-  public LedgeBoxHeight: number;
-  public LedgeBoxWidth: number;
-  public ledgeBoxYOffset: number;
+  public LedgeBoxHeight = new FixedPoint();
+  public LedgeBoxWidth = new FixedPoint();
+  public ledgeBoxYOffset = new FixedPoint();
   public attacks: Map<AttackId, Attack> = new Map<AttackId, Attack>();
-  public Weight: number;
-  public ShieldRadius: number;
-  public ShieldYOffset: number;
+  public Weight = new FixedPoint();
+  public ShieldRadius = new FixedPoint();
+  public ShieldYOffset = new FixedPoint();
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -135,60 +138,64 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength);
 
-    this.ECBShapes.set(STATE_IDS.N_FALL_S, {
-      height: 70,
-      width: 70,
-      yOffset: -25,
-    })
-      .set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 })
-      .set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 })
-      .set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 })
-      .set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 })
-      .set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 })
-      .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
-      .set(STATE_IDS.DOWN_CHARGE_S, { height: 110, width: 85, yOffset: 0 })
-      .set(STATE_IDS.DOWN_CHARGE_EX_S, { height: 65, width: 100, yOffset: 0 })
-      .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 })
-      .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
-      .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
-      .set(STATE_IDS.DOWN_SPCL_AIR_S, { height: 65, width: 65, yOffset: 0 })
-      .set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 })
-      .set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 })
-      .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
-      .set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 })
-      .set(STATE_IDS.SIDE_SPCL_S, { height: 80, width: 100, yOffset: 0 })
-      .set(STATE_IDS.UP_CHARGE_S, { height: 90, width: 100, yOffset: 0 })
-      .set(STATE_IDS.UP_CHARGE_EX_S, { height: 110, width: 85, yOffset: 0 })
-      .set(STATE_IDS.SIDE_CHARGE_S, { height: 100, width: 85, yOffset: 0 })
-      .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
-      .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+    const shapeMaker = (height: number, width: number, yOffset: number) => {
+      return {
+        height: new FixedPoint(height),
+        width: new FixedPoint(width),
+        yOffset: new FixedPoint(yOffset),
+      };
+    };
 
-    this.ShieldRadius = 75;
-    this.ShieldYOffset = -50;
+    this.ECBShapes.set(STATE_IDS.N_FALL_S, shapeMaker(70, 70, -25))
+      .set(STATE_IDS.JUMP_S, shapeMaker(60, 70, -15)) // { height: 60, width: 70, yOffset: -15 })
+      .set(STATE_IDS.N_AIR_S, shapeMaker(60, 70, -25)) //{ height: 60, width: 70, yOffset: -25 })
+      .set(STATE_IDS.F_AIR_S, shapeMaker(60, 70, -25)) // { height: 60, width: 70, yOffset: -25 })
+      .set(STATE_IDS.U_AIR_S, shapeMaker(60, 60, -125)) //{ height: 60, width: 60, yOffset: -25 })
+      .set(STATE_IDS.B_AIR_S, shapeMaker(60, 60, -25)) // { height: 60, width: 60, yOffset: -25 })
+      .set(STATE_IDS.D_AIR_S, shapeMaker(90, 60, -10)) //{ height: 90, width: 60, yOffset: -10 })
+      .set(STATE_IDS.DOWN_CHARGE_S, shapeMaker(110, 85, 0)) // { height: 110, width: 85, yOffset: 0 })
+      .set(STATE_IDS.DOWN_CHARGE_EX_S, shapeMaker(65, 100, 0)) // { height: 65, width: 100, yOffset: 0 })
+      .set(STATE_IDS.AIR_DODGE_S, shapeMaker(60, 70, -15)) //{ height: 60, width: 70, yOffset: -15 })
+      .set(STATE_IDS.DOWN_TILT_S, shapeMaker(50, 100, 0)) //{ height: 50, width: 100, yOffset: 0 })
+      .set(STATE_IDS.DOWN_SPCL_S, shapeMaker(65, 105, 0)) //{ height: 65, width: 105, yOffset: 0 })
+      .set(STATE_IDS.DOWN_SPCL_AIR_S, shapeMaker(65, 65, 0)) // { height: 65, width: 65, yOffset: 0 })
+      .set(STATE_IDS.JUMP_SQUAT_S, shapeMaker(70, 80, 0)) // { height: 70, width: 80, yOffset: 0 })
+      .set(STATE_IDS.LAND_S, shapeMaker(65, 90, 0)) // { height: 65, width: 90, yOffset: 0 })
+      .set(STATE_IDS.SOFT_LAND_S, shapeMaker(85, 95, 0)) //{ height: 85, width: 95, yOffset: 0 })
+      .set(STATE_IDS.LEDGE_GRAB_S, shapeMaker(110, 55, 0)) // { height: 110, width: 55, yOffset: 0 })
+      .set(STATE_IDS.SIDE_SPCL_S, shapeMaker(80, 100, 0)) // { height: 80, width: 100, yOffset: 0 })
+      .set(STATE_IDS.UP_CHARGE_S, shapeMaker(90, 100, 0)) // { height: 90, width: 100, yOffset: 0 })
+      .set(STATE_IDS.UP_CHARGE_EX_S, shapeMaker(110, 85, 0)) //{ height: 110, width: 85, yOffset: 0 })
+      .set(STATE_IDS.SIDE_CHARGE_S, shapeMaker(100, 85, 0)) //{ height: 100, width: 85, yOffset: 0 })
+      .set(STATE_IDS.SIDE_CHARGE_EX_S, shapeMaker(85, 100, 0)) // { height: 85, width: 100, yOffset: 0 })
+      .set(STATE_IDS.CROUCH_S, shapeMaker(50, 100, 0)); // { height: 50, width: 100, yOffset: 0 });
+
+    this.ShieldRadius = new FixedPoint(75);
+    this.ShieldYOffset = new FixedPoint(-50);
 
     this.SCB = new SpeedsComponentBuilder();
-    this.SCB.SetWalkSpeeds(6, 1.6);
-    this.SCB.SetRunSpeeds(10, 2.2);
-    this.SCB.SetFallSpeeds(16, 9, 0.6);
-    this.SCB.SetAerialSpeeds(0.7, 9, 1.8);
-    this.SCB.SetDashSpeeds(3, 13);
-    this.SCB.SetDodgeSpeeds(20, 23);
-    this.SCB.SetGroundedVelocityDecay(0.8);
+    this.SCB.SetWalkSpeeds(toFp(6), toFp(1.6));
+    this.SCB.SetRunSpeeds(toFp(10), toFp(2.2));
+    this.SCB.SetFallSpeeds(toFp(16), toFp(9), toFp(0.6));
+    this.SCB.SetAerialSpeeds(toFp(0.7), toFp(9), toFp(1.8));
+    this.SCB.SetDashSpeeds(toFp(3), toFp(13));
+    this.SCB.SetDodgeSpeeds(toFp(20), toFp(23));
+    this.SCB.SetGroundedVelocityDecay(toFp(0.8));
 
-    this.ECBOffset = 0;
-    this.ECBHeight = 100;
-    this.ECBWidth = 100;
+    this.ECBOffset = toFp(0);
+    this.ECBHeight = toFp(100);
+    this.ECBWidth = toFp(100);
 
     this.populateHurtCircles();
 
-    this.Weight = 110;
+    this.Weight = toFp(110);
 
-    this.JumpVelocity = 17;
+    this.JumpVelocity = toFp(17);
     this.NumberOfJumps = 2;
 
-    this.LedgeBoxHeight = 35;
-    this.LedgeBoxWidth = 80;
-    this.ledgeBoxYOffset = -130;
+    this.LedgeBoxHeight = toFp(35);
+    this.LedgeBoxWidth = toFp(80);
+    this.ledgeBoxYOffset = toFp(-130);
     this.attacks
       .set(ATTACK_IDS.N_GRND_ATK, neutralAttack)
       .set(ATTACK_IDS.D_TILT_ATK, downTilt)
@@ -226,13 +233,15 @@ export class DefaultCharacterConfig implements CharacterConfig {
   }
 }
 
+const toFv = (x: number, y: number) => new FlatVec(toFp(x), toFp(y));
+
 function GetNAtk() {
   const hb1OffSets = new Map<frameNumber, FlatVec>();
-  const hb1Frame3Offset = new FlatVec(30, -50);
-  const hb1Frame4Offset = new FlatVec(60, -50);
-  const hb1Frame5Offset = new FlatVec(80, -50);
-  const hb1Frame6Offset = new FlatVec(80, -50);
-  const hb1Frame7Offset = new FlatVec(80, -50);
+  const hb1Frame3Offset = toFv(30, -50);
+  const hb1Frame4Offset = toFv(60, -50);
+  const hb1Frame5Offset = toFv(80, -50);
+  const hb1Frame6Offset = toFv(80, -50);
+  const hb1Frame7Offset = toFv(80, -50);
 
   hb1OffSets
     .set(3, hb1Frame3Offset)
@@ -242,11 +251,11 @@ function GetNAtk() {
     .set(7, hb1Frame7Offset);
 
   const hb2OffSets = new Map<frameNumber, FlatVec>();
-  const hb2Frame3Offset = new FlatVec(15, -50);
-  const hb2Frame4Offset = new FlatVec(25, -50);
-  const hb2Frame5Offset = new FlatVec(55, -50);
-  const hb2Frame6Offset = new FlatVec(65, -50);
-  const hb2Frame7Offset = new FlatVec(65, -50);
+  const hb2Frame3Offset = toFv(15, -50);
+  const hb2Frame4Offset = toFv(25, -50);
+  const hb2Frame5Offset = toFv(55, -50);
+  const hb2Frame6Offset = toFv(65, -50);
+  const hb2Frame7Offset = toFv(65, -50);
 
   hb2OffSets
     .set(3, hb2Frame3Offset)
@@ -258,13 +267,13 @@ function GetNAtk() {
   const bldr = new AttackBuilder('NAttack');
 
   bldr
-    .WithBaseKnockBack(15)
-    .WithKnockBackScaling(54)
+    .WithBaseKnockBack(toFp(15))
+    .WithKnockBackScaling(toFp(54))
     .WithGravity(true)
     .WithTotalFrames(18)
     .WithInteruptableFrame(15)
-    .WithHitBubble(7, 16, 0, 60, hb1OffSets)
-    .WithHitBubble(6, 14, 1, 60, hb2OffSets);
+    .WithHitBubble(toFp(7), toFp(16), 0, toFp(60), hb1OffSets)
+    .WithHitBubble(toFp(6), toFp(14), 1, toFp(60), hb2OffSets);
 
   return bldr.Build();
 }

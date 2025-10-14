@@ -19,9 +19,13 @@ import {
   VelocityComponent,
   WeightComponent,
 } from './playerComponents';
-import { LineSegmentIntersectionFp } from '../physics/collisions';
+import {
+  LineSegmentIntersectionFp,
+  LineSegmentIntersectionRaw,
+} from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint, MultiplyRaw } from '../../math/fixedPoint';
+import { PooledVector } from '../pools/PooledVector';
 
 export type speedBuilderOptions = (scb: SpeedsComponentBuilder) => void;
 
@@ -159,60 +163,137 @@ export class Player {
     return this.attacks;
   }
 
-  public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {
-    const a = this.attacks.GetAttack();
+  // public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {
+  //   const a = this.attacks.GetAttack();
 
-    if (a === undefined) {
-      return false;
-    }
-    return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
+  //   if (a === undefined) {
+  //     return false;
+  //   }
+  //   return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
+  // }
+
+  // public AddWalkImpulseToPlayer(impulse: number): void {
+  //   const velocity = this.velocity;
+  //   const speeds = this.speeds;
+  //   velocity.AddClampedXImpulse(
+  //     speeds.MaxWalkSpeed,
+  //     impulse * speeds.WalkSpeedMulitplier
+  //   );
+  // }
+
+  // public SetPlayerPosition(x: number, y: number) {
+  //   const position = this.position;
+  //   this.Position;
+  //   position.X = x;
+  //   position.Y = y;
+  //   this.ecb.MoveToPosition(x, y);
+  //   this.ledgeDetector.MoveTo(x, y);
+  // }
+
+  // public AddToPlayerPosition(x: number, y: number): void {
+  //   const pos = this.position;
+  //   pos.X += x;
+  //   pos.Y += y;
+  //   this.ecb.MoveToPosition(pos.X, pos.Y);
+  //   this.ledgeDetector.MoveTo(pos.X, pos.Y);
+  // }
+
+  // public AddToPlayerYPosition(y: number): void {
+  //   const position = this.position;
+  //   position.Y += y;
+  //   this.ecb.MoveToPosition(position.X, position.Y);
+  //   this.ledgeDetector.MoveTo(position.X, position.Y);
+  // }
+
+  // public SetPlayerInitialPosition(x: number, y: number): void {
+  //   this.Position.X = x;
+  //   this.Position.Y = y;
+  //   this.ecb.SetInitialPosition(x, y);
+  //   this.ledgeDetector.MoveTo(x, y);
+  // }
+}
+
+export function CanOnlyFallOffLedgeWhenFacingAwayFromIt(p: Player): boolean {
+  const a = p.Attacks.GetAttack();
+
+  if (a === undefined) {
+    return false;
   }
 
-  public AddWalkImpulseToPlayer(impulse: number): void {
-    const velocity = this.velocity;
-    const speeds = this.speeds;
-    velocity.AddClampedXImpulse(
-      speeds.MaxWalkSpeed,
-      impulse * speeds.WalkSpeedMulitplier
-    );
-  }
+  return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
+}
 
-  public SetPlayerPosition(x: number, y: number) {
-    const position = this.position;
-    this.Position;
-    position.X = x;
-    position.Y = y;
-    this.ecb.MoveToPosition(x, y);
-    this.ledgeDetector.MoveTo(x, y);
-  }
+export function SetPlayerInitialPositionRaw(
+  p: Player,
+  xRaw: number,
+  yRaw: number
+): void {
+  p.Position.X.SetFromRaw(xRaw);
+  p.Position.Y.SetFromRaw(yRaw);
+  p.ECB.SetInitialPositionRaw(xRaw, yRaw);
+  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+}
 
-  public AddToPlayerPosition(x: number, y: number): void {
-    const pos = this.position;
-    pos.X += x;
-    pos.Y += y;
-    this.ecb.MoveToPosition(pos.X, pos.Y);
-    this.ledgeDetector.MoveTo(pos.X, pos.Y);
-  }
+export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
+  const position = p.Position;
+  position.Y.AddRaw(yRaw);
+  p.ECB.MoveToPosition(position.X, position.Y);
+  p.LedgeDetector.MoveTo(position.X, position.Y);
+}
 
-  public AddToPlayerYPosition(y: number): void {
-    const position = this.position;
-    position.Y += y;
-    this.ecb.MoveToPosition(position.X, position.Y);
-    this.ledgeDetector.MoveTo(position.X, position.Y);
-  }
+export function AddWalkImpulseToPlayer(p: Player, impulse: FixedPoint): void {
+  const velocity = p.Velocity;
+  const speeds = p.Speeds;
+  velocity.AddClampedXImpulseRaw(
+    speeds.MaxWalkSpeed.Raw,
+    MultiplyRaw(impulse.Raw, speeds.WalkSpeedMulitplier.Raw)
+  );
+}
 
-  public SetPlayerInitialPosition(x: number, y: number): void {
-    this.Position.X = x;
-    this.Position.Y = y;
-    this.ecb.SetInitialPosition(x, y);
-    this.ledgeDetector.MoveTo(x, y);
-  }
+export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
+  const position = p.Position;
+  position.X.SetFromFp(x);
+  position.Y.SetFromFp(y);
+  p.ECB.MoveToPosition(x, y);
+  p.LedgeDetector.MoveTo(x, y);
+}
+
+export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
+  const position = p.Position;
+  position.X.SetFromRaw(xRaw);
+  position.Y.SetFromRaw(yRaw);
+  p.ECB.MoveToPositionRaw(xRaw, yRaw);
+  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+}
+
+export function AddToPlayerPositionFp(
+  p: Player,
+  x: FixedPoint,
+  y: FixedPoint
+): void {
+  AddToPlayerPositionRaw(p, x.Raw, y.Raw);
+}
+
+export function AddToPlayerPositionVec(p: Player, v: PooledVector): void {
+  AddToPlayerPositionRaw(p, v.X.Raw, v.Y.Raw);
+}
+
+export function AddToPlayerPositionRaw(
+  p: Player,
+  xRaw: number,
+  yRaw: number
+): void {
+  const pos = p.Position;
+  pos.X.AddRaw(xRaw);
+  pos.Y.AddRaw(yRaw);
+  p.ECB.MoveToPosition(pos.X, pos.Y);
+  p.LedgeDetector.MoveTo(pos.X, pos.Y);
 }
 
 export function PlayerOnStage(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: number
+  ecbSensorDepth: FixedPoint
 ) {
   const grnd = s.StageVerticies.GetGround();
   const grndLoopLength = grnd.length;
@@ -220,15 +301,15 @@ export function PlayerOnStage(
   for (let i = 0; i < grndLoopLength; i++) {
     const gP = grnd[i];
     if (
-      LineSegmentIntersectionFp(
-        gP.X1,
-        gP.Y1,
-        gP.X2,
-        gP.Y2,
-        ecbBottom.X,
-        ecbBottom.Y,
-        ecbBottom.X,
-        ecbBottom.Y - ecbSensorDepth
+      LineSegmentIntersectionRaw(
+        gP.X1.Raw,
+        gP.Y1.Raw,
+        gP.X2.Raw,
+        gP.Y2.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw
       )
     ) {
       return true;
@@ -252,15 +333,15 @@ export function PlayerOnPlats(
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
     if (
-      LineSegmentIntersectionFp(
-        ecbBottom.X,
-        ecbBottom.Y,
-        ecbBottom.X,
-        ecbBottom.Y - ecbSensorDepth,
-        plat.X1,
-        plat.Y1,
-        plat.X2,
-        plat.Y2
+      LineSegmentIntersectionRaw(
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        plat.X1.Raw,
+        plat.Y1.Raw,
+        plat.X2.Raw,
+        plat.Y2.Raw
       )
     ) {
       return true;
@@ -272,8 +353,8 @@ export function PlayerOnPlats(
 export function PlayerOnPlatsReturnsYCoord(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: number
-): number | undefined {
+  ecbSensorDepth: FixedPoint
+): FixedPoint | undefined {
   const plats = s.Platforms;
   if (plats === undefined) {
     return undefined;
@@ -283,15 +364,15 @@ export function PlayerOnPlatsReturnsYCoord(
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
     if (
-      LineSegmentIntersectionFp(
-        ecbBottom.X,
-        ecbBottom.Y,
-        ecbBottom.X,
-        ecbBottom.Y - ecbSensorDepth,
-        plat.X1,
-        plat.Y1,
-        plat.X2,
-        plat.Y2
+      LineSegmentIntersectionRaw(
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        plat.X1.Raw,
+        plat.Y1.Raw,
+        plat.X2.Raw,
+        plat.Y2.Raw
       )
     ) {
       return plat.Y1;
@@ -303,7 +384,7 @@ export function PlayerOnPlatsReturnsYCoord(
 export function PlayerOnStageOrPlats(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: number
+  ecbSensorDepth: FixedPoint
 ) {
   if (PlayerOnPlats(s, ecbBottom, ecbSensorDepth)) {
     return true;
@@ -314,7 +395,7 @@ export function PlayerOnStageOrPlats(
 export function PlayerTouchingStageLeftWall(
   s: Stage,
   ecbRight: FlatVec,
-  sensorDepth: number
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -322,15 +403,15 @@ export function PlayerTouchingStageLeftWall(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersectionFp(
-        lP.X1,
-        lP.Y1,
-        lP.X2,
-        lP.Y2,
-        ecbRight.X,
-        ecbRight.Y,
-        ecbRight.X - sensorDepth,
-        ecbRight.Y
+      LineSegmentIntersectionRaw(
+        lP.X1.Raw,
+        lP.Y1.Raw,
+        lP.X2.Raw,
+        lP.Y2.Raw,
+        ecbRight.X.Raw,
+        ecbRight.Y.Raw,
+        ecbRight.X.Raw - sensorDepth.Raw,
+        ecbRight.Y.Raw
       )
     ) {
       return true;
@@ -343,7 +424,7 @@ export function PlayerTouchingStageLeftWall(
 export function PlayerTouchingStageRightWall(
   s: Stage,
   ecbLeft: FlatVec,
-  sensorDepth: number
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -351,15 +432,15 @@ export function PlayerTouchingStageRightWall(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersectionFp(
-        lP.X1,
-        lP.Y1,
-        lP.X2,
-        lP.Y2,
-        ecbLeft.X,
-        ecbLeft.Y,
-        ecbLeft.X + sensorDepth,
-        ecbLeft.Y
+      LineSegmentIntersectionRaw(
+        lP.X1.Raw,
+        lP.Y1.Raw,
+        lP.X2.Raw,
+        lP.Y2.Raw,
+        ecbLeft.X.Raw,
+        ecbLeft.Y.Raw,
+        ecbLeft.X.Raw + sensorDepth.Raw,
+        ecbLeft.Y.Raw
       )
     ) {
       return true;
@@ -372,7 +453,7 @@ export function PlayerTouchingStageRightWall(
 export function PlayerTouchingStageCeiling(
   s: Stage,
   ecbTop: FlatVec,
-  sensorDepth: number
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -380,15 +461,15 @@ export function PlayerTouchingStageCeiling(
   for (let i = 0; i < leftLoopLength; i++) {
     const lP = left[i];
     if (
-      LineSegmentIntersectionFp(
-        lP.X1,
-        lP.Y1,
-        lP.X2,
-        lP.Y2,
-        ecbTop.X,
-        ecbTop.Y,
-        ecbTop.X,
-        ecbTop.Y + sensorDepth
+      LineSegmentIntersectionRaw(
+        lP.X1.Raw,
+        lP.Y1.Raw,
+        lP.X2.Raw,
+        lP.Y2.Raw,
+        ecbTop.X.Raw,
+        ecbTop.Y.Raw,
+        ecbTop.X.Raw,
+        ecbTop.Y.Raw + sensorDepth.Raw
       )
     ) {
       return true;

@@ -1,4 +1,5 @@
 import { IPooledObject, Pool } from '../engine/pools/Pool';
+import { PooledVector } from '../engine/pools/PooledVector';
 
 // Q-format: 16.10 (1 sign bit, 15 integer bits, 10 fractional bits)
 export const FRACTIONAL_BITS = 10;
@@ -22,8 +23,6 @@ export function RawToNumber(raw: number): number {
 }
 
 export function MultiplyRaw(aRaw: number, bRaw: number): number {
-  // (a * SCALE) * (b * SCALE) / SCALE = a * b * SCALE
-  //const product = aRaw * bRaw;
   return Math.trunc((aRaw * bRaw) / SCALE);
 }
 
@@ -42,7 +41,17 @@ export function SqrtRaw(aRaw: number): number {
   return Math.trunc(Math.sqrt(aRaw * SCALE));
 }
 
-export function DotProductVectorRaw(
+export function FPMin(a: FixedPoint, b: FixedPoint): FixedPoint {
+  return a.Raw < b.Raw ? a : b;
+}
+
+export function Sqrt(a: FixedPoint, pool: Pool<FixedPoint>): FixedPoint {
+  const result = pool.Rent();
+  result.SetFromRaw(SqrtRaw(a.Raw));
+  return result;
+}
+
+export function DotProductRaw(
   x1Raw: number,
   y1Raw: number,
   x2Raw: number,
@@ -51,10 +60,15 @@ export function DotProductVectorRaw(
   return MultiplyRaw(x1Raw, x2Raw) + MultiplyRaw(y1Raw, y2Raw);
 }
 
+export function DotProductVectorRaw(vec1: PooledVector, vec2: PooledVector) {
+  return DotProductRaw(vec1.X.Raw, vec1.Y.Raw, vec2.X.Raw, vec2.Y.Raw);
+}
+
 export class FixedPoint implements IPooledObject {
-  public static readonly MAX_VALUE = new FixedPoint().setFromRaw(MAX_RAW_VALUE);
-  public static readonly MIN_VALUE = new FixedPoint().setFromRaw(MIN_RAW_VALUE);
-  public static readonly EPSILON = new FixedPoint().setFromRaw(1);
+  public static readonly MAX_VALUE = new FixedPoint().SetFromRaw(MAX_RAW_VALUE);
+  public static readonly MIN_VALUE = new FixedPoint().SetFromRaw(MIN_RAW_VALUE);
+  public static readonly ONE = new FixedPoint().SetFromNumber(1);
+  public static readonly ZERO = new FixedPoint().SetFromNumber(0);
 
   // The raw integer value representing the fixed-point number.
   private _rawValue: number;
@@ -63,18 +77,14 @@ export class FixedPoint implements IPooledObject {
     this._rawValue = ClampRaw(Math.trunc(value * SCALE));
   }
 
-  public static from(value: number, pool: Pool<FixedPoint>): FixedPoint {
-    return pool.Rent().setFromNumber(value);
-  }
-
   // --- Value Conversion ---
 
-  public setFromNumber(value: number): this {
+  public SetFromNumber(value: number): this {
     this._rawValue = NumberToRaw(value);
     return this;
   }
 
-  public setFromFp(other: FixedPoint): this {
+  public SetFromFp(other: FixedPoint): this {
     this._rawValue = other._rawValue;
     return this;
   }
@@ -83,11 +93,11 @@ export class FixedPoint implements IPooledObject {
     return RawToNumber(this._rawValue);
   }
 
-  public Raw(): number {
+  public get Raw(): number {
     return this._rawValue;
   }
 
-  public setFromRaw(raw: number): this {
+  public SetFromRaw(raw: number): this {
     if (!Number.isInteger(raw)) {
       throw new Error(`Illegal assigntment to FixedPoint. Raw:${raw}`);
     }
@@ -97,94 +107,86 @@ export class FixedPoint implements IPooledObject {
 
   // --- Mutative Arithmetic ---
 
-  public add(other: FixedPoint): this {
+  public Add(other: FixedPoint): this {
     this._rawValue += other._rawValue;
     return this;
   }
 
-  public subtract(other: FixedPoint): this {
+  public AddRaw(otherRaw: number): this {
+    this._rawValue += otherRaw;
+    return this;
+  }
+
+  public Subtract(other: FixedPoint): this {
     this._rawValue -= other._rawValue;
     return this;
   }
 
-  public multiply(other: FixedPoint): this {
+  public Multiply(other: FixedPoint): this {
     this._rawValue = MultiplyRaw(this._rawValue, other._rawValue);
     return this;
   }
 
-  public negate(): this {
+  public Negate(): this {
     if (this._rawValue !== 0) {
       this._rawValue = -this._rawValue;
     }
     return this;
   }
 
-  public divide(other: FixedPoint): this {
+  public Divide(other: FixedPoint): this {
     this._rawValue = DivideRaw(this._rawValue, other._rawValue);
     return this;
   }
 
-  public sqrt(): this {
+  public Sqrt(): this {
     this._rawValue = SqrtRaw(this._rawValue);
     return this;
   }
 
   // --- Set-based Arithmetic ---
 
-  public setAdd(a: FixedPoint, b: FixedPoint): this {
+  public SetAdd(a: FixedPoint, b: FixedPoint): this {
     this._rawValue = a._rawValue + b._rawValue;
     return this;
   }
 
-  public setSubtract(a: FixedPoint, b: FixedPoint): this {
+  public SetSubtract(a: FixedPoint, b: FixedPoint): this {
     this._rawValue = a._rawValue - b._rawValue;
     return this;
   }
 
-  public setMultiply(a: FixedPoint, b: FixedPoint): this {
+  public SetMultiply(a: FixedPoint, b: FixedPoint): this {
     this._rawValue = MultiplyRaw(a._rawValue, b._rawValue);
     return this;
   }
 
-  public setDivide(a: FixedPoint, b: FixedPoint): this {
+  public SetDivide(a: FixedPoint, b: FixedPoint): this {
     this._rawValue = DivideRaw(a._rawValue, b._rawValue);
     return this;
   }
 
-  // --- Static (Non-Mutative) Arithmetic ---
-
-  public static Min(a: FixedPoint, b: FixedPoint): FixedPoint {
-    return a._rawValue < b._rawValue ? a : b;
-  }
-
-  public static sqrt(a: FixedPoint, pool: Pool<FixedPoint>): FixedPoint {
-    const result = pool.Rent();
-    result._rawValue = SqrtRaw(a._rawValue);
-    return result;
-  }
   // --- Comparison ---
 
-  public equals(other: FixedPoint): boolean {
+  public Equals(other: FixedPoint): boolean {
     return this._rawValue === other._rawValue;
   }
 
-  public greaterThan(other: FixedPoint): boolean {
+  public GreaterThan(other: FixedPoint): boolean {
     return this._rawValue > other._rawValue;
   }
 
-  public greaterThanOrEqualTo(other: FixedPoint): boolean {
+  public GreaterThanOrEqualTo(other: FixedPoint): boolean {
     return this._rawValue >= other._rawValue;
   }
 
-  public lessThan(other: FixedPoint): boolean {
+  public LessThan(other: FixedPoint): boolean {
     return this._rawValue < other._rawValue;
   }
 
-  public lessThanOrEqualTo(other: FixedPoint): boolean {
+  public LessThanOrEqualTo(other: FixedPoint): boolean {
     return this._rawValue <= other._rawValue;
   }
-
-  // --- Private Helpers ---
 
   // --- Pool methods ---
   public Zero(): void {

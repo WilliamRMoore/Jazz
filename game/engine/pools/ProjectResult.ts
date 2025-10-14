@@ -14,13 +14,13 @@ export class ProjectionResult implements IProjectionResult, IPooledObject {
   }
 
   public SetMinMax(min: FixedPoint, max: FixedPoint): void {
-    this.min.setFromFp(min);
-    this.max.setFromFp(max);
+    this.min.SetFromRaw(min);
+    this.max.SetFromRaw(max);
   }
 
   public SetMinMaxRaw(min: number, max: number): void {
-    this.min.setFromRaw(min);
-    this.max.setFromRaw(max);
+    this.min.SetFromRaw(min);
+    this.max.SetFromRaw(max);
   }
 
   public Zero() {
