@@ -2,25 +2,33 @@ import {
   GAME_EVENT_IDS,
   GameEventId,
 } from '../engine/finite-state-machine/PlayerStates';
+import { ToFp } from '../engine/utils';
 import { World } from '../engine/world/world';
+import { FixedPoint } from '../math/fixedPoint';
 
 export type InputAction = {
   Action: GameEventId;
-  LXAxis: number;
-  LYAxis: number;
-  RXAxis: number;
-  RYAxis: number;
-  LTVal: number;
-  RTVal: number;
+  LXAxis: FixedPoint;
+  LYAxis: FixedPoint;
+  RXAxis: FixedPoint;
+  RYAxis: FixedPoint;
+  LTVal: FixedPoint;
+  RTVal: FixedPoint;
   Start: boolean;
   Select: boolean;
+  get RawLXAxis(): number;
+  get RawLYAxis(): number;
+  get RawRXAxis(): number;
+  get RawRYAxis(): number;
+  get RawLTVal(): number;
+  get RawRTVal(): number;
 };
 
 export class GamePadInput {
-  LXAxis: number = 0;
-  LYAxis: number = 0;
-  RXAxis: number = 0;
-  RYAxis: number = 0;
+  LXAxis = 0;
+  LYAxis = 0;
+  RXAxis = 0;
+  RYAxis = 0;
 
   action: boolean = false;
   special: boolean = false;
@@ -29,8 +37,8 @@ export class GamePadInput {
   rb: boolean = false;
   lt: boolean = false;
   rt: boolean = false;
-  ltVal: number = 0;
-  rtVal: number = 0;
+  ltVal = 0;
+  rtVal = 0;
 
   dpUp: boolean = false;
   dpDown: boolean = false;
@@ -178,12 +186,12 @@ function transcribeInput(input: GamePadInput): InputAction {
   const RYAxis = input.RYAxis;
   const inputAction = NewInputAction();
 
-  inputAction.LXAxis = LXAxis;
-  inputAction.LYAxis = LYAxis;
-  inputAction.RXAxis = RXAxis;
-  inputAction.RYAxis = RYAxis;
-  inputAction.LTVal = input.ltVal;
-  inputAction.RTVal = input.rtVal;
+  inputAction.LXAxis.SetFromNumber(LXAxis);
+  inputAction.LYAxis.SetFromNumber(LYAxis);
+  inputAction.RXAxis.SetFromNumber(RXAxis);
+  inputAction.RYAxis.SetFromNumber(RYAxis);
+  inputAction.LTVal.SetFromNumber(input.ltVal);
+  inputAction.RTVal.SetFromNumber(input.rtVal);
   inputAction.Start = input.start;
   inputAction.Select = input.select;
 
@@ -288,9 +296,31 @@ function clampStick(x: number, y: number): number[] {
 export function NewInputAction() {
   return {
     Action: GAME_EVENT_IDS.IDLE_GE,
-    LXAxis: 0,
-    LYAxis: 0,
-    RXAxis: 0,
-    RYAxis: 0,
+    LXAxis: ToFp(0),
+    LYAxis: ToFp(0),
+    RXAxis: ToFp(0),
+    RYAxis: ToFp(0),
+    LTVal: ToFp(0),
+    RTVal: ToFp(0),
+    Start: false,
+    Select: false,
+    get RawLXAxis() {
+      return this.LXAxis.Raw;
+    },
+    get RawLYAxis() {
+      return this.LYAxis.Raw;
+    },
+    get RawRXAxis() {
+      return this.RXAxis.Raw;
+    },
+    get RawRYAxis() {
+      return this.RYAxis.Raw;
+    },
+    get RawLTVal() {
+      return this.LTVal.Raw;
+    },
+    get RawRTVal() {
+      return this.RTVal.Raw;
+    },
   } as InputAction;
 }

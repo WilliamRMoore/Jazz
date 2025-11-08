@@ -15,7 +15,7 @@ import {
   SensorComponent,
   ShieldComponent,
   SpeedsComponent,
-  SpeedsComponentBuilder,
+  SpeedsComponentConfigBuilder,
   VelocityComponent,
   WeightComponent,
 } from './playerComponents';
@@ -27,10 +27,10 @@ import { FlatVec } from '../physics/vector';
 import { FixedPoint, MultiplyRaw } from '../../math/fixedPoint';
 import { PooledVector } from '../pools/PooledVector';
 
-export type speedBuilderOptions = (scb: SpeedsComponentBuilder) => void;
+export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
 const defaultSpeedsBuilderOptions: speedBuilderOptions = (
-  scb: SpeedsComponentBuilder
+  scb: SpeedsComponentConfigBuilder
 ) => {
   scb.SetWalkSpeeds(11, 2);
   scb.SetRunSpeeds(14, 2.2);
@@ -42,125 +42,61 @@ const defaultSpeedsBuilderOptions: speedBuilderOptions = (
 };
 
 export class Player {
-  private readonly position: PositionComponent;
-  private readonly velocity: VelocityComponent;
-  private readonly weight: WeightComponent;
-  private readonly flags: PlayerFlagsComponent;
-  private readonly points: PlayerPointsComponent;
-  private readonly hitStun: HitStunComponent;
-  private readonly hitStop: HitStopComponent;
-  private readonly speeds: SpeedsComponent;
-  private readonly ecb: ECBComponent;
-  private readonly hurtCircles: HurtCapsulesComponent;
-  private readonly jump: JumpComponent;
-  private readonly fsmInfo: FSMInfoComponent;
-  private readonly ledgeDetector: LedgeDetectorComponent;
-  private readonly sensors: SensorComponent;
-  private readonly attacks: AttackComponment;
-  private readonly shield: ShieldComponent;
+  public readonly Position: PositionComponent;
+  public readonly Velocity: VelocityComponent;
+  public readonly Weight: WeightComponent;
+  public readonly Flags: PlayerFlagsComponent;
+  public readonly Points: PlayerPointsComponent;
+  public readonly HitStun: HitStunComponent;
+  public readonly HitStop: HitStopComponent;
+  public readonly Speeds: SpeedsComponent;
+  public readonly ECB: ECBComponent;
+  public readonly HurtCircles: HurtCapsulesComponent;
+  public readonly Jump: JumpComponent;
+  public readonly FSMInfo: FSMInfoComponent;
+  public readonly LedgeDetector: LedgeDetectorComponent;
+  public readonly Sensors: SensorComponent;
+  public readonly Attacks: AttackComponment;
+  public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
   constructor(Id: number, CharacterConfig: CharacterConfig) {
     const speedsBuilder = CharacterConfig.SCB;
     this.ID = Id;
-    this.position = new PositionComponent();
-    this.velocity = new VelocityComponent();
-    this.weight = new WeightComponent(CharacterConfig.Weight);
-    this.speeds = speedsBuilder.Build();
-    this.flags = new PlayerFlagsComponent();
-    this.points = new PlayerPointsComponent();
-    this.hitStun = new HitStunComponent();
-    this.hitStop = new HitStopComponent();
+    this.Position = new PositionComponent();
+    this.Velocity = new VelocityComponent();
+    this.Weight = new WeightComponent(CharacterConfig.Weight);
+    this.Speeds = speedsBuilder.Build();
+    this.Flags = new PlayerFlagsComponent();
+    this.Points = new PlayerPointsComponent();
+    this.HitStun = new HitStunComponent();
+    this.HitStop = new HitStopComponent();
 
-    this.ecb = new ECBComponent(
+    this.ECB = new ECBComponent(
       CharacterConfig.ECBShapes,
       CharacterConfig.ECBHeight,
       CharacterConfig.ECBWidth,
       CharacterConfig.ECBOffset
     );
-    this.hurtCircles = new HurtCapsulesComponent(CharacterConfig.HurtCapsules);
-    this.jump = new JumpComponent(
+    this.HurtCircles = new HurtCapsulesComponent(CharacterConfig.HurtCapsules);
+    this.Jump = new JumpComponent(
       CharacterConfig.JumpVelocity,
       CharacterConfig.NumberOfJumps
     );
-    this.fsmInfo = new FSMInfoComponent(CharacterConfig.FrameLengths);
-    this.ledgeDetector = new LedgeDetectorComponent(
+    this.FSMInfo = new FSMInfoComponent(CharacterConfig.FrameLengths);
+    this.LedgeDetector = new LedgeDetectorComponent(
       this.position.X,
       this.position.Y,
       CharacterConfig.LedgeBoxWidth,
       CharacterConfig.LedgeBoxHeight,
       CharacterConfig.ledgeBoxYOffset
     );
-    this.sensors = new SensorComponent();
-    this.attacks = new AttackComponment(CharacterConfig.attacks);
-    this.shield = new ShieldComponent(
+    this.Sensors = new SensorComponent();
+    this.Attacks = new AttackComponment(CharacterConfig.attacks);
+    this.Shield = new ShieldComponent(
       CharacterConfig.ShieldRadius,
       CharacterConfig.ShieldYOffset
     );
-  }
-
-  public get ECB(): ECBComponent {
-    return this.ecb;
-  }
-
-  public get HurtBubbles(): HurtCapsulesComponent {
-    return this.hurtCircles;
-  }
-
-  public get Flags(): PlayerFlagsComponent {
-    return this.flags;
-  }
-
-  public get Points(): PlayerPointsComponent {
-    return this.points;
-  }
-
-  public get HitStun(): HitStunComponent {
-    return this.hitStun;
-  }
-
-  public get HitStop(): HitStopComponent {
-    return this.hitStop;
-  }
-
-  public get Jump(): JumpComponent {
-    return this.jump;
-  }
-
-  public get Position(): PositionComponent {
-    return this.position;
-  }
-
-  public get Velocity(): VelocityComponent {
-    return this.velocity;
-  }
-
-  public get Weight(): WeightComponent {
-    return this.weight;
-  }
-
-  public get Speeds(): SpeedsComponent {
-    return this.speeds;
-  }
-
-  public get FSMInfo(): FSMInfoComponent {
-    return this.fsmInfo;
-  }
-
-  public get LedgeDetector(): LedgeDetectorComponent {
-    return this.ledgeDetector;
-  }
-
-  public get Shield(): ShieldComponent {
-    return this.shield;
-  }
-
-  public get Sensors(): SensorComponent {
-    return this.sensors;
-  }
-
-  public get Attacks(): AttackComponment {
-    return this.attacks;
   }
 
   // public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {

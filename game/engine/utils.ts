@@ -1,4 +1,4 @@
-import { FixedPoint } from '../math/fixedPoint';
+import { FixedPoint, MultiplyRaw, DivideRaw, NumberToRaw } from '../math/fixedPoint';
 import { FlatVec } from './physics/vector';
 
 export function FillArrayWithFlatVec(fvArr: FlatVec[]): void {
@@ -41,8 +41,32 @@ export function EaseIn(t: number) {
   return t * t;
 }
 
+export function EaseInRaw(tRaw: number): number {
+  return MultiplyRaw(tRaw, tRaw);
+}
+
 export function EaseInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+export function EaseInOutRaw(tRaw: number): number {
+  const pointFiveRaw = NumberToRaw(0.5);
+  if (tRaw < pointFiveRaw) {
+    const twoRaw = NumberToRaw(2);
+    return MultiplyRaw(twoRaw, MultiplyRaw(tRaw, tRaw));
+  }
+
+  const oneRaw = NumberToRaw(1);
+  const twoRaw = NumberToRaw(2);
+
+  const oneMinusTRaw = oneRaw - tRaw;
+  const exprRaw = MultiplyRaw(twoRaw, oneMinusTRaw);
+
+  const exprSquaredRaw = MultiplyRaw(exprRaw, exprRaw);
+
+  const exprSquaredDividedBy2Raw = DivideRaw(exprSquaredRaw, twoRaw);
+
+  return oneRaw - exprSquaredDividedBy2Raw;
 }
 
 export function EaseInPower(t: number, p: number) {
@@ -72,4 +96,12 @@ export class Sequencer {
     this.seq = next;
     return next;
   }
+}
+
+export function ToFp(num: number): FixedPoint {
+  return new FixedPoint(num);
+}
+
+export function ToFV(x: number, y: number): FlatVec {
+  return new FlatVec(ToFp(x), ToFp(y));
 }

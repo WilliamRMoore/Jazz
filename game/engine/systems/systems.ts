@@ -738,11 +738,16 @@ export function PlayerSensors(
       );
 
       if (pAVspB) {
-        pA.Sensors.ReactAction(world, pA, pB);
+        const re = pA.Sensors.ReactEvent; //.ReactAction(world, pA, pB);
+        if (re !== undefined) {
+          re.handler(world, re); //HandleJEvent(world, re);
+        }
       }
 
       if (pBVspA) {
-        pB.Sensors.ReactAction(world, pB, pB);
+        const re = pA.Sensors.ReactEvent;
+        if(re !== undefined) {
+          re.handler(world, re);//pB.Sensors.ReactAction(world, pB, pB);
       }
     }
   }
@@ -1184,6 +1189,7 @@ function CalculateHitStun(knockBack: number): number {
 }
 
 import { SIN_LUT, COS_LUT, LUT_SIZE } from './LUTS';
+//import { HandleJEvent } from '../events/events';
 
 function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
