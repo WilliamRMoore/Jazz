@@ -3,13 +3,7 @@ import {
   AddWalkImpulseToPlayer,
   Player,
 } from '../player/playerOrchestrator';
-import {
-  EaseIn,
-  Sequencer,
-  EaseInOut,
-  EaseInRaw,
-  EaseInOutRaw,
-} from '../utils';
+import { Sequencer, EaseInRaw, EaseInOutRaw } from '../utils';
 import { World } from '../world/world';
 import { FSMState } from './PlayerStateMachine';
 import { InputAction } from '../../input/Input';
@@ -22,7 +16,8 @@ import {
   NumberToRaw,
   RawToNumber,
 } from '../../math/fixedPoint';
-import { COS_LUT, SIN_LUT } from '../systems/LUTS';
+import { COS_LUT, SIN_LUT } from '../../math/LUTS';
+import { HandleCommand } from '../command/command';
 
 // Aliases =========================================================================
 
@@ -3247,11 +3242,11 @@ function attackOnEnter(
   }
   p.ECB.SetECBShape(stateId);
   //atk.OnEnter(w, p);
-  const onEnterEvents = atk.onEnterEvents;
-  const onEnterEventCount = onEnterEvents.length;
+  const onEnterCommands = atk.onEnterCommands;
+  const onEnterEventCount = onEnterCommands.length;
   for (let i = 0; i < onEnterEventCount; i++) {
-    const onEnterEvent = onEnterEvents[i];
-    onEnterEvent.handler(w, onEnterEvent);
+    const onEnterCommand = onEnterCommands[i];
+    HandleCommand(w, p, onEnterCommand); //onEnterCommand.handler(w, onEnterCommand);
   }
 }
 
@@ -3269,9 +3264,9 @@ function attackOnUpdate(p: Player, w: World) {
     addAttackImpulseToPlayer(p, impulse, attack);
   }
 
-  const uE = attack.onUpdateEvents.get(currentStateFrame);
-  if (uE !== undefined) {
-    uE.handler(w, uE);
+  const updateCommand = attack.onUpdateCommands.get(currentStateFrame);
+  if (updateCommand !== undefined) {
+    HandleCommand(w, p, updateCommand); //updateCommand.handler(w, updateCommand);
   }
   //attack.OnUpdate(w, p, currentStateFrame);
 }
@@ -3283,11 +3278,11 @@ function attackOnExit(p: Player, w: World) {
     return;
   }
   //atk.OnExit(w, p);
-  const onExitEvents = atk.onEnterEvents;
-  const onExitEventCount = onExitEvents.length;
-  for (let i = 0; i < onExitEventCount; i++) {
-    const onExitEvent = onExitEvents[i];
-    onExitEvent.handler(w, onExitEvent);
+  const onExitCommands = atk.onEnterCommands;
+  const onExitCommandCount = onExitCommands.length;
+  for (let i = 0; i < onExitCommandCount; i++) {
+    const onExitCommand = onExitCommands[i];
+    HandleCommand(w, p, onExitCommand);
   }
   attackComp.ZeroCurrentAttack();
   p.ECB.ResetECBShape();

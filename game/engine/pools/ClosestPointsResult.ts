@@ -20,10 +20,10 @@ export class ClosestPointsResult implements IPooledObject {
     c2X: FixedPoint,
     c2Y: FixedPoint
   ) {
-    this.c1X.SetFromRaw(c1X);
-    this.c1Y.SetFromRaw(c1Y);
-    this.c2X.SetFromRaw(c2X);
-    this.c2Y.SetFromRaw(c2Y);
+    this.c1X.SetFromFp(c1X);
+    this.c1Y.SetFromFp(c1Y);
+    this.c2X.SetFromFp(c2X);
+    this.c2Y.SetFromFp(c2Y);
   }
 
   public SetRaw(

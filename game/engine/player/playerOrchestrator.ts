@@ -1,5 +1,4 @@
 import { Stage } from '../stage/stageMain';
-import { CharacterConfig } from '../../character/default';
 import {
   AttackComponment,
   ECBComponent,
@@ -19,13 +18,11 @@ import {
   VelocityComponent,
   WeightComponent,
 } from './playerComponents';
-import {
-  LineSegmentIntersectionFp,
-  LineSegmentIntersectionRaw,
-} from '../physics/collisions';
+import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
 import { FixedPoint, MultiplyRaw } from '../../math/fixedPoint';
 import { PooledVector } from '../pools/PooledVector';
+import { CharacterConfig } from '../../character/shared';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -60,43 +57,49 @@ export class Player {
   public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
-  constructor(Id: number, CharacterConfig: CharacterConfig) {
-    const speedsBuilder = CharacterConfig.SCB;
+  constructor(Id: number, cc: CharacterConfig) {
+    const sB = new SpeedsComponentConfigBuilder();
+    sB.SetWalkSpeeds(cc.maxWalkSpeed, cc.walkSpeedMulitplier);
+    sB.SetRunSpeeds(cc.maxRunSpeed, cc.runSpeedMultiplier);
+    sB.SetFallSpeeds(cc.fastFallSpeed, cc.fallSpeed, cc.gravity);
+    sB.SetAerialSpeeds(
+      cc.aerialVelocityDecay,
+      cc.aerialSpeedInpulseLimit,
+      cc.aerialSpeedMultiplier
+    );
+    sB.SetDashSpeeds(cc.dashMutiplier, cc.maxDashSpeed);
+    sB.SetDodgeSpeeds(cc.airDodgeSpeed, cc.dodgeRollSpeed);
+    sB.SetGroundedVelocityDecay(cc.groundedVelocityDecay);
+    //CharacterConfig.SCB;
     this.ID = Id;
     this.Position = new PositionComponent();
     this.Velocity = new VelocityComponent();
-    this.Weight = new WeightComponent(CharacterConfig.Weight);
-    this.Speeds = speedsBuilder.Build();
+    this.Weight = new WeightComponent(cc.Weight);
+    this.Speeds = sB.Build();
     this.Flags = new PlayerFlagsComponent();
     this.Points = new PlayerPointsComponent();
     this.HitStun = new HitStunComponent();
     this.HitStop = new HitStopComponent();
 
     this.ECB = new ECBComponent(
-      CharacterConfig.ECBShapes,
-      CharacterConfig.ECBHeight,
-      CharacterConfig.ECBWidth,
-      CharacterConfig.ECBOffset
+      cc.ECBShapes,
+      cc.ECBHeight,
+      cc.ECBWidth,
+      cc.ECBOffset
     );
-    this.HurtCircles = new HurtCapsulesComponent(CharacterConfig.HurtCapsules);
-    this.Jump = new JumpComponent(
-      CharacterConfig.JumpVelocity,
-      CharacterConfig.NumberOfJumps
-    );
-    this.FSMInfo = new FSMInfoComponent(CharacterConfig.FrameLengths);
+    this.HurtCircles = new HurtCapsulesComponent(cc.HurtCapsules);
+    this.Jump = new JumpComponent(cc.JumpVelocity, cc.NumberOfJumps);
+    this.FSMInfo = new FSMInfoComponent(cc.FrameLengths);
     this.LedgeDetector = new LedgeDetectorComponent(
-      this.position.X,
-      this.position.Y,
-      CharacterConfig.LedgeBoxWidth,
-      CharacterConfig.LedgeBoxHeight,
-      CharacterConfig.ledgeBoxYOffset
+      this.Position.X.AsNumber,
+      this.Position.Y.AsNumber,
+      cc.LedgeBoxWidth,
+      cc.LedgeBoxHeight,
+      cc.ledgeBoxYOffset
     );
     this.Sensors = new SensorComponent();
-    this.Attacks = new AttackComponment(CharacterConfig.attacks);
-    this.Shield = new ShieldComponent(
-      CharacterConfig.ShieldRadius,
-      CharacterConfig.ShieldYOffset
-    );
+    this.Attacks = new AttackComponment(cc.attacks);
+    this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
 
   // public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {

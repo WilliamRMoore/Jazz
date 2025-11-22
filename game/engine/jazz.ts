@@ -1,24 +1,25 @@
 import { DefaultCharacterConfig } from '../character/default';
 import { InputAction } from '../input/Input';
 import { FlatVec } from './physics/vector';
-import { Player } from './player/playerOrchestrator';
-import { defaultStage } from './stage/stageMain';
 import {
-  ApplyVelocty,
-  Gravity,
-  TimedFlags,
-  LedgeGrabDetection,
-  OutOfBoundsCheck,
-  PlayerAttacks,
-  PlayerCollisionDetection,
-  PlayerInput,
-  RecordHistory,
-  StageCollisionDetection,
-  PlayerSensors,
-  ApplyVeloctyDecay,
-  PlatformDetection,
-  PlayerShields,
-} from './systems/systems';
+  Player,
+  SetPlayerInitialPositionRaw,
+} from './player/playerOrchestrator';
+import { defaultStage } from './stage/stageMain';
+import { PlayerAttacks } from './systems/attack';
+import { Gravity } from './systems/gravity';
+import { RecordHistory } from './systems/history';
+import { LedgeGrabDetection } from './systems/ledgeGrabDetection';
+import { OutOfBoundsCheck } from './systems/outOfBounds';
+import { PlatformDetection } from './systems/platformCollision';
+import { PlayerCollisionDetection } from './systems/playerCollision';
+import { PlayerInput } from './systems/playerInput';
+import { PlayerSensors } from './systems/sensors';
+import { PlayerShields } from './systems/shield';
+import { StageCollisionDetection } from './systems/stageCollision';
+import { TimedFlags } from './systems/timedFlags';
+import { ApplyVelocityDecay } from './systems/velocityDecay';
+import { ApplyVelocty } from './systems/velocty';
 import { World } from './world/world';
 
 export interface IJazz {
@@ -45,7 +46,7 @@ export class Jazz implements IJazz {
       const charConfig = new DefaultCharacterConfig();
       const p = new Player(i, charConfig);
       this.world.SetPlayer(p);
-      p.SetPlayerInitialPosition(pos.X, pos.Y);
+      SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
     }
     const s = defaultStage();
     this.world.SetStage(s);
@@ -96,7 +97,7 @@ export class Jazz implements IJazz {
 
     ApplyVelocty(playerData);
 
-    ApplyVeloctyDecay(playerData, stageData);
+    ApplyVelocityDecay(playerData, stageData);
 
     PlayerCollisionDetection(playerData, pools);
 

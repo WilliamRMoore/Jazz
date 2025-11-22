@@ -1,12 +1,10 @@
-import {
-  ActivateSensorEventFactory,
-  ChangeStateEventFactory,
-  DeactivateSensorEventFactory,
-  PlayerJEvent,
-  SensorChangeReactionEventFactory,
-  SetVelocityEventFactory,
-  SetJumpCountEventFactory,
-} from '../engine/events/events';
+import { COMMAND_NAMES } from '../engine/command/command';
+import { ActivateSensorCommand } from '../engine/command/commands/activateSensor';
+import { DeactivateSensorCommand } from '../engine/command/commands/deactivateSensor';
+import { SetJumpCountCommand } from '../engine/command/commands/setJumpCount';
+import { SetPlayerSensorDetectCommand } from '../engine/command/commands/setPlayerSensorReactor';
+import { SetVelcoityCommand } from '../engine/command/commands/setPlayerVelocity';
+import { SwitchPlayerStateCommand } from '../engine/command/commands/switchPlayerState';
 import {
   AttackId,
   ATTACK_IDS,
@@ -14,89 +12,28 @@ import {
   STATE_IDS,
   GAME_EVENT_IDS,
 } from '../engine/finite-state-machine/PlayerStates';
-import { FlatVec } from '../engine/physics/vector';
 import {
-  Attack,
-  AttackBuilder,
-  AttackOnEnter,
-  AttackOnExit,
-  AttackOnUpdate,
-  HurtCapsule,
+  frameNumber,
   SpeedsComponentConfigBuilder,
 } from '../engine/player/playerComponents';
-import { Player } from '../engine/player/playerOrchestrator';
-import { World } from '../engine/world/world';
-import { FixedPoint } from '../math/fixedPoint';
-
-type frameNumber = number;
-
-export type ConfigVec = {
-  x: number;
-  y: number;
-};
-
-export type ECBShape = {
-  readonly height: number;
-  readonly width: number;
-  readonly yOffset: number;
-};
-
-type ECBShapes = Map<StateId, ECBShape>;
-
-type HurtCapsuleConfig = {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  radius: number;
-};
-
-export type SpeedsComponentConfig = {
-  groundedVelocityDecay: number;
-  aerialVelocityDecay: number;
-  aerialSpeedInpulseLimit: number;
-  aerialSpeedMultiplier: number;
-  airDodgeSpeed: number;
-  dodgeRollSpeed: number;
-  maxWalkSpeed: number;
-  maxRunSpeed: number;
-  dashMutiplier: number;
-  maxDashSpeed: number;
-  walkSpeedMulitplier: number;
-  runSpeedMultiplier: number;
-  fastFallSpeed: number;
-  fallSpeed: number;
-  gravity: number;
-};
-
-export type CharacterConfig = {
-  FrameLengths: Map<StateId, number>;
-  SCB: SpeedsComponentConfigBuilder;
-  ECBHeight: number;
-  ECBWidth: number;
-  ECBOffset: number;
-  ECBShapes: ECBShapes;
-  HurtCapsules: Array<HurtCapsuleConfig>;
-  JumpVelocity: number;
-  NumberOfJumps: number;
-  LedgeBoxHeight: number;
-  LedgeBoxWidth: number;
-  ledgeBoxYOffset: number;
-  attacks: Map<AttackId, Attack>;
-  Weight: number;
-  ShieldRadius: number;
-  ShieldYOffset: number;
-};
+import {
+  AttackConfig,
+  AttackConfigBuilder,
+  CharacterConfig,
+  ConfigVec,
+  ECBShapesConfig,
+  HurtCapsuleConfig,
+} from './shared';
 
 //const toFp = (num: number) => new FixedPoint(num);
 
 export class DefaultCharacterConfig implements CharacterConfig {
   public FrameLengths = new Map<StateId, number>();
-  public SCB: SpeedsComponentConfigBuilder;
+  // public SCB: SpeedsComponentConfigBuilder;
   public ECBHeight = 0;
   public ECBWidth = 0;
   public ECBOffset = 0;
-  public ECBShapes: ECBShapes = new Map<
+  public ECBShapes: ECBShapesConfig = new Map<
     StateId,
     { height: number; width: number; yOffset: number }
   >();
@@ -106,10 +43,28 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
   public ledgeBoxYOffset = 0;
-  public attacks: Map<AttackId, Attack> = new Map<AttackId, Attack>();
+  public attacks: Map<AttackId, AttackConfig> = new Map<
+    AttackId,
+    AttackConfig
+  >();
   public Weight = 0;
   public ShieldRadius = 0;
   public ShieldYOffset = 0;
+  public groundedVelocityDecay: number;
+  public aerialVelocityDecay: number;
+  public aerialSpeedInpulseLimit: number;
+  public aerialSpeedMultiplier: number;
+  public airDodgeSpeed: number;
+  public dodgeRollSpeed: number;
+  public maxWalkSpeed: number;
+  public maxRunSpeed: number;
+  public dashMutiplier: number;
+  public maxDashSpeed: number;
+  public walkSpeedMulitplier: number;
+  public runSpeedMultiplier: number;
+  public fastFallSpeed: number;
+  public fallSpeed: number;
+  public gravity: number;
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -215,14 +170,21 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);
 
-    this.SCB = new SpeedsComponentConfigBuilder();
-    this.SCB.SetWalkSpeeds(6, 1.6);
-    this.SCB.SetRunSpeeds(10, 2.2);
-    this.SCB.SetFallSpeeds(16, 9, 0.6);
-    this.SCB.SetAerialSpeeds(0.7, 9, 1.8);
-    this.SCB.SetDashSpeeds(3, 13);
-    this.SCB.SetDodgeSpeeds(20, 23);
-    this.SCB.SetGroundedVelocityDecay(0.8);
+    this.maxWalkSpeed = 6;
+    this.walkSpeedMulitplier = 1.6;
+    this.maxRunSpeed = 10;
+    this.runSpeedMultiplier = 2.2;
+    this.fastFallSpeed = 16;
+    this.fallSpeed = 9;
+    this.gravity = 0.6;
+    this.aerialVelocityDecay = 0.7;
+    this.aerialSpeedInpulseLimit = 9;
+    this.aerialSpeedMultiplier = 1.8;
+    this.dashMutiplier = 3;
+    this.maxDashSpeed = 13;
+    this.airDodgeSpeed = 20;
+    this.dodgeRollSpeed = 23;
+    this.groundedVelocityDecay = 0.8;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -239,32 +201,32 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.LedgeBoxWidth = 80;
     this.ledgeBoxYOffset = -130;
     this.attacks
-      .set(ATTACK_IDS.N_GRND_ATK, neutralAttack)
-      .set(ATTACK_IDS.D_TILT_ATK, downTilt)
-      .set(ATTACK_IDS.U_TILT_ATK, upTilt)
-      .set(ATTACK_IDS.S_TILT_ATK, sideTilt)
-      .set(ATTACK_IDS.S_TILT_U_ATK, sideTiltUp)
-      .set(ATTACK_IDS.S_TITL_D_ATK, sideTiltDown)
-      .set(ATTACK_IDS.S_CHARGE_ATK, sideCharge)
-      .set(ATTACK_IDS.S_CHARGE_EX_ATK, sideChargeExtension)
-      .set(ATTACK_IDS.U_CHARGE_ATK, upCharge)
-      .set(ATTACK_IDS.U_CHARGE_EX_ATK, upChargeExtension)
-      .set(ATTACK_IDS.D_CHARGE_ATK, downCharge)
-      .set(ATTACK_IDS.D_CHARGE_EX_ATK, downChargeEx)
-      .set(ATTACK_IDS.N_SPCL_ATK, nSpecial)
-      .set(ATTACK_IDS.S_SPCL_ATK, sideSpecial)
-      .set(ATTACK_IDS.S_SPCL_EX_ATK, sideSpecialEx)
-      .set(ATTACK_IDS.D_SPCL_ATK, downSpecial)
-      .set(ATTACK_IDS.D_SPCL_AIR_ATK, downSpecialAerial)
-      .set(ATTACK_IDS.N_AIR_ATK, neutralAir)
-      .set(ATTACK_IDS.F_AIR_ATK, fAir)
-      .set(ATTACK_IDS.U_AIR_ATK, uAir)
-      .set(ATTACK_IDS.B_AIR_ATK, bAir)
-      .set(ATTACK_IDS.D_AIR_ATK, dAir)
-      .set(ATTACK_IDS.S_SPCL_AIR_ATK, sideSpecialAir)
-      .set(ATTACK_IDS.S_SPCL_EX_AIR_ATK, sideSpecialExAir)
-      .set(ATTACK_IDS.DASH_ATK, dashAtk)
-      .set(ATTACK_IDS.U_SPCL_ATK, upSpecial);
+      .set(neutralAttack.AttackId, neutralAttack)
+      .set(downTilt.AttackId, downTilt)
+      .set(upTilt.AttackId, upTilt)
+      .set(sideTilt.AttackId, sideTilt)
+      .set(sideTiltUp.AttackId, sideTiltUp)
+      .set(sideTiltDown.AttackId, sideTiltDown)
+      .set(sideCharge.AttackId, sideCharge)
+      .set(sideChargeExtension.AttackId, sideChargeExtension)
+      .set(upCharge.AttackId, upCharge)
+      .set(upChargeExtension.AttackId, upChargeExtension)
+      .set(downCharge.AttackId, downCharge)
+      .set(downChargeEx.AttackId, downChargeEx)
+      .set(nSpecial.AttackId, nSpecial)
+      .set(sideSpecial.AttackId, sideSpecial)
+      .set(sideSpecialEx.AttackId, sideSpecialEx)
+      .set(downSpecial.AttackId, downSpecial)
+      .set(downSpecialAerial.AttackId, downSpecialAerial)
+      .set(neutralAir.AttackId, neutralAir)
+      .set(fAir.AttackId, fAir)
+      .set(uAir.AttackId, uAir)
+      .set(bAir.AttackId, bAir)
+      .set(dAir.AttackId, dAir)
+      .set(sideSpecialAir.AttackId, sideSpecialAir)
+      .set(sideSpecialExAir.AttackId, sideSpecialExAir)
+      .set(dashAtk.AttackId, dashAtk)
+      .set(upSpecial.AttackId, upSpecial);
   }
 
   private populateHurtCircles() {
@@ -319,9 +281,10 @@ function GetNAtk() {
     .set(6, hb2Frame6Offset)
     .set(7, hb2Frame7Offset);
 
-  const bldr = new AttackBuilder('NAttack');
+  const bldr = new AttackConfigBuilder('NAttack');
 
   bldr
+    .WithAttackId(ATTACK_IDS.N_GRND_ATK)
     .WithBaseKnockBack(15)
     .WithKnockBackScaling(54)
     .WithGravity(true)
@@ -359,9 +322,10 @@ function GetDashAttack() {
     .set(14, toCv(40, -60))
     .set(15, toCv(40, -60));
 
-  const bldr = new AttackBuilder('DashAttack');
+  const bldr = new AttackConfigBuilder('DashAttack');
 
   bldr
+    .WithAttackId(ATTACK_IDS.DASH_ATK)
     .WithGravity(true)
     .WithBaseKnockBack(basKnowback)
     .WithKnockBackScaling(knockBackScaling)
@@ -413,7 +377,8 @@ function GetNeutralAir() {
     .set(25, toCv(10, -50))
     .set(26, toCv(10, -50));
 
-  const bldr = new AttackBuilder('NAir')
+  const bldr = new AttackConfigBuilder('NAir')
+    .WithAttackId(ATTACK_IDS.N_AIR_ATK)
     .WithBaseKnockBack(10)
     .WithKnockBackScaling(50)
     .WithGravity(true)
@@ -466,7 +431,8 @@ function GetUAir() {
     20
   );
 
-  const uAirAttack = new AttackBuilder('UAir')
+  const uAirAttack = new AttackConfigBuilder('UAir')
+    .WithAttackId(ATTACK_IDS.U_AIR_ATK)
     .WithTotalFrames(uairTotalFrames)
     .WithInteruptableFrame(uairTotalFrames)
     .WithBaseKnockBack(uairBaseKnockBack)
@@ -530,7 +496,8 @@ function GetFAir() {
   );
 
   // Build the FAir attack using AttackBuilder
-  const FairAttack = new AttackBuilder('FAir')
+  const FairAttack = new AttackConfigBuilder('FAir')
+    .WithAttackId(ATTACK_IDS.F_AIR_ATK)
     .WithTotalFrames(fairTotalFrames)
     .WithInteruptableFrame(fairTotalFrames)
     .WithBaseKnockBack(fairBaseKnockback)
@@ -587,9 +554,10 @@ function GetBAir() {
     .set(14, hb2Frame14Offset)
     .set(15, hb2Frame15Offset);
 
-  const bldr = new AttackBuilder('BAir');
+  const bldr = new AttackConfigBuilder('BAir');
 
   bldr
+    .WithAttackId(ATTACK_IDS.B_AIR_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
@@ -633,7 +601,8 @@ function GetDAir() {
     .set(19, toCv(0, 21))
     .set(20, toCv(0, 19));
 
-  const bldr = new AttackBuilder('DAir')
+  const bldr = new AttackConfigBuilder('DAir')
+    .WithAttackId(ATTACK_IDS.D_AIR_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
@@ -681,9 +650,10 @@ function GetDownTilt() {
     .set(13, toCv(50, -7))
     .set(14, toCv(50, -7));
 
-  const bldr = new AttackBuilder('DownTilt');
+  const bldr = new AttackConfigBuilder('DownTilt');
 
   bldr
+    .WithAttackId(ATTACK_IDS.D_TILT_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
@@ -731,9 +701,10 @@ function GetSideTilt() {
     .set(13, toCv(10, -40))
     .set(14, toCv(10, -40));
 
-  const bldr = new AttackBuilder('SideTilt');
+  const bldr = new AttackConfigBuilder('SideTilt');
 
   bldr
+    .WithAttackId(ATTACK_IDS.S_TILT_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
@@ -781,9 +752,10 @@ function GetSideTiltDown() {
     .set(13, toCv(10, -40))
     .set(14, toCv(10, -40));
 
-  const bldr = new AttackBuilder('SideTiltUp');
+  const bldr = new AttackConfigBuilder('SideTiltDown');
 
   bldr
+    .WithAttackId(ATTACK_IDS.S_TITL_D_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
@@ -831,9 +803,10 @@ function GetSideTiltUp() {
     .set(13, toCv(10, -40))
     .set(14, toCv(10, -40));
 
-  const bldr = new AttackBuilder('SideTiltUp');
+  const bldr = new AttackConfigBuilder('SideTiltUp');
 
   bldr
+    .WithAttackId(ATTACK_IDS.S_TILT_U_ATK)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
@@ -871,9 +844,10 @@ function GetUpTilt() {
 
   hitBubbleOffsets2.set(59, toCv(110, -40)).set(60, toCv(110, -40));
 
-  const bldr = new AttackBuilder('UpTilt');
+  const bldr = new AttackConfigBuilder('UpTilt');
 
   bldr
+    .WithAttackId(ATTACK_IDS.U_TILT_ATK)
     .WithBaseKnockBack(BaseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
@@ -893,7 +867,8 @@ function GetUpTilt() {
 function GetUpcharge() {
   const totalFrames = 180;
 
-  const bldr = new AttackBuilder('UpCharge')
+  const bldr = new AttackConfigBuilder('UpCharge')
+    .WithAttackId(ATTACK_IDS.U_CHARGE_ATK)
     .WithTotalFrames(totalFrames)
     .WithGravity(true);
 
@@ -924,9 +899,10 @@ function GetUpchargeExt() {
     v.y -= 40;
   });
 
-  const bldr = new AttackBuilder('UpChargeExtension');
+  const bldr = new AttackConfigBuilder('UpChargeExtension');
 
   bldr
+    .WithAttackId(ATTACK_IDS.U_CHARGE_EX_ATK)
     .WithBaseKnockBack(baseKb)
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
@@ -939,7 +915,8 @@ function GetUpchargeExt() {
 function GetDownCharge() {
   const totalFrames = 180;
 
-  const bldr = new AttackBuilder('DownCharge')
+  const bldr = new AttackConfigBuilder('DownCharge')
+    .WithAttackId(ATTACK_IDS.D_CHARGE_ATK)
     .WithTotalFrames(totalFrames)
     .WithGravity(true);
 
@@ -978,9 +955,10 @@ function GetDownChargeExtension() {
     }
   }
 
-  const bldr = new AttackBuilder('DownChargeExtension');
+  const bldr = new AttackConfigBuilder('DownChargeExtension');
 
   bldr
+    .WithAttackId(ATTACK_IDS.D_CHARGE_EX_ATK)
     .WithBaseKnockBack(baseKb)
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
@@ -998,7 +976,8 @@ function GetDownChargeExtension() {
 function GetSideCharge() {
   const totalFrames = 180;
 
-  const bldr = new AttackBuilder('SideCharge')
+  const bldr = new AttackConfigBuilder('SideCharge')
+    .WithAttackId(ATTACK_IDS.S_CHARGE_ATK)
     .WithTotalFrames(totalFrames)
     .WithGravity(true);
 
@@ -1034,7 +1013,8 @@ function GetSideChargeExtension() {
 
   impulses.set(20, toCv(8, 0));
 
-  const bldr = new AttackBuilder('SideChargeExtension')
+  const bldr = new AttackConfigBuilder('SideChargeExtension')
+    .WithAttackId(ATTACK_IDS.S_CHARGE_EX_ATK)
     .WithTotalFrames(totalFrames)
     .WithImpulses(impulses, 10)
     .WithGravity(true)
@@ -1058,9 +1038,10 @@ function GetNSpecial() {
     h1Offset.set(i, toCv(90, -40));
   }
 
-  const bldr = new AttackBuilder('NSpecial');
+  const bldr = new AttackConfigBuilder('NSpecial');
 
   bldr
+    .WithAttackId(ATTACK_IDS.N_SPCL_ATK)
     .WithTotalFrames(activeFrames)
     .WithGravity(true)
     .WithHitBubble(h1Damage, radius, 0, 65, h1Offset)
@@ -1073,73 +1054,75 @@ function GetNSpecial() {
 function GetSideSpecial() {
   const activeFrames = 80;
   const impulses = new Map<frameNumber, ConfigVec>();
-  //const frameEvents = new Map<frameNumber, Array<PlayerJEvent<unknown>>>();
-  const reactEvent = ChangeStateEventFactory(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
-  const changeReactionEvent = SensorChangeReactionEventFactory(reactEvent);
 
-  // const reactor: SensorReactor = (w, sensorOwner, detectedPlayer) => {
-  //   const sm = w.PlayerData.StateMachine(sensorOwner.ID)!;
-  //   sm.UpdateFromWorld(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
-  //   // change the state here
-  // };
+  const switchStateCommand: SwitchPlayerStateCommand = {
+    commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
+    payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
+  };
 
-  const velEventSet0 = SetVelocityEventFactory(0, 0);
+  const sensorReactorChangeStateOnDetection: SetPlayerSensorDetectCommand = {
+    commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
+    payload: switchStateCommand,
+  };
 
-  // const onEnter: AttackOnEnter = (w, p) => {
-  //   const vel = p.Velocity;
-  //   vel.X = 0;
-  //   p.Sensors.SetSensorReactor(reactor);
-  // };
+  const setPlayerVelocityToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
 
-  const asf = ActivateSensorEventFactory;
-
-  //frameEvents.set(15, [asf(-15, 45, 30), asf(-50, 45, 30), asf(-85, 45, 30)]);
-
-  const sensor1 = asf(-15, 45, 30);
-  const sensor2 = asf(-50, 45, 30);
-  const sensor3 = asf(-85, 45, 30);
+  const sensor1: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -15,
+      radius: 30,
+    },
+  };
+  const sensor2: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -50,
+      radius: 30,
+    },
+  };
+  const sensor3: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -85,
+      radius: 30,
+    },
+  };
 
   const frameActivate = 15;
 
-  // const onUpdate: AttackOnUpdate = (w, p, fN) => {
-  //   if (fN === 15) {
-  //     p.Sensors.ActivateSensor(-15, 45, 30)
-  //       .ActivateSensor(-50, 45, 30)
-  //       .ActivateSensor(-85, 45, 30);
-  //   }
+  const deactivateSensor: DeactivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
+    payload: undefined,
+  };
 
-  //   if (fN === 40) {
-  //     p.Sensors.DeactivateSensors();
-  //   }
-  // };
-
-  const dsf = DeactivateSensorEventFactory;
-  const deactivateSensor = dsf();
   const frameDeactivate = 40;
-
-  // const onExit: AttackOnExit = (w, p) => {
-  //   p.Sensors.DeactivateSensors();
-  // };
 
   impulses.set(5, toCv(-6, 0)).set(6, toCv(-3, 0));
   for (let i = 14; i < 35; i++) {
     impulses.set(i, toCv(4, 0));
   }
 
-  const bldr = new AttackBuilder('SideSpecial');
+  const bldr = new AttackConfigBuilder('SideSpecial');
 
   bldr
-    //.WithUpdateAction(onUpdate)
-    //.WithExitAction(onExit)
-    //.WithEnterAction(onEnter)
-    .WithOnEnterEvent(velEventSet0)
-    .WithOnEnterEvent(changeReactionEvent)
+    .WithAttackId(ATTACK_IDS.S_SPCL_ATK)
+    .WithOnEnterCommand(setPlayerVelocityToZero)
+    .WithOnEnterCommand(sensorReactorChangeStateOnDetection)
     .WithOnUpdateEvent(frameActivate, sensor1)
     .WithOnUpdateEvent(frameActivate, sensor2)
     .WithOnUpdateEvent(frameActivate, sensor3)
     .WithOnUpdateEvent(frameDeactivate, deactivateSensor)
     .WithOnExitEvent(deactivateSensor)
-
     .WithImpulses(impulses, 13)
     .WithTotalFrames(activeFrames)
     .CanOnlyFallOffLedgeIfFacingIt()
@@ -1163,19 +1146,22 @@ function GetSideSpecialExtension() {
     .set(6, toCv(65, -105))
     .set(7, toCv(25, -125));
 
-  const onEnterEvent = SetVelocityEventFactory(0, 0);
+  const setVeloctyToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
 
-  const bldr = new AttackBuilder('SideSpecialExtension');
+  const bldr = new AttackConfigBuilder('SideSpecialExtension');
 
   bldr
+    .WithAttackId(ATTACK_IDS.S_SPCL_EX_ATK)
     .WithTotalFrames(totalFrameLength)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
-    .WithOnEnterEvent(onEnterEvent)
-    // .WithEnterAction((w: World, p: Player) => {
-    //   p.Velocity.X = 0;
-    //   p.Velocity.Y = 0;
-    // })
+    .WithOnEnterCommand(setVeloctyToZero)
     .WithHitBubble(damage, radius, 0, 89, hb1Offsets);
 
   return bldr.Build();
@@ -1184,68 +1170,73 @@ function GetSideSpecialExtension() {
 function GetSideSpecialAir() {
   const activeFrames = 70;
   const impulses = new Map<frameNumber, ConfigVec>();
-
-  // const reactor: SensorReactor = (w, sensorOwner, detectedPlayer) => {
-  //   const sm = w.PlayerData.StateMachine(sensorOwner.ID)!;
-  //   sm.UpdateFromWorld(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE);
-  // };
-
-  // const onEnter: AttackOnEnter = (w, p) => {
-  //   const vel = p.Velocity;
-  //   vel.X = 0;
-  //   vel.Y = 0;
-  //   p.Sensors.SetSensorReactor(reactor);
-  // };
-
-  // const onUpdate: AttackOnUpdate = (w, p, fN) => {
-  //   if (fN === 15) {
-  //     p.Sensors.ActivateSensor(-15, 45, 30)
-  //       .ActivateSensor(-50, 45, 30)
-  //       .ActivateSensor(-85, 45, 30);
-  //   }
-
-  //   if (fN === 40) {
-  //     p.Sensors.DeactivateSensors();
-  //   }
-  // };
-
-  // const onExit: AttackOnExit = (w, p) => {
-  //   p.Sensors.DeactivateSensors();
-  // };
-
-  const setVelZero = SetVelocityEventFactory(0, 0);
-  const changeStateToExtension = ChangeStateEventFactory(
-    GAME_EVENT_IDS.S_SPCL_EX_AIR_GE
-  );
-  const changeReactorTo = SensorChangeReactionEventFactory(
-    changeStateToExtension
-  );
-
-  const activateSensor1 = ActivateSensorEventFactory(-15, 45, 30);
-  const activateSensor2 = ActivateSensorEventFactory(-50, 45, 30);
-  const activateSensor3 = ActivateSensorEventFactory(-85, 45, 30);
-  const deactivateSensors = DeactivateSensorEventFactory();
   const frameToActivate = 15;
   const frameToDeactivate = 40;
 
-  //impulses.set(5, new FlatVec(-6, 0)).set(6, new FlatVec(-3, 0));
+  const setPlayerVelocityToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
+
+  const setPlayerStateToSideSpclAirEx: SwitchPlayerStateCommand = {
+    commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
+    payload: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE,
+  };
+
+  const setSensorReactorToSwicthStateOnDetection: SetPlayerSensorDetectCommand =
+    {
+      commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
+      payload: setPlayerStateToSideSpclAirEx,
+    };
+
+  const activateSensor1: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -15,
+      radius: 30,
+    },
+  };
+  const activateSensor2: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -50,
+      radius: 30,
+    },
+  };
+  const activateSensor3: ActivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
+    payload: {
+      x: 45,
+      y: -85,
+      radius: 30,
+    },
+  };
+
+  const deactivateSensor: DeactivateSensorCommand = {
+    commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
+    payload: undefined,
+  };
+
   for (let i = 14; i < 35; i++) {
     impulses.set(i, toCv(4, 0));
   }
 
-  const bldr = new AttackBuilder('SideSpecialAir');
+  const bldr = new AttackConfigBuilder('SideSpecialAir');
 
   bldr
-    // .WithUpdateAction(onUpdate)
-    // .WithExitAction(onExit)
-    // .WithEnterAction(onEnter)
-    .WithOnEnterEvent(setVelZero)
-    .WithOnEnterEvent(changeReactorTo)
+    .WithAttackId(ATTACK_IDS.S_SPCL_AIR_ATK)
+    .WithOnEnterCommand(setPlayerVelocityToZero)
+    .WithOnEnterCommand(setSensorReactorToSwicthStateOnDetection)
     .WithOnUpdateEvent(frameToActivate, activateSensor1)
     .WithOnUpdateEvent(frameToActivate, activateSensor2)
     .WithOnUpdateEvent(frameToActivate, activateSensor3)
-    .WithOnUpdateEvent(frameToDeactivate, deactivateSensors)
-    .WithOnExitEvent(deactivateSensors)
+    .WithOnUpdateEvent(frameToDeactivate, deactivateSensor)
+    .WithOnExitEvent(deactivateSensor)
     .WithImpulses(impulses, 12)
     .WithTotalFrames(activeFrames)
     .WithGravity(false);
@@ -1269,19 +1260,22 @@ function GetSideSpecialExtensionAir() {
     .set(6, toCv(90, -50))
     .set(7, toCv(80, -35));
 
-  const setVelZero = SetVelocityEventFactory(0, 0);
+  const setPlayerVelocityToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
 
-  const bldr = new AttackBuilder('SideSpecialExtensionAir');
+  const bldr = new AttackConfigBuilder('SideSpecialExtensionAir');
 
   bldr
+    .WithAttackId(ATTACK_IDS.S_SPCL_EX_AIR_ATK)
     .WithTotalFrames(totalFrameLength)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
-    // .WithEnterAction((w: World, p: Player) => {
-    //   p.Velocity.X = 0;
-    //   p.Velocity.Y = 0;
-    // })
-    .WithOnEnterEvent(setVelZero)
+    .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithHitBubble(damage, radius, 0, launchAngle, hb1Offsets);
 
   return bldr.Build();
@@ -1305,9 +1299,10 @@ function GetDownSpecial() {
     }
   }
 
-  const blrd = new AttackBuilder('DSpecial');
+  const blrd = new AttackConfigBuilder('DSpecial');
 
   blrd
+    .WithAttackId(ATTACK_IDS.D_SPCL_ATK)
     .WithBaseKnockBack(15)
     .WithKnockBackScaling(66)
     .WithGravity(false)
@@ -1337,12 +1332,23 @@ function GetDownSpecialAerial() {
     hb3offSets.set(i, toCv(20, 0));
   }
 
-  const setVelZero = SetVelocityEventFactory(0, 0);
-  const setJumpZero = SetJumpCountEventFactory(0);
+  const setPlayerVelocityToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
 
-  const blrd = new AttackBuilder('DSpecialAir');
+  const setJumpToOne: SetJumpCountCommand = {
+    commandName: COMMAND_NAMES.SET_JUMP_COUNT,
+    payload: 1,
+  };
+
+  const blrd = new AttackConfigBuilder('DSpecialAir');
 
   blrd
+    .WithAttackId(ATTACK_IDS.D_SPCL_AIR_ATK)
     .WithBaseKnockBack(15)
     .WithKnockBackScaling(66)
     .WithGravity(false)
@@ -1352,8 +1358,8 @@ function GetDownSpecialAerial() {
     .WithHitBubble(12, 18, 3, launchAngle, hb3offSets)
     .WithHitBubble(16, 25, 4, launchAngle, hb4OffSets)
     .WithImpulses(impulses, 8)
-    .WithOnEnterEvent(setVelZero)
-    .WithOnExitEvent(setJumpZero);
+    .WithOnEnterCommand(setPlayerVelocityToZero)
+    .WithOnExitEvent(setJumpToOne);
   // .WithEnterAction((w: World, p: Player) => {
   //   p.Velocity.X = 0;
   //   p.Velocity.Y = 0;
@@ -1373,15 +1379,22 @@ function GetUpSpecial() {
     impulses.set(i, toCv(1.2, -2));
   }
 
-  const bldr = new AttackBuilder('UpSpecial');
+  const bldr = new AttackConfigBuilder('UpSpecial');
 
-  const setVelZeroOnEnter = SetVelocityEventFactory(0, 0);
+  const setPlayerVelocityToZero: SetVelcoityCommand = {
+    commandName: COMMAND_NAMES.VELOCITY_SET,
+    payload: {
+      x: 0,
+      y: 0,
+    },
+  };
 
   bldr
+    .WithAttackId(ATTACK_IDS.U_SPCL_ATK)
     .WithTotalFrames(totalFrameLength)
     .WithImpulses(impulses, 12)
     .WithGravity(false)
-    .WithOnEnterEvent(setVelZeroOnEnter);
+    .WithOnEnterCommand(setPlayerVelocityToZero);
   // .WithEnterAction((w: World, p: Player) => {
   //   p.Velocity.X = 0;
   //   p.Velocity.Y = 0;

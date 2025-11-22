@@ -22,9 +22,9 @@ export class CollisionResult implements ICollisionResult, IPooledObject {
     depth: FixedPoint
   ): void {
     this.collision = true;
-    this.normX.SetFromRaw(x);
-    this.normY.SetFromRaw(y);
-    this.depth.SetFromRaw(depth);
+    this.normX.SetFromFp(x);
+    this.normY.SetFromFp(y);
+    this.depth.SetFromFp(depth);
   }
 
   public SetCollisionTrueRaw(

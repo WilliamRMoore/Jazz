@@ -17,8 +17,13 @@ import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { World } from '../world/world';
 import { CreateConvexHull } from '../physics/collisions';
 import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
-import { PlayerJEvent } from '../events/events';
-import { ConfigVec } from '../../character/default';
+import { Command } from '../command/command';
+import {
+  AttackConfig,
+  ECBShapesConfig,
+  HitBubblesConifg,
+  HurtCapsuleConfig,
+} from '../../character/shared';
 
 /***
  * TODO:
@@ -192,8 +197,8 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
 export class WeightComponent {
   public readonly Weight: FixedPoint = new FixedPoint();
 
-  constructor(weight: FixedPoint) {
-    this.Weight.SetFromFp(weight);
+  constructor(weight: number) {
+    this.Weight.SetFromNumber(weight);
   }
 }
 
@@ -700,23 +705,24 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   private readonly ecbStateShapes: ECBShapes;
   // private readonly fpp: Pool<FixedPoint>;
 
-  constructor(
-    shapes: ECBShapes,
-    height: FixedPoint = new FixedPoint(100),
-    width: FixedPoint = new FixedPoint(100),
-    yOffset: FixedPoint = new FixedPoint(0)
-  ) {
-    // The constructor was missing the fpp pool parameter, which is needed for the initial update.
-    this.height.SetFromFp(height);
-    this.width.SetFromFp(width);
-    this.originalHeight.SetFromFp(height);
-    this.originalWidth.SetFromFp(width);
-    this.originalYOffset.SetFromFp(yOffset);
-    this.yOffset.SetFromFp(yOffset);
-    this.ecbStateShapes = shapes;
+  constructor(shapes: ECBShapesConfig, height = 100, width = 100, yOffset = 0) {
+    this.height.SetFromNumber(height);
+    this.width.SetFromNumber(width);
+    this.originalHeight.SetFromNumber(height);
+    this.originalWidth.SetFromNumber(width);
+    this.originalYOffset.SetFromNumber(yOffset);
+    this.yOffset.SetFromNumber(yOffset);
+    //this.ecbStateShapes = shapes;
+    this.ecbStateShapes = new Map<StateId, ECBShape>();
+    for (const [Key, val] of shapes) {
+      this.ecbStateShapes.set(Key, {
+        height: new FixedPoint(val.height),
+        width: new FixedPoint(val.width),
+        yOffset: new FixedPoint(val.yOffset),
+      });
+    }
     FillArrayWithFlatVec(this.curVerts);
     FillArrayWithFlatVec(this.prevVerts);
-    //this.fpp = fpp;
     this.loadAllVerts();
     this.update();
   }
@@ -959,17 +965,17 @@ export class HurtCapsule {
   public readonly Radius: FixedPoint = new FixedPoint();
 
   constructor(
-    startOffsetX: FixedPoint,
-    startOffsetY: FixedPoint,
-    endOffsetX: FixedPoint,
-    endOffsetY: FixedPoint,
-    radius: FixedPoint
+    startOffsetX: number,
+    startOffsetY: number,
+    endOffsetX: number,
+    endOffsetY: number,
+    radius: number
   ) {
-    this.StartOffsetX.SetFromFp(startOffsetX);
-    this.StartOffsetY.SetFromFp(startOffsetY);
-    this.EndOffsetX.SetFromFp(endOffsetX);
-    this.EndOffsetY.SetFromFp(endOffsetY);
-    this.Radius.SetFromFp(radius);
+    this.StartOffsetX.SetFromNumber(startOffsetX);
+    this.StartOffsetY.SetFromNumber(startOffsetY);
+    this.EndOffsetX.SetFromNumber(endOffsetX);
+    this.EndOffsetY.SetFromNumber(endOffsetY);
+    this.Radius.SetFromNumber(radius);
   }
 
   public GetStartPosition(
@@ -1012,8 +1018,13 @@ export class HurtCapsule {
 export class HurtCapsulesComponent {
   public readonly HurtCapsules: Array<HurtCapsule>;
 
-  constructor(hurtCapsules: Array<HurtCapsule>) {
-    this.HurtCapsules = hurtCapsules;
+  constructor(hurtCapsules: Array<HurtCapsuleConfig>) {
+    this.HurtCapsules = [];
+    hurtCapsules.forEach((hc) => {
+      this.HurtCapsules.push(
+        new HurtCapsule(hc.x1, hc.y1, hc.x2, hc.y2, hc.radius)
+      );
+    });
   }
 }
 
@@ -1029,15 +1040,13 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   private readonly curRadius = new FixedPoint(0);
   private readonly step = new FixedPoint(0);
   private readonly framesToFulll = new FixedPoint(300);
-  //private readonly fpp: Pool<FixedPoint>;
   private readonly damageMult = new FixedPoint(1.5);
 
-  constructor(fpp: Pool<FixedPoint>, radius: FixedPoint, yOffset: FixedPoint) {
-    this.curRadius = radius;
-    this.InitialRadius = radius;
-    this.YOffset = yOffset;
-    this.step.SetDivide(radius, this.framesToFulll);
-    //this.fpp = fpp;
+  constructor(radius: number, yOffset: number) {
+    this.curRadius.SetFromNumber(radius);
+    this.InitialRadius.SetFromNumber(radius);
+    this.YOffset.SetFromNumber(yOffset);
+    this.step.SetDivide(this.curRadius, this.framesToFulll);
   }
 
   public SnapShot(): ShieldSnapShot {
@@ -1104,7 +1113,7 @@ export class LedgeDetectorComponent
 {
   private maxGrabs: number = 15;
   private numberOfLedgeGrabs: number = 0;
-  private readonly yOffset: FixedPoint;
+  private readonly yOffset: FixedPoint = new FixedPoint(0);
   private readonly x: FixedPoint = new FixedPoint(0);
   private readonly y: FixedPoint = new FixedPoint(0);
   private readonly width: FixedPoint = new FixedPoint(0);
@@ -1114,20 +1123,19 @@ export class LedgeDetectorComponent
   //private readonly fpp: Pool<FixedPoint>;
 
   constructor(
-    fpp: Pool<FixedPoint>,
-    x: FixedPoint,
-    y: FixedPoint,
-    width: FixedPoint,
-    height: FixedPoint,
-    yOffset = new FixedPoint(-130)
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    yOffset = -130
   ) {
     //this.fpp = fpp;
-    this.height = height;
-    this.width = width;
-    this.yOffset = yOffset;
+    this.height.SetFromNumber(height);
+    this.width.SetFromNumber(width);
+    this.yOffset.SetFromNumber(yOffset);
     FillArrayWithFlatVec(this.rightSide);
     FillArrayWithFlatVec(this.leftSide);
-    this.MoveTo(x, y);
+    this.MoveToRaw(NumberToRaw(x), NumberToRaw(y));
   }
 
   public MoveTo(x: FixedPoint, y: FixedPoint): void {
@@ -1243,8 +1251,8 @@ export class JumpComponent implements IHistoryEnabled<number> {
   private jumpCount: number = 0;
   public readonly JumpVelocity: FixedPoint = new FixedPoint(0);
 
-  constructor(jumpVelocity: FixedPoint, numberOfJumps: number = 2) {
-    this.JumpVelocity.SetFromFp(jumpVelocity);
+  constructor(jumpVelocity: number, numberOfJumps: number = 2) {
+    this.JumpVelocity.SetFromNumber(jumpVelocity);
     this.numberOfJumps = numberOfJumps;
   }
 
@@ -1282,7 +1290,7 @@ export class JumpComponent implements IHistoryEnabled<number> {
 }
 
 type bubbleId = number;
-type frameNumber = number;
+export type frameNumber = number;
 
 export class HitBubble {
   public readonly BubbleId: bubbleId;
@@ -1295,22 +1303,28 @@ export class HitBubble {
   public readonly frameOffsets: Map<frameNumber, FlatVec>;
 
   constructor(
-    id: bubbleId,
-    damage: FixedPoint,
-    priority: number,
-    radius: FixedPoint,
-    launchAngle: FixedPoint,
-    frameOffsets: Map<frameNumber, FlatVec>
+    hbc: HitBubblesConifg
+    // id: bubbleId,
+    // damage: FixedPoint,
+    // priority: number,
+    // radius: FixedPoint,
+    // launchAngle: FixedPoint,
+    // frameOffsets: Map<frameNumber, FlatVec>
   ) {
-    this.BubbleId = id;
-    this.Damage.SetFromFp(damage);
-    this.Priority = priority;
-    this.Radius.SetFromFp(radius);
-    this.launchAngle.SetFromFp(launchAngle);
-    const activeframes = Array.from(frameOffsets.keys()).sort((a, b) => a - b);
+    this.BubbleId = hbc.BubbleId;
+    this.Damage.SetFromNumber(hbc.Damage);
+    this.Priority = hbc.Priority;
+    this.Radius.SetFromNumber(hbc.Radius);
+    this.launchAngle.SetFromNumber(hbc.LaunchAngle);
+    const activeframes = Array.from(hbc.frameOffsets.keys()).sort(
+      (a, b) => a - b
+    );
     this.activeStartFrame = activeframes[0];
     this.activeEndFrame = activeframes[activeframes.length - 1];
-    this.frameOffsets = frameOffsets;
+    this.frameOffsets = new Map<frameNumber, FlatVec>();
+    for (const [k, v] of hbc.frameOffsets) {
+      this.frameOffsets.set(k, ToFV(v.x, v.y));
+    }
   }
 
   public IsActive(attackFrameNumber: frameNumber): boolean {
@@ -1327,7 +1341,6 @@ export class HitBubble {
   }
 
   public GetGlobalPosition(
-    //fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
     playerX: FixedPoint,
     playerY: FixedPoint,
@@ -1352,9 +1365,9 @@ export class HitBubble {
   }
 }
 
-export type AttackOnUpdate = (w: World, p: Player, frameNumber: number) => void;
-export type AttackOnEnter = (w: World, p: Player) => void;
-export type AttackOnExit = (w: World, p: Player) => void;
+// export type AttackOnUpdate = (w: World, p: Player, frameNumber: number) => void;
+// export type AttackOnEnter = (w: World, p: Player) => void;
+// export type AttackOnExit = (w: World, p: Player) => void;
 
 export class Attack {
   public readonly Name: string;
@@ -1371,62 +1384,68 @@ export class Attack {
   >();
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
-  public readonly onEnterEvents: Array<PlayerJEvent<unknown>> = [];
-  public readonly onUpdateEvents: Map<number, PlayerJEvent<unknown>> =
-    new Map(); //Array<PlayerJEvent<unknown>> | undefined;
-  public readonly onExitEvents: Array<PlayerJEvent<unknown>> = [];
+  public readonly onEnterCommands: Array<Command> = [];
+  public readonly onUpdateCommands: Map<number, Command> = new Map(); //Array<PlayerJEvent<unknown>> | undefined;
+  public readonly onExitCommands: Array<Command> = [];
 
   // private onEnter: AttackOnEnter = (w, p) => {};
   // private onUpdate: AttackOnUpdate = (w, p, fN) => {};
   // private onExit: AttackOnExit = (w, p) => {};
 
   constructor(
-    name: string,
-    totalFrameLength: number,
-    interuptableFrame: number,
-    baseKb: FixedPoint,
-    kbScaling: FixedPoint,
-    impulseClamp: FixedPoint | undefined,
-    hitBubbles: Array<HitBubble>,
-    canOnlyFallOffLedgeWhenFacingAwayFromIt: boolean = false,
-    gravityActive: boolean = true,
-    impulses: Map<frameNumber, FlatVec> | undefined,
-    onEnterEvent: Array<PlayerJEvent<unknown>>,
-    onUpdateEvents: Map<number, PlayerJEvent<unknown>> | undefined,
-    onExitEvent: Array<PlayerJEvent<unknown>>
+    conf: AttackConfig
+    // name: string,
+    // totalFrameLength: number,
+    // interuptableFrame: number,
+    // baseKb: FixedPoint,
+    // kbScaling: FixedPoint,
+    // impulseClamp: FixedPoint | undefined,
+    // hitBubbles: Array<HitBubble>,
+    // canOnlyFallOffLedgeWhenFacingAwayFromIt: boolean = false,
+    // gravityActive: boolean = true,
+    // impulses: Map<frameNumber, FlatVec> | undefined,
+    // onEnterCommands: Array<Command>,
+    // onUpdateCommands: Map<number, Command> | undefined,
+    // onExitCommands: Array<Command>
 
     // onEnter: AttackOnEnter | undefined,
     // onUpdate: AttackOnUpdate | undefined,
     // onExit: AttackOnExit | undefined
   ) {
-    this.Name = name;
-    this.TotalFrameLength = totalFrameLength;
-    this.InteruptableFrame = interuptableFrame;
-    this.GravityActive = gravityActive;
+    this.Name = conf.Name;
+    this.TotalFrameLength = conf.TotalFrameLength;
+    this.InteruptableFrame = conf.InteruptableFrame;
+    this.GravityActive = conf.GravityActive;
     this.CanOnlyFallOffLedgeIfFacingAwayFromIt =
-      canOnlyFallOffLedgeWhenFacingAwayFromIt;
-    this.BaseKnockBack.SetFromFp(baseKb);
-    this.KnockBackScaling.SetFromFp(kbScaling);
+      conf.CanOnlyFallOffLedgeIfFacingAwayFromIt;
+    this.BaseKnockBack.SetFromNumber(conf.BaseKnockBack);
+    this.KnockBackScaling.SetFromNumber(conf.KnockBackScaling);
 
-    if (impulseClamp != undefined) {
-      this.ImpulseClamp = new FixedPoint().SetFromFp(impulseClamp);
+    if (conf.ImpulseClamp != undefined) {
+      this.ImpulseClamp = new FixedPoint().SetFromNumber(conf.ImpulseClamp);
     }
 
-    this.HitBubbles = hitBubbles.sort((a, b) => a.Priority - b.Priority);
+    const hbs = conf.HitBubbles.map((hbc) => new HitBubble(hbc));
 
-    if (impulses !== undefined) {
-      this.Impulses = impulses;
+    this.HitBubbles = hbs.sort((a, b) => a.Priority - b.Priority);
+
+    if (conf.Impulses !== undefined) {
+      this.Impulses = new Map<frameNumber, FlatVec>();
+
+      for (const [k, v] of conf.Impulses) {
+        this.Impulses.set(k, ToFV(v.x, v.y));
+      }
     }
 
-    if (onEnterEvent !== undefined) {
-      this.onEnterEvents = onEnterEvent;
+    if (conf.onEnterCommands !== undefined) {
+      this.onEnterCommands = conf.onEnterCommands;
     }
-    if (onUpdateEvents !== undefined) {
-      this.onUpdateEvents = onUpdateEvents;
+    if (conf.onUpdateCommands !== undefined) {
+      this.onUpdateCommands = conf.onUpdateCommands;
     }
 
-    if (onExitEvent !== undefined) {
-      this.onExitEvents = onExitEvent;
+    if (conf.onExitCommands !== undefined) {
+      this.onExitCommands = conf.onExitCommands;
     }
 
     // if (onEnter !== undefined) {
@@ -1491,152 +1510,17 @@ export class Attack {
   }
 }
 
-export class AttackBuilder {
-  private name: string = '';
-  private totalFrames: number = 0;
-  private interuptableFrame: number = 0;
-  private hasGravtity: boolean = true;
-  private baseKnockBack: number = 0;
-  private knockBackScaling: number = 0;
-  private impulseClamp: number | undefined;
-  private impulses: Map<frameNumber, ConfigVec> | undefined;
-  private hitBubbles: Array<HitBubble> = [];
-  private canOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
-  private onEnterEvent: Array<PlayerJEvent<unknown>> = [];
-  private onUpdateEvents = new Map<number, PlayerJEvent<unknown>>();
-  private onExitEvent: Array<PlayerJEvent<unknown>> = [];
-
-  constructor(name: string) {
-    this.name = name;
-  }
-
-  public WithTotalFrames(totalFrames: number): AttackBuilder {
-    this.totalFrames = totalFrames;
-    return this;
-  }
-
-  public WithImpulses(
-    impulses: Map<frameNumber, ConfigVec>,
-    impulseClamp: number | undefined = undefined
-  ): AttackBuilder {
-    this.impulses = impulses;
-    this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
-    return this;
-  }
-
-  public WithInteruptableFrame(interuptFrame: number): AttackBuilder {
-    this.interuptableFrame = interuptFrame;
-    return this;
-  }
-
-  public WithGravity(gravity: boolean): AttackBuilder {
-    this.hasGravtity = gravity;
-    return this;
-  }
-
-  public CanOnlyFallOffLedgeIfFacingIt(): AttackBuilder {
-    this.canOnlyFallOffLedgeIfFacingAwayFromIt = true;
-    return this;
-  }
-
-  public WithBaseKnockBack(baseKb: number): AttackBuilder {
-    this.baseKnockBack = baseKb;
-    return this;
-  }
-
-  public WithKnockBackScaling(kbScaling: number): AttackBuilder {
-    this.knockBackScaling = kbScaling;
-    return this;
-  }
-
-  public WithOnEnterEvent(event: PlayerJEvent<any>): AttackBuilder {
-    this.onEnterEvent.push(event);
-    return this;
-  }
-
-  public WithOnUpdateEvent(
-    frameNumber: number,
-    event: PlayerJEvent<any>
-  ): AttackBuilder {
-    this.onUpdateEvents.set(frameNumber, event);
-    return this;
-  }
-
-  public WithOnExitEvent(event: PlayerJEvent<any>): AttackBuilder {
-    this.onExitEvent.push(event); // = event;
-    return this;
-  }
-
-  public WithHitBubble(
-    damage: number,
-    radius: number,
-    priority: number,
-    launchAngle: number,
-    frameOffsets: Map<frameNumber, ConfigVec>
-  ): AttackBuilder {
-    const hitBubId = this.hitBubbles.length;
-    const fvOffsets = new Map<frameNumber, FlatVec>();
-
-    for (const [k, v] of frameOffsets) {
-      fvOffsets.set(k, ToFV(v.x, v.y));
-    }
-
-    const hitBub = new HitBubble(
-      hitBubId,
-      ToFp(damage),
-      priority,
-      ToFp(radius),
-      ToFp(launchAngle),
-      fvOffsets
-    );
-
-    this.hitBubbles.push(hitBub);
-
-    return this;
-  }
-
-  public Build(): Attack {
-    const BaseKnockBack = ToFp(this.baseKnockBack);
-    const knockBackScaling = ToFp(this.knockBackScaling);
-
-    let impulses: Map<frameNumber, FlatVec> | undefined = undefined;
-    if (this.impulses !== undefined) {
-      impulses = new Map<frameNumber, FlatVec>();
-      for (const [k, v] of this.impulses) {
-        impulses.set(k, ToFV(v.x, v.y));
-      }
-    }
-
-    let impulseClamp: FixedPoint | undefined = undefined;
-
-    if (this.impulseClamp !== undefined) {
-      impulseClamp = ToFp(this.impulseClamp);
-    }
-
-    return new Attack(
-      this.name,
-      this.totalFrames,
-      this.interuptableFrame,
-      BaseKnockBack,
-      knockBackScaling,
-      impulseClamp,
-      this.hitBubbles,
-      this.canOnlyFallOffLedgeIfFacingAwayFromIt,
-      this.hasGravtity,
-      impulses,
-      this.onEnterEvent,
-      this.onUpdateEvents,
-      this.onExitEvent
-    );
-  }
-}
-
 export type AttackSnapShot = Attack | undefined;
 export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   private attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
 
-  public constructor(attacks: Map<AttackId, Attack>) {
+  public constructor(attacksConfigs: Map<AttackId, AttackConfig>) {
+    const attacks = new Map<AttackId, Attack>();
+    attacksConfigs.forEach((ac) => {
+      const atk = new Attack(ac);
+      attacks.set(ac.AttackId, atk);
+    });
     this.attacks = attacks;
   }
 
@@ -1752,7 +1636,7 @@ export type SensorSnapShot = {
 export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   private currentSensorIdx: number = 0;
   private readonly sensors: Array<Sensor> = new Array<Sensor>(10);
-  private reactEvent: PlayerJEvent<unknown> | undefined;
+  public ReactCommand: Command | undefined;
 
   constructor() {
     for (let i = 0; i < this.sensors.length; i++) {
@@ -1760,13 +1644,13 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     }
   }
 
-  public SwitchReactor(event: PlayerJEvent<unknown>): void {
-    this.reactEvent = event;
-  }
+  // public SwitchReactor(event: Command<unknown>): void {
+  //   this.reactEvent = event;
+  // }
 
-  public get ReactEvent(): PlayerJEvent<unknown> | undefined {
-    return this.reactEvent;
-  }
+  // public get ReactEvent(): Command<unknown> | undefined {
+  //   return this.reactEvent;
+  // }
 
   // public ReactAction(
   //   world: World,
@@ -1781,20 +1665,20 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   // }
 
   public ActivateSensor(
-    yOffset: FixedPoint,
     xOffset: FixedPoint,
+    yOffset: FixedPoint,
     radius: FixedPoint
   ): SensorComponent {
     if (this.currentSensorIdx >= this.sensors.length) {
       throw new Error('No more sensors available to activate.');
     }
-    this.activateSensor(yOffset.Raw, xOffset.Raw, radius.Raw);
+    this.ActivateSensorRaw(yOffset.Raw, xOffset.Raw, radius.Raw);
     return this;
   }
 
-  private activateSensor(
-    yOffsetRaw: number,
+  public ActivateSensorRaw(
     xOffsetRaw: number,
+    yOffsetRaw: number,
     radiusRaw: number
   ): void {
     const sensor = this.sensors[this.currentSensorIdx];
@@ -1851,7 +1735,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     const snapShotSensorLength = snapShot.sensors.length;
     for (let i = 0; i < snapShotSensorLength; i++) {
       const snapShotSensor = snapShot.sensors[i];
-      this.activateSensor(
+      this.ActivateSensorRaw(
         NumberToRaw(snapShotSensor.yOffset),
         NumberToRaw(snapShotSensor.xOffset),
         NumberToRaw(snapShotSensor.radius)

@@ -14,8 +14,8 @@ export class ProjectionResult implements IProjectionResult, IPooledObject {
   }
 
   public SetMinMax(min: FixedPoint, max: FixedPoint): void {
-    this.min.SetFromRaw(min);
-    this.max.SetFromRaw(max);
+    this.min.SetFromFp(min);
+    this.max.SetFromFp(max);
   }
 
   public SetMinMaxRaw(min: number, max: number): void {
