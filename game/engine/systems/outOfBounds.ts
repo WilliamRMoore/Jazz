@@ -1,6 +1,6 @@
 import { NumberToRaw } from '../../math/fixedPoint';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { STATE_IDS } from '../finite-state-machine/PlayerStates';
+import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
 import {
   Player,
   SetPlayerInitialPositionRaw,

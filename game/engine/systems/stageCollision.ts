@@ -2,7 +2,7 @@ import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../finite-state-machine/PlayerStates';
+} from '../finite-state-machine/playerStates/shared';
 import { IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,

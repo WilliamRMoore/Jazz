@@ -6,7 +6,7 @@ import {
   MultiplyRaw,
 } from '../../math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../../math/LUTS';
-import { GAME_EVENT_IDS } from '../finite-state-machine/PlayerStates';
+import { GAME_EVENT_IDS } from '../finite-state-machine/playerStates/shared';
 import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
@@ -97,7 +97,7 @@ function resolveHitResult(
   pB.Points.AddDamage(atkDamage);
 
   const playerDamage = pB.Points.Damage;
-  const weight = pB.Weight.Weight;
+  const weight = pB.Weight.Value;
   const scailing = pAHitsPbResult.KnockBackScaling;
   const baseKnockBack = pAHitsPbResult.BaseKnockBack;
 

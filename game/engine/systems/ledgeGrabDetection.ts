@@ -2,7 +2,8 @@ import { NumberToRaw, DivideRaw } from '../../math/fixedPoint';
 import {
   STATE_IDS,
   GAME_EVENT_IDS,
-} from '../finite-state-machine/PlayerStates';
+} from '../finite-state-machine/playerStates/shared';
+
 import { IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnStageOrPlats,

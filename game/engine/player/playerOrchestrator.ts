@@ -26,18 +26,6 @@ import { CharacterConfig } from '../../character/shared';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
-const defaultSpeedsBuilderOptions: speedBuilderOptions = (
-  scb: SpeedsComponentConfigBuilder
-) => {
-  scb.SetWalkSpeeds(11, 2);
-  scb.SetRunSpeeds(14, 2.2);
-  scb.SetFallSpeeds(22, 15, 0.7);
-  scb.SetAerialSpeeds(0.5, 13, 1.8);
-  scb.SetDashSpeeds(3, 17);
-  scb.SetDodgeSpeeds(25, 25);
-  scb.SetGroundedVelocityDecay(0.8);
-};
-
 export class Player {
   public readonly Position: PositionComponent;
   public readonly Velocity: VelocityComponent;
@@ -70,7 +58,6 @@ export class Player {
     sB.SetDashSpeeds(cc.dashMutiplier, cc.maxDashSpeed);
     sB.SetDodgeSpeeds(cc.airDodgeSpeed, cc.dodgeRollSpeed);
     sB.SetGroundedVelocityDecay(cc.groundedVelocityDecay);
-    //CharacterConfig.SCB;
     this.ID = Id;
     this.Position = new PositionComponent();
     this.Velocity = new VelocityComponent();
@@ -101,55 +88,6 @@ export class Player {
     this.Attacks = new AttackComponment(cc.attacks);
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
-
-  // public CanOnlyFallOffLedgeWhenFacingAwayFromIt(): boolean {
-  //   const a = this.attacks.GetAttack();
-
-  //   if (a === undefined) {
-  //     return false;
-  //   }
-  //   return a.CanOnlyFallOffLedgeIfFacingAwayFromIt;
-  // }
-
-  // public AddWalkImpulseToPlayer(impulse: number): void {
-  //   const velocity = this.velocity;
-  //   const speeds = this.speeds;
-  //   velocity.AddClampedXImpulse(
-  //     speeds.MaxWalkSpeed,
-  //     impulse * speeds.WalkSpeedMulitplier
-  //   );
-  // }
-
-  // public SetPlayerPosition(x: number, y: number) {
-  //   const position = this.position;
-  //   this.Position;
-  //   position.X = x;
-  //   position.Y = y;
-  //   this.ecb.MoveToPosition(x, y);
-  //   this.ledgeDetector.MoveTo(x, y);
-  // }
-
-  // public AddToPlayerPosition(x: number, y: number): void {
-  //   const pos = this.position;
-  //   pos.X += x;
-  //   pos.Y += y;
-  //   this.ecb.MoveToPosition(pos.X, pos.Y);
-  //   this.ledgeDetector.MoveTo(pos.X, pos.Y);
-  // }
-
-  // public AddToPlayerYPosition(y: number): void {
-  //   const position = this.position;
-  //   position.Y += y;
-  //   this.ecb.MoveToPosition(position.X, position.Y);
-  //   this.ledgeDetector.MoveTo(position.X, position.Y);
-  // }
-
-  // public SetPlayerInitialPosition(x: number, y: number): void {
-  //   this.Position.X = x;
-  //   this.Position.Y = y;
-  //   this.ecb.SetInitialPosition(x, y);
-  //   this.ledgeDetector.MoveTo(x, y);
-  // }
 }
 
 export function CanOnlyFallOffLedgeWhenFacingAwayFromIt(p: Player): boolean {

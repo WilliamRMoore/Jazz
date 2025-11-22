@@ -1,7 +1,8 @@
 import { Command } from '../engine/command/command';
-import { AttackId, StateId } from '../engine/finite-state-machine/PlayerStates';
-import { FlatVec } from '../engine/physics/vector';
-import { ToFV } from '../engine/utils';
+import {
+  StateId,
+  AttackId,
+} from '../engine/finite-state-machine/playerStates/shared';
 
 type frameNumber = number;
 
@@ -99,7 +100,7 @@ export type AttackConfig = {
   CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean;
   HitBubbles: Array<HitBubblesConifg>;
   onEnterCommands: Array<Command>;
-  onUpdateCommands: Map<number, Command>; //Array<PlayerJEvent<unknown>> | undefined;
+  onUpdateCommands: Map<number, Command>;
   onExitCommands: Array<Command>;
 };
 
@@ -193,11 +194,6 @@ export class AttackConfigBuilder {
     frameOffsets: Map<frameNumber, ConfigVec>
   ): AttackConfigBuilder {
     const hitBubId = this.hitBubbles.length;
-    // const fvOffsets = new Map<frameNumber, FlatVec>();
-
-    // for (const [k, v] of frameOffsets) {
-    //   fvOffsets.set(k, ToFV(v.x, v.y));
-    // }
 
     const hitBub: HitBubblesConifg = {
       BubbleId: hitBubId,
@@ -207,14 +203,6 @@ export class AttackConfigBuilder {
       LaunchAngle: launchAngle,
       frameOffsets: frameOffsets,
     };
-    // const hitBub = new HitBubble(
-    //   hitBubId,
-    //   ToFp(damage),
-    //   priority,
-    //   ToFp(radius),
-    //   ToFp(launchAngle),
-    //   fvOffsets
-    // );
 
     this.hitBubbles.push(hitBub);
 
@@ -222,22 +210,6 @@ export class AttackConfigBuilder {
   }
 
   public Build(): AttackConfig {
-    // const BaseKnockBack = ToFp(this.baseKnockBack);
-    // const knockBackScaling = ToFp(this.knockBackScaling);
-
-    // let impulses: Map<frameNumber, FlatVec> | undefined = undefined;
-    // if (this.impulses !== undefined) {
-    //   impulses = new Map<frameNumber, FlatVec>();
-    //   for (const [k, v] of this.impulses) {
-    //     impulses.set(k, ToFV(v.x, v.y));
-    //   }
-    // }
-
-    // let impulseClamp: FixedPoint | undefined = undefined;
-
-    // if (this.impulseClamp !== undefined) {
-    //   impulseClamp = ToFp(this.impulseClamp);
-    // }
     if (this.attackId == undefined) {
       throw new Error('ATTACK ID CANNOT BE NULL!');
     }
@@ -260,20 +232,5 @@ export class AttackConfigBuilder {
     };
 
     return atkConf;
-    // return new Attack(
-    //   this.name,
-    //   this.totalFrames,
-    //   this.interuptableFrame,
-    //   BaseKnockBack,
-    //   knockBackScaling,
-    //   impulseClamp,
-    //   this.hitBubbles,
-    //   this.canOnlyFallOffLedgeIfFacingAwayFromIt,
-    //   this.hasGravtity,
-    //   impulses,
-    //   this.onEnterEvent,
-    //   this.onUpdateEvents,
-    //   this.onExitEvent
-    // );
   }
 }

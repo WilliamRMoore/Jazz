@@ -1,20 +1,12 @@
-import {
-  AttackGameEventMappings,
-  AttackId,
-  GameEventId,
-  Idle,
-  StateId,
-} from '../finite-state-machine/PlayerStates';
 import { FSMState } from '../finite-state-machine/PlayerStateMachine';
 import { FlatVec } from '../physics/vector';
-import { FillArrayWithFlatVec, ToFp, ToFV } from '../utils';
+import { FillArrayWithFlatVec, ToFV } from '../utils';
 import { Player } from './playerOrchestrator';
 import { Clamp } from '../utils';
 import { Circle } from '../physics/circle';
 import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
-import { World } from '../world/world';
 import { CreateConvexHull } from '../physics/collisions';
 import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
 import { Command } from '../command/command';
@@ -24,6 +16,13 @@ import {
   HitBubblesConifg,
   HurtCapsuleConfig,
 } from '../../character/shared';
+import { AttackGameEventMappings } from '../finite-state-machine/PlayerStates';
+import {
+  StateId,
+  AttackId,
+  GameEventId,
+} from '../finite-state-machine/playerStates/shared';
+import { Idle } from '../finite-state-machine/playerStates/states';
 
 /***
  * TODO:
@@ -195,10 +194,10 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
 }
 
 export class WeightComponent {
-  public readonly Weight: FixedPoint = new FixedPoint();
+  public readonly Value: FixedPoint = new FixedPoint();
 
   constructor(weight: number) {
-    this.Weight.SetFromNumber(weight);
+    this.Value.SetFromNumber(weight);
   }
 }
 
@@ -209,21 +208,11 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   private readonly y: FixedPoint = new FixedPoint();
 
   public AddClampedXImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    // const clampValueRaw = Math.abs(clamp.Raw); //Math.abs(clamp.AsNumber);
-    // const currentVelocityRaw = this.x.Raw;
-
-    // // Don't add impulse if we are already at or beyond the clamp limit.
-    // if (Math.abs(currentVelocityRaw) >= clampValueRaw) {
-    //   return;
-    // }
-
-    // //const newVelocityRaw = currentVelocityRaw + impulse.Raw; //currentVelocity + impulse.AsNumber;
-    // this.x.SetFromRaw(currentVelocityRaw + impulse.Raw);
     this.AddClampedXImpulseRaw(clamp.Raw, impulse.Raw);
   }
 
   public AddClampedXImpulseRaw(clampRaw: number, impulseRaw: number): void {
-    const clampValueRaw = Math.abs(clampRaw); //Math.abs(clamp.AsNumber);
+    const clampValueRaw = Math.abs(clampRaw);
     const currentVelocityRaw = this.x.Raw;
 
     // Don't add impulse if we are already at or beyond the clamp limit.
@@ -231,20 +220,19 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
       return;
     }
 
-    //const newVelocityRaw = currentVelocityRaw + impulse.Raw; //currentVelocity + impulse.AsNumber;
     this.x.SetFromRaw(currentVelocityRaw + impulseRaw);
   }
 
   public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    const clampValueRaw = Math.abs(clamp.Raw); //Math.abs(clamp.AsNumber);
-    const newVelocityRaw = this.y.Raw + impulse.Raw; //this.y.AsNumber + impulse.AsNumber;
-    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw)); //this.y.SetFromNumber(Clamp(newVelocityRaw, clampValueRaw));
+    const clampValueRaw = Math.abs(clamp.Raw);
+    const newVelocityRaw = this.y.Raw + impulse.Raw;
+    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw));
   }
 
   public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {
-    const clampValueRaw = Math.abs(clampRaw); //Math.abs(clamp.AsNumber);
-    const newVelocityRaw = this.y.Raw + impulse; //this.y.AsNumber + impulse.AsNumber;
-    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw)); //this.y.SetFromNumber(Clamp(newVelocityRaw, clampValueRaw));
+    const clampValueRaw = Math.abs(clampRaw);
+    const newVelocityRaw = this.y.Raw + impulse;
+    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw));
   }
 
   public SnapShot(): VelocitySnapShot {
@@ -648,6 +636,14 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return this.disablePlatformDetection > 0;
   }
 
+  public GetIntangabilityFrames(): number {
+    return this.intangabilityFrames;
+  }
+
+  public HasNoVelocityDecay(): boolean {
+    return !this.velocityDecayActive;
+  }
+
   public SnapShot(): FlagsSnapShot {
     return {
       FacingRight: this.facingRight,
@@ -759,6 +755,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   public SetInitialPositionRaw(xRaw: number, yRaw: number): void {
     this.x.SetFromRaw(xRaw);
     this.y.SetFromRaw(yRaw);
+    this.update();
     this.UpdatePreviousECB();
   }
 
@@ -870,6 +867,10 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
 
   public get YOffset(): FixedPoint {
     return this.yOffset;
+  }
+
+  public get _ecbShapes(): ECBShapes {
+    return this.ecbStateShapes;
   }
 
   public ResetECBShape(): void {
@@ -1037,68 +1038,61 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   public readonly InitialRadius = new FixedPoint(0);
   public readonly YOffset = new FixedPoint(0);
   public Active: boolean = false;
-  private readonly curRadius = new FixedPoint(0);
+  public readonly CurrentRadius = new FixedPoint(0);
   private readonly step = new FixedPoint(0);
   private readonly framesToFulll = new FixedPoint(300);
   private readonly damageMult = new FixedPoint(1.5);
 
   constructor(radius: number, yOffset: number) {
-    this.curRadius.SetFromNumber(radius);
+    this.CurrentRadius.SetFromNumber(radius);
     this.InitialRadius.SetFromNumber(radius);
     this.YOffset.SetFromNumber(yOffset);
-    this.step.SetDivide(this.curRadius, this.framesToFulll);
+    this.step.SetDivide(this.CurrentRadius, this.framesToFulll);
   }
 
   public SnapShot(): ShieldSnapShot {
     return {
-      CurrentRadius: this.curRadius.AsNumber,
+      CurrentRadius: this.CurrentRadius.AsNumber,
       Active: this.Active,
     } as ShieldSnapShot;
   }
 
   public SetFromSnapShot(snapShot: ShieldSnapShot): void {
     this.Active = snapShot.Active;
-    this.curRadius.SetFromNumber(snapShot.CurrentRadius);
-  }
-
-  public get CurrentRadius(): FixedPoint {
-    return this.curRadius;
+    this.CurrentRadius.SetFromNumber(snapShot.CurrentRadius);
   }
 
   public Grow(): void {
-    if (this.curRadius.LessThan(this.InitialRadius)) {
-      this.curRadius.Add(this.step);
+    if (this.CurrentRadius.LessThan(this.InitialRadius)) {
+      this.CurrentRadius.Add(this.step);
     }
 
-    if (this.curRadius.GreaterThan(this.InitialRadius)) {
-      this.curRadius.SetFromFp(this.InitialRadius);
+    if (this.CurrentRadius.GreaterThan(this.InitialRadius)) {
+      this.CurrentRadius.SetFromFp(this.InitialRadius);
     }
   }
 
   public ShrinkRaw(intensityRaw: number): void {
-    if (this.curRadius.Raw > 0) {
-      // this.curRadius.Subtract(
-      //   this.fpp.Rent().SetMultiply(this.step, intensity)
-      // );
-      this.curRadius.SetFromRaw(MultiplyRaw(this.step.Raw, intensityRaw));
+    if (this.CurrentRadius.Raw > 0) {
+      this.CurrentRadius.SetFromRaw(MultiplyRaw(this.step.Raw, intensityRaw));
     }
 
-    if (this.curRadius.Raw < 0) {
-      this.curRadius.SetFromRaw(0); //.SetFromNumber(0);
+    if (this.CurrentRadius.Raw < 0) {
+      this.CurrentRadius.SetFromRaw(0);
     }
   }
 
   public Damage(d: FixedPoint) {
-    const damageMod = MultiplyRaw(d.Raw, this.damageMult.Raw); //this.fpp.Rent().SetMultiply(d, this.damageMult);
-    const curRadius = this.curRadius;
-    this.curRadius.SetFromRaw(curRadius.Raw - damageMod); //.Subtract(damageMod);
+    const damageMod = MultiplyRaw(d.Raw, this.damageMult.Raw);
+    const curRadius = this.CurrentRadius;
+    this.CurrentRadius.SetFromRaw(curRadius.Raw - damageMod);
     if (curRadius.Raw < 0) {
-      this.curRadius.SetFromRaw(0); //.SetFromNumber(0);
+      this.CurrentRadius.SetFromRaw(0);
     }
   }
 
   public Reset() {
-    this.curRadius.SetFromFp(this.InitialRadius);
+    this.CurrentRadius.SetFromFp(this.InitialRadius);
   }
 }
 
@@ -1120,7 +1114,6 @@ export class LedgeDetectorComponent
   private readonly height: FixedPoint = new FixedPoint(0);
   private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
   private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
-  //private readonly fpp: Pool<FixedPoint>;
 
   constructor(
     x: number,
@@ -1129,7 +1122,6 @@ export class LedgeDetectorComponent
     height: number,
     yOffset = -130
   ) {
-    //this.fpp = fpp;
     this.height.SetFromNumber(height);
     this.width.SetFromNumber(width);
     this.yOffset.SetFromNumber(yOffset);
@@ -1557,6 +1549,10 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   public SetFromSnapShot(snapShot: Attack | undefined): void {
     this.currentAttack = snapShot;
   }
+
+  public get _attacks(): Map<AttackId, Attack> {
+    return this.attacks;
+  }
 }
 
 class Sensor {
@@ -1566,7 +1562,6 @@ class Sensor {
   private active: boolean = false;
 
   public GetGlobalPosition(
-    //fpp: Pool<FixedPoint>,
     vecPool: Pool<PooledVector>,
     globalX: FixedPoint,
     globalY: FixedPoint,
@@ -1578,9 +1573,9 @@ class Sensor {
     const globalYRaw = globalY.Raw;
 
     const xRaw = facingRight
-      ? globalXRaw + xOffsetRaw //fpp.Rent().SetAdd(globalX, this.xOffset)
-      : MultiplyRaw(globalXRaw, xOffsetRaw); //fpp.Rent().SetMultiply(globalX, this.xOffset);
-    const yRaw = globalYRaw + yOffsetRaw; //fpp.Rent().SetAdd(globalY, this.yOffset);
+      ? globalXRaw + xOffsetRaw
+      : MultiplyRaw(globalXRaw, xOffsetRaw);
+    const yRaw = globalYRaw + yOffsetRaw;
     return vecPool.Rent().SetXYRaw(xRaw, yRaw);
   }
 
@@ -1612,26 +1607,16 @@ class Sensor {
   }
 }
 
-// export type SensorReactor = (
-//   w: World,
-//   sensorOwner: Player,
-//   detectedPlayer: Player
-// ) => void;
-
 export type SensorSnapShot = {
-  sensors: Array<{
-    xOffset: number;
-    yOffset: number;
-    radius: number;
-  }>;
-  //reactor: SensorReactor;
+  sensors:
+    | Array<{
+        xOffset: number;
+        yOffset: number;
+        radius: number;
+      }>
+    | undefined;
+  reactorJsonString: string | undefined;
 };
-
-// const defaultReactor: SensorReactor = (
-//   w: World,
-//   sensorOwner: Player,
-//   detectedPlayer: Player
-// ) => {};
 
 export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   private currentSensorIdx: number = 0;
@@ -1643,26 +1628,6 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
       this.sensors[i] = new Sensor();
     }
   }
-
-  // public SwitchReactor(event: Command<unknown>): void {
-  //   this.reactEvent = event;
-  // }
-
-  // public get ReactEvent(): Command<unknown> | undefined {
-  //   return this.reactEvent;
-  // }
-
-  // public ReactAction(
-  //   world: World,
-  //   pOwnerOfSensors: Player,
-  //   playerDetectedBySensor: Player
-  // ): void {
-  //   return this.sensorReactor(world, pOwnerOfSensors, playerDetectedBySensor);
-  // }
-
-  // public SetSensorReactor(sr: SensorReactor): void {
-  //   this.sensorReactor = sr;
-  // }
 
   public ActivateSensor(
     xOffset: FixedPoint,
@@ -1697,7 +1662,6 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
         sensor.Deactivate();
       }
     }
-    //this.sensorReactor = defaultReactor;
     this.currentSensorIdx = 0;
   }
 
@@ -1711,15 +1675,18 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
 
   public SnapShot(): SensorSnapShot {
     const snapShot: SensorSnapShot = {
-      sensors: [],
-      //reactor: this.sensorReactor,
+      sensors: undefined,
+      reactorJsonString: undefined,
     };
 
     const length = this.sensors.length;
+    if (length > 0) {
+      snapShot.sensors = [];
+    }
     for (let i = 0; i < length; i++) {
       const sensor = this.sensors[i];
       if (sensor.IsActive) {
-        snapShot.sensors.push({
+        snapShot.sensors!.push({
           yOffset: sensor.YOffset.AsNumber,
           xOffset: sensor.XOffset.AsNumber,
           radius: sensor.Radius.AsNumber,
@@ -1727,44 +1694,36 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
       }
     }
 
+    if (this.ReactCommand !== undefined) {
+      snapShot.reactorJsonString = JSON.stringify(this.ReactCommand);
+    }
     return snapShot;
   }
 
   public SetFromSnapShot(snapShot: SensorSnapShot): void {
     this.DeactivateSensors();
-    const snapShotSensorLength = snapShot.sensors.length;
+    const snapShotSensorLength = snapShot.sensors?.length ?? 0;
     for (let i = 0; i < snapShotSensorLength; i++) {
-      const snapShotSensor = snapShot.sensors[i];
+      const snapShotSensor = snapShot.sensors![i];
       this.ActivateSensorRaw(
         NumberToRaw(snapShotSensor.yOffset),
         NumberToRaw(snapShotSensor.xOffset),
         NumberToRaw(snapShotSensor.radius)
       );
     }
-    //this.sensorReactor = snapShot.reactor || defaultReactor;
-    this.currentSensorIdx = snapShot.sensors.length;
+
+    if (snapShot.reactorJsonString !== undefined) {
+      const c = JSON.parse(snapShot.reactorJsonString) as Command;
+      this.ReactCommand = c;
+    } else {
+      this.ReactCommand = undefined;
+    }
+
+    this.currentSensorIdx = snapShot.sensors?.length ?? 0;
   }
 }
 
 // builder ================================================
-
-// export type SpeedsComponentConfig = {
-//   groundedVelocityDecay: number
-//   aerialVelocityDecay: number
-//   aerialSpeedInpulseLimit: number
-//   aerialSpeedMultiplier: number
-//   airDodgeSpeed: number
-//   dodgeRollSpeed: number
-//   maxWalkSpeed: number
-//   maxRunSpeed: number
-//   dashMutiplier: number
-//   maxDashSpeed: number
-//   walkSpeedMulitplier: number
-//   runSpeedMultiplier: number
-//   fastFallSpeed: number
-//   fallSpeed: number
-//   gravity: number
-// }
 
 export class SpeedsComponentConfigBuilder {
   private readonly groundedVelocityDecay: FixedPoint = new FixedPoint();

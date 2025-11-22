@@ -1,5 +1,5 @@
 import { NumberToRaw, DivideRaw } from '../../math/fixedPoint';
-import { STATE_IDS } from '../finite-state-machine/PlayerStates';
+import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
 import { IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../player/playerOrchestrator';
 import { PlayerData, Pools } from '../world/world';

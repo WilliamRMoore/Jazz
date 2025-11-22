@@ -7,7 +7,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../game/engine/finite-state-machine/PlayerStates';
+} from '../game/engine/finite-state-machine/playerStates/shared';
 import { Player } from '../game/engine/player/playerOrchestrator';
 
 describe('Player Orechstraotr Initialization', () => {
@@ -20,7 +20,7 @@ describe('Player Orechstraotr Initialization', () => {
   });
 
   test('Should have weight of 110', () => {
-    expect(po.Weight.Weight.AsNumber).toBe(110);
+    expect(po.Weight.Value.AsNumber).toBe(110);
   });
 
   test('Should have side special configuration', () => {
@@ -55,5 +55,51 @@ describe('Player Orechstraotr Initialization', () => {
     const shield = po.Shield;
     expect(shield.InitialRadius.AsNumber).toBe(75);
     expect(shield.YOffset.AsNumber).toBe(-50);
+  });
+
+  test('Should have down special attack properties', () => {
+    const attacks = po.Attacks._attacks;
+    const downSpecial = attacks.get(ATTACK_IDS.D_SPCL_ATK);
+
+    expect(downSpecial).toBeDefined();
+    if (!downSpecial) return;
+
+    expect(downSpecial.Name).toBe('DSpecial');
+    expect(downSpecial.TotalFrameLength).toBe(77);
+    expect(downSpecial.BaseKnockBack.AsNumber).toBe(15);
+    expect(downSpecial.KnockBackScaling.AsNumber).toBe(66);
+    expect(downSpecial.GravityActive).toBe(false);
+    expect(downSpecial.ImpulseClamp?.AsNumber).toBe(12);
+    expect(downSpecial.HitBubbles.length).toBe(4);
+
+    const impulse = downSpecial.Impulses.get(23);
+    expect(impulse).toBeDefined();
+    if (!impulse) return;
+    expect(impulse.X.AsNumber).toBe(2);
+    expect(impulse.Y.AsNumber).toBe(0);
+
+    const hb1 = downSpecial.HitBubbles[0];
+    expect(hb1.Damage.AsNumber).toBe(15);
+    expect(hb1.Radius.AsNumber).toBe(20);
+    expect(hb1.Priority).toBe(0);
+    expect(hb1.launchAngle.AsNumber).toBe(45);
+
+    const hb4 = downSpecial.HitBubbles.find((hb) => hb.Priority === 4);
+    expect(hb4).toBeDefined();
+    if (!hb4) return;
+    expect(hb4.Damage.AsNumber).toBe(16);
+    expect(hb4.Radius.AsNumber).toBe(25);
+
+    const hb1Offset = hb1.frameOffsets.get(23);
+    expect(hb1Offset).toBeDefined();
+    if (!hb1Offset) return;
+    expect(hb1Offset.X.AsNumber).toBe(100);
+    expect(hb1Offset.Y.AsNumber).toBe(-25);
+
+    const hb4Offset = hb4.frameOffsets.get(51);
+    expect(hb4Offset).toBeDefined();
+    if (!hb4Offset) return;
+    expect(hb4Offset.X.AsNumber).toBe(120);
+    expect(hb4Offset.Y.AsNumber).toBe(-25);
   });
 });

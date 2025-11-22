@@ -1,4 +1,4 @@
-import { GameEventId } from '../../finite-state-machine/PlayerStates';
+import { GameEventId } from '../../finite-state-machine/playerStates/shared';
 import { Player } from '../../player/playerOrchestrator';
 import { World } from '../../world/world';
 

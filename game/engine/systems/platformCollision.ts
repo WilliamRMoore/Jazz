@@ -1,10 +1,10 @@
 import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import {
-  STATE_IDS,
   GAME_EVENT_IDS,
+  STATE_IDS,
   CanStateWalkOffLedge,
-} from '../finite-state-machine/PlayerStates';
+} from '../finite-state-machine/playerStates/shared';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {
   PlayerOnPlats,

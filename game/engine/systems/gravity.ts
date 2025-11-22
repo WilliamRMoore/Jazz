@@ -1,5 +1,5 @@
 import { NumberToRaw, MultiplyRaw } from '../../math/fixedPoint';
-import { STATE_IDS } from '../finite-state-machine/PlayerStates';
+import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
 import { Player, PlayerOnStageOrPlats } from '../player/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { PlayerData, StageData } from '../world/world';

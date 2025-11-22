@@ -3,19 +3,16 @@ import { ActivateSensorCommand } from '../engine/command/commands/activateSensor
 import { DeactivateSensorCommand } from '../engine/command/commands/deactivateSensor';
 import { SetJumpCountCommand } from '../engine/command/commands/setJumpCount';
 import { SetPlayerSensorDetectCommand } from '../engine/command/commands/setPlayerSensorReactor';
-import { SetVelcoityCommand } from '../engine/command/commands/setPlayerVelocity';
+import { SetVelocityCommand } from '../engine/command/commands/setPlayerVelocity';
 import { SwitchPlayerStateCommand } from '../engine/command/commands/switchPlayerState';
 import {
-  AttackId,
-  ATTACK_IDS,
   StateId,
+  AttackId,
   STATE_IDS,
+  ATTACK_IDS,
   GAME_EVENT_IDS,
-} from '../engine/finite-state-machine/PlayerStates';
-import {
-  frameNumber,
-  SpeedsComponentConfigBuilder,
-} from '../engine/player/playerComponents';
+} from '../engine/finite-state-machine/playerStates/shared';
+import { frameNumber } from '../engine/player/playerComponents';
 import {
   AttackConfig,
   AttackConfigBuilder,
@@ -25,11 +22,8 @@ import {
   HurtCapsuleConfig,
 } from './shared';
 
-//const toFp = (num: number) => new FixedPoint(num);
-
 export class DefaultCharacterConfig implements CharacterConfig {
   public FrameLengths = new Map<StateId, number>();
-  // public SCB: SpeedsComponentConfigBuilder;
   public ECBHeight = 0;
   public ECBWidth = 0;
   public ECBOffset = 0;
@@ -1065,7 +1059,7 @@ function GetSideSpecial() {
     payload: switchStateCommand,
   };
 
-  const setPlayerVelocityToZero: SetVelcoityCommand = {
+  const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
@@ -1146,7 +1140,7 @@ function GetSideSpecialExtension() {
     .set(6, toCv(65, -105))
     .set(7, toCv(25, -125));
 
-  const setVeloctyToZero: SetVelcoityCommand = {
+  const setVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
@@ -1161,7 +1155,7 @@ function GetSideSpecialExtension() {
     .WithTotalFrames(totalFrameLength)
     .WithBaseKnockBack(baseKnockBack)
     .WithKnockBackScaling(knockBackScaling)
-    .WithOnEnterCommand(setVeloctyToZero)
+    .WithOnEnterCommand(setVelocityToZero)
     .WithHitBubble(damage, radius, 0, 89, hb1Offsets);
 
   return bldr.Build();
@@ -1173,7 +1167,7 @@ function GetSideSpecialAir() {
   const frameToActivate = 15;
   const frameToDeactivate = 40;
 
-  const setPlayerVelocityToZero: SetVelcoityCommand = {
+  const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
@@ -1260,7 +1254,7 @@ function GetSideSpecialExtensionAir() {
     .set(6, toCv(90, -50))
     .set(7, toCv(80, -35));
 
-  const setPlayerVelocityToZero: SetVelcoityCommand = {
+  const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
@@ -1332,7 +1326,7 @@ function GetDownSpecialAerial() {
     hb3offSets.set(i, toCv(20, 0));
   }
 
-  const setPlayerVelocityToZero: SetVelcoityCommand = {
+  const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
@@ -1360,14 +1354,6 @@ function GetDownSpecialAerial() {
     .WithImpulses(impulses, 8)
     .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithOnExitEvent(setJumpToOne);
-  // .WithEnterAction((w: World, p: Player) => {
-  //   p.Velocity.X = 0;
-  //   p.Velocity.Y = 0;
-  // })
-  // .WithExitAction((w: World, p: Player) => {
-  //   p.Jump.ResetJumps();
-  //   p.Jump.IncrementJumps();
-  // });
 
   return blrd.Build();
 }
@@ -1381,7 +1367,7 @@ function GetUpSpecial() {
 
   const bldr = new AttackConfigBuilder('UpSpecial');
 
-  const setPlayerVelocityToZero: SetVelcoityCommand = {
+  const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,

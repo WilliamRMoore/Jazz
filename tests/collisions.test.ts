@@ -301,6 +301,33 @@ describe('CreateConvexHull', () => {
     expect(hull.length).toBe(4);
   });
 
+  test('should form a rectangle from two squares', () => {
+    const points: FlatVec[] = [
+      { X: new FixedPoint(0), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(0) },
+      { X: new FixedPoint(10), Y: new FixedPoint(10) },
+      { X: new FixedPoint(0), Y: new FixedPoint(10) },
+      //
+      { X: new FixedPoint(5), Y: new FixedPoint(0) },
+      { X: new FixedPoint(15), Y: new FixedPoint(0) },
+      { X: new FixedPoint(15), Y: new FixedPoint(10) },
+      { X: new FixedPoint(5), Y: new FixedPoint(10) },
+    ];
+
+    const hull = CreateConvexHull(points);
+
+    expect(hull.length).toBe(4);
+
+    expect(hull[0].X.AsNumber).toBe(0);
+    expect(hull[0].Y.AsNumber).toBe(0);
+    expect(hull[1].X.AsNumber).toBe(15);
+    expect(hull[1].Y.AsNumber).toBe(0);
+    expect(hull[2].X.AsNumber).toBe(15);
+    expect(hull[2].Y.AsNumber).toBe(10);
+    expect(hull[3].X.AsNumber).toBe(0);
+    expect(hull[3].Y.AsNumber).toBe(10);
+  });
+
   test('should form a hull pointing in the positive X direction', () => {
     const points: FlatVec[] = [
       { X: new FixedPoint(0), Y: new FixedPoint(0) },

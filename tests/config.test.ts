@@ -1,13 +1,13 @@
 import { DefaultCharacterConfig } from '../game/character/default';
 import { COMMAND_NAMES } from '../game/engine/command/command';
 import { SetPlayerSensorDetectCommand } from '../game/engine/command/commands/setPlayerSensorReactor';
-import { SetVelcoityCommand } from '../game/engine/command/commands/setPlayerVelocity';
+import { SetVelocityCommand } from '../game/engine/command/commands/setPlayerVelocity';
 import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switchPlayerState';
 import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../game/engine/finite-state-machine/PlayerStates';
+} from '../game/engine/finite-state-machine/playerStates/shared';
 
 describe('DefaultCharacterConfig', () => {
   let config: DefaultCharacterConfig;
@@ -48,7 +48,7 @@ describe('DefaultCharacterConfig', () => {
     const sideSpecial = config.attacks.get(ATTACK_IDS.S_SPCL_ATK);
     const setVelCommand = sideSpecial?.onEnterCommands.find(
       (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET
-    )! as SetVelcoityCommand;
+    )! as SetVelocityCommand;
     const payLoad = setVelCommand.payload;
     expect(payLoad.x).toBe(0);
     expect(payLoad.y).toBe(0);
@@ -60,5 +60,129 @@ describe('DefaultCharacterConfig', () => {
     const ge = cPayload.payload;
 
     expect(ge).toBe(GAME_EVENT_IDS.SIDE_SPCL_EX_GE);
+  });
+
+  test('upTilt should have the correct properties', () => {
+    const upTilt = config.attacks.get(ATTACK_IDS.U_TILT_ATK);
+
+    expect(upTilt).toBeDefined();
+    if (!upTilt) {
+      return;
+    }
+
+    expect(upTilt.AttackId).toBe(ATTACK_IDS.U_TILT_ATK);
+    expect(upTilt.TotalFrameLength).toBe(60);
+    expect(upTilt.BaseKnockBack).toBe(30);
+    expect(upTilt.KnockBackScaling).toBe(45);
+    expect(upTilt.GravityActive).toBe(true);
+
+    expect(upTilt.HitBubbles.length).toBe(2);
+
+    const hitBubble1 = upTilt.HitBubbles[0];
+    expect(hitBubble1.Damage).toBe(16);
+    expect(hitBubble1.Radius).toBe(30);
+    expect(hitBubble1.LaunchAngle).toBe(65);
+
+    const hitBubble2 = upTilt.HitBubbles[1];
+    expect(hitBubble2.Damage).toBe(32);
+    expect(hitBubble2.Radius).toBe(50);
+    expect(hitBubble2.LaunchAngle).toBe(65);
+
+    const hitBubble2Offsets = hitBubble2.frameOffsets;
+    expect(hitBubble2Offsets.size).toBe(2);
+    expect(hitBubble2Offsets.has(59)).toBe(true);
+    expect(hitBubble2Offsets.has(60)).toBe(true);
+
+    const offset59 = hitBubble2Offsets.get(59);
+    expect(offset59?.x).toBe(110);
+    expect(offset59?.y).toBe(-40);
+
+    const offset60 = hitBubble2Offsets.get(60);
+    expect(offset60?.x).toBe(110);
+    expect(offset60?.y).toBe(-40);
+  });
+
+  test('sideTilt should have the correct properties', () => {
+    const sideTilt = config.attacks.get(ATTACK_IDS.S_TILT_ATK);
+
+    expect(sideTilt).toBeDefined();
+    if (!sideTilt) {
+      return;
+    }
+
+    expect(sideTilt.AttackId).toBe(ATTACK_IDS.S_TILT_ATK);
+    expect(sideTilt.TotalFrameLength).toBe(33);
+    expect(sideTilt.BaseKnockBack).toBe(20);
+    expect(sideTilt.KnockBackScaling).toBe(30);
+    expect(sideTilt.GravityActive).toBe(true);
+
+    expect(sideTilt.HitBubbles.length).toBe(3);
+
+    const hitBubble1 = sideTilt.HitBubbles[0];
+    expect(hitBubble1.Damage).toBe(12);
+    expect(hitBubble1.Radius).toBe(27);
+    expect(hitBubble1.LaunchAngle).toBe(40);
+    expect(hitBubble1.frameOffsets.size).toBe(6);
+    expect(hitBubble1.frameOffsets.get(9)?.x).toBe(100);
+    expect(hitBubble1.frameOffsets.get(9)?.y).toBe(-40);
+
+
+    const hitBubble2 = sideTilt.HitBubbles[1];
+    expect(hitBubble2.Damage).toBe(11);
+    expect(hitBubble2.Radius).toBe(25);
+    expect(hitBubble2.LaunchAngle).toBe(40);
+    expect(hitBubble2.frameOffsets.size).toBe(6);
+    expect(hitBubble2.frameOffsets.get(10)?.x).toBe(60);
+    expect(hitBubble2.frameOffsets.get(10)?.y).toBe(-40);
+
+    const hitBubble3 = sideTilt.HitBubbles[2];
+    expect(hitBubble3.Damage).toBe(10);
+    expect(hitBubble3.Radius).toBe(23);
+    expect(hitBubble3.LaunchAngle).toBe(40);
+    expect(hitBubble3.frameOffsets.size).toBe(6);
+    expect(hitBubble3.frameOffsets.get(11)?.x).toBe(10);
+    expect(hitBubble3.frameOffsets.get(11)?.y).toBe(-40);
+  });
+
+  test('sideTiltUp should have the correct properties', () => {
+    const sideTiltUp = config.attacks.get(ATTACK_IDS.S_TILT_U_ATK);
+
+    expect(sideTiltUp).toBeDefined();
+    if (!sideTiltUp) {
+      return;
+    }
+
+    expect(sideTiltUp.AttackId).toBe(ATTACK_IDS.S_TILT_U_ATK);
+    expect(sideTiltUp.TotalFrameLength).toBe(33);
+    expect(sideTiltUp.BaseKnockBack).toBe(20);
+    expect(sideTiltUp.KnockBackScaling).toBe(30);
+    expect(sideTiltUp.GravityActive).toBe(true);
+
+    expect(sideTiltUp.HitBubbles.length).toBe(3);
+
+    const hitBubble1 = sideTiltUp.HitBubbles[0];
+    expect(hitBubble1.Damage).toBe(12);
+    expect(hitBubble1.Radius).toBe(27);
+    expect(hitBubble1.LaunchAngle).toBe(40);
+    expect(hitBubble1.frameOffsets.size).toBe(6);
+    expect(hitBubble1.frameOffsets.get(9)?.x).toBe(100);
+    expect(hitBubble1.frameOffsets.get(9)?.y).toBe(-65);
+
+
+    const hitBubble2 = sideTiltUp.HitBubbles[1];
+    expect(hitBubble2.Damage).toBe(11);
+    expect(hitBubble2.Radius).toBe(25);
+    expect(hitBubble2.LaunchAngle).toBe(40);
+    expect(hitBubble2.frameOffsets.size).toBe(6);
+    expect(hitBubble2.frameOffsets.get(9)?.x).toBe(60);
+    expect(hitBubble2.frameOffsets.get(9)?.y).toBe(-53);
+
+    const hitBubble3 = sideTiltUp.HitBubbles[2];
+    expect(hitBubble3.Damage).toBe(10);
+    expect(hitBubble3.Radius).toBe(23);
+    expect(hitBubble3.LaunchAngle).toBe(40);
+    expect(hitBubble3.frameOffsets.size).toBe(6);
+    expect(hitBubble3.frameOffsets.get(9)?.x).toBe(10);
+    expect(hitBubble3.frameOffsets.get(9)?.y).toBe(-40);
   });
 });

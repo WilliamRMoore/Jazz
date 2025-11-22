@@ -13,7 +13,7 @@ export type Command = {
 };
 
 class CommandNames {
-  public readonly PLAYER_SWITCH_STATE = 'PL_SWICTH_STATE';
+  public readonly PLAYER_SWITCH_STATE = 'PL_SWITCH_STATE';
   public readonly SENSOR_ACTIVATE = 'PL_SENSE_ACTIVATE';
   public readonly SENSOR_DEACTIVATE = 'PL_SENSE_DEACTIVATE';
   public readonly SET_SENSOR_REACT_COMMAND = 'PL_SET_SENSOR_DETECT_COMMAND';
