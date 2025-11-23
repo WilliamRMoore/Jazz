@@ -514,6 +514,10 @@ export class PlayerPointsComponent
     return this.damagePoints;
   }
 
+  public get MatchPoints(): number {
+    return this.matchPoints;
+  }
+
   public SnapShot(): PlayerPointsSnapShot {
     return {
       damagePoints: this.damagePoints.AsNumber,
@@ -699,7 +703,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   private readonly prevVerts = new Array<FlatVec>(4);
   private readonly allVerts = new Array<FlatVec>(8);
   private readonly ecbStateShapes: ECBShapes;
-  // private readonly fpp: Pool<FixedPoint>;
 
   constructor(shapes: ECBShapesConfig, height = 100, width = 100, yOffset = 0) {
     this.height.SetFromNumber(height);
@@ -708,7 +711,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.originalWidth.SetFromNumber(width);
     this.originalYOffset.SetFromNumber(yOffset);
     this.yOffset.SetFromNumber(yOffset);
-    //this.ecbStateShapes = shapes;
     this.ecbStateShapes = new Map<StateId, ECBShape>();
     for (const [Key, val] of shapes) {
       this.ecbStateShapes.set(Key, {
@@ -788,29 +790,27 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   private update(): void {
-    // Rent temporary FixedPoint objects from the pool for calculations
-    //const fpp = this.fpp;
-    const half = NumberToRaw(0.5); //fpp.Rent().SetFromNumber(0.5);
+    const half = NumberToRaw(0.5);
     const px = this.x.Raw;
     const py = this.y.Raw;
     const height = this.height.Raw;
     const width = this.width.Raw;
     const yOffset = this.yOffset.Raw;
 
-    const bottomX = px; //fpp.Rent().SetFromFp(px);
-    const bottomY = py + yOffset; //fpp.Rent().SetAdd(py, yOffset);
+    const bottomX = px;
+    const bottomY = py + yOffset;
 
-    const topX = px; //fpp.Rent().SetFromFp(px);
-    const topY = bottomY - height; //fpp.Rent().SetSubtract(bottomY, height);
+    const topX = px;
+    const topY = bottomY - height;
 
-    const halfWidth = MultiplyRaw(width, half); //fpp.Rent().SetMultiply(width, half);
-    const halfHeight = MultiplyRaw(height, half); //fpp.Rent().SetMultiply(height, half);
+    const halfWidth = MultiplyRaw(width, half);
+    const halfHeight = MultiplyRaw(height, half);
 
-    const leftX = bottomX - halfWidth; //fpp.Rent().SetSubtract(bottomX, halfWidth);
-    const leftY = bottomY - halfHeight; //fpp.Rent().SetSubtract(bottomY, halfHeight);
+    const leftX = bottomX - halfWidth;
+    const leftY = bottomY - halfHeight;
 
-    const rightX = bottomX + halfWidth; //fpp.Rent().SetAdd(bottomX, halfWidth);
-    const rightY = leftY; //fpp.Rent().SetFromFp(leftY);
+    const rightX = bottomX + halfWidth;
+    const rightY = leftY;
 
     this.curVerts[0].X.SetFromRaw(bottomX);
     this.curVerts[0].Y.SetFromRaw(bottomY);
@@ -893,7 +893,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   }
 
   public SetFromSnapShot(snapShot: ECBSnapShot): void {
-    //const fpp = this.fpp;
     this.x.SetFromNumber(snapShot.posX);
     this.y.SetFromNumber(snapShot.posY);
     this.prevX.SetFromNumber(snapShot.prevPosX);
@@ -905,26 +904,26 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.update();
 
     // Update prevVerts
-    const half = NumberToRaw(0.5); //fpp.Rent().SetFromNumber(0.5);
+    const half = NumberToRaw(0.5);
     const px = this.prevX.Raw;
     const py = this.prevY.Raw;
     const height = this.height.Raw;
     const width = this.width.Raw;
     const yOffset = this.yOffset.Raw;
 
-    const bottomX = px; //fpp.Rent().SetFromFp(px);
-    const bottomY = py + yOffset; // fpp.Rent().SetAdd(py, yOffset);
+    const bottomX = px;
+    const bottomY = py + yOffset;
 
-    const topX = px; //fpp.Rent().SetFromFp(px);
-    const topY = bottomY - height; //fpp.Rent().SetSubtract(bottomY, height);
+    const topX = px;
+    const topY = bottomY - height;
 
-    const halfWidth = MultiplyRaw(width, half); // fpp.Rent().SetFromFp(width).Multiply(half);
-    const halfHeight = MultiplyRaw(height, half); //fpp.Rent().SetFromFp(height).Multiply(half);
+    const halfWidth = MultiplyRaw(width, half);
+    const halfHeight = MultiplyRaw(height, half);
 
-    const leftX = bottomX - halfWidth; //fpp.Rent().SetFromFp(bottomX).Subtract(halfWidth);
-    const leftY = bottomY - halfHeight; //fpp.Rent().SetFromFp(bottomY).Subtract(halfHeight);
+    const leftX = bottomX - halfWidth;
+    const leftY = bottomY - halfHeight;
 
-    const rightX = bottomX + halfWidth; //fpp.Rent().SetFromFp(bottomX).Add(halfWidth);
+    const rightX = bottomX + halfWidth;
     const rightY = leftY;
 
     this.prevVerts[0].X.SetFromRaw(bottomX);
@@ -980,36 +979,20 @@ export class HurtCapsule {
   }
 
   public GetStartPosition(
-    //fpp: Pool<FixedPoint>,
     x: FixedPoint,
     y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    // return vecPool
-    //   .Rent()
-    //   .SetXY(
-    //     fpp.Rent().SetAdd(this.StartOffsetX, x),
-    //     fpp.Rent().SetAdd(this.StartOffsetY, y)
-    //   );
-
     const xsRaw = this.StartOffsetX.Raw + x.Raw;
     const ysRaw = this.StartOffsetY.Raw + y.Raw;
     return vecPool.Rent().SetXYRaw(xsRaw, ysRaw);
   }
 
   public GetEndPosition(
-    // fpp: Pool<FixedPoint>,
     x: FixedPoint,
     y: FixedPoint,
     vecPool: Pool<PooledVector>
   ): PooledVector {
-    // return vecPool
-    //   .Rent()
-    //   .SetXY(
-    //     fpp.Rent().SetAdd(this.EndOffsetX, x),
-    //     fpp.Rent().SetAdd(this.EndOffsetY, y)
-    //   );
-
     const xeRaw = this.EndOffsetX.Raw + x.Raw;
     const yeRaw = this.EndOffsetY.Raw + y.Raw;
     return vecPool.Rent().SetXYRaw(xeRaw, yeRaw);
@@ -1174,9 +1157,9 @@ export class LedgeDetectorComponent
     const xRaw = this.x.Raw;
     const yRaw = this.y.Raw;
 
-    const widthRightRaw = xRaw + widthRaw; //this.fpp.Rent().SetAdd(this.x, this.width);
-    const widthLeftRaw = xRaw - widthRaw; //this.fpp.Rent().SetSubtract(this.x, this.width);
-    const bottomHeightRaw = yRaw + heightRaw; //this.fpp.Rent().SetAdd(this.y, this.height);
+    const widthRightRaw = xRaw + widthRaw;
+    const widthLeftRaw = xRaw - widthRaw;
+    const bottomHeightRaw = yRaw + heightRaw;
 
     //bottom left
     rightBottomLeft.X.SetFromRaw(xRaw);
@@ -1226,14 +1209,9 @@ export class LedgeDetectorComponent
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    // this.MoveTo(
-    //   this.fpp.Rent().SetFromNumber(snapShot.middleX),
-    //   this.fpp.Rent().SetFromNumber(snapShot.middleY)
-    // );
     const middleXRaw = NumberToRaw(snapShot.middleX);
     const middleYRaw = NumberToRaw(snapShot.middleY);
     this.MoveToRaw(middleXRaw, middleYRaw);
-    //this.numberOfLedgeGrabs)
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
   }
 }
@@ -1279,6 +1257,10 @@ export class JumpComponent implements IHistoryEnabled<number> {
   public SetFromSnapShot(snapShot: number): void {
     this.jumpCount = snapShot;
   }
+
+  public get JumpCount(): number {
+    return this.jumpCount;
+  }
 }
 
 type bubbleId = number;
@@ -1294,15 +1276,7 @@ export class HitBubble {
   public readonly activeEndFrame: frameNumber;
   public readonly frameOffsets: Map<frameNumber, FlatVec>;
 
-  constructor(
-    hbc: HitBubblesConifg
-    // id: bubbleId,
-    // damage: FixedPoint,
-    // priority: number,
-    // radius: FixedPoint,
-    // launchAngle: FixedPoint,
-    // frameOffsets: Map<frameNumber, FlatVec>
-  ) {
+  constructor(hbc: HitBubblesConifg) {
     this.BubbleId = hbc.BubbleId;
     this.Damage.SetFromNumber(hbc.Damage);
     this.Priority = hbc.Priority;
@@ -1348,18 +1322,12 @@ export class HitBubble {
     const xRaw = playerX.Raw;
     const yRaw = playerY.Raw;
 
-    const globalXRaw = facinRight
-      ? xRaw + offset.X.Raw //fpp.Rent().SetAdd(playerX, offset.X)
-      : xRaw - offset.X.Raw; //fpp.Rent().SetSubtract(playerX, offset.X);
-    const globalYRaw = yRaw + offset.Y.Raw; //fpp.Rent().SetAdd(playerY, offset.Y);
+    const globalXRaw = facinRight ? xRaw + offset.X.Raw : xRaw - offset.X.Raw;
+    const globalYRaw = yRaw + offset.Y.Raw;
 
     return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
 }
-
-// export type AttackOnUpdate = (w: World, p: Player, frameNumber: number) => void;
-// export type AttackOnEnter = (w: World, p: Player) => void;
-// export type AttackOnExit = (w: World, p: Player) => void;
 
 export class Attack {
   public readonly Name: string;
@@ -1377,33 +1345,10 @@ export class Attack {
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   public readonly onEnterCommands: Array<Command> = [];
-  public readonly onUpdateCommands: Map<number, Command> = new Map(); //Array<PlayerJEvent<unknown>> | undefined;
+  public readonly onUpdateCommands: Map<number, Command> = new Map();
   public readonly onExitCommands: Array<Command> = [];
 
-  // private onEnter: AttackOnEnter = (w, p) => {};
-  // private onUpdate: AttackOnUpdate = (w, p, fN) => {};
-  // private onExit: AttackOnExit = (w, p) => {};
-
-  constructor(
-    conf: AttackConfig
-    // name: string,
-    // totalFrameLength: number,
-    // interuptableFrame: number,
-    // baseKb: FixedPoint,
-    // kbScaling: FixedPoint,
-    // impulseClamp: FixedPoint | undefined,
-    // hitBubbles: Array<HitBubble>,
-    // canOnlyFallOffLedgeWhenFacingAwayFromIt: boolean = false,
-    // gravityActive: boolean = true,
-    // impulses: Map<frameNumber, FlatVec> | undefined,
-    // onEnterCommands: Array<Command>,
-    // onUpdateCommands: Map<number, Command> | undefined,
-    // onExitCommands: Array<Command>
-
-    // onEnter: AttackOnEnter | undefined,
-    // onUpdate: AttackOnUpdate | undefined,
-    // onExit: AttackOnExit | undefined
-  ) {
+  constructor(conf: AttackConfig) {
     this.Name = conf.Name;
     this.TotalFrameLength = conf.TotalFrameLength;
     this.InteruptableFrame = conf.InteruptableFrame;
@@ -1439,31 +1384,7 @@ export class Attack {
     if (conf.onExitCommands !== undefined) {
       this.onExitCommands = conf.onExitCommands;
     }
-
-    // if (onEnter !== undefined) {
-    //   this.onEnter = onEnter;
-    // }
-
-    // if (onUpdate !== undefined) {
-    //   this.onUpdate = onUpdate;
-    // }
-
-    // if (onExit !== undefined) {
-    //   this.onExit = onExit;
-    // }
   }
-
-  // public get OnEnter(): AttackOnEnter {
-  //   return this.onEnter;
-  // }
-
-  // public get OnUpdate(): AttackOnUpdate {
-  //   return this.onUpdate;
-  // }
-
-  // public get OnExit(): AttackOnExit {
-  //   return this.onExit;
-  // }
 
   public GetActiveImpulseForFrame(frameNumber: number): FlatVec | undefined {
     return this.Impulses.get(frameNumber);
@@ -1485,7 +1406,6 @@ export class Attack {
         activeHBs.AddBubble(hb);
       }
     }
-
     return activeHBs;
   }
 
@@ -1718,7 +1638,6 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     } else {
       this.ReactCommand = undefined;
     }
-
     this.currentSensorIdx = snapShot.sensors?.length ?? 0;
   }
 }

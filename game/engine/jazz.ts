@@ -18,8 +18,8 @@ import { PlayerSensors } from './systems/sensors';
 import { PlayerShields } from './systems/shield';
 import { StageCollisionDetection } from './systems/stageCollision';
 import { TimedFlags } from './systems/timedFlags';
+import { ApplyVelocity } from './systems/velocity';
 import { ApplyVelocityDecay } from './systems/velocityDecay';
-import { ApplyVelocty } from './systems/velocty';
 import { World } from './world/world';
 
 export interface IJazz {
@@ -95,7 +95,7 @@ export class Jazz implements IJazz {
 
     Gravity(playerData, stageData);
 
-    ApplyVelocty(playerData);
+    ApplyVelocity(playerData);
 
     ApplyVelocityDecay(playerData, stageData);
 

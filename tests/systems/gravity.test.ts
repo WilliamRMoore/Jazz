@@ -1,17 +1,17 @@
-import { DefaultCharacterConfig } from '../game/character/default';
-import { defaultStage } from '../game/engine/stage/stageMain';
-import { Player } from '../game/engine/player/playerOrchestrator';
-import { Gravity } from '../game/engine/systems/gravity';
-import { World } from '../game/engine/world/world';
+import { DefaultCharacterConfig } from '../../game/character/default';
+import { defaultStage } from '../../game/engine/stage/stageMain';
+import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Gravity } from '../../game/engine/systems/gravity';
+import { World } from '../../game/engine/world/world';
 import {
   STATE_IDS,
   ATTACK_IDS,
   GAME_EVENT_IDS,
-} from '../game/engine/finite-state-machine/playerStates/shared';
-import { FixedPoint } from '../game/math/fixedPoint';
-import { Attack } from '../game/engine/player/playerComponents';
+} from '../../game/engine/finite-state-machine/playerStates/shared';
+import { FixedPoint, NumberToRaw } from '../../game/math/fixedPoint';
+import { Attack } from '../../game/engine/player/playerComponents';
 
-describe('Systems tests', () => {
+describe('Gravity system tests', () => {
   let p: Player;
   let w: World;
 

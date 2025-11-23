@@ -18,7 +18,6 @@ import { ClosestPointsResult } from '../game/engine/pools/ClosestPointsResult';
 describe('FindArithemticMean', () => {
   test('should correctly calculate the arithmetic mean of vertices', () => {
     // 1. Arrange
-    const fpp = new Pool<FixedPoint>(1, () => new FixedPoint(0));
     const pooledVec = new PooledVector();
 
     const vertices: FlatVec[] = [

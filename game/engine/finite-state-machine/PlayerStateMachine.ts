@@ -53,16 +53,11 @@ export class StateMachine {
   public ForceState(sateId: StateId): void {
     //ignore mapping rules and force a state change
     const state = this.states.get(sateId);
-
     if (state === undefined) {
       return;
     }
-
     const fsmInfo = this.player.FSMInfo;
-
     this.changeState(state, fsmInfo);
-    fsmInfo.CurrentState.OnUpdate?.(this.player, this.world);
-    fsmInfo.IncrementStateFrame();
   }
 
   public UpdateFromInput(inputAction: InputAction, world: World): void {
@@ -72,17 +67,14 @@ export class StateMachine {
     if (this.runConditional(world, fsmInfo)) {
       return;
     }
-
     // if our input is a valid transition, run it
     if (this.runNext(inputAction, fsmInfo)) {
       return;
     }
-
     // if we have a default state, run it
     if (this.runDefault(world, fsmInfo)) {
       return;
     }
-
     // None of the above? Update current state
     this.updateState(fsmInfo);
   }

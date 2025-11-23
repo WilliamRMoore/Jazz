@@ -22,25 +22,25 @@ export function OutOfBoundsCheck(
     const pX = pPos.X;
     const deathBoundry = stage.DeathBoundry!;
 
-    if (pY < deathBoundry.topBoundry) {
+    if (pY.Raw < deathBoundry.topBoundry.Raw) {
       // kill player if in hit stun.
       KillPlayer(p, sm);
       return;
     }
 
-    if (pY > deathBoundry.bottomBoundry) {
+    if (pY.Raw > deathBoundry.bottomBoundry.Raw) {
       // kill player?
       KillPlayer(p, sm);
       return;
     }
 
-    if (pX < deathBoundry.leftBoundry) {
+    if (pX.Raw < deathBoundry.leftBoundry.Raw) {
       // kill Player?
       KillPlayer(p, sm);
       return;
     }
 
-    if (pX > deathBoundry.rightBoundry) {
+    if (pX.Raw > deathBoundry.rightBoundry.Raw) {
       // kill player?
       KillPlayer(p, sm);
       return;

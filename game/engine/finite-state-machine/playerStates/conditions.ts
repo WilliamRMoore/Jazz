@@ -4,6 +4,16 @@ import { InputStoreLocal } from '../../engine-state-management/Managers';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 
+// Constants for conditions
+const WALK_TO_DASH_STATE_FRAME_THRESHOLD = 2;
+const DASH_TO_TURN_THRESHOLD = NumberToRaw(0.5);
+const SPOT_DODGE_LYAXIS_THRESHOLD = NumberToRaw(0.25);
+const ROLL_DODGE_LXAXIS_THRESHOLD = NumberToRaw(0.25);
+const UP_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(0.1);
+const DOWN_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(-0.1);
+const TURN_TO_DASH_LXAXIS_THRESHOLD = NumberToRaw(0.5);
+
+
 type conditionFunc = (world: World, playerIndex: number) => boolean;
 
 export type condition = {
@@ -142,7 +152,7 @@ export const WalkToDash: condition = {
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
-      fsmInfo.CurrentStateFrame > 2 ||
+      fsmInfo.CurrentStateFrame > WALK_TO_DASH_STATE_FRAME_THRESHOLD ||
       prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return false;
@@ -278,19 +288,18 @@ export const DashToTurn: condition = {
     const prevLaxRaw = prevIa.RawLXAxis; // Previous left stick X-axis
     const curLaxRaw = ia.RawLXAxis; // Current left stick X-axis
     const laxDifference = curLaxRaw - prevLaxRaw; // Difference between current and previous X-axis
-    const threshold = NumberToRaw(0.5); // Threshold for detecting significant variation
 
     const flags = player.Flags;
     const facingRight = flags.IsFacingRight;
     // Check if the variation exceeds the threshold and is in the opposite direction of the player's facing direction
-    if (laxDifference < -threshold && facingRight) {
+    if (laxDifference < -DASH_TO_TURN_THRESHOLD && facingRight) {
       // Player is facing right, but the stick moved significantly to the left
       if (curLaxRaw < 0) {
         return true;
       }
     }
 
-    if (laxDifference > threshold && !facingRight) {
+    if (laxDifference > DASH_TO_TURN_THRESHOLD && !facingRight) {
       // Player is facing left, but the stick moved significantly to the right
       if (curLaxRaw > 0) {
         return true;
@@ -399,18 +408,16 @@ export const TurnToDash: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const stateFrame = p.FSMInfo.CurrentStateFrame;
 
-    if (stateFrame > 2) {
+    if (stateFrame > WALK_TO_DASH_STATE_FRAME_THRESHOLD) {
       return false;
     }
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-    const negPointFiveRaw = NumberToRaw(-0.5);
-    const posPointFiveRaw = NumberToRaw(0.5);
     if (
-      (ia.RawLXAxis < negPointFiveRaw && p.Flags.IsFacingRight) ||
-      (ia.RawLXAxis > posPointFiveRaw && p.Flags.IsFacingLeft)
+      (ia.RawLXAxis < -TURN_TO_DASH_LXAXIS_THRESHOLD && p.Flags.IsFacingRight) ||
+      (ia.RawLXAxis > TURN_TO_DASH_LXAXIS_THRESHOLD && p.Flags.IsFacingLeft)
     ) {
       const prevIa = inputStore.GetInputForFrame(w.PreviousFrame);
       return inputMacthesTargetNotRepeating(
@@ -1042,7 +1049,7 @@ export const UpChargeToEx: condition = {
     }
 
     // This handles releasing the analog stick from the 'up' position
-    if (ia.RawRYAxis <= NumberToRaw(0.1)) {
+    if (ia.RawRYAxis <= UP_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
 
@@ -1064,7 +1071,7 @@ export const DownChargeToEx: condition = {
     }
 
     // Release analog stick from down position
-    if (ia.RawRYAxis >= NumberToRaw(-0.1)) {
+    if (ia.RawRYAxis >= DOWN_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
 
@@ -1086,7 +1093,7 @@ export const ToSpotDodge: condition = {
       if (
         ia.RawLYAxis < 0 &&
         ia.RawLYAxis < prevIa.RawLYAxis &&
-        lyAxisDiff >= NumberToRaw(0.25)
+        lyAxisDiff >= SPOT_DODGE_LYAXIS_THRESHOLD
       ) {
         return true;
       }
@@ -1114,7 +1121,7 @@ export const ToRollDodge: condition = {
     if (
       ia.RawLXAxis > 0 &&
       ia.RawLXAxis > prevIa.RawLXAxis &&
-      lxAxisDiffRaw <= NumberToRaw(-0.25)
+      lxAxisDiffRaw <= -ROLL_DODGE_LXAXIS_THRESHOLD
     ) {
       return true;
     }
@@ -1122,7 +1129,7 @@ export const ToRollDodge: condition = {
     if (
       ia.RawLXAxis < 0 &&
       ia.RawLXAxis < prevIa.RawLXAxis &&
-      lxAxisDiffRaw >= NumberToRaw(0.25)
+      lxAxisDiffRaw >= ROLL_DODGE_LXAXIS_THRESHOLD
     ) {
       return true;
     }

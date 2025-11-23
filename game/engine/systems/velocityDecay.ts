@@ -40,7 +40,7 @@ export function ApplyVelocityDecay(
       }
 
       if (pvyRaw > 0) {
-        playerVelocity.Y.Zero;
+        playerVelocity.Y.Zero();
       }
 
       continue;
