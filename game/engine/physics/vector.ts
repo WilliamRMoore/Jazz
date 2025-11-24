@@ -5,7 +5,11 @@ export class FlatVec {
   public readonly Y: FixedPoint = new FixedPoint(0);
 
   static FromRaw(xRaw: number, yRaw: number) {
-    return new FlatVec(new FixedPoint(xRaw), new FixedPoint(yRaw));
+    const x = new FixedPoint();
+    x.SetFromRaw(xRaw);
+    const y = new FixedPoint();
+    y.SetFromRaw(yRaw);
+    return new FlatVec(x, y);
   }
 
   constructor(x: FixedPoint, y: FixedPoint) {

@@ -63,6 +63,7 @@ describe('Player states tests', () => {
 
     fsm.UpdateFromInput(NewInputAction(), w);
     fsm.UpdateFromInput(NewInputAction(), w);
+    fsm.UpdateFromInput(NewInputAction(), w);
 
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelX);
     expect(p.Velocity.Y.Raw).toBeGreaterThan(initialVelY);
@@ -74,6 +75,36 @@ describe('Player states tests', () => {
     AirDodge.OnExit(p, w);
     expect(p.Flags.HasNoVelocityDecay()).toBeFalsy();
     expect(p.Flags.GetIntangabilityFrames()).toBe(0);
+  });
+
+  test('DownSpecialAerial state', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+
+    // Set initial velocity and jump count
+    p.Velocity.X.SetFromNumber(10);
+    p.Velocity.Y.SetFromNumber(10);
+    p.Jump.Set(0);
+    p.Flags.FaceRight();
+
+    // Force state and check OnEnter effects
+    fsm.ForceState(STATE_IDS.DOWN_SPCL_AIR_S);
+    expect(p.Velocity.X.Raw).toBe(0);
+    expect(p.Velocity.Y.Raw).toBe(0);
+
+    // Update state machine to check OnUpdate effects
+    // The impulse starts at frame 13
+    for (let i = 0; i < 15; i++) {
+      fsm.UpdateFromInput(NewInputAction(), w);
+    }
+
+    // After 15 frames, the impulse should have been applied
+    expect(p.Velocity.X.Raw).toBeGreaterThan(0);
+    expect(p.Velocity.Y.Raw).toBeGreaterThan(0);
+
+    // Check OnExit effects
+    const downSpecialAerialState = p.FSMInfo.CurrentState;
+    downSpecialAerialState.OnExit(p, w);
+    expect(p.Jump.JumpCount).toBe(1);
   });
 
   test('Idle state', () => {

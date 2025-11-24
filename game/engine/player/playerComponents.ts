@@ -1121,7 +1121,7 @@ export class LedgeDetectorComponent
 
   public MoveToRaw(xRaw: number, yRaw: number): void {
     this.x.SetFromRaw(xRaw);
-    this.y.SetFromRaw(yRaw);
+    this.y.SetFromRaw(this.yOffset.Raw + yRaw);
     this.update();
   }
 

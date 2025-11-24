@@ -94,7 +94,7 @@ export function PlayerCollisionDetection(
 
         SetPlayerPositionRaw(
           otherPlayer,
-          DivideRaw(otherPlayerXRaw - moveX, twoRaw),
+          DivideRaw(otherPlayerXRaw + moveX, twoRaw),
           otherPlayerYRaw
         );
       }

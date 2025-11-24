@@ -945,7 +945,7 @@ function attackOnExit(p: Player, w: World) {
     return;
   }
   //atk.OnExit(w, p);
-  const onExitCommands = atk.onEnterCommands;
+  const onExitCommands = atk.onExitCommands;
   const onExitCommandCount = onExitCommands.length;
   for (let i = 0; i < onExitCommandCount; i++) {
     const onExitCommand = onExitCommands[i];
