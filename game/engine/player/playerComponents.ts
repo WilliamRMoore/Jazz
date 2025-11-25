@@ -1057,7 +1057,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
 
   public ShrinkRaw(intensityRaw: number): void {
     if (this.CurrentRadius.Raw > 0) {
-      this.CurrentRadius.SetFromRaw(MultiplyRaw(this.step.Raw, intensityRaw));
+      this.CurrentRadius.SetFromRaw(this.CurrentRadius.Raw - MultiplyRaw(this.step.Raw, intensityRaw));
     }
 
     if (this.CurrentRadius.Raw < 0) {

@@ -21,7 +21,7 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
       MultiplyRaw(grav, gravMutliplier)
-    ); //.AddClampedYImpulse(fallSpeed, grav * GravMutliplier);
+    );
   }
 }
 

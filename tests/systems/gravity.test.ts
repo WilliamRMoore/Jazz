@@ -8,7 +8,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
 } from '../../game/engine/finite-state-machine/playerStates/shared';
-import { FixedPoint, NumberToRaw } from '../../game/math/fixedPoint';
+import { FixedPoint } from '../../game/math/fixedPoint';
 import { Attack } from '../../game/engine/player/playerComponents';
 
 describe('Gravity system tests', () => {

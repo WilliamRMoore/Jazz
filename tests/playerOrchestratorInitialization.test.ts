@@ -26,7 +26,7 @@ describe('Player Orechstraotr Initialization', () => {
   test('Should have side special configuration', () => {
     const attacks = po.Attacks._attacks;
 
-    const sideSpecial = attacks.get(ATTACK_IDS.S_SPCL_ATK); //config.attacks.get(ATTACK_IDS.S_SPCL_ATK);
+    const sideSpecial = attacks.get(ATTACK_IDS.S_SPCL_ATK);
     const setVelCommand = sideSpecial?.onEnterCommands.find(
       (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET
     )! as SetVelocityCommand;

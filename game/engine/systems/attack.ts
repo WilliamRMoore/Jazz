@@ -21,6 +21,20 @@ import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, HistoryData, Pools } from '../world/world';
 
+const POINT_ZERO_ONE_THREE = NumberToRaw(0.013);
+const POINT_FOUR = NumberToRaw(0.4);
+const POINT_SEVEN_FIVE = NumberToRaw(0.75);
+const ONE_POINT_FOUR = NumberToRaw(1.4);
+const TWO = NumberToRaw(2);
+const THREE = NumberToRaw(3);
+const TEN = NumberToRaw(10);
+const TWENTY = NumberToRaw(20);
+const TWO_HUNDRED = NumberToRaw(200);
+const ONE_HUNDRED = NumberToRaw(100);
+const HALF_CIRCLE = NumberToRaw(180);
+const LUT_SIZE = NumberToRaw(256);
+const FULL_CIRCLE = NumberToRaw(360);
+
 export function PlayerAttacks(
   playerData: PlayerData,
   historyData: HistoryData,
@@ -64,7 +78,7 @@ export function PlayerAttacks(
         //check for clang
         const clang =
           Math.abs(p1HitsP2Result.Damage.Raw - p2HitsP1Result.Damage.Raw) <
-          NumberToRaw(3);
+          THREE;
       }
 
       if (p1HitsP2Result.Hit) {
@@ -109,7 +123,7 @@ function resolveHitResult(
     baseKnockBack
   );
 
-  const hitStop = CalculateHitStop(atkDamage);
+  const hitStopRaw = CalculateHitStop(atkDamage);
   const hitStunFrames = CalculateHitStun(kbRaw);
   const launchVec = CalculateLaunchVector(
     vecPool,
@@ -118,7 +132,9 @@ function resolveHitResult(
     kbRaw
   );
 
-  pA.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
+  pA.Flags.SetHitPauseFrames(
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+  );
 
   if (pA.Position.X > pB.Position.X) {
     pB.Flags.FaceRight();
@@ -126,7 +142,7 @@ function resolveHitResult(
     pB.Flags.FaceLeft();
   }
 
-  pB.HitStop.SetHitStop(hitStop);
+  pB.HitStop.SetHitStop(Math.floor(RawToNumber(hitStopRaw)));
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
 
   const pBSm = playerData.StateMachine(pB.ID);
@@ -141,10 +157,14 @@ function resolveShieldHitResult(
 ): void {
   const atkDamage = pAHitsPbResult.Damage;
 
-  const hitStop = CalculateHitStop(atkDamage);
+  const hitStopRaw = CalculateHitStop(atkDamage);
 
-  pA.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
-  pB.Flags.SetHitPauseFrames(Math.floor(hitStop * 0.75));
+  pA.Flags.SetHitPauseFrames(
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+  );
+  pB.Flags.SetHitPauseFrames(
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+  );
 
   pB.Shield.Damage(atkDamage);
 }
@@ -382,15 +402,13 @@ function PAvsPB(
 }
 
 function CalculateHitStop(damage: FixedPoint): number {
-  const three = NumberToRaw(3);
-  return RawToNumber(Math.floor(DivideRaw(damage.Raw, three) + three));
+  return DivideRaw(damage.Raw, THREE) + THREE;
 }
 
-function CalculateHitStun(knockBack: number): number {
-  return Math.ceil(knockBack) * 0.4;
+function CalculateHitStun(knockBackRaw: number): number {
+  return Math.ceil(RawToNumber(MultiplyRaw(knockBackRaw, POINT_FOUR)));
+  //return Math.ceil(knockBack) * 0.4;
 }
-
-//import { HandleJEvent } from '../events/events';
 
 function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
@@ -398,30 +416,26 @@ function CalculateLaunchVector(
   isFacingRight: boolean,
   knockBackRaw: number
 ): PooledVector {
-  // Represent 360 and 180 degrees as fixed-point numbers
-  const fullCircleRaw = NumberToRaw(360);
-  const halfCircleRaw = NumberToRaw(180);
-
   let angleRaw = launchAngle.Raw;
 
   if (!isFacingRight) {
-    angleRaw = halfCircleRaw - angleRaw;
+    angleRaw = HALF_CIRCLE - angleRaw;
   }
 
   // Normalize angle to be within [0, 360) using fixed-point arithmetic
-  angleRaw = angleRaw % fullCircleRaw;
+  angleRaw = angleRaw % FULL_CIRCLE;
   if (angleRaw < 0) {
-    angleRaw += fullCircleRaw;
+    angleRaw += FULL_CIRCLE;
   }
 
   // Calculate LUT index using deterministic fixed-point math
-  const lutIndex = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), fullCircleRaw);
+  const lutIndex = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), FULL_CIRCLE);
 
   const cosValue = COS_LUT[lutIndex];
   const sinValue = SIN_LUT[lutIndex];
 
   const x = MultiplyRaw(cosValue, knockBackRaw);
-  const y = -DivideRaw(MultiplyRaw(sinValue, knockBackRaw), NumberToRaw(2));
+  const y = -DivideRaw(MultiplyRaw(sinValue, knockBackRaw), TWO);
 
   return vecPool.Rent().SetXYRaw(x, y);
 }
@@ -445,30 +459,23 @@ function CalculateKnockbackRaw(
 ): number {
   //((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
   // Convert floating-point and integer constants to raw fixed-point values
-  const TEN_RAW = NumberToRaw(10);
-  const TWENTY_RAW = NumberToRaw(20);
-  const TWO_HUNDRED_RAW = NumberToRaw(200);
-  const ONE_HUNDRED_RAW = NumberToRaw(100);
-  const ONE_POINT_FOUR_RAW = NumberToRaw(1.4);
-  const ZERO_POINT_ZERO_ONE_THREE_RAW = NumberToRaw(0.013);
 
   // term1 = pRaw / 10
-  const term1 = DivideRaw(pRaw, TEN_RAW);
+  const term1 = DivideRaw(pRaw, TEN);
 
   // term2 = (pRaw * dRaw) / 20
   const p_x_d = MultiplyRaw(pRaw, dRaw);
-  const term2 = DivideRaw(p_x_d, TWENTY_RAW);
+  const term2 = DivideRaw(p_x_d, TWENTY);
 
   // term3 = term1 + term2
   const term3 = term1 + term2;
 
   // term4 = 200 / (wRaw + 100)
-  const w_plus_100 = wRaw + ONE_HUNDRED_RAW;
-  const term4 = DivideRaw(TWO_HUNDRED_RAW, w_plus_100);
+  const w_plus_100 = wRaw + ONE_HUNDRED;
+  const term4 = DivideRaw(TWO_HUNDRED, w_plus_100);
 
   // ((...)*term4 * 1.4 + bkb) * s
-  const temp_kb =
-    MultiplyRaw(MultiplyRaw(term3, term4), ONE_POINT_FOUR_RAW) + brAW;
+  const temp_kb = MultiplyRaw(MultiplyRaw(term3, term4), ONE_POINT_FOUR) + brAW;
 
-  return MultiplyRaw(MultiplyRaw(temp_kb, sRaw), ZERO_POINT_ZERO_ONE_THREE_RAW);
+  return MultiplyRaw(MultiplyRaw(temp_kb, sRaw), POINT_ZERO_ONE_THREE);
 }

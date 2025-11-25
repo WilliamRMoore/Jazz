@@ -1,11 +1,11 @@
 import { IJazz, JazzDebugger } from '../engine/jazz';
-import { STATE_IDS } from '../engine/finite-state-machine/PlayerStates';
 import { DebugRenderer, resolution } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput } from '../input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 import { FixedPoint } from '../math/fixedPoint';
+import { STATE_IDS } from '../engine/finite-state-machine/playerStates/shared';
 
 const frameInterval = 1000 / 60;
 

@@ -2,6 +2,8 @@ import { NumberToRaw } from '../../math/fixedPoint';
 import { PlayerOnStageOrPlats } from '../player/playerOrchestrator';
 import { PlayerData, StageData } from '../world/world';
 
+const ZERO_POINT_TWO = NumberToRaw(0.2);
+
 export function ApplyVelocityDecay(
   playerData: PlayerData,
   stageData: StageData
@@ -34,15 +36,12 @@ export function ApplyVelocityDecay(
       } else if (pvxRaw < 0) {
         playerVelocity.X.Add(groundedVelocityDecay);
       }
-
       if (absPvxRaw < groundedVelocityDecay.Raw) {
         playerVelocity.X.Zero();
       }
-
       if (pvyRaw > 0) {
         playerVelocity.Y.Zero();
       }
-
       continue;
     }
 
@@ -52,20 +51,20 @@ export function ApplyVelocityDecay(
       : speeds.FallSpeed;
 
     if (pvxRaw > 0) {
-      playerVelocity.X.Subtract(aerialVelocityDecay); //-= aerialVelocityDecay;
+      playerVelocity.X.Subtract(aerialVelocityDecay);
     } else if (pvxRaw < 0) {
-      playerVelocity.X.Add(aerialVelocityDecay); //+= aerialVelocityDecay;
+      playerVelocity.X.Add(aerialVelocityDecay);
     }
 
     if (pvyRaw > fallSpeed.Raw) {
-      playerVelocity.Y.Subtract(aerialVelocityDecay); //-= aerialVelocityDecay;
+      playerVelocity.Y.Subtract(aerialVelocityDecay);
     }
 
     if (pvyRaw < 0) {
       playerVelocity.Y.Add(aerialVelocityDecay);
     }
 
-    if (absPvxRaw < NumberToRaw(0.2)) {
+    if (absPvxRaw < ZERO_POINT_TWO) {
       playerVelocity.X.Zero(); //= 0;
     }
   }

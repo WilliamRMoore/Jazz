@@ -4,8 +4,8 @@ import { IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../player/playerOrchestrator';
 import { PlayerData, Pools } from '../world/world';
 
-const moveX = NumberToRaw(1.5);
-const twoRaw = NumberToRaw(2);
+const MOVE_X = NumberToRaw(1.5);
+const TWO = NumberToRaw(2);
 
 export function PlayerCollisionDetection(
   playerData: PlayerData,
@@ -58,43 +58,29 @@ export function PlayerCollisionDetection(
         const otherPlayerYRaw = otherPlayerPos.Y.Raw;
 
         if (checkPlayerXRaw >= otherPlayerXRaw) {
-          //checkPlayer.SetPlayerPosition(checkPlayerXRaw + moveX / 2, checkPlayerYRaw);
           SetPlayerPositionRaw(
             checkPlayer,
-            DivideRaw(checkPlayerXRaw + moveX, twoRaw),
+            DivideRaw(checkPlayerXRaw + MOVE_X, TWO),
             checkPlayerYRaw
           );
-          // otherPlayer.SetPlayerPosition(
-          //   otherPlayerXRaw - moveX / 2,
-          //   otherPlayerYRaw
-          // );
+
           SetPlayerPositionRaw(
             otherPlayer,
-            DivideRaw(otherPlayerXRaw - moveX, twoRaw),
+            DivideRaw(otherPlayerXRaw - MOVE_X, TWO),
             otherPlayerYRaw
           );
           continue;
         }
 
-        // checkPlayer.SetPlayerPosition(
-        //   checkPlayerXRaw - moveX / 2,
-        //   checkPlayerYRaw
-        // );
-
-        // otherPlayer.SetPlayerPosition(
-        //   otherPlayerXRaw + moveX / 2,
-        //   otherPlayerYRaw
-        // );
-
         SetPlayerPositionRaw(
           checkPlayer,
-          DivideRaw(checkPlayerXRaw - moveX, twoRaw),
+          DivideRaw(checkPlayerXRaw - MOVE_X, TWO),
           checkPlayerYRaw
         );
 
         SetPlayerPositionRaw(
           otherPlayer,
-          DivideRaw(otherPlayerXRaw + moveX, twoRaw),
+          DivideRaw(otherPlayerXRaw + MOVE_X, TWO),
           otherPlayerYRaw
         );
       }

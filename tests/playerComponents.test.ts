@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../game/character/default';
 import { Player } from '../game/engine/player/playerOrchestrator';
 import { World } from '../game/engine/world/world';
-import { ECBComponent, ECBSnapShot } from '../game/engine/player/playerComponents';
+import { ECBComponent } from '../game/engine/player/playerComponents';
 import { FixedPoint, NumberToRaw } from '../game/math/fixedPoint';
 import { STATE_IDS } from '../game/engine/finite-state-machine/playerStates/shared';
 
@@ -121,13 +121,21 @@ describe('PlayerComponents ECB tests', () => {
     const halfWidth = snapshot.Width / 2;
     const halfHeight = snapshot.Height / 2;
     expect(newEcb.PrevBottom.X.AsNumber).toBe(snapshot.prevPosX);
-    expect(newEcb.PrevBottom.Y.AsNumber).toBe(snapshot.prevPosY + snapshot.YOffset);
+    expect(newEcb.PrevBottom.Y.AsNumber).toBe(
+      snapshot.prevPosY + snapshot.YOffset
+    );
     expect(newEcb.PrevTop.X.AsNumber).toBe(snapshot.prevPosX);
-    expect(newEcb.PrevTop.Y.AsNumber).toBe(snapshot.prevPosY + snapshot.YOffset - snapshot.Height);
+    expect(newEcb.PrevTop.Y.AsNumber).toBe(
+      snapshot.prevPosY + snapshot.YOffset - snapshot.Height
+    );
     expect(newEcb.PrevLeft.X.AsNumber).toBe(snapshot.prevPosX - halfWidth);
-    expect(newEcb.PrevLeft.Y.AsNumber).toBe(snapshot.prevPosY + snapshot.YOffset - halfHeight);
+    expect(newEcb.PrevLeft.Y.AsNumber).toBe(
+      snapshot.prevPosY + snapshot.YOffset - halfHeight
+    );
     expect(newEcb.PrevRight.X.AsNumber).toBe(snapshot.prevPosX + halfWidth);
-    expect(newEcb.PrevRight.Y.AsNumber).toBe(snapshot.prevPosY + snapshot.YOffset - halfHeight);
+    expect(newEcb.PrevRight.Y.AsNumber).toBe(
+      snapshot.prevPosY + snapshot.YOffset - halfHeight
+    );
   });
 
   test('Getters should return correct vertices', () => {

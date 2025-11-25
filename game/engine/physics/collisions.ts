@@ -16,6 +16,8 @@ import {
   NumberToRaw,
 } from '../../math/fixedPoint';
 
+const ONE = NumberToRaw(1);
+
 export function IntersectsPolygons(
   verticiesA: Array<FlatVec>,
   verticiesB: Array<FlatVec>,
@@ -204,8 +206,6 @@ export function ClosestPointsBetweenSegments(
   const denomT2Raw = MultiplyRaw(bRaw, bRaw);
   const denomRaw = denomT1Raw - denomT2Raw;
 
-  const ONE_RAW = NumberToRaw(1);
-
   // Check for parallel or near-parallel lines
   if (denomRaw !== 0) {
     // Use a small epsilon to handle near-parallel cases
@@ -215,7 +215,7 @@ export function ClosestPointsBetweenSegments(
 
     sRaw = DivideRaw(sNumeRaw, denomRaw);
 
-    sRaw = ClampWithMin(sRaw, 0, ONE_RAW);
+    sRaw = ClampWithMin(sRaw, 0, ONE);
   } else {
     // Segments are parallel or nearly parallel
     sRaw = 0;
@@ -231,12 +231,12 @@ export function ClosestPointsBetweenSegments(
     tRaw = 0;
     sRaw = DivideRaw(-cRaw, aRaw);
 
-    sRaw = ClampWithMin(sRaw, 0, ONE_RAW);
-  } else if (tRaw > ONE_RAW) {
-    tRaw = ONE_RAW; //1;
+    sRaw = ClampWithMin(sRaw, 0, ONE);
+  } else if (tRaw > ONE) {
+    tRaw = ONE; //1;
     const sNumeRaw = bRaw - cRaw;
     sRaw = DivideRaw(sNumeRaw, aRaw);
-    sRaw = ClampWithMin(sRaw, 0, ONE_RAW);
+    sRaw = ClampWithMin(sRaw, 0, ONE);
   }
 
   // c1 = p1 + s * d1
@@ -275,7 +275,7 @@ export function FindArithemticMean(
   return pooledVec.SetXYRaw(sumXRaw, sumYRaw);
 }
 
-function closestPointOnSegmentToPoint(
+export function closestPointOnSegmentToPoint(
   segStart: FlatVec,
   segEnd: FlatVec,
   point: FlatVec,
@@ -304,12 +304,11 @@ function closestPointOnSegmentToPoint(
     const tT2Raw = MultiplyRaw(pointVecYRaw, segVecYRaw);
     const tNumeratorRaw = tT1Raw + tT2Raw;
     tRaw = DivideRaw(tNumeratorRaw, segLengthSquaredRaw);
-    const oneRaw = NumberToRaw(1);
 
     if (tRaw < 0) {
       tRaw = 0;
-    } else if (tRaw > oneRaw) {
-      tRaw = oneRaw;
+    } else if (tRaw > ONE) {
+      tRaw = ONE;
     }
   }
 
@@ -323,7 +322,7 @@ function closestPointOnSegmentToPoint(
   return ret;
 }
 
-function projectVerticies(
+export function projectVerticies(
   verticies: Array<FlatVec>,
   axis: PooledVector,
   projResPool: Pool<ProjectionResult>

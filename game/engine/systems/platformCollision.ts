@@ -17,6 +17,8 @@ import {
 import { PlayerData, StageData } from '../world/world';
 import { CORRECTION_DEPTH_RAW, shouldSoftlandRaw } from './shared';
 
+const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
+
 function handlePlatformLanding(
   p: Player,
   sm: StateMachine,
@@ -143,7 +145,7 @@ export function PlatformDetection(
 
     //if we are moving downward, and we are holding down, and we are NOT in the airdodge state,
     if (
-      ia.LYAxis.Raw < NumberToRaw(-0.8) &&
+      ia.LYAxis.Raw < NEG_ZERO_POINT_EIGHT &&
       fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S
     ) {
       continue;
