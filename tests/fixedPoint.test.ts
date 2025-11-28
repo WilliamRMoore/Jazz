@@ -1,4 +1,4 @@
-import { FixedPoint } from '../game/math/fixedPoint';
+import { FixedPoint } from '../game/engine/math/fixedPoint';
 
 describe('FixedPoint', () => {
   const SCALE = 1 << 10;

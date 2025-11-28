@@ -1,15 +1,17 @@
-import { NumberToRaw, DivideRaw } from '../../math/fixedPoint';
 import {
   STATE_IDS,
   GAME_EVENT_IDS,
-} from '../finite-state-machine/playerStates/shared';
+} from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw, DivideRaw } from '../math/fixedPoint';
 
 import { IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnStageOrPlats,
   SetPlayerPositionRaw,
-} from '../player/playerOrchestrator';
+} from '../entity/playerOrchestrator';
 import { PlayerData, StageData, Pools } from '../world/world';
+
+const TWO = NumberToRaw(2);
 
 export function LedgeGrabDetection(
   playerData: PlayerData,
@@ -55,8 +57,6 @@ export function LedgeGrabDetection(
     const front =
       isFacingRight === true ? ledgeDetector.RightSide : ledgeDetector.LeftSide;
 
-    const twoRaw = NumberToRaw(2);
-
     if (isFacingRight) {
       const intersectsLeftLedge = IntersectsPolygons(
         leftLedge,
@@ -70,7 +70,7 @@ export function LedgeGrabDetection(
         sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
         SetPlayerPositionRaw(
           p,
-          DivideRaw(leftLedge[0].X.Raw - ecb.Width.Raw, twoRaw),
+          leftLedge[0].X.Raw - DivideRaw(ecb.Width.Raw, TWO),
           p.Position.Y.Raw
         );
       }
@@ -90,7 +90,7 @@ export function LedgeGrabDetection(
       sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
       SetPlayerPositionRaw(
         p,
-        DivideRaw(rightLedge[0].X.Raw + ecb.Width.Raw, twoRaw),
+        rightLedge[0].X.Raw + DivideRaw(ecb.Width.Raw, TWO),
         p.Position.Y.Raw
       );
     }

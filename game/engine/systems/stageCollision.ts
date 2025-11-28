@@ -2,7 +2,8 @@ import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../finite-state-machine/playerStates/shared';
+} from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw } from '../math/fixedPoint';
 import { IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -12,13 +13,11 @@ import {
   CanOnlyFallOffLedgeWhenFacingAwayFromIt,
   SetPlayerPositionRaw,
   AddToPlayerYPositionRaw,
-} from '../player/playerOrchestrator';
+} from '../entity/playerOrchestrator';
 import { PlayerData, Pools, StageData } from '../world/world';
-import {
-  CORNER_JITTER_CORRECTION_RAW,
-  CORRECTION_DEPTH_RAW,
-  shouldSoftlandRaw,
-} from './shared';
+import { CORRECTION_DEPTH_RAW, shouldSoftlandRaw } from './shared';
+
+const CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
 
 export function StageCollisionDetection(
   playerData: PlayerData,
@@ -53,7 +52,7 @@ export function StageCollisionDetection(
     const playerVerts = ecb.GetHull();
     const fsmIno = p.FSMInfo;
     const preResolutionStateId = fsmIno.CurrentStatetId;
-    const preResolutionYOffset = ecb.YOffset;
+    const preResolutionYOffsetRaw = ecb.YOffset.Raw;
     const stageVerts = stage.StageVerticies.GetVerts();
 
     // --- 1. Always resolve collision first ---
@@ -77,11 +76,11 @@ export function StageCollisionDetection(
       if (normalXRaw === 0 && normalYRaw > 0) {
         move.AddToYRaw(CORRECTION_DEPTH_RAW);
       }
-      // Right wall correction
+      // Left wall correction
       else if (normalXRaw > 0 && normalYRaw === 0) {
         move.AddToXRaw(CORRECTION_DEPTH_RAW);
       }
-      // Left wall correction
+      // Right wall correction
       else if (normalXRaw < 0 && normalYRaw === 0) {
         move.AddToXRaw(-CORRECTION_DEPTH_RAW);
       }
@@ -94,7 +93,7 @@ export function StageCollisionDetection(
         move.AddToXRaw(move.X.Raw <= 0 ? move.Y.Raw : -move.Y.Raw);
       }
 
-      AddToPlayerPositionVec(p, move); //p.AddToPlayerPosition(move.X, move.Y);
+      AddToPlayerPositionVec(p, move);
     }
 
     // --- 2. Jitter correction after collision resolution ---
@@ -107,20 +106,12 @@ export function StageCollisionDetection(
       CORNER_JITTER_CORRECTION_RAW;
 
     if (standingOnLeftLedge && onStage) {
-      // p.SetPlayerPosition(
-      //   leftStagePoint.X + CORNER_JITTER_CORRECTION_RAW,
-      //   p.Position.Y
-      // );
       SetPlayerInitialPositionRaw(
         p,
         leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
         p.Position.Y.Raw
       );
     } else if (standingOnRightLedge && onStage) {
-      // p.SetPlayerPosition(
-      //   rightStagePoint.X - CORNER_JITTER_CORRECTION_RAW,
-      //   p.Position.Y
-      // );
       SetPlayerInitialPositionRaw(
         p,
         rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
@@ -161,22 +152,12 @@ export function StageCollisionDetection(
           Math.abs(position.X.Raw - leftStagePoint.X.Raw) <
           Math.abs(position.X.Raw - rightStagePoint.X.Raw)
         ) {
-          // Snap to left ledge
-          // p.SetPlayerPosition(
-          //   leftStagePoint.X + CORNER_JITTER_CORRECTION_RAW,
-          //   leftStagePoint.Y
-          // );
           SetPlayerPositionRaw(
             p,
             leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
             leftStagePoint.Y.Raw
           );
         } else {
-          // Snap to right ledge
-          // p.SetPlayerPosition(
-          //   rightStagePoint.X - CORNER_JITTER_CORRECTION_RAW,
-          //   rightStagePoint.Y
-          // );
           SetPlayerPositionRaw(
             p,
             rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
@@ -196,6 +177,7 @@ export function StageCollisionDetection(
 
     // If grounded and had a collision, set landing state (soft/hard)
     if (grnd === true && collisionResult.Collision) {
+      const ecbBottomYRaw = ecb.Bottom.Y.Raw;
       sm.UpdateFromWorld(
         shouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
@@ -209,7 +191,7 @@ export function StageCollisionDetection(
       (fsmIno.CurrentStatetId === STATE_IDS.LAND_S ||
         fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
     ) {
-      AddToPlayerYPositionRaw(p, preResolutionYOffset.Raw);
+      AddToPlayerYPositionRaw(p, preResolutionYOffsetRaw);
     }
   }
 }

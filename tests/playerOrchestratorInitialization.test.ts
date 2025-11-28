@@ -7,8 +7,8 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../game/engine/finite-state-machine/playerStates/shared';
-import { Player } from '../game/engine/player/playerOrchestrator';
+} from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { Player } from '../game/engine/entity/playerOrchestrator';
 
 describe('Player Orechstraotr Initialization', () => {
   let config: DefaultCharacterConfig;

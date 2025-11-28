@@ -10,7 +10,7 @@ export function PlayerShields(pd: PlayerData, localFrame: number) {
       const inputStore = pd.InputStore(i);
       const input = inputStore.GetInputForFrame(localFrame);
       const triggerValue =
-        input.RawLTVal >= input.RawRTVal ? input.RawLTVal : input.RawRTVal;
+        input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
       shield.ShrinkRaw(triggerValue);
       return;
     }

@@ -8,7 +8,6 @@ import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { CreateConvexHull } from '../physics/collisions';
-import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
 import { Command } from '../command/command';
 import {
   AttackConfig,
@@ -21,8 +20,9 @@ import {
   StateId,
   AttackId,
   GameEventId,
-} from '../finite-state-machine/playerStates/shared';
-import { Idle } from '../finite-state-machine/playerStates/states';
+} from '../finite-state-machine/stateConfigurations/shared';
+import { Idle } from '../finite-state-machine/stateConfigurations/states';
+import { FixedPoint, NumberToRaw, MultiplyRaw } from '../math/fixedPoint';
 
 /***
  * TODO:
@@ -224,15 +224,23 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   }
 
   public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    const clampValueRaw = Math.abs(clamp.Raw);
     const newVelocityRaw = this.y.Raw + impulse.Raw;
-    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw));
+    const clampValueRaw = Math.abs(clamp.Raw);
+    if (newVelocityRaw > 0) {
+      this.y.SetFromRaw(Math.min(newVelocityRaw, clampValueRaw));
+    } else {
+      this.y.SetFromRaw(newVelocityRaw);
+    }
   }
 
   public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {
-    const clampValueRaw = Math.abs(clampRaw);
     const newVelocityRaw = this.y.Raw + impulse;
-    this.y.SetFromRaw(Clamp(newVelocityRaw, clampValueRaw));
+    const clampValueRaw = Math.abs(clampRaw);
+    if (newVelocityRaw > 0) {
+      this.y.SetFromRaw(Math.min(newVelocityRaw, clampValueRaw));
+    } else {
+      this.y.SetFromRaw(newVelocityRaw);
+    }
   }
 
   public SnapShot(): VelocitySnapShot {
@@ -286,6 +294,10 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
 
   public get CurrentStatetId(): StateId {
     return this.currentState.StateId;
+  }
+
+  public set _currentStaeFrame(frame: number) {
+    this.currentStateFrame = frame;
   }
 
   public SetCurrentState(s: FSMState) {
@@ -418,21 +430,21 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
 }
 
 export class SpeedsComponent {
-  public readonly GroundedVelocityDecay: FixedPoint = new FixedPoint(0);
-  public readonly AerialVelocityDecay: FixedPoint = new FixedPoint(0);
-  public readonly AirDogeSpeed: FixedPoint = new FixedPoint(0);
-  public readonly DodeRollSpeed: FixedPoint = new FixedPoint(0);
-  public readonly ArielVelocityMultiplier: FixedPoint = new FixedPoint(0);
-  public readonly AerialSpeedInpulseLimit: FixedPoint = new FixedPoint(0);
-  public readonly MaxWalkSpeed: FixedPoint = new FixedPoint(0);
-  public readonly MaxRunSpeed: FixedPoint = new FixedPoint(0);
-  public readonly WalkSpeedMulitplier: FixedPoint = new FixedPoint(0);
-  public readonly RunSpeedMultiplier: FixedPoint = new FixedPoint(0);
-  public readonly FastFallSpeed: FixedPoint = new FixedPoint(0);
-  public readonly FallSpeed: FixedPoint = new FixedPoint(0);
-  public readonly Gravity: FixedPoint = new FixedPoint(0);
-  public readonly DashMultiplier: FixedPoint = new FixedPoint(0);
-  public readonly MaxDashSpeed: FixedPoint = new FixedPoint(0);
+  public readonly GroundedVelocityDecayRaw: number;
+  public readonly AerialVelocityDecayRaw: number;
+  public readonly AirDogeSpeedRaw: number;
+  public readonly DodeRollSpeedRaw: number;
+  public readonly ArielVelocityMultiplierRaw: number;
+  public readonly AerialSpeedInpulseLimitRaw: number;
+  public readonly MaxWalkSpeedRaw: number;
+  public readonly MaxRunSpeedRaw: number;
+  public readonly WalkSpeedMulitplierRaw: number;
+  public readonly RunSpeedMultiplierRaw: number;
+  public readonly FastFallSpeedRaw: number;
+  public readonly FallSpeedRaw: number;
+  public readonly GravityRaw: number;
+  public readonly DashMultiplierRaw: number;
+  public readonly MaxDashSpeedRaw: number;
   // Might need a general Aerial speed limit for each character
 
   constructor(
@@ -452,21 +464,21 @@ export class SpeedsComponent {
     maxDashSpeed: FixedPoint,
     gravity: FixedPoint
   ) {
-    this.GroundedVelocityDecay.SetFromFp(grndSpeedVelDecay);
-    this.AerialVelocityDecay.SetFromFp(aerialVelocityDecay);
-    this.AerialSpeedInpulseLimit.SetFromFp(aerialSpeedInpulseLimit);
-    this.ArielVelocityMultiplier.SetFromFp(aerialVelocityMultiplier);
-    this.AirDogeSpeed.SetFromFp(airDodgeSpeed);
-    this.DodeRollSpeed.SetFromFp(dodgeRollSpeed);
-    this.MaxWalkSpeed.SetFromFp(maxWalkSpeed);
-    this.MaxRunSpeed.SetFromFp(maxRunSpeed);
-    this.WalkSpeedMulitplier.SetFromFp(walkSpeedMultiplier);
-    this.RunSpeedMultiplier.SetFromFp(runSpeedMultiplier);
-    this.FastFallSpeed.SetFromFp(fastFallSpeed);
-    this.FallSpeed.SetFromFp(fallSpeed);
-    this.DashMultiplier.SetFromFp(dashMultiplier);
-    this.MaxDashSpeed.SetFromFp(maxDashSpeed);
-    this.Gravity.SetFromFp(gravity);
+    this.GroundedVelocityDecayRaw = grndSpeedVelDecay.Raw;
+    this.AerialVelocityDecayRaw = aerialVelocityDecay.Raw;
+    this.AerialSpeedInpulseLimitRaw = aerialSpeedInpulseLimit.Raw;
+    this.ArielVelocityMultiplierRaw = aerialVelocityMultiplier.Raw;
+    this.AirDogeSpeedRaw = airDodgeSpeed.Raw;
+    this.DodeRollSpeedRaw = dodgeRollSpeed.Raw;
+    this.MaxWalkSpeedRaw = maxWalkSpeed.Raw;
+    this.MaxRunSpeedRaw = maxRunSpeed.Raw;
+    this.WalkSpeedMulitplierRaw = walkSpeedMultiplier.Raw;
+    this.RunSpeedMultiplierRaw = runSpeedMultiplier.Raw;
+    this.FastFallSpeedRaw = fastFallSpeed.Raw;
+    this.FallSpeedRaw = fallSpeed.Raw;
+    this.DashMultiplierRaw = dashMultiplier.Raw;
+    this.MaxDashSpeedRaw = maxDashSpeed.Raw;
+    this.GravityRaw = gravity.Raw;
   }
 }
 
@@ -1057,7 +1069,9 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
 
   public ShrinkRaw(intensityRaw: number): void {
     if (this.CurrentRadius.Raw > 0) {
-      this.CurrentRadius.SetFromRaw(this.CurrentRadius.Raw - MultiplyRaw(this.step.Raw, intensityRaw));
+      this.CurrentRadius.SetFromRaw(
+        this.CurrentRadius.Raw - MultiplyRaw(this.step.Raw, intensityRaw)
+      );
     }
 
     if (this.CurrentRadius.Raw < 0) {
@@ -1334,14 +1348,11 @@ export class Attack {
   public readonly TotalFrameLength: number;
   public readonly InteruptableFrame: number;
   public readonly GravityActive: boolean;
-  public readonly BaseKnockBack: FixedPoint = new FixedPoint(0);
-  public readonly KnockBackScaling: FixedPoint = new FixedPoint(0);
+  public readonly BaseKnockBack = new FixedPoint(0);
+  public readonly KnockBackScaling = new FixedPoint(0);
   public readonly ImpulseClamp: FixedPoint | undefined;
-  public readonly PlayerIdsHit: Set<number> = new Set<number>();
-  public readonly Impulses: Map<frameNumber, FlatVec> = new Map<
-    frameNumber,
-    FlatVec
-  >();
+  public readonly PlayerIdsHit = new Set<number>();
+  public readonly Impulses: Map<frameNumber, FlatVec> = new Map();
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   public readonly onEnterCommands: Array<Command> = [];
@@ -1363,12 +1374,10 @@ export class Attack {
     }
 
     const hbs = conf.HitBubbles.map((hbc) => new HitBubble(hbc));
-
     this.HitBubbles = hbs.sort((a, b) => a.Priority - b.Priority);
 
     if (conf.Impulses !== undefined) {
       this.Impulses = new Map<frameNumber, FlatVec>();
-
       for (const [k, v] of conf.Impulses) {
         this.Impulses.set(k, ToFV(v.x, v.y));
       }
@@ -1380,7 +1389,6 @@ export class Attack {
     if (conf.onUpdateCommands !== undefined) {
       this.onUpdateCommands = conf.onUpdateCommands;
     }
-
     if (conf.onExitCommands !== undefined) {
       this.onExitCommands = conf.onExitCommands;
     }
@@ -1423,6 +1431,7 @@ export class Attack {
 }
 
 export type AttackSnapShot = Attack | undefined;
+
 export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   private attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
@@ -1535,7 +1544,7 @@ export type SensorSnapShot = {
         radius: number;
       }>
     | undefined;
-  reactorJsonString: string | undefined;
+  reactor: Command | undefined;
 };
 
 export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
@@ -1583,6 +1592,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
       }
     }
     this.currentSensorIdx = 0;
+    this.ReactCommand = undefined;
   }
 
   public get Sensors(): Array<Sensor> {
@@ -1596,7 +1606,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   public SnapShot(): SensorSnapShot {
     const snapShot: SensorSnapShot = {
       sensors: undefined,
-      reactorJsonString: undefined,
+      reactor: undefined,
     };
 
     const length = this.sensors.length;
@@ -1615,7 +1625,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     }
 
     if (this.ReactCommand !== undefined) {
-      snapShot.reactorJsonString = JSON.stringify(this.ReactCommand);
+      snapShot.reactor = this.ReactCommand;
     }
     return snapShot;
   }
@@ -1631,10 +1641,8 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
         NumberToRaw(snapShotSensor.radius)
       );
     }
-
-    if (snapShot.reactorJsonString !== undefined) {
-      const c = JSON.parse(snapShot.reactorJsonString) as Command;
-      this.ReactCommand = c;
+    if (snapShot.reactor !== undefined) {
+      this.ReactCommand = snapShot.reactor;
     } else {
       this.ReactCommand = undefined;
     }

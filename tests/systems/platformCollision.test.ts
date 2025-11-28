@@ -1,16 +1,16 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
+import { PlatformDetection } from '../../game/engine/systems/platformCollision';
+import { World } from '../../game/engine/world/world';
+import { NewInputAction } from '../../game/input/Input';
+import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { ApplyVelocity } from '../../game/engine/systems/velocity';
+import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';
+import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import {
   Player,
   SetPlayerPosition,
-} from '../../game/engine/player/playerOrchestrator';
-import { PlatformDetection } from '../../game/engine/systems/platformCollision';
-import { World } from '../../game/engine/world/world';
-import { FixedPoint } from '../../game/math/fixedPoint';
-import { NewInputAction } from '../../game/input/Input';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/playerStates/shared';
-import { ApplyVelocity } from '../../game/engine/systems/velocity';
-import { NeutralFall } from '../../game/engine/finite-state-machine/playerStates/states';
+} from '../../game/engine/entity/playerOrchestrator';
 
 describe('Platform Collision system tests', () => {
   let p: Player;
@@ -56,7 +56,7 @@ describe('Platform Collision system tests', () => {
       new FixedPoint(1000),
       new FixedPoint(300 - p.ECB.Height.AsNumber)
     );
-    p.FSMInfo.SetCurrentState({ StateId: STATE_IDS.IDLE_S } as any);
+    p.FSMInfo.SetCurrentState(NeutralFall);
 
     const frame = 10;
     const prevInput = NewInputAction();
@@ -70,7 +70,7 @@ describe('Platform Collision system tests', () => {
     const MOCK_Y_COORD = new FixedPoint(300);
     jest
       .spyOn(
-        require('../../game/engine/player/playerOrchestrator'),
+        require('../../game/engine/entity/playerOrchestrator'),
         'PlayerOnPlatsReturnsYCoord'
       )
       .mockReturnValue(MOCK_Y_COORD);
@@ -86,10 +86,12 @@ describe('Platform Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(initialY));
 
     const frame = 10;
+    const prevInput = NewInputAction();
     const input = NewInputAction();
     input.LYAxis.SetFromNumber(-0.9);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, input);
-    w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, input);
+    w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, prevInput);
+    p.FSMInfo.SetCurrentState(NeutralFall);
 
     fallOneFrame();
 
@@ -109,7 +111,7 @@ describe('Platform Collision system tests', () => {
     input.LYAxis.SetFromNumber(0);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, input);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, input);
-
+    p.FSMInfo.SetCurrentState(NeutralFall);
     fallOneFrame();
 
     PlatformDetection(w.PlayerData, w.StageData, frame);

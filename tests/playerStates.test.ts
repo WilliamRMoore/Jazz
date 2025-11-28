@@ -1,22 +1,22 @@
 import { DefaultCharacterConfig } from '../game/character/default';
-import { Player } from '../game/engine/player/playerOrchestrator';
+import { Player } from '../game/engine/entity/playerOrchestrator';
 import { World } from '../game/engine/world/world';
+import { GetAtan2IndexRaw } from '../game/engine/utils';
 import {
   AirDodge,
-  GetAtan2IndexRaw,
   Idle,
   Walk,
   Dash,
-} from '../game/engine/finite-state-machine/playerStates/states';
-import { STATE_IDS } from '../game/engine/finite-state-machine/playerStates/shared';
+} from '../game/engine/finite-state-machine/stateConfigurations/states';
+import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NewInputAction } from '../game/input/Input';
 import {
-  MultiplyRaw,
   NumberToRaw,
   RawToNumber,
+  MultiplyRaw,
   DivideRaw,
-} from '../game/math/fixedPoint';
-import { COS_LUT, SIN_LUT } from '../game/math/LUTS';
+} from '../game/engine/math/fixedPoint';
+import { COS_LUT, SIN_LUT } from '../game/engine/math/LUTS';
 
 describe('Player states tests', () => {
   let p: Player;
@@ -46,7 +46,7 @@ describe('Player states tests', () => {
     fsm.ForceState(STATE_IDS.AIR_DODGE_S);
 
     const angleIndex = GetAtan2IndexRaw(input.LYAxis.Raw, input.LXAxis.Raw);
-    const expectedSpeedRaw = p.Speeds.AirDogeSpeed.Raw;
+    const expectedSpeedRaw = p.Speeds.AirDogeSpeedRaw;
     const expectedVelXRaw = RawToNumber(
       MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw)
     );
@@ -170,7 +170,7 @@ describe('Player states tests', () => {
 
     // Expect X velocity to be initialized to MaxDashSpeed (or related impulse)
     const expectedImpulseRight = RawToNumber(
-      Math.abs(DivideRaw(p.Speeds.MaxDashSpeed.Raw, NumberToRaw(0.33)))
+      Math.abs(DivideRaw(p.Speeds.MaxDashSpeedRaw, NumberToRaw(0.33)))
     );
     expect(p.Velocity.X.AsNumber).toBeCloseTo(expectedImpulseRight);
 
@@ -180,7 +180,7 @@ describe('Player states tests', () => {
     Dash.OnEnter(p, w);
 
     const expectedImpulseLeft = -RawToNumber(
-      Math.abs(DivideRaw(p.Speeds.MaxDashSpeed.Raw, NumberToRaw(0.33)))
+      Math.abs(DivideRaw(p.Speeds.MaxDashSpeedRaw, NumberToRaw(0.33)))
     );
     expect(p.Velocity.X.AsNumber).toBeCloseTo(expectedImpulseLeft);
   });
@@ -200,9 +200,7 @@ describe('Player states tests', () => {
     Dash.OnUpdate(p, w);
 
     // Expect velocity to increase further, clamped by MaxDashSpeed
-    expect(p.Velocity.X.AsNumber).toBeLessThanOrEqual(
-      p.Speeds.MaxDashSpeed.AsNumber
-    );
+    expect(p.Velocity.X.AsNumber).toBeLessThanOrEqual(p.Speeds.MaxDashSpeedRaw);
     expect(p.Velocity.X.Raw).toBeGreaterThan(initialVelocityX);
 
     p.Velocity.X.SetFromNumber(-5); // Initial velocity to the left
@@ -214,7 +212,7 @@ describe('Player states tests', () => {
 
     // Expect velocity to decrease further (become more negative), clamped by MaxDashSpeed
     expect(p.Velocity.X.AsNumber).toBeGreaterThanOrEqual(
-      -p.Speeds.MaxDashSpeed.AsNumber
+      -p.Speeds.MaxDashSpeedRaw
     );
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelocityXLeft);
   });

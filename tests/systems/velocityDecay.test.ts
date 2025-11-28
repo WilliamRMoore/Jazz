@@ -1,9 +1,9 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { ApplyVelocityDecay } from '../../game/engine/systems/velocityDecay';
 import { World } from '../../game/engine/world/world';
-import { FixedPoint, NumberToRaw } from '../../game/math/fixedPoint';
+import { FixedPoint, NumberToRaw } from '../../game/engine/math/fixedPoint';
 
 describe('Velocity Decay system tests', () => {
   let p: Player;
@@ -48,7 +48,7 @@ describe('Velocity Decay system tests', () => {
   test('Grounded velocity decay for X velocity', () => {
     p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650)); // On ground
     p.Velocity.X.SetFromNumber(10); // Positive X velocity
-    const decayAmount = p.Speeds.GroundedVelocityDecay.Raw;
+    const decayAmount = p.Speeds.GroundedVelocityDecayRaw;
 
     ApplyVelocityDecay(w.PlayerData, w.StageData);
 
@@ -72,7 +72,7 @@ describe('Velocity Decay system tests', () => {
   test('Aerial velocity decay for X velocity', () => {
     p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
     p.Velocity.X.SetFromNumber(10);
-    const decayAmount = p.Speeds.AerialVelocityDecay.Raw;
+    const decayAmount = p.Speeds.AerialVelocityDecayRaw;
 
     ApplyVelocityDecay(w.PlayerData, w.StageData);
     expect(p.Velocity.X.Raw).toBeCloseTo(NumberToRaw(10) - decayAmount);
@@ -85,7 +85,7 @@ describe('Velocity Decay system tests', () => {
   test('Aerial velocity decay for Y velocity (positive, greater than fall speed)', () => {
     p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
     p.Velocity.Y.SetFromNumber(NumberToRaw(20)); // Positive Y velocity, greater than default fall speed
-    const aerialDecay = p.Speeds.AerialVelocityDecay.Raw;
+    const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
 
     ApplyVelocityDecay(w.PlayerData, w.StageData);
@@ -96,7 +96,7 @@ describe('Velocity Decay system tests', () => {
   test('Aerial velocity decay for Y velocity (negative)', () => {
     p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
     p.Velocity.Y.SetFromNumber(-10); // Negative Y velocity
-    const aerialDecay = p.Speeds.AerialVelocityDecay.Raw;
+    const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
 
     ApplyVelocityDecay(w.PlayerData, w.StageData);

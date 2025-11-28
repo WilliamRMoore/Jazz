@@ -1,8 +1,7 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import { World } from '../../game/engine/world/world';
-import { FixedPoint } from '../../game/math/fixedPoint';
 
 describe('Velocity system tests', () => {
   let p: Player;

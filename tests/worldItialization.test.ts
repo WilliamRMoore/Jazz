@@ -1,5 +1,5 @@
 import { DefaultCharacterConfig } from '../game/character/default';
-import { Player } from '../game/engine/player/playerOrchestrator';
+import { Player } from '../game/engine/entity/playerOrchestrator';
 import { defaultStage, Stage } from '../game/engine/stage/stageMain';
 import { World } from '../game/engine/world/world';
 

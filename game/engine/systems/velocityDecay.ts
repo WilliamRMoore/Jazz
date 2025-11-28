@@ -1,8 +1,8 @@
-import { NumberToRaw } from '../../math/fixedPoint';
-import { PlayerOnStageOrPlats } from '../player/playerOrchestrator';
+import { NumberToRaw } from '../math/fixedPoint';
+import { PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { PlayerData, StageData } from '../world/world';
 
-const ZERO_POINT_TWO = NumberToRaw(0.2);
+const POINT_TWO = NumberToRaw(0.2);
 
 export function ApplyVelocityDecay(
   playerData: PlayerData,
@@ -30,13 +30,13 @@ export function ApplyVelocityDecay(
     const absPvxRaw = Math.abs(pvxRaw);
 
     if (grounded) {
-      const groundedVelocityDecay = speeds.GroundedVelocityDecay;
+      const groundedVelocityDecayRaw = speeds.GroundedVelocityDecayRaw;
       if (pvxRaw > 0) {
-        playerVelocity.X.Subtract(groundedVelocityDecay);
+        playerVelocity.X.SubtractRaw(groundedVelocityDecayRaw);
       } else if (pvxRaw < 0) {
-        playerVelocity.X.Add(groundedVelocityDecay);
+        playerVelocity.X.AddRaw(groundedVelocityDecayRaw);
       }
-      if (absPvxRaw < groundedVelocityDecay.Raw) {
+      if (absPvxRaw < groundedVelocityDecayRaw) {
         playerVelocity.X.Zero();
       }
       if (pvyRaw > 0) {
@@ -45,26 +45,26 @@ export function ApplyVelocityDecay(
       continue;
     }
 
-    const aerialVelocityDecay = speeds.AerialVelocityDecay;
-    const fallSpeed = p.Flags.IsFastFalling
-      ? speeds.FastFallSpeed
-      : speeds.FallSpeed;
+    const aerialVelocityDecayRaw = speeds.AerialVelocityDecayRaw;
+    const fallSpeedRaw = p.Flags.IsFastFalling
+      ? speeds.FastFallSpeedRaw
+      : speeds.FallSpeedRaw;
 
     if (pvxRaw > 0) {
-      playerVelocity.X.Subtract(aerialVelocityDecay);
+      playerVelocity.X.SubtractRaw(aerialVelocityDecayRaw);
     } else if (pvxRaw < 0) {
-      playerVelocity.X.Add(aerialVelocityDecay);
+      playerVelocity.X.AddRaw(aerialVelocityDecayRaw);
     }
 
-    if (pvyRaw > fallSpeed.Raw) {
-      playerVelocity.Y.Subtract(aerialVelocityDecay);
+    if (pvyRaw > fallSpeedRaw) {
+      playerVelocity.Y.SubtractRaw(aerialVelocityDecayRaw);
     }
 
     if (pvyRaw < 0) {
-      playerVelocity.Y.Add(aerialVelocityDecay);
+      playerVelocity.Y.AddRaw(aerialVelocityDecayRaw);
     }
 
-    if (absPvxRaw < ZERO_POINT_TWO) {
+    if (absPvxRaw < POINT_TWO) {
       playerVelocity.X.Zero(); //= 0;
     }
   }

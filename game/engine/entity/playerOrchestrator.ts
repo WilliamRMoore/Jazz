@@ -20,9 +20,9 @@ import {
 } from './playerComponents';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
-import { FixedPoint, MultiplyRaw } from '../../math/fixedPoint';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
+import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -122,8 +122,8 @@ export function AddWalkImpulseToPlayer(p: Player, impulse: FixedPoint): void {
   const velocity = p.Velocity;
   const speeds = p.Speeds;
   velocity.AddClampedXImpulseRaw(
-    speeds.MaxWalkSpeed.Raw,
-    MultiplyRaw(impulse.Raw, speeds.WalkSpeedMulitplier.Raw)
+    speeds.MaxWalkSpeedRaw,
+    MultiplyRaw(impulse.Raw, speeds.WalkSpeedMulitplierRaw)
   );
 }
 

@@ -1,6 +1,6 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { PlayerShields } from '../../game/engine/systems/shield';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/input/Input';

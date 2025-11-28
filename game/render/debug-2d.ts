@@ -1,4 +1,3 @@
-import { Shield } from '../engine/finite-state-machine/PlayerStates';
 import { FlatVec, Line } from '../engine/physics/vector';
 import {
   AttackSnapShot,
@@ -8,10 +7,11 @@ import {
   FSMInfoSnapShot,
   HurtCapsule,
   LedgeDetectorSnapShot,
+  PositionSnapShot,
   SensorSnapShot,
   ShieldSnapShot,
   StaticHistory,
-} from '../engine/player/playerComponents';
+} from '../engine/entity/playerComponents';
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackHitBubbles';
 import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
@@ -150,9 +150,9 @@ function drawStage(ctx: CanvasRenderingContext2D, world: World) {
   const stageVertsLength = stageVerts.length;
 
   ctx.beginPath();
-  ctx.moveTo(stageVerts[0].X, stageVerts[0].Y);
+  ctx.moveTo(stageVerts[0].X.AsNumber, stageVerts[0].Y.AsNumber);
   for (let i = 0; i < stageVertsLength; i++) {
-    ctx.lineTo(stageVerts[i].X, stageVerts[i].Y);
+    ctx.lineTo(stageVerts[i].X.AsNumber, stageVerts[i].Y.AsNumber);
   }
   ctx.closePath();
   ctx.fillStyle = color;
@@ -163,17 +163,17 @@ function drawStage(ctx: CanvasRenderingContext2D, world: World) {
 
   ctx.fillStyle = 'yellow';
   ctx.beginPath();
-  ctx.moveTo(lLedge[0].X, lLedge[0].Y);
+  ctx.moveTo(lLedge[0].X.AsNumber, lLedge[0].Y.AsNumber);
   for (let i = 0; i < lLedge.length; i++) {
-    ctx.lineTo(lLedge[i].X, lLedge[i].Y);
+    ctx.lineTo(lLedge[i].X.AsNumber, lLedge[i].Y.AsNumber);
   }
   ctx.closePath();
   ctx.fill();
 
   ctx.beginPath();
-  ctx.moveTo(rLedge[0].X, rLedge[0].Y);
+  ctx.moveTo(rLedge[0].X.AsNumber, rLedge[0].Y.AsNumber);
   for (let i = 0; i < rLedge.length; i++) {
-    ctx.lineTo(rLedge[i].X, rLedge[i].Y);
+    ctx.lineTo(rLedge[i].X.AsNumber, rLedge[i].Y.AsNumber);
   }
   ctx.closePath();
   ctx.fill();
@@ -194,8 +194,8 @@ function drawPlatforms(
   for (let i = 0; i < platsLength; i++) {
     const plat = plats[i];
     ctx.beginPath();
-    ctx.moveTo(plat.X1, plat.Y1);
-    ctx.lineTo(plat.X2, plat.Y2);
+    ctx.moveTo(plat.X1.AsNumber, plat.Y1.AsNumber);
+    ctx.lineTo(plat.X2.AsNumber, plat.Y2.AsNumber);
     ctx.closePath();
     ctx.stroke();
   }
@@ -265,7 +265,7 @@ function drawPlayer(
     const playerHistory = world.GetComponentHistory(i);
     const sensorsWrapper = playerHistory!.SensorsHistory[currentFrame];
     const sensors = sensorsWrapper.sensors;
-    if (sensors.length === 0) {
+    if (sensors === undefined || sensors.length === 0) {
       continue;
     }
     const pos = playerHistory!.PositionHistory[currentFrame];
@@ -288,8 +288,8 @@ function drawPlayer(
 function drawSensors(
   ctx: CanvasRenderingContext2D,
   alpha: number,
-  curPos: FlatVec,
-  lastPos: FlatVec,
+  curPos: PositionSnapShot,
+  lastPos: PositionSnapShot,
   flags: FlagsSnapShot,
   sensorsWrapper: SensorSnapShot
 ) {
@@ -297,7 +297,7 @@ function drawSensors(
   ctx.fillStyle = 'white';
   ctx.globalAlpha = 0.4;
 
-  const sensors = sensorsWrapper.sensors;
+  const sensors = sensorsWrapper.sensors!;
   const interpolatedX = Lerp(lastPos.X, curPos.X, alpha);
   const interpolatedY = Lerp(lastPos.Y, curPos.Y, alpha);
   const facingRight = flags.FacingRight;
@@ -319,8 +319,8 @@ function drawSensors(
 
 function drawShield(
   ctx: CanvasRenderingContext2D,
-  curPosition: FlatVec,
-  lastPosition: FlatVec,
+  curPosition: PositionSnapShot,
+  lastPosition: PositionSnapShot,
   shield: ShieldSnapShot,
   shieldYOffset: number,
   alpha: number
@@ -592,8 +592,8 @@ function drawHitCircles(
   attack: AttackSnapShot,
   fsmInfo: FSMInfoSnapShot,
   flags: FlagsSnapShot,
-  currentPosition: FlatVec,
-  lastPosition: FlatVec,
+  currentPosition: PositionSnapShot,
+  lastPosition: PositionSnapShot,
   alpha: number
 ) {
   if (attack === undefined) {
@@ -626,12 +626,12 @@ function drawHitCircles(
       continue;
     }
     const offsetX = flags.FacingRight
-      ? interpolatedX + offSet.X
-      : interpolatedX - offSet.X;
-    const offsetY = interpolatedY + offSet.Y;
+      ? interpolatedX + offSet.X.AsNumber
+      : interpolatedX - offSet.X.AsNumber;
+    const offsetY = interpolatedY + offSet.Y.AsNumber;
 
     ctx.beginPath();
-    ctx.arc(offsetX, offsetY, circle.Radius, 0, Math.PI * 2);
+    ctx.arc(offsetX, offsetY, circle.Radius.AsNumber, 0, Math.PI * 2);
     ctx.fill(); // Fill the circle with yellow
     ctx.stroke(); // Draw the circle outline
     ctx.closePath();
@@ -642,8 +642,8 @@ function drawHitCircles(
 function drawHurtCircles(
   ctx: CanvasRenderingContext2D,
   frame: number,
-  curPositon: FlatVec,
-  lasPosition: FlatVec,
+  curPositon: PositionSnapShot,
+  lasPosition: PositionSnapShot,
   hurtCapsules: Array<HurtCapsule>,
   instangible: boolean,
   alpha: number
@@ -668,17 +668,17 @@ function drawHurtCircles(
   const hcLength = hurtCapsules.length;
   for (let i = 0; i < hcLength; i++) {
     const hurtCapsule = hurtCapsules[i];
-    const globalStartX = hurtCapsule.StartOffsetX + lerpedPosX;
-    const globalStartY = hurtCapsule.StartOffsetY + lerpedPosY;
-    const globalEndX = hurtCapsule.EndOffsetX + lerpedPosX;
-    const globalEndY = hurtCapsule.EndOffsetY + lerpedPosY;
+    const globalStartX = hurtCapsule.StartOffsetX.AsNumber + lerpedPosX;
+    const globalStartY = hurtCapsule.StartOffsetY.AsNumber + lerpedPosY;
+    const globalEndX = hurtCapsule.EndOffsetX.AsNumber + lerpedPosX;
+    const globalEndY = hurtCapsule.EndOffsetY.AsNumber + lerpedPosY;
     drawCapsule(
       ctx,
       globalStartX,
       globalStartY,
       globalEndX,
       globalEndY,
-      hurtCapsule.Radius
+      hurtCapsule.Radius.AsNumber
     );
   }
 
@@ -687,8 +687,8 @@ function drawHurtCircles(
 
 function drawPositionMarker(
   ctx: CanvasRenderingContext2D,
-  posHistory: FlatVec,
-  lastPosHistory: FlatVec,
+  posHistory: PositionSnapShot,
+  lastPosHistory: PositionSnapShot,
   alpha: number
 ) {
   const playerPosX = Lerp(lastPosHistory.X, posHistory.X, alpha);

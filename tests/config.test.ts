@@ -7,7 +7,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS,
-} from '../game/engine/finite-state-machine/playerStates/shared';
+} from '../game/engine/finite-state-machine/stateConfigurations/shared';
 
 describe('DefaultCharacterConfig', () => {
   let config: DefaultCharacterConfig;
@@ -126,7 +126,6 @@ describe('DefaultCharacterConfig', () => {
     expect(hitBubble1.frameOffsets.get(9)?.x).toBe(100);
     expect(hitBubble1.frameOffsets.get(9)?.y).toBe(-40);
 
-
     const hitBubble2 = sideTilt.HitBubbles[1];
     expect(hitBubble2.Damage).toBe(11);
     expect(hitBubble2.Radius).toBe(25);
@@ -167,7 +166,6 @@ describe('DefaultCharacterConfig', () => {
     expect(hitBubble1.frameOffsets.size).toBe(6);
     expect(hitBubble1.frameOffsets.get(9)?.x).toBe(100);
     expect(hitBubble1.frameOffsets.get(9)?.y).toBe(-65);
-
 
     const hitBubble2 = sideTiltUp.HitBubbles[1];
     expect(hitBubble2.Damage).toBe(11);

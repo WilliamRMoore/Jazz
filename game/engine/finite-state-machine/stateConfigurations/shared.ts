@@ -1,6 +1,6 @@
-// Aliases =========================================================================
-
 import { Sequencer } from '../../utils';
+
+// Aliases =========================================================================
 
 export type GameEventId = number;
 export type StateId = number;

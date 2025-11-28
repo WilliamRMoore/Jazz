@@ -1,6 +1,6 @@
 import { InputAction } from '../../../input/Input';
-import { NumberToRaw } from '../../../math/fixedPoint';
 import { InputStoreLocal } from '../../engine-state-management/Managers';
+import { NumberToRaw } from '../../math/fixedPoint';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 
@@ -12,7 +12,6 @@ const ROLL_DODGE_LXAXIS_THRESHOLD = NumberToRaw(0.25);
 const UP_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(0.1);
 const DOWN_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(-0.1);
 const TURN_TO_DASH_LXAXIS_THRESHOLD = NumberToRaw(0.5);
-
 
 type conditionFunc = (world: World, playerIndex: number) => boolean;
 
@@ -42,11 +41,11 @@ export const IdleToTurn: condition = {
     const flags = p.Flags;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -75,13 +74,13 @@ export const IdleToDash: condition = {
     }
 
     const facingRight = p.Flags.IsFacingRight;
-    const lxAxis = ia.RawLXAxis;
+    const lxAxisRaw = ia.LXAxisRaw;
 
-    if (lxAxis > 0 && facingRight) {
+    if (lxAxisRaw > 0 && facingRight) {
       return true;
     }
 
-    if (lxAxis < 0 && !facingRight) {
+    if (lxAxisRaw < 0 && !facingRight) {
       return true;
     }
 
@@ -110,13 +109,13 @@ export const IdleToDashTurn: condition = {
 
     const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-    const lxAxis = ia.RawLXAxis;
+    const lxAxisRaw = ia.LXAxisRaw;
 
-    if (lxAxis < 0 && flags.IsFacingRight) {
+    if (lxAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (lxAxis > 0 && flags.IsFacingLeft) {
+    if (lxAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -132,7 +131,7 @@ export const shieldToShieldDrop: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLTVal === 0 && ia.RawRTVal === 0) {
+    if (ia.LTValRaw === 0 && ia.RTValRaw === 0) {
       return true;
     }
 
@@ -163,7 +162,7 @@ export const WalkToDash: condition = {
 
     if (
       flags.IsFacingRight &&
-      ia.RawLXAxis > 0 &&
+      ia.LXAxisRaw > 0 &&
       ia.Action === GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return true;
@@ -171,7 +170,7 @@ export const WalkToDash: condition = {
 
     if (
       flags.IsFacingLeft &&
-      ia.RawLXAxis < 0 &&
+      ia.LXAxisRaw < 0 &&
       ia.Action === GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return true;
@@ -196,8 +195,8 @@ export const WalkToTurn: condition = {
       return false;
     }
 
-    const prevLaxRaw = prevIa.RawLXAxis;
-    const curLaxRaw = ia.RawLXAxis;
+    const prevLaxRaw = prevIa.LXAxisRaw;
+    const curLaxRaw = ia.LXAxisRaw;
     if (
       (prevLaxRaw < 0 && curLaxRaw > 0) ||
       (prevLaxRaw > 0 && curLaxRaw < 0)
@@ -248,8 +247,8 @@ export const RunToTurn: condition = {
       return false;
     }
 
-    const prevLaxRaw = prevIa.RawLXAxis;
-    const curLaxRaw = ia.RawLXAxis;
+    const prevLaxRaw = prevIa.LXAxisRaw;
+    const curLaxRaw = ia.LXAxisRaw;
 
     if (
       (prevLaxRaw < 0 && curLaxRaw > 0) ||
@@ -285,21 +284,21 @@ export const DashToTurn: condition = {
       return false;
     }
 
-    const prevLaxRaw = prevIa.RawLXAxis; // Previous left stick X-axis
-    const curLaxRaw = ia.RawLXAxis; // Current left stick X-axis
-    const laxDifference = curLaxRaw - prevLaxRaw; // Difference between current and previous X-axis
+    const prevLaxRaw = prevIa.LXAxisRaw; // Previous left stick X-axis
+    const curLaxRaw = ia.LXAxisRaw; // Current left stick X-axis
+    const laxDifferenceRaw = curLaxRaw - prevLaxRaw; // Difference between current and previous X-axis
 
     const flags = player.Flags;
     const facingRight = flags.IsFacingRight;
     // Check if the variation exceeds the threshold and is in the opposite direction of the player's facing direction
-    if (laxDifference < -DASH_TO_TURN_THRESHOLD && facingRight) {
+    if (laxDifferenceRaw < -DASH_TO_TURN_THRESHOLD && facingRight) {
       // Player is facing right, but the stick moved significantly to the left
       if (curLaxRaw < 0) {
         return true;
       }
     }
 
-    if (laxDifference > DASH_TO_TURN_THRESHOLD && !facingRight) {
+    if (laxDifferenceRaw > DASH_TO_TURN_THRESHOLD && !facingRight) {
       // Player is facing left, but the stick moved significantly to the right
       if (curLaxRaw > 0) {
         return true;
@@ -323,7 +322,7 @@ export const ToJump: condition = {
     const jumpId = GAME_EVENT_IDS.JUMP_GE;
 
     if (
-      inputMacthesTargetNotRepeating(jumpId, ia, prevIa) &&
+      inputActionMacthesTargetNotRepeating(jumpId, ia, prevIa) &&
       player.Jump.HasJumps()
     ) {
       return true;
@@ -353,11 +352,11 @@ export const DashDefaultRun: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -373,7 +372,7 @@ export const DashDefaultIdle: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis === 0) {
+    if (ia.LXAxisRaw === 0) {
       return true;
     }
 
@@ -392,8 +391,8 @@ export const TurnDefaultWalk: condition = {
     const facingRight = p?.Flags.IsFacingRight;
 
     if (
-      (facingRight && ia!.RawLXAxis < 0) ||
-      (!facingRight && ia!.RawLXAxis > 0)
+      (facingRight && ia!.LXAxisRaw < 0) ||
+      (!facingRight && ia!.LXAxisRaw > 0)
     ) {
       return true;
     }
@@ -416,11 +415,12 @@ export const TurnToDash: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (
-      (ia.RawLXAxis < -TURN_TO_DASH_LXAXIS_THRESHOLD && p.Flags.IsFacingRight) ||
-      (ia.RawLXAxis > TURN_TO_DASH_LXAXIS_THRESHOLD && p.Flags.IsFacingLeft)
+      (ia.LXAxisRaw < -TURN_TO_DASH_LXAXIS_THRESHOLD &&
+        p.Flags.IsFacingRight) ||
+      (ia.LXAxisRaw > TURN_TO_DASH_LXAXIS_THRESHOLD && p.Flags.IsFacingLeft)
     ) {
       const prevIa = inputStore.GetInputForFrame(w.PreviousFrame);
-      return inputMacthesTargetNotRepeating(
+      return inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.MOVE_FAST_GE,
         ia,
         prevIa
@@ -440,7 +440,11 @@ export const ToNair: condition = {
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
-    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
+    return inputActionMacthesTargetNotRepeating(
+      GAME_EVENT_IDS.ATTACK_GE,
+      ia,
+      prevIa
+    );
   },
   StateId: STATE_IDS.N_AIR_S,
 };
@@ -466,24 +470,24 @@ export const ToFAir: condition = {
     const isFacingRight = p?.Flags.IsFacingRight;
     const IsFacingLeft = !isFacingRight;
 
-    const isRStickXAxisActuated = Math.abs(ia.RawRXAxis) > 0;
+    const isRStickXAxisActuated = Math.abs(ia.RXAxisRaw) > 0;
 
     if (isRStickXAxisActuated === true) {
-      if (isFacingRight && ia.RawRXAxis > 0) {
+      if (isFacingRight && ia.RXAxisRaw > 0) {
         return true;
       }
 
-      if (IsFacingLeft && ia.RawRXAxis < 0) {
+      if (IsFacingLeft && ia.RXAxisRaw < 0) {
         return true;
       }
     }
 
     if (isRStickXAxisActuated === false) {
-      if (isFacingRight && ia.RawLXAxis > 0) {
+      if (isFacingRight && ia.LXAxisRaw > 0) {
         return true;
       }
 
-      if (IsFacingLeft && ia.RawLXAxis < 0) {
+      if (IsFacingLeft && ia.LXAxisRaw < 0) {
         return true;
       }
     }
@@ -508,11 +512,11 @@ export const ToBAir: condition = {
     }
 
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
-      if (p!.Flags.IsFacingRight && (ia.RawRXAxis < 0 || ia.RawLXAxis < 0)) {
+      if (p!.Flags.IsFacingRight && (ia.RXAxisRaw < 0 || ia.LXAxisRaw < 0)) {
         return true;
       }
 
-      if (p!.Flags.IsFacingLeft && (ia.RawRXAxis > 0 || ia.RawLXAxis > 0)) {
+      if (p!.Flags.IsFacingLeft && (ia.RXAxisRaw > 0 || ia.LXAxisRaw > 0)) {
         return true;
       }
     }
@@ -531,7 +535,7 @@ export const ToUAir: condition = {
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
       ia,
       prevIa
@@ -549,7 +553,7 @@ export const ToDAir: condition = {
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
       prevIa
@@ -575,11 +579,11 @@ export const SideTiltToWalk: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -595,7 +599,7 @@ export const LandToIdle: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis === 0) {
+    if (ia.LXAxisRaw === 0) {
       return true;
     }
 
@@ -613,11 +617,11 @@ export const LandToWalk: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -635,11 +639,11 @@ export const LandToTurn: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
 
@@ -672,11 +676,11 @@ export const RunStopToTurn: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
-    if (ia.RawLXAxis > 0 && flags.IsFacingLeft) {
+    if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
 
-    if (ia.RawLXAxis < 0 && flags.IsFacingRight) {
+    if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
 
@@ -693,7 +697,11 @@ export const IdleToAttack: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.ATTACK_GE, ia, prevIa);
+    return inputActionMacthesTargetNotRepeating(
+      GAME_EVENT_IDS.ATTACK_GE,
+      ia,
+      prevIa
+    );
   },
   StateId: STATE_IDS.ATTACK_S,
 };
@@ -708,7 +716,7 @@ export const ToSideCharge: condition = {
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
-      inputMacthesTargetNotRepeating(
+      inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
         prevIa
@@ -717,8 +725,8 @@ export const ToSideCharge: condition = {
       return false;
     }
 
-    const rxAbsRaw = Math.abs(ia.RawRXAxis);
-    if (rxAbsRaw > 0 && rxAbsRaw > Math.abs(ia.RawRYAxis)) {
+    const rxAbsRaw = Math.abs(ia.RXAxisRaw);
+    if (rxAbsRaw > 0 && rxAbsRaw > Math.abs(ia.RYAxisRaw)) {
       return true;
     }
 
@@ -736,7 +744,7 @@ export const IdleToUpTilt: condition = {
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     if (
-      inputMacthesTargetNotRepeating(
+      inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
         prevIa
@@ -745,7 +753,7 @@ export const IdleToUpTilt: condition = {
       return false;
     }
 
-    if (ia.RawRYAxis > 0) {
+    if (ia.RYAxisRaw > 0) {
       return false;
     }
 
@@ -764,7 +772,7 @@ export const ToUpCharge: condition = {
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
-      inputMacthesTargetNotRepeating(
+      inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
         prevIa
@@ -773,7 +781,7 @@ export const ToUpCharge: condition = {
       return false;
     }
 
-    if (Math.abs(ia.RawRYAxis) > Math.abs(ia.RawRXAxis) === false) {
+    if (Math.abs(ia.RYAxisRaw) > Math.abs(ia.RXAxisRaw) === false) {
       return false;
     }
 
@@ -792,7 +800,7 @@ export const ToDownCharge: condition = {
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
     if (
-      inputMacthesTargetNotRepeating(
+      inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
         prevIa
@@ -801,11 +809,11 @@ export const ToDownCharge: condition = {
       return false;
     }
 
-    if (ia.RawRYAxis >= 0) {
+    if (ia.RYAxisRaw >= 0) {
       return false;
     }
 
-    if (Math.abs(ia.RawRYAxis) > Math.abs(ia.RawRXAxis) === false) {
+    if (Math.abs(ia.RYAxisRaw) > Math.abs(ia.RXAxisRaw) === false) {
       return false;
     }
 
@@ -822,13 +830,13 @@ export const RunToDashAttack: condition = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
-      if (Math.abs(ia.RawRXAxis) > 0) {
+      if (Math.abs(ia.RXAxisRaw) > 0) {
         return false;
       }
       const facingRight = p.Flags.IsFacingRight;
       if (
-        (ia.RawLXAxis > 0 && facingRight) ||
-        (ia.RawLXAxis < 0 && facingRight === false)
+        (ia.LXAxisRaw > 0 && facingRight) ||
+        (ia.LXAxisRaw < 0 && facingRight === false)
       ) {
         return true;
       }
@@ -849,13 +857,13 @@ export const ToSideTilt: condition = {
       return false;
     }
 
-    if (Math.abs(ia.RawRXAxis) > 0) {
+    if (Math.abs(ia.RXAxisRaw) > 0) {
       return false;
     }
     const facingRight = p.Flags.IsFacingRight;
     if (
-      (ia.RawLXAxis > 0 && facingRight) ||
-      (ia.RawLXAxis < 0 && !facingRight)
+      (ia.LXAxisRaw > 0 && facingRight) ||
+      (ia.LXAxisRaw < 0 && !facingRight)
     ) {
       return true;
     }
@@ -873,7 +881,11 @@ export const ToNSpecial: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(GAME_EVENT_IDS.SPCL_GE, ia, prevIa);
+    return inputActionMacthesTargetNotRepeating(
+      GAME_EVENT_IDS.SPCL_GE,
+      ia,
+      prevIa
+    );
   },
   StateId: STATE_IDS.SPCL_S,
 };
@@ -886,7 +898,7 @@ export const ToSideSpecial: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
       prevIa
@@ -903,7 +915,7 @@ export const ToSideSpecialAir: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
       prevIa
@@ -920,8 +932,7 @@ export const ToDownSpecial: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
       prevIa
@@ -938,7 +949,7 @@ export const ToDownSpecialAir: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
       prevIa
@@ -955,7 +966,7 @@ export const ToUpSpecial: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_SPCL_GE,
       ia,
       prevIa
@@ -972,8 +983,7 @@ export const ToDownTilt: condition = {
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
-    return inputMacthesTargetNotRepeating(
+    return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
       prevIa
@@ -1024,11 +1034,11 @@ export const SideChargeToEx: condition = {
     const p = w.PlayerData.Player(playerIndex);
     const flags = p.Flags;
 
-    if (flags.IsFacingRight && ia.RawRXAxis <= 0) {
+    if (flags.IsFacingRight && ia.RXAxisRaw <= 0) {
       return true;
     }
 
-    if (flags.IsFacingLeft && ia.RawRXAxis >= 0) {
+    if (flags.IsFacingLeft && ia.RXAxisRaw >= 0) {
       return true;
     }
 
@@ -1049,7 +1059,7 @@ export const UpChargeToEx: condition = {
     }
 
     // This handles releasing the analog stick from the 'up' position
-    if (ia.RawRYAxis <= UP_CHARGE_EX_RYAXIS_THRESHOLD) {
+    if (ia.RYAxisRaw <= UP_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
 
@@ -1071,7 +1081,7 @@ export const DownChargeToEx: condition = {
     }
 
     // Release analog stick from down position
-    if (ia.RawRYAxis >= DOWN_CHARGE_EX_RYAXIS_THRESHOLD) {
+    if (ia.RYAxisRaw >= DOWN_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
 
@@ -1089,10 +1099,10 @@ export const ToSpotDodge: condition = {
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
 
     if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
-      const lyAxisDiff = prevIa.RawLYAxis - ia.RawLYAxis;
+      const lyAxisDiff = prevIa.LYAxisRaw - ia.LYAxisRaw;
       if (
-        ia.RawLYAxis < 0 &&
-        ia.RawLYAxis < prevIa.RawLYAxis &&
+        ia.LYAxisRaw < 0 &&
+        ia.LYAxisRaw < prevIa.LYAxisRaw &&
         lyAxisDiff >= SPOT_DODGE_LYAXIS_THRESHOLD
       ) {
         return true;
@@ -1116,19 +1126,19 @@ export const ToRollDodge: condition = {
     }
 
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
-    const lxAxisDiffRaw = prevIa.RawLXAxis - ia.RawLXAxis;
+    const lxAxisDiffRaw = prevIa.LXAxisRaw - ia.LXAxisRaw;
 
     if (
-      ia.RawLXAxis > 0 &&
-      ia.RawLXAxis > prevIa.RawLXAxis &&
+      ia.LXAxisRaw > 0 &&
+      ia.LXAxisRaw > prevIa.LXAxisRaw &&
       lxAxisDiffRaw <= -ROLL_DODGE_LXAXIS_THRESHOLD
     ) {
       return true;
     }
 
     if (
-      ia.RawLXAxis < 0 &&
-      ia.RawLXAxis < prevIa.RawLXAxis &&
+      ia.LXAxisRaw < 0 &&
+      ia.LXAxisRaw < prevIa.LXAxisRaw &&
       lxAxisDiffRaw >= ROLL_DODGE_LXAXIS_THRESHOLD
     ) {
       return true;
@@ -1227,7 +1237,7 @@ export const defaultDownChargeEx: condition = {
   StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
-function inputMacthesTargetNotRepeating(
+function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,
   prevIa: InputAction | undefined

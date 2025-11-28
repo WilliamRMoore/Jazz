@@ -1,4 +1,4 @@
-import { Player } from '../player/playerOrchestrator';
+import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { ActivatePlayerSensor } from './commands/activateSensor';
 import { DeactivatePlayerSensor } from './commands/deactivateSensor';

@@ -1,10 +1,10 @@
-import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import {
   GAME_EVENT_IDS,
   STATE_IDS,
   CanStateWalkOffLedge,
-} from '../finite-state-machine/playerStates/shared';
+} from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw, FixedPoint } from '../math/fixedPoint';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -13,29 +13,12 @@ import {
   PlayerOnPlatsReturnsYCoord,
   SetPlayerPositionRaw,
   Player,
-} from '../player/playerOrchestrator';
+} from '../entity/playerOrchestrator';
 import { PlayerData, StageData } from '../world/world';
 import { CORRECTION_DEPTH_RAW, shouldSoftlandRaw } from './shared';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
-
-function handlePlatformLanding(
-  p: Player,
-  sm: StateMachine,
-  yCoord: FixedPoint,
-  xCoord: FixedPoint
-) {
-  const landId = shouldSoftlandRaw(p.Velocity.Y.Raw)
-    ? GAME_EVENT_IDS.SOFT_LAND_GE
-    : GAME_EVENT_IDS.LAND_GE;
-  sm.UpdateFromWorld(landId);
-  const newYOffset = p.ECB.YOffset;
-  SetPlayerPositionRaw(
-    p,
-    xCoord.Raw,
-    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw
-  );
-}
+const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
 
 export function PlatformDetection(
   playerData: PlayerData,
@@ -126,13 +109,13 @@ export function PlatformDetection(
     if (landingYCoord != undefined) {
       const sm = playerData.StateMachine(playerIndex);
       // Check for a fast downward flick on the left stick to fall through the platform.
-      const checkValue = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
+      const checkValueRaw = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
 
       const inLanding =
         p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
         p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
 
-      if (checkValue <= -0.5 && !inLanding) {
+      if (checkValueRaw <= NEG_ZERO_POINT_FIVE && !inLanding) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         flags.SetDisablePlatFrames(11);
         continue;
@@ -172,8 +155,8 @@ export function PlatformDetection(
         continue;
       }
 
-      const playerIsTooFarRight = currentBottom.X > plat.X2;
-      const playerIsTooFarLeft = currentBottom.X < plat.X1;
+      const playerIsTooFarRight = currentBottom.X.Raw > plat.X2.Raw;
+      const playerIsTooFarLeft = currentBottom.X.Raw < plat.X1.Raw;
 
       if (playerIsTooFarRight) {
         handlePlatformLanding(
@@ -203,4 +186,22 @@ export function PlatformDetection(
       );
     }
   }
+}
+
+function handlePlatformLanding(
+  p: Player,
+  sm: StateMachine,
+  yCoord: FixedPoint,
+  xCoord: FixedPoint
+) {
+  const landId = shouldSoftlandRaw(p.Velocity.Y.Raw)
+    ? GAME_EVENT_IDS.SOFT_LAND_GE
+    : GAME_EVENT_IDS.LAND_GE;
+  sm.UpdateFromWorld(landId);
+  const newYOffset = p.ECB.YOffset;
+  SetPlayerPositionRaw(
+    p,
+    xCoord.Raw,
+    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw
+  );
 }

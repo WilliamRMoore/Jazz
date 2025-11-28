@@ -1,18 +1,18 @@
+import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import {
   NumberToRaw,
-  FixedPoint,
   RawToNumber,
-  DivideRaw,
   MultiplyRaw,
-} from '../../math/fixedPoint';
-import { COS_LUT, SIN_LUT } from '../../math/LUTS';
-import { GAME_EVENT_IDS } from '../finite-state-machine/playerStates/shared';
+  FixedPoint,
+  DivideRaw,
+} from '../math/fixedPoint';
+import { COS_LUT, LUT_SIZE as LUT_SIZE_OG, SIN_LUT } from '../math/LUTS';
 import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
 } from '../physics/collisions';
-import { ComponentHistory } from '../player/playerComponents';
-import { Player } from '../player/playerOrchestrator';
+import { ComponentHistory } from '../entity/playerComponents';
+import { Player } from '../entity/playerOrchestrator';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
@@ -29,11 +29,11 @@ const TWO = NumberToRaw(2);
 const THREE = NumberToRaw(3);
 const TEN = NumberToRaw(10);
 const TWENTY = NumberToRaw(20);
-const TWO_HUNDRED = NumberToRaw(200);
 const ONE_HUNDRED = NumberToRaw(100);
 const HALF_CIRCLE = NumberToRaw(180);
-const LUT_SIZE = NumberToRaw(256);
+const TWO_HUNDRED = NumberToRaw(200);
 const FULL_CIRCLE = NumberToRaw(360);
+const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
 export function PlayerAttacks(
   playerData: PlayerData,
@@ -401,16 +401,16 @@ function PAvsPB(
   return atkResPool.Rent();
 }
 
-function CalculateHitStop(damage: FixedPoint): number {
+export function CalculateHitStop(damage: FixedPoint): number {
   return DivideRaw(damage.Raw, THREE) + THREE;
 }
 
-function CalculateHitStun(knockBackRaw: number): number {
+export function CalculateHitStun(knockBackRaw: number): number {
   return Math.ceil(RawToNumber(MultiplyRaw(knockBackRaw, POINT_FOUR)));
   //return Math.ceil(knockBack) * 0.4;
 }
 
-function CalculateLaunchVector(
+export function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
   launchAngle: FixedPoint,
   isFacingRight: boolean,
@@ -429,7 +429,9 @@ function CalculateLaunchVector(
   }
 
   // Calculate LUT index using deterministic fixed-point math
-  const lutIndex = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), FULL_CIRCLE);
+  const lutIndexRaw = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), FULL_CIRCLE);
+
+  const lutIndex = Math.floor(RawToNumber(lutIndexRaw));
 
   const cosValue = COS_LUT[lutIndex];
   const sinValue = SIN_LUT[lutIndex];
@@ -440,7 +442,7 @@ function CalculateLaunchVector(
   return vecPool.Rent().SetXYRaw(x, y);
 }
 
-function CalculateKnockback(
+export function CalculateKnockback(
   p: FixedPoint,
   d: FixedPoint,
   w: FixedPoint,

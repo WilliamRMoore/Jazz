@@ -1,4 +1,4 @@
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 import { IPooledObject } from './Pool';
 
 export class ProjectionResult implements IProjectionResult, IPooledObject {

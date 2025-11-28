@@ -1,4 +1,4 @@
-import { HitBubble } from '../player/playerComponents';
+import { HitBubble } from '../entity/playerComponents';
 import { IPooledObject } from './Pool';
 
 export class ActiveHitBubblesDTO implements IPooledObject {

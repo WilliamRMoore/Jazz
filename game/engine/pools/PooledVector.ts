@@ -1,10 +1,10 @@
 import {
-  DivideRaw,
-  DotProductRaw,
   FixedPoint,
   MultiplyRaw,
   SqrtRaw,
-} from '../../math/fixedPoint';
+  DivideRaw,
+  DotProductRaw,
+} from '../math/fixedPoint';
 import { FlatVec } from '../physics/vector';
 import { IPooledObject, Pool } from './Pool';
 
@@ -183,7 +183,7 @@ export class PooledVector implements IPooledObject {
   }
 
   public Zero(): void {
-    this.x.SetFromNumber(0);
-    this.y.SetFromNumber(0);
+    this.x.Zero();
+    this.y.Zero();
   }
 }

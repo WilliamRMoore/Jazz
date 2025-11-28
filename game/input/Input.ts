@@ -1,10 +1,10 @@
 import {
   GAME_EVENT_IDS,
   GameEventId,
-} from '../engine/finite-state-machine/playerStates/shared';
+} from '../engine/finite-state-machine/stateConfigurations/shared';
+import { FixedPoint } from '../engine/math/fixedPoint';
 import { ToFp } from '../engine/utils';
 import { World } from '../engine/world/world';
-import { FixedPoint } from '../math/fixedPoint';
 
 export type InputAction = {
   Action: GameEventId;
@@ -16,12 +16,12 @@ export type InputAction = {
   RTVal: FixedPoint;
   Start: boolean;
   Select: boolean;
-  get RawLXAxis(): number;
-  get RawLYAxis(): number;
-  get RawRXAxis(): number;
-  get RawRYAxis(): number;
-  get RawLTVal(): number;
-  get RawRTVal(): number;
+  get LXAxisRaw(): number;
+  get LYAxisRaw(): number;
+  get RXAxisRaw(): number;
+  get RYAxisRaw(): number;
+  get LTValRaw(): number;
+  get RTValRaw(): number;
 };
 
 export class GamePadInput {
@@ -304,22 +304,22 @@ export function NewInputAction() {
     RTVal: ToFp(0),
     Start: false,
     Select: false,
-    get RawLXAxis() {
+    get LXAxisRaw() {
       return this.LXAxis.Raw;
     },
-    get RawLYAxis() {
+    get LYAxisRaw() {
       return this.LYAxis.Raw;
     },
-    get RawRXAxis() {
+    get RXAxisRaw() {
       return this.RXAxis.Raw;
     },
-    get RawRYAxis() {
+    get RYAxisRaw() {
       return this.RYAxis.Raw;
     },
-    get RawLTVal() {
+    get LTValRaw() {
       return this.LTVal.Raw;
     },
-    get RawRTVal() {
+    get RTValRaw() {
       return this.RTVal.Raw;
     },
   } as InputAction;

@@ -1,5 +1,5 @@
-import { NumberToRaw } from '../../../math/fixedPoint';
-import { Player } from '../../player/playerOrchestrator';
+import { NumberToRaw } from '../../math/fixedPoint';
+import { Player } from '../../entity/playerOrchestrator';
 
 export type ActivateSensorCommand = {
   commandName: string;

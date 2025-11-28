@@ -2,7 +2,7 @@ import { Command } from '../engine/command/command';
 import {
   StateId,
   AttackId,
-} from '../engine/finite-state-machine/playerStates/shared';
+} from '../engine/finite-state-machine/stateConfigurations/shared';
 
 type frameNumber = number;
 
@@ -182,7 +182,7 @@ export class AttackConfigBuilder {
   }
 
   public WithOnExitEvent(event: Command): AttackConfigBuilder {
-    this.onExitCommands.push(event); // = event;
+    this.onExitCommands.push(event);
     return this;
   }
 

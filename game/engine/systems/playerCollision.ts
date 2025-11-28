@@ -1,7 +1,7 @@
-import { NumberToRaw, DivideRaw } from '../../math/fixedPoint';
-import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
+import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw, DivideRaw } from '../math/fixedPoint';
 import { IntersectsPolygons } from '../physics/collisions';
-import { SetPlayerPositionRaw } from '../player/playerOrchestrator';
+import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { PlayerData, Pools } from '../world/world';
 
 const MOVE_X = NumberToRaw(1.5);

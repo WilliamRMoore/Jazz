@@ -6,15 +6,15 @@ import { FlatVec, Line } from './vector';
 import { ClampWithMin } from '../utils';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import {
-  DivideRaw,
-  DotProductRaw,
-  DotProductVectorRaw,
-  FixedPoint,
-  MAX_RAW_VALUE,
-  MIN_RAW_VALUE,
-  MultiplyRaw,
   NumberToRaw,
-} from '../../math/fixedPoint';
+  MAX_RAW_VALUE,
+  DotProductRaw,
+  FixedPoint,
+  DotProductVectorRaw,
+  MultiplyRaw,
+  DivideRaw,
+  MIN_RAW_VALUE,
+} from '../math/fixedPoint';
 
 const ONE = NumberToRaw(1);
 
@@ -60,7 +60,7 @@ export function IntersectsPolygons(
     }
 
     const vbVaDepthRaw = vbProj.Max.Raw - vaProj.Min.Raw;
-    const vaVbDepthRaw = vaProj.Max.Raw - vbProj.Max.Raw;
+    const vaVbDepthRaw = vaProj.Max.Raw - vbProj.Min.Raw;
     const axisDepthRaw = Math.min(vbVaDepthRaw, vaVbDepthRaw);
 
     if (axisDepthRaw < depthRaw) {

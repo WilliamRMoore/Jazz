@@ -1,4 +1,4 @@
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 
 export class FlatVec {
   public readonly X: FixedPoint = new FixedPoint(0);

@@ -1,9 +1,9 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { World } from '../../game/engine/world/world';
 import { PlayerCollisionDetection } from '../../game/engine/systems/playerCollision';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/playerStates/shared';
-import { FixedPoint } from '../../game/math/fixedPoint';
+import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { FixedPoint } from '../../game/engine/math/fixedPoint';
 
 describe('Player Collision system tests', () => {
   let p1: Player;
@@ -28,7 +28,7 @@ describe('Player Collision system tests', () => {
     p2.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(500));
     p1.ECB.UpdatePreviousECB();
     p2.ECB.UpdatePreviousECB();
-    
+
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
 

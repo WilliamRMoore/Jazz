@@ -1,5 +1,15 @@
-import { FixedPoint, MultiplyRaw, DivideRaw, NumberToRaw } from '../math/fixedPoint';
+import {
+  NumberToRaw,
+  FixedPoint,
+  MultiplyRaw,
+  DivideRaw,
+  RawToNumber,
+} from './math/fixedPoint';
+import { ATAN2_LUT, ATAN2_SIZE, LUT_SIZE } from './math/LUTS';
 import { FlatVec } from './physics/vector';
+
+const ONE = NumberToRaw(1);
+const TWO = NumberToRaw(2);
 
 export function FillArrayWithFlatVec(fvArr: FlatVec[]): void {
   for (let index = 0; index < fvArr.length; index++) {
@@ -52,21 +62,17 @@ export function EaseInOut(t: number): number {
 export function EaseInOutRaw(tRaw: number): number {
   const pointFiveRaw = NumberToRaw(0.5);
   if (tRaw < pointFiveRaw) {
-    const twoRaw = NumberToRaw(2);
-    return MultiplyRaw(twoRaw, MultiplyRaw(tRaw, tRaw));
+    return MultiplyRaw(TWO, MultiplyRaw(tRaw, tRaw));
   }
 
-  const oneRaw = NumberToRaw(1);
-  const twoRaw = NumberToRaw(2);
-
-  const oneMinusTRaw = oneRaw - tRaw;
-  const exprRaw = MultiplyRaw(twoRaw, oneMinusTRaw);
+  const oneMinusTRaw = ONE - tRaw;
+  const exprRaw = MultiplyRaw(TWO, oneMinusTRaw);
 
   const exprSquaredRaw = MultiplyRaw(exprRaw, exprRaw);
 
-  const exprSquaredDividedBy2Raw = DivideRaw(exprSquaredRaw, twoRaw);
+  const exprSquaredDividedBy2Raw = DivideRaw(exprSquaredRaw, TWO);
 
-  return oneRaw - exprSquaredDividedBy2Raw;
+  return ONE - exprSquaredDividedBy2Raw;
 }
 
 export function EaseInPower(t: number, p: number) {
@@ -104,4 +110,24 @@ export function ToFp(num: number): FixedPoint {
 
 export function ToFV(x: number, y: number): FlatVec {
   return new FlatVec(ToFp(x), ToFp(y));
+}
+
+export function GetAtan2IndexRaw(yRaw: number, xRaw: number): number {
+  if (xRaw === 0 && yRaw === 0) {
+    return 0;
+  }
+
+  const xF = -RawToNumber(xRaw);
+  const yF = -RawToNumber(yRaw);
+
+  const atan2SizeHalf = ATAN2_SIZE / 2;
+  let xLut = Math.floor(xF * atan2SizeHalf + atan2SizeHalf);
+  let yLut = Math.floor(yF * atan2SizeHalf + atan2SizeHalf);
+
+  xLut = Math.max(0, Math.min(ATAN2_SIZE - 1, xLut));
+  yLut = Math.max(0, Math.min(ATAN2_SIZE - 1, yLut));
+
+  const lutIndex = yLut * ATAN2_SIZE + xLut;
+
+  return ATAN2_LUT[lutIndex] % LUT_SIZE;
 }

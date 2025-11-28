@@ -1,6 +1,6 @@
-import { NumberToRaw, MultiplyRaw } from '../../math/fixedPoint';
-import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
-import { Player, PlayerOnStageOrPlats } from '../player/playerOrchestrator';
+import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw, MultiplyRaw } from '../math/fixedPoint';
+import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { PlayerData, StageData } from '../world/world';
 
@@ -13,10 +13,11 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
+    debugger;
     const speeds = p.Speeds;
-    const grav = speeds.Gravity.Raw;
+    const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
-    const fallSpeed = isFF ? speeds.FastFallSpeed.Raw : speeds.FallSpeed.Raw;
+    const fallSpeed = isFF ? speeds.FastFallSpeedRaw : speeds.FallSpeedRaw;
     const gravMutliplier = NumberToRaw(isFF ? 2 : 1);
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,

@@ -1,10 +1,11 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+const LUT_SIZE = 512;
+const ATAN2_SIZE = 128;
 
 const BITS = 10;
 const Q = 1 << BITS;
-const LUT_SIZE = 2048;
-const ATAN2_SIZE = 256; // Increased to 1024x1024 table
 
 function floatToFixed(n: number): number {
   return Math.floor(n * Q);
@@ -60,3 +61,4 @@ function generateLuts() {
 }
 
 generateLuts();
+//npx ts-node game/engine/systems/generate-luts.ts

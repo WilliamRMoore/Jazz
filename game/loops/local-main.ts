@@ -4,8 +4,8 @@ import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput } from '../input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
-import { FixedPoint } from '../math/fixedPoint';
-import { STATE_IDS } from '../engine/finite-state-machine/playerStates/shared';
+import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { FixedPoint } from '../engine/math/fixedPoint';
 
 const frameInterval = 1000 / 60;
 

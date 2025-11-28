@@ -1,4 +1,4 @@
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 import { IPooledObject } from './Pool';
 
 export class ClosestPointsResult implements IPooledObject {
@@ -6,13 +6,6 @@ export class ClosestPointsResult implements IPooledObject {
   private readonly c1Y = new FixedPoint();
   private readonly c2X = new FixedPoint();
   private readonly c2Y = new FixedPoint();
-
-  public Zero(): void {
-    this.c1X.Zero();
-    this.c1Y.Zero();
-    this.c2X.Zero();
-    this.c2Y.Zero();
-  }
 
   public Set(
     c1X: FixedPoint,
@@ -52,5 +45,12 @@ export class ClosestPointsResult implements IPooledObject {
 
   public get C2Y(): FixedPoint {
     return this.c2Y;
+  }
+
+  public Zero(): void {
+    this.c1X.Zero();
+    this.c1Y.Zero();
+    this.c2X.Zero();
+    this.c2Y.Zero();
   }
 }

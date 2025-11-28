@@ -1,10 +1,10 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { OutOfBoundsCheck } from '../../game/engine/systems/outOfBounds';
 import { World } from '../../game/engine/world/world';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/playerStates/shared';
-import { NumberToRaw, FixedPoint } from '../../game/math/fixedPoint';
+import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { FixedPoint, NumberToRaw } from '../../game/engine/math/fixedPoint';
 
 describe('OutOfBounds system tests', () => {
   let p: Player;

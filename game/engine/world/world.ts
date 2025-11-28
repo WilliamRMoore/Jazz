@@ -1,8 +1,8 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { InputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
-import { ComponentHistory } from '../player/playerComponents';
-import { Player } from '../player/playerOrchestrator';
+import { ComponentHistory } from '../entity/playerComponents';
+import { Player } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
@@ -11,7 +11,7 @@ import { ProjectionResult } from '../pools/ProjectResult';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 
 export type PlayerData = {
   PlayerCount: number;

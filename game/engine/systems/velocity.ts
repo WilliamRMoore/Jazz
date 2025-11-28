@@ -1,4 +1,4 @@
-import { AddToPlayerPositionFp } from '../player/playerOrchestrator';
+import { AddToPlayerPositionFp } from '../entity/playerOrchestrator';
 import { PlayerData } from '../world/world';
 
 export function ApplyVelocity(playerData: PlayerData): void {

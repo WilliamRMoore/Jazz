@@ -1,4 +1,4 @@
-import { Player } from '../../player/playerOrchestrator';
+import { Player } from '../../entity/playerOrchestrator';
 
 export type SetJumpCountCommand = {
   commandName: string;

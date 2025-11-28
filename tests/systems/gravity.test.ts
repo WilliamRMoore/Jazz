@@ -1,15 +1,15 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
-import { Player } from '../../game/engine/player/playerOrchestrator';
+import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { Gravity } from '../../game/engine/systems/gravity';
 import { World } from '../../game/engine/world/world';
 import {
   STATE_IDS,
   ATTACK_IDS,
   GAME_EVENT_IDS,
-} from '../../game/engine/finite-state-machine/playerStates/shared';
-import { FixedPoint } from '../../game/math/fixedPoint';
-import { Attack } from '../../game/engine/player/playerComponents';
+} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { Attack } from '../../game/engine/entity/playerComponents';
+import { FixedPoint } from '../../game/engine/math/fixedPoint';
 
 describe('Gravity system tests', () => {
   let p: Player;
@@ -99,7 +99,7 @@ describe('Gravity system tests', () => {
 
     Gravity(w.PlayerData, w.StageData);
 
-    const expectedVel = initialVelocityY + p.Speeds.Gravity.Raw * 2;
+    const expectedVel = initialVelocityY + p.Speeds.GravityRaw * 2;
     // use toBeCloseTo because of fixed point arithmetic
     expect(p.Velocity.Y.Raw).toBeCloseTo(expectedVel);
   });

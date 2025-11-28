@@ -7,13 +7,13 @@ import {
   LineSegmentIntersectionLine,
   CreateConvexHull,
 } from '../game/engine/physics/collisions';
-import { FixedPoint } from '../game/math/fixedPoint';
 import { Pool } from '../game/engine/pools/Pool';
 import { FlatVec, Line } from '../game/engine/physics/vector';
 import { CollisionResult } from '../game/engine/pools/CollisionResult';
 import { ProjectionResult } from '../game/engine/pools/ProjectResult';
 import { PooledVector } from '../game/engine/pools/PooledVector';
 import { ClosestPointsResult } from '../game/engine/pools/ClosestPointsResult';
+import { FixedPoint } from '../game/engine/math/fixedPoint';
 
 describe('FindArithemticMean', () => {
   test('should correctly calculate the arithmetic mean of vertices', () => {

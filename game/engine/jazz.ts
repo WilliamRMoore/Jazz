@@ -4,7 +4,7 @@ import { FlatVec } from './physics/vector';
 import {
   Player,
   SetPlayerInitialPositionRaw,
-} from './player/playerOrchestrator';
+} from './entity/playerOrchestrator';
 import { defaultStage } from './stage/stageMain';
 import { PlayerAttacks } from './systems/attack';
 import { Gravity } from './systems/gravity';

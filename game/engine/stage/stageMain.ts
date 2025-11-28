@@ -1,4 +1,4 @@
-import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
+import { NumberToRaw, FixedPoint } from '../math/fixedPoint';
 import { FlatVec, Line, VertArrayContainsFlatVec } from '../physics/vector';
 
 //TODO: Add Platforms
@@ -132,7 +132,7 @@ export class Ledges {
     rightLedge.push(
       FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw + heightRaw)
     );
-    rightLedge.push(FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw)); //
+    rightLedge.push(FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw));
 
     this.leftLedge = leftLedge;
     this.rightLedge = rightLedge;

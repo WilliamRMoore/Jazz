@@ -1,11 +1,11 @@
+import { NumberToRaw } from '../game/engine/math/fixedPoint';
 import {
   SIN_LUT,
   COS_LUT,
   ATAN2_LUT,
-  LUT_SIZE,
   ATAN2_SIZE,
-} from '../game/math/LUTS';
-import { NumberToRaw } from '../game/math/fixedPoint';
+  LUT_SIZE,
+} from '../game/engine/math/LUTS';
 
 describe('LUTS tests', () => {
   test('test SIN_LUT', () => {
@@ -59,9 +59,9 @@ describe('LUTS tests', () => {
 
         const actualAngleIndex = ATAN2_LUT[y * ATAN2_SIZE + x];
 
-        expect(Math.abs(actualAngleIndex - expectedAngleIndex)).toBeLessThanOrEqual(
-          epsilon
-        );
+        expect(
+          Math.abs(actualAngleIndex - expectedAngleIndex)
+        ).toBeLessThanOrEqual(epsilon);
       }
     }
   });

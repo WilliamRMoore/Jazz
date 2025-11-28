@@ -11,8 +11,8 @@ import {
   STATE_IDS,
   ATTACK_IDS,
   GAME_EVENT_IDS,
-} from '../engine/finite-state-machine/playerStates/shared';
-import { frameNumber } from '../engine/player/playerComponents';
+} from '../engine/finite-state-machine/stateConfigurations/shared';
+import { frameNumber } from '../engine/entity/playerComponents';
 import {
   AttackConfig,
   AttackConfigBuilder,
@@ -164,21 +164,21 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);
 
-    this.maxWalkSpeed = 6;
-    this.walkSpeedMulitplier = 1.6;
-    this.maxRunSpeed = 10;
+    this.maxWalkSpeed = 3.5;
+    this.walkSpeedMulitplier = 1.2;
+    this.maxRunSpeed = 6.6;
     this.runSpeedMultiplier = 2.2;
-    this.fastFallSpeed = 16;
-    this.fallSpeed = 9;
+    this.fastFallSpeed = 15;
+    this.fallSpeed = 7.5;
     this.gravity = 0.6;
     this.aerialVelocityDecay = 0.7;
-    this.aerialSpeedInpulseLimit = 9;
+    this.aerialSpeedInpulseLimit = 4.8;
     this.aerialSpeedMultiplier = 1.8;
     this.dashMutiplier = 3;
-    this.maxDashSpeed = 13;
-    this.airDodgeSpeed = 20;
-    this.dodgeRollSpeed = 23;
-    this.groundedVelocityDecay = 0.8;
+    this.maxDashSpeed = 7.5;
+    this.airDodgeSpeed = 15;
+    this.dodgeRollSpeed = 16;
+    this.groundedVelocityDecay = 0.5;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -188,7 +188,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.Weight = 110;
 
-    this.JumpVelocity = 17;
+    this.JumpVelocity = 20;
     this.NumberOfJumps = 2;
 
     this.LedgeBoxHeight = 35;
@@ -563,37 +563,37 @@ function GetBAir() {
 }
 
 function GetDAir() {
-  const activeFrames = 40;
+  const activeFrames = 35;
   const radius = 30;
-  const damage = 21;
+  const damage = 20;
   const baseKnockBack = 20;
-  const knockBackScaling = 64;
+  const knockBackScaling = 45;
   const launchAngle = 285;
 
   const hb1OffSets = new Map<frameNumber, ConfigVec>();
   hb1OffSets
+    .set(13, toCv(0, -30))
+    .set(14, toCv(0, -30))
     .set(15, toCv(0, -30))
     .set(16, toCv(0, -30))
     .set(17, toCv(0, -30))
-    .set(18, toCv(0, -30))
-    .set(19, toCv(0, -30))
-    .set(20, toCv(0, -30));
+    .set(18, toCv(0, -30));
 
   const hb2OffSets = new Map<frameNumber, ConfigVec>()
-    .set(15, toCv(-5, -5))
-    .set(16, toCv(-8, -6))
-    .set(17, toCv(-10, -7))
-    .set(18, toCv(-12, -10))
-    .set(19, toCv(-9, -10))
-    .set(20, toCv(-7, -9));
+    .set(13, toCv(-5, -5))
+    .set(14, toCv(-8, -6))
+    .set(15, toCv(-10, -7))
+    .set(16, toCv(-12, -10))
+    .set(17, toCv(-9, -10))
+    .set(18, toCv(-7, -9));
 
   const hb3offSets = new Map<frameNumber, ConfigVec>()
-    .set(15, toCv(0, 15))
-    .set(16, toCv(0, 17))
-    .set(17, toCv(0, 20))
-    .set(18, toCv(0, 23))
-    .set(19, toCv(0, 21))
-    .set(20, toCv(0, 19));
+    .set(13, toCv(0, 15))
+    .set(14, toCv(0, 17))
+    .set(15, toCv(0, 20))
+    .set(16, toCv(0, 23))
+    .set(17, toCv(0, 21))
+    .set(18, toCv(0, 19));
 
   const bldr = new AttackConfigBuilder('DAir')
     .WithAttackId(ATTACK_IDS.D_AIR_ATK)

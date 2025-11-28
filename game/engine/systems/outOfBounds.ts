@@ -1,10 +1,10 @@
-import { NumberToRaw } from '../../math/fixedPoint';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { STATE_IDS } from '../finite-state-machine/playerStates/shared';
+import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { NumberToRaw } from '../math/fixedPoint';
 import {
   Player,
   SetPlayerInitialPositionRaw,
-} from '../player/playerOrchestrator';
+} from '../entity/playerOrchestrator';
 import { PlayerData, StageData } from '../world/world';
 
 export function OutOfBoundsCheck(
@@ -50,7 +50,7 @@ export function OutOfBoundsCheck(
 
 function KillPlayer(p: Player, sm: StateMachine): void {
   // reset player to spawn point
-  SetPlayerInitialPositionRaw(p, NumberToRaw(610), NumberToRaw(300)); //(610, 300);
+  SetPlayerInitialPositionRaw(p, NumberToRaw(610), NumberToRaw(300));
   // reset any stats
   p.Jump.ResetJumps();
   p.Jump.IncrementJumps();

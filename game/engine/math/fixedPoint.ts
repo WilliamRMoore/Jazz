@@ -1,5 +1,5 @@
-import { IPooledObject, Pool } from '../engine/pools/Pool';
-import { PooledVector } from '../engine/pools/PooledVector';
+import { Pool, IPooledObject } from '../pools/Pool';
+import { PooledVector } from '../pools/PooledVector';
 
 // Q-format: 16.10 (1 sign bit, 15 integer bits, 10 fractional bits)
 export const FRACTIONAL_BITS = 10;
@@ -119,6 +119,11 @@ export class FixedPoint implements IPooledObject {
 
   public Subtract(other: FixedPoint): this {
     this._rawValue -= other._rawValue;
+    return this;
+  }
+
+  public SubtractRaw(otherRaw: number): this {
+    this._rawValue -= otherRaw;
     return this;
   }
 

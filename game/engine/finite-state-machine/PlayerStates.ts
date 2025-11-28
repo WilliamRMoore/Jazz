@@ -50,14 +50,14 @@ import {
   InitDownChargeRelations,
   InitDownChargeExRelations,
   ActionStateMappings,
-} from './playerStates/relationshipMappings';
+} from './stateConfigurations/relationshipMappings';
 import {
   StateId,
   GameEventId,
   AttackId,
   GAME_EVENT_IDS,
   ATTACK_IDS,
-} from './playerStates/shared';
+} from './stateConfigurations/shared';
 import {
   Idle,
   SpotDodge,
@@ -108,7 +108,7 @@ import {
   Crouch,
   DownTilt,
   UpTilt,
-} from './playerStates/states';
+} from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
 const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();

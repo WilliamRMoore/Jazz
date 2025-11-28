@@ -3,7 +3,7 @@ import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
 } from '../physics/collisions';
-import { Player } from '../player/playerOrchestrator';
+import { Player } from '../entity/playerOrchestrator';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
@@ -25,7 +25,6 @@ export function PlayerSensors(
 
     for (let innerIdx = outerIdx + 1; innerIdx < playerCount; innerIdx++) {
       const pB = playerData.Player(innerIdx);
-
       const pAVspB = sesnsorDetect(
         pA,
         pB,
@@ -33,7 +32,6 @@ export function PlayerSensors(
         pools.ColResPool,
         pools.ClstsPntsResPool
       );
-
       const pBVspA = sesnsorDetect(
         pB,
         pA,
@@ -43,16 +41,15 @@ export function PlayerSensors(
       );
 
       if (pAVspB) {
-        const rc = pA.Sensors.ReactCommand; //.ReactAction(world, pA, pB);
+        const rc = pA.Sensors.ReactCommand;
         if (rc !== undefined) {
-          HandleCommand(world, pA, rc); //rc.handler(world, rc); //HandleJEvent(world, re);
+          HandleCommand(world, pA, rc);
         }
       }
-
       if (pBVspA) {
         const rc = pB.Sensors.ReactCommand;
         if (rc !== undefined) {
-          HandleCommand(world, pB, rc); //re.handler(world, re);//pB.Sensors.ReactAction(world, pB, pB);
+          HandleCommand(world, pB, rc);
         }
       }
     }
