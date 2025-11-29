@@ -809,6 +809,7 @@ export const UpSpecial: FSMState = {
  * up throw
  * back throw
  * down throw
+ * release
  */
 
 /**
@@ -827,6 +828,8 @@ export const UpSpecial: FSMState = {
  * flinch
  * clang
  */
+
+// ~72ish states
 
 //==================== Utils =====================
 
