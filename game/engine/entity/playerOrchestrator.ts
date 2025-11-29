@@ -260,10 +260,17 @@ export function PlayerOnPlatsReturnsYCoord(
 
 export function PlayerOnStageOrPlats(
   s: Stage,
-  ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint
+  p: Player
+  // ecbBottom: FlatVec,
+  // ecbSensorDepth: FixedPoint
 ) {
-  if (PlayerOnPlats(s, ecbBottom, ecbSensorDepth)) {
+  const ecbBottom = p.ECB.Bottom;
+  const ecbSensorDepth = p.ECB.SensorDepth;
+
+  if (
+    !p.Flags.IsPlatDetectDisabled &&
+    PlayerOnPlats(s, ecbBottom, ecbSensorDepth)
+  ) {
     return true;
   }
   return PlayerOnStage(s, ecbBottom, ecbSensorDepth);

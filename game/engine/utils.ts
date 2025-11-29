@@ -55,6 +55,16 @@ export function EaseInRaw(tRaw: number): number {
   return MultiplyRaw(tRaw, tRaw);
 }
 
+export function EaseOut(t: number): number {
+    return 1 - (1 - t) * (1 - t);
+}
+
+export function EaseOutRaw(tRaw: number): number {
+    const oneMinusT = ONE - tRaw;
+    const oneMinusTSquared = MultiplyRaw(oneMinusT, oneMinusT);
+    return ONE - oneMinusTSquared;
+}
+
 export function EaseInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }

@@ -117,6 +117,7 @@ export function PlatformDetection(
 
       if (checkValueRaw <= NEG_ZERO_POINT_FIVE && !inLanding) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+        flags.FastFallOff();
         flags.SetDisablePlatFrames(11);
         continue;
       }

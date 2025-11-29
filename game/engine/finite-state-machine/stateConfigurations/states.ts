@@ -1,11 +1,6 @@
 import { HandleCommand } from '../../command/command';
-import {
-  NumberToRaw,
-  DivideRaw,
-  MultiplyRaw,
-  RawToNumber,
-} from '../../math/fixedPoint';
-import { COS_LUT, SIN_LUT, ATAN2_LUT, ATAN2_SIZE } from '../../math/LUTS';
+import { NumberToRaw, DivideRaw, MultiplyRaw } from '../../math/fixedPoint';
+import { COS_LUT, SIN_LUT } from '../../math/LUTS';
 import { FlatVec } from '../../physics/vector';
 import { Attack } from '../../entity/playerComponents';
 import {
@@ -13,15 +8,15 @@ import {
   AddWalkImpulseToPlayer,
   AddToPlayerYPositionRaw,
 } from '../../entity/playerOrchestrator';
-import { EaseInRaw, EaseInOutRaw, GetAtan2IndexRaw } from '../../utils';
+import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
 import { FSMState } from '../PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
-const NEG_POINT_EIGHT = NumberToRaw(-0.8);
 const POINT_ONE_FIVE = NumberToRaw(0.15);
 const POINT_SIX = NumberToRaw(0.6);
+const POINT_EIGHT = NumberToRaw(0.8);
 const ONE = NumberToRaw(1);
 const TWO = NumberToRaw(2);
 
@@ -172,25 +167,7 @@ export const NeutralFall: FSMState = {
     p.ECB.SetECBShape(STATE_IDS.N_FALL_S);
   },
   OnUpdate: (p: Player, w: World) => {
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
-    const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const prevIa = inputStore.GetInputForFrame(prevFrame);
-    const speedsComp = p.Speeds;
-
-    if (
-      p.Velocity.Y.Raw > 0 &&
-      ia.LYAxis.Raw < NEG_POINT_EIGHT &&
-      prevIa.LYAxis.Raw > NEG_POINT_EIGHT
-    ) {
-      p.Flags.FastFallOn();
-    }
-
-    p.Velocity.AddClampedXImpulseRaw(
-      speedsComp.AerialSpeedInpulseLimitRaw,
-      MultiplyRaw(ia.LXAxis.Raw, speedsComp.ArielVelocityMultiplierRaw)
-    );
+    aerialInputOnUpdate(p, w);
   },
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
@@ -275,20 +252,15 @@ export const AirDodge: FSMState = {
       STATE_IDS.AIR_DODGE_S
     )!;
     const currentFrameForState = p.FSMInfo.CurrentStateFrame;
-
     const currentFrameFpRaw = NumberToRaw(currentFrameForState);
     const frameLengthFpRaw = NumberToRaw(frameLength);
     const normalizedTimeRaw = DivideRaw(currentFrameFpRaw, frameLengthFpRaw);
-    // const oneRaw = NumberToRaw(1);
     const clampedNormalizedTimeRaw = Math.min(normalizedTimeRaw, ONE);
-
     const easeRaw = EaseInRaw(clampedNormalizedTimeRaw);
-
     const pVel = p.Velocity;
     const oneMinusEaseRaw = ONE - easeRaw;
     pVel.X.SetFromRaw(MultiplyRaw(pVel.X.Raw, oneMinusEaseRaw));
     pVel.Y.SetFromRaw(MultiplyRaw(pVel.Y.Raw, oneMinusEaseRaw));
-
     if (currentFrameForState === 2) {
       p.Flags.SetIntangabilityFrames(15);
     }
@@ -313,7 +285,6 @@ export const Helpless: FSMState = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const speeds = p.Speeds;
-    // const point6Raw = NumberToRaw(0.6);
     const airSpeedRaw = MultiplyRaw(
       speeds.AerialSpeedInpulseLimitRaw,
       POINT_SIX
@@ -436,15 +407,11 @@ export const RollDodge: FSMState = {
     const inputStore = pd.InputStore(p.ID);
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-
-    // The roll direction is determined by the player's facing direction,
-    // which should be set by the input that triggered the roll.
     if (ia.LXAxis.Raw > 0) {
       p.Flags.FaceLeft();
     } else if (ia.LXAxis.Raw < 0) {
       p.Flags.FaceRight();
     }
-
     p.Flags.SetIntangabilityFrames(20);
     p.Flags.VelocityDecayOff();
     p.ECB.SetECBShape(STATE_IDS.ROLL_DODGE_S);
@@ -457,11 +424,13 @@ export const RollDodge: FSMState = {
       currentFrameRaw,
       NumberToRaw(totalFrames)
     );
-    const easedValueRaw = EaseInOutRaw(normalizedTimeRaw);
+    const clampedNormalizedTimeRaw = Math.min(normalizedTimeRaw, ONE);
+    const easeRaw = EaseInRaw(clampedNormalizedTimeRaw);
     const maxSpeedRaw = p.Speeds.DodeRollSpeedRaw;
+    const oneMinusEaseRaw = ONE - easeRaw;
     const direction = p.Flags.IsFacingRight ? NumberToRaw(-1) : NumberToRaw(1);
     p.Velocity.X.SetFromRaw(
-      MultiplyRaw(direction, MultiplyRaw(maxSpeedRaw, easedValueRaw))
+      MultiplyRaw(direction, MultiplyRaw(maxSpeedRaw, oneMinusEaseRaw))
     );
   },
   OnExit: (p, w) => {
@@ -525,7 +494,6 @@ export const SideTilt: FSMState = {
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const stateId = STATE_IDS.SIDE_TILT_S;
-    // const pointOneFive = NumberToRaw(0.15);
     if (ia.LYAxis.Raw > POINT_ONE_FIVE) {
       attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_U_GE, stateId);
       return;
@@ -643,7 +611,7 @@ export const NAerialAttack: FSMState = {
     attackOnEnter(p, w, geId, stateId);
   },
   OnUpdate: (p: Player, w: World) => {
-    fastFallCheck(p, w);
+    aerialInputOnUpdate(p, w);
     attackOnUpdate(p, w);
   },
   OnExit: attackOnExit,
@@ -658,7 +626,7 @@ export const FAerialAttack: FSMState = {
     attackOnEnter(p, w, geId, stateId);
   },
   OnUpdate: (p: Player, w: World) => {
-    fastFallCheck(p, w);
+    aerialInputOnUpdate(p, w);
     attackOnUpdate(p, w);
   },
   OnExit: attackOnExit,
@@ -673,7 +641,7 @@ export const UAirAttack: FSMState = {
     attackOnEnter(p, w, geId, stateId);
   },
   OnUpdate: (p: Player, w: World) => {
-    fastFallCheck(p, w);
+    aerialInputOnUpdate(p, w);
     attackOnUpdate(p, w);
   },
   OnExit: attackOnExit,
@@ -688,7 +656,7 @@ export const BAirAttack: FSMState = {
     attackOnEnter(p, w, geId, stateId);
   },
   OnUpdate: (p: Player, w: World) => {
-    fastFallCheck(p, w);
+    aerialInputOnUpdate(p, w);
     attackOnUpdate(p, w);
   },
   OnExit: attackOnExit,
@@ -703,7 +671,7 @@ export const DAirAttack: FSMState = {
     attackOnEnter(p, w, geId, stateId);
   },
   OnUpdate: (p: Player, w: World) => {
-    fastFallCheck(p, w);
+    aerialInputOnUpdate(p, w);
     attackOnUpdate(p, w);
   },
   OnExit: attackOnExit,
@@ -868,11 +836,8 @@ function fastFallCheck(p: Player, w: World) {
   const prevFrame = w.PreviousFrame;
   const ia = inputStore.GetInputForFrame(curFrame);
   const prevIa = inputStore.GetInputForFrame(prevFrame);
-  const speedsComp = p.Speeds;
-  const asilRaw = speedsComp.AerialSpeedInpulseLimitRaw;
-  const vel = MultiplyRaw(ia.LXAxis.Raw, asilRaw);
-  p.Velocity.AddClampedXImpulseRaw(asilRaw, vel);
   if (
+    p.Velocity.Y.Raw >= 0 &&
     prevIa !== undefined &&
     ShouldFastFall(ia.LYAxis.Raw, prevIa.LYAxis.Raw)
   ) {
@@ -915,10 +880,31 @@ function attackOnUpdate(p: Player, w: World) {
     addAttackImpulseToPlayer(p, impulse, attack);
   }
 
-  const updateCommand = attack.onUpdateCommands.get(currentStateFrame);
-  if (updateCommand !== undefined) {
-    HandleCommand(w, p, updateCommand);
+  const updateCommands = attack.onUpdateCommands.get(currentStateFrame);
+
+  if (updateCommands !== undefined) {
+    const updateCommandCount = updateCommands.length;
+    for (let i = 0; i < updateCommandCount; i++) {
+      const updateCommand = updateCommands[i];
+      HandleCommand(w, p, updateCommand);
+    }
   }
+}
+
+function aerialInputOnUpdate(p: Player, w: World) {
+  const inputStore = w.PlayerData.InputStore(p.ID);
+  const curFrame = w.localFrame;
+  const ia = inputStore.GetInputForFrame(curFrame);
+  const speedsComp = p.Speeds;
+
+  if (!p.Flags.IsPlatDetectDisabled) {
+    fastFallCheck(p, w);
+  }
+
+  p.Velocity.AddClampedXImpulseRaw(
+    speedsComp.AerialSpeedInpulseLimitRaw,
+    MultiplyRaw(ia.LXAxis.Raw, speedsComp.ArielVelocityMultiplierRaw)
+  );
 }
 
 function attackOnExit(p: Player, w: World) {
@@ -927,7 +913,6 @@ function attackOnExit(p: Player, w: World) {
   if (atk === undefined) {
     return;
   }
-  //atk.OnExit(w, p);
   const onExitCommands = atk.onExitCommands;
   const onExitCommandCount = onExitCommands.length;
   for (let i = 0; i < onExitCommandCount; i++) {
@@ -942,9 +927,7 @@ function ShouldFastFall(
   curLYAxsisRaw: number,
   prevLYAxsisRaw: number
 ): boolean {
-  const pointEight = NumberToRaw(0.8);
-
-  return curLYAxsisRaw < -pointEight && prevLYAxsisRaw > -pointEight;
+  return curLYAxsisRaw < -POINT_EIGHT && prevLYAxsisRaw > -POINT_EIGHT;
 }
 
 function addAttackImpulseToPlayer(p: Player, impulse: FlatVec, attack: Attack) {

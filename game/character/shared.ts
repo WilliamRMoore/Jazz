@@ -100,7 +100,7 @@ export type AttackConfig = {
   CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean;
   HitBubbles: Array<HitBubblesConifg>;
   onEnterCommands: Array<Command>;
-  onUpdateCommands: Map<number, Command>;
+  onUpdateCommands: Map<number, Array<Command>>;
   onExitCommands: Array<Command>;
 };
 
@@ -117,7 +117,7 @@ export class AttackConfigBuilder {
   private hitBubbles: Array<HitBubblesConifg> = [];
   private canOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   private onEnterCommands: Array<Command> = [];
-  private onUpdateCommands = new Map<number, Command>();
+  private onUpdateCommands = new Map<number, Array<Command>>();
   private onExitCommands: Array<Command> = [];
 
   constructor(name: string) {
@@ -168,21 +168,25 @@ export class AttackConfigBuilder {
     return this;
   }
 
-  public WithOnEnterCommand(event: Command): AttackConfigBuilder {
-    this.onEnterCommands.push(event);
+  public WithOnEnterCommand(command: Command): AttackConfigBuilder {
+    this.onEnterCommands.push(command);
     return this;
   }
 
   public WithOnUpdateEvent(
     frameNumber: number,
-    event: Command
+    command: Command
   ): AttackConfigBuilder {
-    this.onUpdateCommands.set(frameNumber, event);
+    if (!this.onUpdateCommands.has(frameNumber)) {
+      this.onUpdateCommands.set(frameNumber, [command]);
+    } else {
+      this.onUpdateCommands.get(frameNumber)!.push(command);
+    }
     return this;
   }
 
-  public WithOnExitEvent(event: Command): AttackConfigBuilder {
-    this.onExitCommands.push(event);
+  public WithOnExitEvent(command: Command): AttackConfigBuilder {
+    this.onExitCommands.push(command);
     return this;
   }
 

@@ -48,7 +48,7 @@ export function LedgeGrabDetection(
       continue;
     }
 
-    if (PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth)) {
+    if (PlayerOnStageOrPlats(stage, p)) {
       continue;
     }
 

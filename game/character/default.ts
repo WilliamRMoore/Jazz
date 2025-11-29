@@ -107,7 +107,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.LAND_S, 11)
       .set(STATE_IDS.SOFT_LAND_S, 2)
       .set(STATE_IDS.SPOT_DODGE_S, 43)
-      .set(STATE_IDS.ROLL_DODGE_S, 40)
+      .set(STATE_IDS.ROLL_DODGE_S, 35)
       .set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength)
       .set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength)
       .set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength)
@@ -146,7 +146,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
       .set(STATE_IDS.DOWN_CHARGE_S, { height: 110, width: 85, yOffset: 0 })
       .set(STATE_IDS.DOWN_CHARGE_EX_S, { height: 65, width: 100, yOffset: 0 })
-      .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -15 })
+      .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -5 })
       .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
       .set(STATE_IDS.DOWN_SPCL_AIR_S, { height: 65, width: 65, yOffset: 0 })
@@ -166,19 +166,19 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.maxWalkSpeed = 3.5;
     this.walkSpeedMulitplier = 1.2;
-    this.maxRunSpeed = 6.6;
+    this.maxRunSpeed = 7;
     this.runSpeedMultiplier = 2.2;
-    this.fastFallSpeed = 15;
-    this.fallSpeed = 7.5;
+    this.fastFallSpeed = 14;
+    this.fallSpeed = 7.2;
     this.gravity = 0.6;
     this.aerialVelocityDecay = 0.7;
     this.aerialSpeedInpulseLimit = 4.8;
     this.aerialSpeedMultiplier = 1.8;
     this.dashMutiplier = 3;
-    this.maxDashSpeed = 7.5;
-    this.airDodgeSpeed = 15;
-    this.dodgeRollSpeed = 16;
-    this.groundedVelocityDecay = 0.5;
+    this.maxDashSpeed = 7.8;
+    this.airDodgeSpeed = 13.5;
+    this.dodgeRollSpeed = 14.5;
+    this.groundedVelocityDecay = 0.42;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -230,20 +230,19 @@ export class DefaultCharacterConfig implements CharacterConfig {
       x2: 0,
       y2: -50,
       radius: 40,
-    }; //new HurtCapsule(0, -40, 0, -50, 40);
+    };
     const head: HurtCapsuleConfig = {
       x1: 0,
       y1: -105,
       x2: 0,
       y2: -125,
       radius: 14,
-    }; //new HurtCapsule(0, -105, 0, -125, 14);
+    };
     this.HurtCapsules.push(head);
     this.HurtCapsules.push(body);
   }
 }
 
-//const toFv = (x: number, y: number) => new FlatVec(toFp(x), toFp(y));
 const toCv = (x: number, y: number) => ({ x: x, y: y } as ConfigVec);
 
 function GetNAtk() {
@@ -324,7 +323,7 @@ function GetDashAttack() {
     .WithBaseKnockBack(basKnowback)
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
-    .WithImpulses(impulses, 18)
+    .WithImpulses(impulses, 8)
     .WithHitBubble(damage, radius, 0, 50, hb1Offsets);
 
   return bldr.Build();
@@ -1362,7 +1361,7 @@ function GetUpSpecial() {
   const totalFrameLength = 62;
   const impulses = new Map<frameNumber, ConfigVec>();
   for (let i = 13; i < 29; i++) {
-    impulses.set(i, toCv(1.2, -2));
+    impulses.set(i, toCv(1.2, -1.6));
   }
 
   const bldr = new AttackConfigBuilder('UpSpecial');
@@ -1378,13 +1377,9 @@ function GetUpSpecial() {
   bldr
     .WithAttackId(ATTACK_IDS.U_SPCL_ATK)
     .WithTotalFrames(totalFrameLength)
-    .WithImpulses(impulses, 12)
+    .WithImpulses(impulses, 10)
     .WithGravity(false)
     .WithOnEnterCommand(setPlayerVelocityToZero);
-  // .WithEnterAction((w: World, p: Player) => {
-  //   p.Velocity.X = 0;
-  //   p.Velocity.Y = 0;
-  // });
 
   return bldr.Build();
 }

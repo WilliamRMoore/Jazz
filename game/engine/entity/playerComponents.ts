@@ -1356,7 +1356,7 @@ export class Attack {
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   public readonly onEnterCommands: Array<Command> = [];
-  public readonly onUpdateCommands: Map<number, Command> = new Map();
+  public readonly onUpdateCommands: Map<number, Array<Command>> = new Map();
   public readonly onExitCommands: Array<Command> = [];
 
   constructor(conf: AttackConfig) {

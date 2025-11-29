@@ -18,11 +18,7 @@ export function ApplyVelocityDecay(
       continue;
     }
 
-    const grounded = PlayerOnStageOrPlats(
-      stage,
-      p.ECB.Bottom,
-      p.ECB.SensorDepth
-    );
+    const grounded = PlayerOnStageOrPlats(stage, p);
     const playerVelocity = p.Velocity;
     const pvxRaw = playerVelocity.X.Raw;
     const pvyRaw = playerVelocity.Y.Raw;

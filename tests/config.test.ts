@@ -19,7 +19,7 @@ describe('DefaultCharacterConfig', () => {
 
   test('should initialize with the correct base character properties', () => {
     expect(config.Weight).toBe(110);
-    expect(config.JumpVelocity).toBe(17);
+    expect(config.JumpVelocity).toBe(20);
     expect(config.NumberOfJumps).toBe(2);
     expect(config.ShieldRadius).toBe(75);
     expect(config.ShieldYOffset).toBe(-50);

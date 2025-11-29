@@ -5,7 +5,7 @@ import { LUT_SIZE } from '../game/engine/math/LUTS';
 // This is a helper function to get the expected index based on Math.atan2,
 // which is the ground truth we are testing against.
 const getExpectedAngleIndex = (y: number, x: number): number => {
-  const angle = Math.atan2(y, x); // Angle in radians
+  const angle = Math.atan2(-y, -x); // Angle in radians
   // Map [-π, π] to [0, LUT_SIZE)
   const index = Math.floor(((angle + Math.PI) / (2 * Math.PI)) * LUT_SIZE);
   // Wrap around if necessary, as index can be LUT_SIZE

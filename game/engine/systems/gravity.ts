@@ -38,10 +38,9 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   if (p.Flags.IsInHitPause) {
     return false;
   }
-  const ecb = p.ECB;
   const attack = p.Attacks.GetAttack();
   if (attack === undefined) {
-    return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
+    return !PlayerOnStageOrPlats(stage, p);
   }
   // attack is defined, and has gravity set to active
   if (attack.GravityActive === false) {
@@ -49,5 +48,5 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   }
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  return !PlayerOnStageOrPlats(stage, ecb.Bottom, ecb.SensorDepth);
+  return !PlayerOnStageOrPlats(stage, p);
 }

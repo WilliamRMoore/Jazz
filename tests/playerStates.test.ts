@@ -169,9 +169,7 @@ describe('Player states tests', () => {
     Dash.OnEnter(p, w);
 
     // Expect X velocity to be initialized to MaxDashSpeed (or related impulse)
-    const expectedImpulseRight = RawToNumber(
-      Math.abs(DivideRaw(p.Speeds.MaxDashSpeedRaw, NumberToRaw(0.33)))
-    );
+    const expectedImpulseRight = RawToNumber(p.Speeds.MaxDashSpeedRaw);
     expect(p.Velocity.X.AsNumber).toBeCloseTo(expectedImpulseRight);
 
     p.Velocity.X.SetFromNumber(0);
@@ -179,9 +177,7 @@ describe('Player states tests', () => {
 
     Dash.OnEnter(p, w);
 
-    const expectedImpulseLeft = -RawToNumber(
-      Math.abs(DivideRaw(p.Speeds.MaxDashSpeedRaw, NumberToRaw(0.33)))
-    );
+    const expectedImpulseLeft = -RawToNumber(p.Speeds.MaxDashSpeedRaw);
     expect(p.Velocity.X.AsNumber).toBeCloseTo(expectedImpulseLeft);
   });
 
