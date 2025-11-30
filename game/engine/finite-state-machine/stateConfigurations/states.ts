@@ -57,7 +57,6 @@ export const Dash: FSMState = {
   StateName: 'DASH',
   StateId: STATE_IDS.DASH_S,
   OnEnter: (p: Player, w: World) => {
-    debugger;
     const flags = p.Flags;
     const MaxDashSpeedRaw = p.Speeds.MaxDashSpeedRaw;
     const absMaxDashRaw = Math.abs(MaxDashSpeedRaw);
@@ -68,7 +67,6 @@ export const Dash: FSMState = {
     p.Velocity.AddClampedXImpulseRaw(MaxDashSpeedRaw, impulse);
   },
   OnUpdate: (p: Player, w: World) => {
-    debugger;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.localFrame;
     const ia = inputStore.GetInputForFrame(curFrame);

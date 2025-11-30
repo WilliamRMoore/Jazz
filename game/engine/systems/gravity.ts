@@ -13,7 +13,7 @@ export function Gravity(playerData: PlayerData, stageData: StageData): void {
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
-    debugger;
+
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
@@ -42,7 +42,7 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   if (attack === undefined) {
     return !PlayerOnStageOrPlats(stage, p);
   }
-  // attack is defined, and has gravity set to active
+  // attack is defined, and has gravity set to inactive
   if (attack.GravityActive === false) {
     return false;
   }

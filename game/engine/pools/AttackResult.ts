@@ -6,14 +6,14 @@ type playerIndex = number;
 export class AttackResult implements IPooledObject {
   private hit: boolean = false;
   private shieldHit: boolean = false;
-  private damage = new FixedPoint();
-  private baseKnockBack = new FixedPoint();
-  private knockBackScaling = new FixedPoint();
-  private launchAngle = new FixedPoint();
+  private readonly damage = new FixedPoint();
+  private readonly baseKnockBack = new FixedPoint();
+  private readonly knockBackScaling = new FixedPoint();
+  private readonly launchAngle = new FixedPoint();
   private priority: number = Number.MAX_SAFE_INTEGER;
-  private normX = new FixedPoint();
-  private normY = new FixedPoint();
-  private depth = new FixedPoint();
+  private readonly normX = new FixedPoint();
+  private readonly normY = new FixedPoint();
+  private readonly depth = new FixedPoint();
   private playerIndexOfPlayerHit: playerIndex = -1;
 
   public Zero(): void {
@@ -43,14 +43,14 @@ export class AttackResult implements IPooledObject {
   ) {
     this.hit = true;
     this.playerIndexOfPlayerHit = playerIndex;
-    this.damage = damage;
+    this.damage.SetFromFp(damage);
     this.priority = priority;
-    this.normX = normX;
-    this.normY = normY;
-    this.depth = depth;
-    this.baseKnockBack = baseKnockBack;
-    this.knockBackScaling = knockBackScaling;
-    this.launchAngle = launchAngle;
+    this.normX.SetFromFp(normX);
+    this.normY.SetFromFp(normY);
+    this.depth.SetFromFp(depth);
+    this.baseKnockBack.SetFromFp(baseKnockBack);
+    this.knockBackScaling.SetFromFp(knockBackScaling);
+    this.launchAngle.SetFromFp(launchAngle);
   }
 
   public SetShieldHitTrue(
@@ -66,14 +66,14 @@ export class AttackResult implements IPooledObject {
   ) {
     this.shieldHit = true;
     this.playerIndexOfPlayerHit = playerIndex;
-    this.damage = damage;
+    this.damage.SetFromFp(damage);
     this.priority = priority;
-    this.normX = normX;
-    this.normY = normY;
-    this.depth = depth;
-    this.baseKnockBack = baseKnockBack;
-    this.knockBackScaling = knockBackScaling;
-    this.launchAngle = launchAngle;
+    this.normX.SetFromFp(normX);
+    this.normY.SetFromFp(normY);
+    this.depth.SetFromFp(depth);
+    this.baseKnockBack.SetFromFp(baseKnockBack);
+    this.knockBackScaling.SetFromFp(knockBackScaling);
+    this.launchAngle.SetFromFp(launchAngle);
   }
 
   public get Hit(): boolean {

@@ -61,11 +61,6 @@ export class PooledVector implements IPooledObject {
   }
 
   private LengthRaw(): number {
-    // const fp = pool
-    //   .Rent()
-    //   .setMultiply(this.x, this.x)
-    //   .add(pool.Rent().setMultiply(this.y, this.y));
-    // return FixedPoint.sqrt(fp, pool);
     const xRaw = this.x.Raw;
     const yRaw = this.y.Raw;
     const sum = MultiplyRaw(xRaw, xRaw) + MultiplyRaw(yRaw, yRaw);
@@ -73,12 +68,7 @@ export class PooledVector implements IPooledObject {
   }
 
   public Distance(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
-    // const dx = this.x.Raw() - other.x.Raw(); //fpp.Rent().setSubtract(this.x, other.X);
-    // const dy = this.y.Raw() - other.y.Raw(); //fpp.Rent().setSubtract(this.y, other.Y);
-    // const dx2 = MultiplyRaw(dx, dx); //fpp.Rent().setMultiply(dx, dx);
-    // const dy2 = MultiplyRaw(dy, dy); //this.Multiply(dy, dy);//fpp.Rent().setMultiply(dy, dy);
-    // const sum = dx2 + dy2; //fpp.Rent().setAdd(dx2, dy2);
-    return fpp.Rent().SetFromRaw(this.DistanceRaw(other)); //FixedPoint.sqrt(sum, fpp);
+    return fpp.Rent().SetFromRaw(this.DistanceRaw(other));
   }
 
   public DistanceRaw(other: PooledVector): number {

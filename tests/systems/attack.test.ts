@@ -76,6 +76,7 @@ describe('Attack systesm tests', () => {
 
     expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(true);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.HIT_STOP_S);
+    p1Sm.ForceState(STATE_IDS.IDLE_S);
   });
 
   test('Player should NOT register an attack hit', () => {

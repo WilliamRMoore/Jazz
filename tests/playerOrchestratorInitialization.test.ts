@@ -82,7 +82,7 @@ describe('Player Orechstraotr Initialization', () => {
     expect(hb1.Damage.AsNumber).toBe(15);
     expect(hb1.Radius.AsNumber).toBe(20);
     expect(hb1.Priority).toBe(0);
-    expect(hb1.launchAngle.AsNumber).toBe(45);
+    expect(hb1.launchAngle.Raw).toBe(45);
 
     const hb4 = downSpecial.HitBubbles.find((hb) => hb.Priority === 4);
     expect(hb4).toBeDefined();

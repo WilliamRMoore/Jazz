@@ -1503,7 +1503,7 @@ class Sensor {
 
     const xRaw = facingRight
       ? globalXRaw + xOffsetRaw
-      : MultiplyRaw(globalXRaw, xOffsetRaw);
+      : globalXRaw - xOffsetRaw;
     const yRaw = globalYRaw + yOffsetRaw;
     return vecPool.Rent().SetXYRaw(xRaw, yRaw);
   }

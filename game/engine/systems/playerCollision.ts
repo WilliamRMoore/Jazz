@@ -60,13 +60,13 @@ export function PlayerCollisionDetection(
         if (checkPlayerXRaw >= otherPlayerXRaw) {
           SetPlayerPositionRaw(
             checkPlayer,
-            DivideRaw(checkPlayerXRaw + MOVE_X, TWO),
+            checkPlayerXRaw + DivideRaw(MOVE_X, TWO),
             checkPlayerYRaw
           );
 
           SetPlayerPositionRaw(
             otherPlayer,
-            DivideRaw(otherPlayerXRaw - MOVE_X, TWO),
+            otherPlayerXRaw - DivideRaw(MOVE_X, TWO),
             otherPlayerYRaw
           );
           continue;
@@ -74,13 +74,13 @@ export function PlayerCollisionDetection(
 
         SetPlayerPositionRaw(
           checkPlayer,
-          DivideRaw(checkPlayerXRaw - MOVE_X, TWO),
+          checkPlayerXRaw - DivideRaw(MOVE_X, TWO),
           checkPlayerYRaw
         );
 
         SetPlayerPositionRaw(
           otherPlayer,
-          DivideRaw(otherPlayerXRaw + MOVE_X, TWO),
+          otherPlayerXRaw + DivideRaw(MOVE_X, TWO),
           otherPlayerYRaw
         );
       }

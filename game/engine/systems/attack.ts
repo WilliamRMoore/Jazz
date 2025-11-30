@@ -296,21 +296,33 @@ function PAvsPB(
   }
 
   const pBHurtBubbles = pB.HurtCircles.HurtCapsules;
-
+  const pBPosition = pB.Position;
   const hurtLength = pBHurtBubbles.length;
 
   for (let hurtIndex = 0; hurtIndex < hurtLength; hurtIndex++) {
     const pBHurtBubble = pBHurtBubbles[hurtIndex];
+
+    const pBStartHurtDto = pBHurtBubble.GetStartPosition(
+      pBPosition.X,
+      pBPosition.Y,
+      vecPool
+    );
+
+    const pBEndHurtDto = pBHurtBubble.GetEndPosition(
+      pBPosition.X,
+      pBPosition.Y,
+      vecPool
+    );
 
     for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
       const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
       const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
       const prevPos = pAPositionHistory[previousWorldFrame];
-      const xRaw = NumberToRaw(prevPos.X);
-      const yRaw = NumberToRaw(prevPos.Y);
+      const prevXRaw = NumberToRaw(prevPos.X);
+      const prevYRaw = NumberToRaw(prevPos.Y);
 
-      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
+      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
       const pACurPositionDto = vecPool
         .Rent()
         .SetXY(pA.Position.X, pA.Position.Y);
@@ -330,7 +342,7 @@ function PAvsPB(
         continue;
       }
 
-      let pAHitBubblePreviousPos =
+      const pAHitBubblePreviousPos =
         pAHitBubble?.GetGlobalPosition(
           vecPool,
           pAPrevPositionDto.X,
@@ -339,20 +351,6 @@ function PAvsPB(
           currentStateFrame - 1 < 0 ? 0 : currentStateFrame - 1
         ) ??
         vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
-
-      const pBPosition = pB.Position;
-
-      const pBStartHurtDto = pBHurtBubble.GetStartPosition(
-        pBPosition.X,
-        pBPosition.Y,
-        vecPool
-      );
-
-      const pBEndHurtDto = pBHurtBubble.GetEndPosition(
-        pBPosition.X,
-        pBPosition.Y,
-        vecPool
-      );
 
       const pointsToTest = ClosestPointsBetweenSegments(
         pAHitBubblePreviousPos,
@@ -407,7 +405,6 @@ export function CalculateHitStop(damage: FixedPoint): number {
 
 export function CalculateHitStun(knockBackRaw: number): number {
   return Math.ceil(RawToNumber(MultiplyRaw(knockBackRaw, POINT_FOUR)));
-  //return Math.ceil(knockBack) * 0.4;
 }
 
 export function CalculateLaunchVector(
