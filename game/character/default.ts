@@ -5,6 +5,7 @@ import { SetJumpCountCommand } from '../engine/command/commands/setJumpCount';
 import { SetPlayerSensorDetectCommand } from '../engine/command/commands/setPlayerSensorReactor';
 import { SetVelocityCommand } from '../engine/command/commands/setPlayerVelocity';
 import { SwitchPlayerStateCommand } from '../engine/command/commands/switchPlayerState';
+import { frameNumber } from '../engine/entity/components/attack';
 import {
   StateId,
   AttackId,
@@ -12,7 +13,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
 } from '../engine/finite-state-machine/stateConfigurations/shared';
-import { frameNumber } from '../engine/entity/playerComponents';
+
 import {
   AttackConfig,
   AttackConfigBuilder,

@@ -1,17 +1,18 @@
-import { FlatVec, Line } from '../engine/physics/vector';
+import { AttackSnapShot } from '../engine/entity/components/attack';
+import { ECBSnapShot } from '../engine/entity/components/ecb';
+import { FlagsSnapShot } from '../engine/entity/components/flags';
+import { FSMInfoSnapShot } from '../engine/entity/components/fsmInfo';
+import { HurtCapsule } from '../engine/entity/components/hurtCircles';
+import { LedgeDetectorSnapShot } from '../engine/entity/components/ledgeDetector';
+import { PositionSnapShot } from '../engine/entity/components/position';
+import { SensorSnapShot } from '../engine/entity/components/sensor';
+import { ShieldSnapShot } from '../engine/entity/components/shield';
 import {
-  AttackSnapShot,
-  ComponentHistory,
-  ECBSnapShot,
-  FlagsSnapShot,
-  FSMInfoSnapShot,
-  HurtCapsule,
-  LedgeDetectorSnapShot,
-  PositionSnapShot,
-  SensorSnapShot,
-  ShieldSnapShot,
   StaticHistory,
-} from '../engine/entity/playerComponents';
+  ComponentHistory,
+} from '../engine/entity/componentHistory';
+import { FlatVec, Line } from '../engine/physics/vector';
+
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackHitBubbles';
 import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';

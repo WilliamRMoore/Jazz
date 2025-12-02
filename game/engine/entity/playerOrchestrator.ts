@@ -1,28 +1,28 @@
 import { Stage } from '../stage/stageMain';
-import {
-  AttackComponment,
-  ECBComponent,
-  FSMInfoComponent,
-  HitStopComponent,
-  HitStunComponent,
-  HurtCapsulesComponent,
-  JumpComponent,
-  LedgeDetectorComponent,
-  PlayerFlagsComponent,
-  PlayerPointsComponent,
-  PositionComponent,
-  SensorComponent,
-  ShieldComponent,
-  SpeedsComponent,
-  SpeedsComponentConfigBuilder,
-  VelocityComponent,
-  WeightComponent,
-} from './playerComponents';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
 import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
+import { AttackComponment } from './components/attack';
+import { ECBComponent } from './components/ecb';
+import { PlayerFlagsComponent } from './components/flags';
+import { FSMInfoComponent } from './components/fsmInfo';
+import { HitStopComponent } from './components/hitStop';
+import { HitStunComponent } from './components/hitStun';
+import { HurtCapsulesComponent } from './components/hurtCircles';
+import { JumpComponent } from './components/jump';
+import { LedgeDetectorComponent } from './components/ledgeDetector';
+import { PlayerPointsComponent } from './components/points';
+import { PositionComponent } from './components/position';
+import { SensorComponent } from './components/sensor';
+import { ShieldComponent } from './components/shield';
+import {
+  SpeedsComponentConfigBuilder,
+  SpeedsComponent,
+} from './components/speeds';
+import { VelocityComponent } from './components/velocity';
+import { WeightComponent } from './components/weight';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -258,12 +258,7 @@ export function PlayerOnPlatsReturnsYCoord(
   return undefined;
 }
 
-export function PlayerOnStageOrPlats(
-  s: Stage,
-  p: Player
-  // ecbBottom: FlatVec,
-  // ecbSensorDepth: FixedPoint
-) {
+export function PlayerOnStageOrPlats(s: Stage, p: Player) {
   const ecbBottom = p.ECB.Bottom;
   const ecbSensorDepth = p.ECB.SensorDepth;
 

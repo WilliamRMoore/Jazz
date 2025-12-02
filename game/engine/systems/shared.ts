@@ -7,6 +7,6 @@ export const CORRECTION_DEPTH_RAW = NumberToRaw(0.1); //= 0.1;
 
 export const HARD_LAND_VELOCITY_RAW = NumberToRaw(5);
 
-export function shouldSoftlandRaw(yVelocityRaw: number) {
+export function ShouldSoftlandRaw(yVelocityRaw: number) {
   return yVelocityRaw < HARD_LAND_VELOCITY_RAW;
 }

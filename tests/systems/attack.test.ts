@@ -7,7 +7,7 @@ import {
   NumberToRaw,
   RawToNumber,
 } from '../../game/engine/math/fixedPoint';
-import { ComponentHistory } from '../../game/engine/entity/playerComponents';
+import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,

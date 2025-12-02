@@ -2,12 +2,12 @@ import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { InputAction } from '../../input/Input';
 
-import { FSMInfoComponent } from '../entity/playerComponents';
 import { ActionMappings, FSMStates } from './PlayerStates';
 import { RunCondition } from './stateConfigurations/conditions';
 import { ActionStateMappings } from './stateConfigurations/relationshipMappings';
 import { StateId, GameEventId } from './stateConfigurations/shared';
 import { Idle } from './stateConfigurations/states';
+import { FSMInfoComponent } from '../entity/components/fsmInfo';
 
 export type FSMState = {
   StateName: string;

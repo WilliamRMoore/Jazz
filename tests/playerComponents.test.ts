@@ -1,9 +1,9 @@
 import { DefaultCharacterConfig } from '../game/character/default';
 import { Player } from '../game/engine/entity/playerOrchestrator';
 import { World } from '../game/engine/world/world';
-import { ECBComponent } from '../game/engine/entity/playerComponents';
 import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { FixedPoint, NumberToRaw } from '../game/engine/math/fixedPoint';
+import { ECBComponent } from '../game/engine/entity/components/ecb';
 
 describe('PlayerComponents ECB tests', () => {
   let p: Player;

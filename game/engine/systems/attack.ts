@@ -11,7 +11,7 @@ import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
 } from '../physics/collisions';
-import { ComponentHistory } from '../entity/playerComponents';
+import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
 import { AttackResult } from '../pools/AttackResult';
@@ -242,7 +242,7 @@ function PAvsPB(
         continue;
       }
 
-      let pAHitBubblePreviousPos =
+      const pAHitBubblePreviousPos =
         pAHitBubble?.GetGlobalPosition(
           vecPool,
           pAPrevPositionDto.X,
@@ -252,7 +252,7 @@ function PAvsPB(
         ) ??
         vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
-      let closestPoints = ClosestPointsBetweenSegments(
+      const closestPoints = ClosestPointsBetweenSegments(
         shieldPos,
         shieldPos,
         pAHitBubblePreviousPos,
@@ -278,7 +278,7 @@ function PAvsPB(
 
       if (collision.Collision) {
         pAAttack.HitPlayer(pB.ID);
-        let attackResult = atkResPool.Rent();
+        const attackResult = atkResPool.Rent();
         attackResult.SetShieldHitTrue(
           pB.ID,
           pAHitBubble.Damage,

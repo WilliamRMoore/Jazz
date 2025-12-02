@@ -39,7 +39,6 @@ export function PlayerSensors(
         pools.ColResPool,
         pools.ClstsPntsResPool
       );
-
       if (pAVspB) {
         const rc = pA.Sensors.ReactCommand;
         if (rc !== undefined) {

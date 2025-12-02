@@ -15,7 +15,7 @@ import {
   Player,
 } from '../entity/playerOrchestrator';
 import { PlayerData, StageData } from '../world/world';
-import { CORRECTION_DEPTH_RAW, shouldSoftlandRaw } from './shared';
+import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
 const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
@@ -195,7 +195,7 @@ function handlePlatformLanding(
   yCoord: FixedPoint,
   xCoord: FixedPoint
 ) {
-  const landId = shouldSoftlandRaw(p.Velocity.Y.Raw)
+  const landId = ShouldSoftlandRaw(p.Velocity.Y.Raw)
     ? GAME_EVENT_IDS.SOFT_LAND_GE
     : GAME_EVENT_IDS.LAND_GE;
   sm.UpdateFromWorld(landId);

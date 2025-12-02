@@ -78,6 +78,21 @@ export type CharacterConfig = {
   gravity: number;
 };
 
+export type GrabBubbleConfig = {
+  BubbleId: number;
+  Radius: number;
+  frameOffsets: Map<frameNumber, ConfigVec>;
+};
+
+export type GrabConfig = {
+  Name: string;
+  GrabId: number;
+  TotalFrameLength: number;
+  ImpulseClamp: number | undefined;
+  Impulses: Map<frameNumber, ConfigVec> | undefined;
+  GrabBubbles: Array<GrabBubbleConfig>;
+};
+
 export type HitBubblesConifg = {
   BubbleId: number;
   Damage: number;

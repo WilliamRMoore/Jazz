@@ -10,7 +10,7 @@ export type AttackId = number;
 
 const seq = new Sequencer();
 
-seq.SeqStart = -1;
+seq.SeqStart = 0;
 
 //Postfixed with _GE for game event. So you know you are looking at game event Ids.
 class GAME_EVENTS {
@@ -64,7 +64,7 @@ class GAME_EVENTS {
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
 
-seq.SeqStart = -1;
+seq.SeqStart = 0;
 
 //Postfixed _S for state, so you know you are looking at state Ids.
 class STATES {
@@ -122,7 +122,7 @@ class STATES {
 
 export const STATE_IDS = new STATES();
 
-seq.SeqStart = -1;
+seq.SeqStart = 0;
 
 class ATTACKS {
   public readonly N_GRND_ATK = seq.Next as AttackId;

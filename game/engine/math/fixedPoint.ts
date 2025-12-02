@@ -41,16 +41,6 @@ export function SqrtRaw(aRaw: number): number {
   return Math.trunc(Math.sqrt(aRaw * SCALE));
 }
 
-export function FPMin(a: FixedPoint, b: FixedPoint): FixedPoint {
-  return a.Raw < b.Raw ? a : b;
-}
-
-export function Sqrt(a: FixedPoint, pool: Pool<FixedPoint>): FixedPoint {
-  const result = pool.Rent();
-  result.SetFromRaw(SqrtRaw(a.Raw));
-  return result;
-}
-
 export function DotProductRaw(
   x1Raw: number,
   y1Raw: number,
@@ -65,11 +55,6 @@ export function DotProductVectorRaw(vec1: PooledVector, vec2: PooledVector) {
 }
 
 export class FixedPoint implements IPooledObject {
-  public static readonly MAX_VALUE = new FixedPoint().SetFromRaw(MAX_RAW_VALUE);
-  public static readonly MIN_VALUE = new FixedPoint().SetFromRaw(MIN_RAW_VALUE);
-  public static readonly ONE = new FixedPoint().SetFromNumber(1);
-  public static readonly ZERO = new FixedPoint().SetFromNumber(0);
-
   // The raw integer value representing the fixed-point number.
   private _rawValue: number;
 

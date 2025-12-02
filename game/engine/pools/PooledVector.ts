@@ -89,20 +89,6 @@ export class PooledVector implements IPooledObject {
     return this;
   }
 
-  public DotProduct(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
-    return fpp
-      .Rent()
-      .SetFromRaw(
-        DotProductRaw(this.x.Raw, this.y.Raw, other.x.Raw, other.y.Raw)
-      );
-  }
-
-  public CrossProduct(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
-    const x_prod = fpp.Rent().SetMultiply(this.x, other.Y);
-    const y_prod = fpp.Rent().SetMultiply(this.y, other.X);
-    return x_prod.Subtract(y_prod);
-  }
-
   public SetFromFlatVec(vec: FlatVec): PooledVector {
     this.x.SetFromFp(vec.X);
     this.y.SetFromFp(vec.Y);

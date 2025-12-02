@@ -56,13 +56,13 @@ export function EaseInRaw(tRaw: number): number {
 }
 
 export function EaseOut(t: number): number {
-    return 1 - (1 - t) * (1 - t);
+  return 1 - (1 - t) * (1 - t);
 }
 
 export function EaseOutRaw(tRaw: number): number {
-    const oneMinusT = ONE - tRaw;
-    const oneMinusTSquared = MultiplyRaw(oneMinusT, oneMinusT);
-    return ONE - oneMinusTSquared;
+  const oneMinusT = ONE - tRaw;
+  const oneMinusTSquared = MultiplyRaw(oneMinusT, oneMinusT);
+  return ONE - oneMinusTSquared;
 }
 
 export function EaseInOut(t: number): number {
@@ -108,9 +108,10 @@ export class Sequencer {
   }
 
   public get Next(): number {
+    const ret = this.seq;
     const next = this.step(this.seq);
     this.seq = next;
-    return next;
+    return ret;
   }
 }
 

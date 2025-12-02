@@ -2,7 +2,6 @@ import { HandleCommand } from '../../command/command';
 import { NumberToRaw, DivideRaw, MultiplyRaw } from '../../math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../../math/LUTS';
 import { FlatVec } from '../../physics/vector';
-import { Attack } from '../../entity/playerComponents';
 import {
   Player,
   AddWalkImpulseToPlayer,
@@ -12,6 +11,7 @@ import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
 import { FSMState } from '../PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
+import { Attack } from '../../entity/components/attack';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
 const POINT_ONE_FIVE = NumberToRaw(0.15);

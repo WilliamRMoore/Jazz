@@ -15,7 +15,7 @@ import {
   AddToPlayerYPositionRaw,
 } from '../entity/playerOrchestrator';
 import { PlayerData, Pools, StageData } from '../world/world';
-import { CORRECTION_DEPTH_RAW, shouldSoftlandRaw } from './shared';
+import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
 
 const CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
 
@@ -179,7 +179,7 @@ export function StageCollisionDetection(
     if (grnd === true && collisionResult.Collision) {
       const ecbBottomYRaw = ecb.Bottom.Y.Raw;
       sm.UpdateFromWorld(
-        shouldSoftlandRaw(p.Velocity.Y.Raw)
+        ShouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
           : GAME_EVENT_IDS.LAND_GE
       );

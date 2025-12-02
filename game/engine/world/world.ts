@@ -1,7 +1,7 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { InputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
-import { ComponentHistory } from '../entity/playerComponents';
+import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { PooledVector } from '../pools/PooledVector';
