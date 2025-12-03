@@ -12,6 +12,8 @@ import {
   STATE_IDS,
   ATTACK_IDS,
   GAME_EVENT_IDS,
+  GrabId,
+  GRAB_IDS,
 } from '../engine/finite-state-machine/stateConfigurations/shared';
 
 import {
@@ -19,7 +21,10 @@ import {
   AttackConfigBuilder,
   CharacterConfig,
   ConfigVec,
+  ECBShape,
   ECBShapesConfig,
+  GrabConfig,
+  GrabConfigBuilder,
   HurtCapsuleConfig,
 } from './shared';
 
@@ -28,38 +33,33 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ECBHeight = 0;
   public ECBWidth = 0;
   public ECBOffset = 0;
-  public ECBShapes: ECBShapesConfig = new Map<
-    StateId,
-    { height: number; width: number; yOffset: number }
-  >();
+  public ECBShapes: ECBShapesConfig = new Map<StateId, ECBShape>();
   public HurtCapsules: Array<HurtCapsuleConfig> = [];
   public JumpVelocity = 0;
   public NumberOfJumps: number;
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
-  public ledgeBoxYOffset = 0;
-  public attacks: Map<AttackId, AttackConfig> = new Map<
-    AttackId,
-    AttackConfig
-  >();
+  public LedgeBoxYOffset = 0;
+  public Attacks = new Map<AttackId, AttackConfig>();
+  public Grabs = new Map<GrabId, GrabConfig>();
   public Weight = 0;
   public ShieldRadius = 0;
   public ShieldYOffset = 0;
-  public groundedVelocityDecay: number;
-  public aerialVelocityDecay: number;
-  public aerialSpeedInpulseLimit: number;
-  public aerialSpeedMultiplier: number;
-  public airDodgeSpeed: number;
-  public dodgeRollSpeed: number;
-  public maxWalkSpeed: number;
-  public maxRunSpeed: number;
-  public dashMutiplier: number;
-  public maxDashSpeed: number;
-  public walkSpeedMulitplier: number;
-  public runSpeedMultiplier: number;
-  public fastFallSpeed: number;
-  public fallSpeed: number;
-  public gravity: number;
+  public GroundedVelocityDecay: number;
+  public AerialVelocityDecay: number;
+  public AerialSpeedInpulseLimit: number;
+  public AerialSpeedMultiplier: number;
+  public AirDodgeSpeed: number;
+  public DodgeRollSpeed: number;
+  public MaxWalkSpeed: number;
+  public MaxRunSpeed: number;
+  public DashMutiplier: number;
+  public MaxDashSpeed: number;
+  public WalkSpeedMulitplier: number;
+  public RunSpeedMultiplier: number;
+  public FastFallSpeed: number;
+  public FallSpeed: number;
+  public Gravity: number;
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -165,21 +165,21 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);
 
-    this.maxWalkSpeed = 3.5;
-    this.walkSpeedMulitplier = 1.2;
-    this.maxRunSpeed = 7;
-    this.runSpeedMultiplier = 2.2;
-    this.fastFallSpeed = 14;
-    this.fallSpeed = 7.2;
-    this.gravity = 0.6;
-    this.aerialVelocityDecay = 0.7;
-    this.aerialSpeedInpulseLimit = 4.8;
-    this.aerialSpeedMultiplier = 1.8;
-    this.dashMutiplier = 3;
-    this.maxDashSpeed = 7.8;
-    this.airDodgeSpeed = 13.5;
-    this.dodgeRollSpeed = 14.5;
-    this.groundedVelocityDecay = 0.42;
+    this.MaxWalkSpeed = 3.5;
+    this.WalkSpeedMulitplier = 1.2;
+    this.MaxRunSpeed = 7;
+    this.RunSpeedMultiplier = 2.2;
+    this.FastFallSpeed = 14;
+    this.FallSpeed = 7.2;
+    this.Gravity = 0.6;
+    this.AerialVelocityDecay = 0.7;
+    this.AerialSpeedInpulseLimit = 4.8;
+    this.AerialSpeedMultiplier = 1.8;
+    this.DashMutiplier = 3;
+    this.MaxDashSpeed = 7.8;
+    this.AirDodgeSpeed = 13.5;
+    this.DodgeRollSpeed = 14.5;
+    this.GroundedVelocityDecay = 0.42;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -194,9 +194,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.LedgeBoxHeight = 35;
     this.LedgeBoxWidth = 80;
-    this.ledgeBoxYOffset = -130;
-    this.attacks
-      .set(neutralAttack.AttackId, neutralAttack)
+    this.LedgeBoxYOffset = -130;
+    this.Attacks.set(neutralAttack.AttackId, neutralAttack)
       .set(downTilt.AttackId, downTilt)
       .set(upTilt.AttackId, upTilt)
       .set(sideTilt.AttackId, sideTilt)
@@ -1381,6 +1380,23 @@ function GetUpSpecial() {
     .WithImpulses(impulses, 10)
     .WithGravity(false)
     .WithOnEnterCommand(setPlayerVelocityToZero);
+
+  return bldr.Build();
+}
+
+function GetGrab() {
+  const totalFrames = 30;
+  const radius = 30;
+  const bubble1Offsets = new Map<frameNumber, ConfigVec>();
+  const cv = toCv(50, -50);
+  bubble1Offsets.set(6, cv).set(7, cv).set(8, cv).set(9, cv).set(10, cv);
+
+  const bldr = new GrabConfigBuilder('Grab');
+
+  bldr
+    .WithTotalFrames(totalFrames)
+    .WithGrabBubble(radius, bubble1Offsets)
+    .WithGrabId(GRAB_IDS.GRAB_G);
 
   return bldr.Build();
 }

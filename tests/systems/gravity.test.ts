@@ -73,7 +73,7 @@ describe('Gravity system tests', () => {
 
   test('Gravity is not applied when attack has gravity disabled', () => {
     const charConfig = new DefaultCharacterConfig();
-    const attackConf = charConfig.attacks.get(ATTACK_IDS.N_GRND_ATK);
+    const attackConf = charConfig.Attacks.get(ATTACK_IDS.N_GRND_ATK);
 
     if (attackConf) {
       const newAttackConf = { ...attackConf, GravityActive: false };

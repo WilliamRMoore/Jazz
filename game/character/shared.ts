@@ -2,6 +2,7 @@ import { Command } from '../engine/command/command';
 import {
   StateId,
   AttackId,
+  GrabId,
 } from '../engine/finite-state-machine/stateConfigurations/shared';
 
 type frameNumber = number;
@@ -56,41 +57,27 @@ export type CharacterConfig = {
   NumberOfJumps: number;
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
-  ledgeBoxYOffset: number;
-  attacks: Map<AttackId, AttackConfig>;
+  LedgeBoxYOffset: number;
+  Attacks: Map<AttackId, AttackConfig>;
+  Grabs: Map<GrabId, GrabConfig>;
   Weight: number;
   ShieldRadius: number;
   ShieldYOffset: number;
-  groundedVelocityDecay: number;
-  aerialVelocityDecay: number;
-  aerialSpeedInpulseLimit: number;
-  aerialSpeedMultiplier: number;
-  airDodgeSpeed: number;
-  dodgeRollSpeed: number;
-  maxWalkSpeed: number;
-  maxRunSpeed: number;
-  dashMutiplier: number;
-  maxDashSpeed: number;
-  walkSpeedMulitplier: number;
-  runSpeedMultiplier: number;
-  fastFallSpeed: number;
-  fallSpeed: number;
-  gravity: number;
-};
-
-export type GrabBubbleConfig = {
-  BubbleId: number;
-  Radius: number;
-  frameOffsets: Map<frameNumber, ConfigVec>;
-};
-
-export type GrabConfig = {
-  Name: string;
-  GrabId: number;
-  TotalFrameLength: number;
-  ImpulseClamp: number | undefined;
-  Impulses: Map<frameNumber, ConfigVec> | undefined;
-  GrabBubbles: Array<GrabBubbleConfig>;
+  GroundedVelocityDecay: number;
+  AerialVelocityDecay: number;
+  AerialSpeedInpulseLimit: number;
+  AerialSpeedMultiplier: number;
+  AirDodgeSpeed: number;
+  DodgeRollSpeed: number;
+  MaxWalkSpeed: number;
+  MaxRunSpeed: number;
+  DashMutiplier: number;
+  MaxDashSpeed: number;
+  WalkSpeedMulitplier: number;
+  RunSpeedMultiplier: number;
+  FastFallSpeed: number;
+  FallSpeed: number;
+  Gravity: number;
 };
 
 export type HitBubblesConifg = {
@@ -251,5 +238,83 @@ export class AttackConfigBuilder {
     };
 
     return atkConf;
+  }
+}
+
+export type GrabBubbleConfig = {
+  BubbleId: number;
+  Radius: number;
+  frameOffsets: Map<frameNumber, ConfigVec>;
+};
+
+export type GrabConfig = {
+  Name: string;
+  GrabId: number;
+  TotalFrameLength: number;
+  ImpulseClamp: number | undefined;
+  Impulses: Map<frameNumber, ConfigVec> | undefined;
+  GrabBubbles: Array<GrabBubbleConfig>;
+};
+
+export class GrabConfigBuilder {
+  private grabId: GrabId = 0;
+  private name: string = '';
+  private totalFrames: number = 0;
+  private impulseClamp: number | undefined;
+  private impulses: Map<frameNumber, ConfigVec> | undefined;
+  private grabBubbles: Array<GrabBubbleConfig> = [];
+
+  constructor(name: string) {
+    this.name = name;
+  }
+
+  public WithGrabId(grabId: GrabId): GrabConfigBuilder {
+    this.grabId = grabId;
+    return this;
+  }
+
+  public WithTotalFrames(totalFrames: number): GrabConfigBuilder {
+    this.totalFrames = totalFrames;
+    return this;
+  }
+
+  public WithImpulses(
+    impulses: Map<frameNumber, ConfigVec>,
+    impulseClamp: number | undefined = undefined
+  ): GrabConfigBuilder {
+    this.impulses = impulses;
+    this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
+    return this;
+  }
+
+  public WithGrabBubble(
+    radius: number,
+    frameOffsets: Map<frameNumber, ConfigVec>
+  ): GrabConfigBuilder {
+    const grabBubId = this.grabBubbles.length;
+
+    const grabBub: GrabBubbleConfig = {
+      BubbleId: grabBubId,
+      Radius: radius,
+      frameOffsets: frameOffsets,
+    };
+    this.grabBubbles.push(grabBub);
+    return this;
+  }
+
+  public Build(): GrabConfig {
+    if (this.grabId == undefined) {
+      throw new Error('GRAB ID CANNOT BE NULL!');
+    }
+    const grabConf: GrabConfig = {
+      Name: this.name,
+      GrabId: this.grabId,
+      TotalFrameLength: this.totalFrames,
+      ImpulseClamp: this.impulseClamp,
+      Impulses: this.impulses,
+      GrabBubbles: this.grabBubbles,
+    };
+
+    return grabConf;
   }
 }

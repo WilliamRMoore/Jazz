@@ -5,6 +5,7 @@ import { Sequencer } from '../../utils';
 export type GameEventId = number;
 export type StateId = number;
 export type AttackId = number;
+export type GrabId = number;
 
 // Constants =======================================================================
 
@@ -49,15 +50,18 @@ class GAME_EVENTS {
   public readonly MOVE_FAST_GE = seq.Next as GameEventId;
   public readonly JUMP_GE = seq.Next as GameEventId;
   public readonly GRAB_GE = seq.Next as GameEventId;
+  public readonly RUN_GRAB_GE = seq.Next as GameEventId;
+  public readonly SPCL_GRAB_GE = seq.Next as GameEventId;
   public readonly GUARD_GE = seq.Next as GameEventId;
   public readonly UP_GE = seq.Next as GameEventId;
   public readonly DOWN_GE = seq.Next as GameEventId;
-  // End of GameEvents that can be source from player input
+  // End of GameEvents that can be sourced from player input
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
   public readonly FALL_GE = seq.Next as GameEventId;
   public readonly LEDGE_GRAB_GE = seq.Next as GameEventId;
   public readonly HIT_STOP_GE = seq.Next as GameEventId;
+  public readonly HELD_GE = seq.Next as GameEventId;
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
 }
@@ -118,6 +122,13 @@ class STATES {
   public readonly SHIELD_DROP_S = seq.Next as StateId;
   public readonly SPOT_DODGE_S = seq.Next as StateId;
   public readonly ROLL_DODGE_S = seq.Next as StateId;
+  public readonly GRAB_S = seq.Next as StateId;
+  public readonly RUN_GRAB_S = seq.Next as StateId;
+  public readonly SPCL_GRAB_S = seq.Next as StateId;
+  public readonly GRAB_HOLD_S = seq.Next as StateId;
+  public readonly GRAB_HELD_S = seq.Next as StateId;
+  public readonly GRAB_RELEASE_S = seq.Next as StateId;
+  public readonly GRAB_ESCAPE_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -158,6 +169,16 @@ class ATTACKS {
 
 export const ATTACK_IDS = new ATTACKS();
 
+seq.SeqStart = 0;
+
+class GRABS {
+  public readonly GRAB_G = seq.Next as GrabId;
+  public readonly RUN_GRAB_G = seq.Next as GrabId;
+  public readonly SPCL_GRAB_G = seq.Next as GrabId;
+}
+
+export const GRAB_IDS = new GRABS();
+
 export function CanStateWalkOffLedge(stateId: StateId): boolean {
   switch (stateId) {
     case STATE_IDS.IDLE_S:
@@ -176,6 +197,12 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.CROUCH_S:
     case STATE_IDS.LEDGE_GRAB_S:
     case STATE_IDS.ROLL_DODGE_S:
+    case STATE_IDS.SPOT_DODGE_S:
+    case STATE_IDS.GRAB_S:
+    case STATE_IDS.TURN_S:
+    case STATE_IDS.DASH_S:
+    case STATE_IDS.DOWN_CHARGE_S:
+    case STATE_IDS.DOWN_CHARGE_EX_S:
       return false;
     default:
       return true;

@@ -35,7 +35,7 @@ describe('DefaultCharacterConfig', () => {
   });
 
   test('neutralAtk should have thses settings', () => {
-    const nAtk = config.attacks.get(ATTACK_IDS.N_GRND_ATK);
+    const nAtk = config.Attacks.get(ATTACK_IDS.N_GRND_ATK);
     expect(nAtk?.BaseKnockBack).toBe(15);
     expect(nAtk?.KnockBackScaling).toBe(54);
     expect(nAtk?.TotalFrameLength).toBe(18);
@@ -45,7 +45,7 @@ describe('DefaultCharacterConfig', () => {
   });
 
   test('Side special should have thses settings', () => {
-    const sideSpecial = config.attacks.get(ATTACK_IDS.S_SPCL_ATK);
+    const sideSpecial = config.Attacks.get(ATTACK_IDS.S_SPCL_ATK);
     const setVelCommand = sideSpecial?.onEnterCommands.find(
       (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET
     )! as SetVelocityCommand;
@@ -63,7 +63,7 @@ describe('DefaultCharacterConfig', () => {
   });
 
   test('upTilt should have the correct properties', () => {
-    const upTilt = config.attacks.get(ATTACK_IDS.U_TILT_ATK);
+    const upTilt = config.Attacks.get(ATTACK_IDS.U_TILT_ATK);
 
     expect(upTilt).toBeDefined();
     if (!upTilt) {
@@ -103,7 +103,7 @@ describe('DefaultCharacterConfig', () => {
   });
 
   test('sideTilt should have the correct properties', () => {
-    const sideTilt = config.attacks.get(ATTACK_IDS.S_TILT_ATK);
+    const sideTilt = config.Attacks.get(ATTACK_IDS.S_TILT_ATK);
 
     expect(sideTilt).toBeDefined();
     if (!sideTilt) {
@@ -144,7 +144,7 @@ describe('DefaultCharacterConfig', () => {
   });
 
   test('sideTiltUp should have the correct properties', () => {
-    const sideTiltUp = config.attacks.get(ATTACK_IDS.S_TILT_U_ATK);
+    const sideTiltUp = config.Attacks.get(ATTACK_IDS.S_TILT_U_ATK);
 
     expect(sideTiltUp).toBeDefined();
     if (!sideTiltUp) {

@@ -12,6 +12,7 @@ import { VelocitySnapShot } from './components/velocity';
 import { hitStunSnapShot } from './components/hitStun';
 import { PlayerPointsSnapShot } from './components/points';
 import { hitStopSnapShot } from './components/hitStop';
+import { GrabSnapShot } from './components/grab';
 
 /***
  * TODO:
@@ -59,6 +60,7 @@ export class ComponentHistory {
   readonly LedgeDetectorHistory: Array<LedgeDetectorSnapShot> = [];
   readonly SensorsHistory: Array<SensorSnapShot> = [];
   readonly AttackHistory: Array<AttackSnapShot> = [];
+  readonly GrabHistory: Array<GrabSnapShot> = [];
 
   public SetPlayerToFrame(p: Player, frameNumber: number) {
     p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
@@ -74,6 +76,7 @@ export class ComponentHistory {
     p.Sensors.SetFromSnapShot(this.SensorsHistory[frameNumber]);
     p.Jump.SetFromSnapShot(this.JumpHistroy[frameNumber]);
     p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
+    p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
   }
 
   public static GetRightXFromEcbHistory(ecb: ECBSnapShot): number {

@@ -13,7 +13,7 @@ import {
 } from '../physics/collisions';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
@@ -195,7 +195,7 @@ function PAvsPB(
     return atkResPool.Rent();
   }
 
-  const pAHitBubbles = pAAttack.GetActiveHitBubblesForFrame(
+  const pAHitBubbles = pAAttack.GetActiveBubblesForFrame(
     pAstateFrame,
     activeHbPool.Rent()
   );

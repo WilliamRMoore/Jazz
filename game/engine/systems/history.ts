@@ -23,6 +23,7 @@ export function RecordHistory(
     history.EcbHistory[frameNumber] = p.ECB.SnapShot();
     history.JumpHistroy[frameNumber] = p.Jump.SnapShot();
     history.AttackHistory[frameNumber] = p.Attacks.SnapShot();
+    history.GrabHistory[frameNumber] = p.Grabs.SnapShot();
   }
   w.SetPoolHistory();
 }

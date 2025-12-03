@@ -10,7 +10,7 @@ import { CollisionResult } from '../pools/CollisionResult';
 import { ProjectionResult } from '../pools/ProjectResult';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { FixedPoint } from '../math/fixedPoint';
 
 export type PlayerData = {

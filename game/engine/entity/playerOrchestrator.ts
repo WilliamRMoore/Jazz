@@ -23,6 +23,7 @@ import {
 } from './components/speeds';
 import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
+import { GrabComponent } from './components/grab';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -42,22 +43,23 @@ export class Player {
   public readonly LedgeDetector: LedgeDetectorComponent;
   public readonly Sensors: SensorComponent;
   public readonly Attacks: AttackComponment;
+  public readonly Grabs: GrabComponent;
   public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
   constructor(Id: number, cc: CharacterConfig) {
     const sB = new SpeedsComponentConfigBuilder();
-    sB.SetWalkSpeeds(cc.maxWalkSpeed, cc.walkSpeedMulitplier);
-    sB.SetRunSpeeds(cc.maxRunSpeed, cc.runSpeedMultiplier);
-    sB.SetFallSpeeds(cc.fastFallSpeed, cc.fallSpeed, cc.gravity);
+    sB.SetWalkSpeeds(cc.MaxWalkSpeed, cc.WalkSpeedMulitplier);
+    sB.SetRunSpeeds(cc.MaxRunSpeed, cc.RunSpeedMultiplier);
+    sB.SetFallSpeeds(cc.FastFallSpeed, cc.FallSpeed, cc.Gravity);
     sB.SetAerialSpeeds(
-      cc.aerialVelocityDecay,
-      cc.aerialSpeedInpulseLimit,
-      cc.aerialSpeedMultiplier
+      cc.AerialVelocityDecay,
+      cc.AerialSpeedInpulseLimit,
+      cc.AerialSpeedMultiplier
     );
-    sB.SetDashSpeeds(cc.dashMutiplier, cc.maxDashSpeed);
-    sB.SetDodgeSpeeds(cc.airDodgeSpeed, cc.dodgeRollSpeed);
-    sB.SetGroundedVelocityDecay(cc.groundedVelocityDecay);
+    sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
+    sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
+    sB.SetGroundedVelocityDecay(cc.GroundedVelocityDecay);
     this.ID = Id;
     this.Position = new PositionComponent();
     this.Velocity = new VelocityComponent();
@@ -82,10 +84,11 @@ export class Player {
       this.Position.Y.AsNumber,
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
-      cc.ledgeBoxYOffset
+      cc.LedgeBoxYOffset
     );
     this.Sensors = new SensorComponent();
-    this.Attacks = new AttackComponment(cc.attacks);
+    this.Attacks = new AttackComponment(cc.Attacks);
+    this.Grabs = new GrabComponent(cc.Grabs);
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
 }

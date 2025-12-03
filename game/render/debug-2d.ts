@@ -13,7 +13,7 @@ import {
 } from '../engine/entity/componentHistory';
 import { FlatVec, Line } from '../engine/physics/vector';
 
-import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
 import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
 
@@ -602,7 +602,7 @@ function drawHitCircles(
   }
   adto.Zero();
   const currentSateFrame = fsmInfo.StateFrame;
-  const circles = attack.GetActiveHitBubblesForFrame(currentSateFrame, adto); //.GetHitBubblesForFrame(currentSateFrame);
+  const circles = attack.GetActiveBubblesForFrame(currentSateFrame, adto); //.GetHitBubblesForFrame(currentSateFrame);
 
   if (circles === undefined) {
     return;

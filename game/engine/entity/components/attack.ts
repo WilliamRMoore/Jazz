@@ -7,7 +7,7 @@ import {
 } from '../../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
-import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
@@ -88,7 +88,7 @@ export class Attack {
   public readonly KnockBackScaling = new FixedPoint(0);
   public readonly ImpulseClamp: FixedPoint | undefined;
   public readonly PlayerIdsHit = new Set<number>();
-  public readonly Impulses: Map<frameNumber, FlatVec> = new Map();
+  public readonly Impulses: Map<frameNumber, FlatVec> | undefined;
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   public readonly onEnterCommands: Array<Command> = [];
@@ -130,11 +130,14 @@ export class Attack {
     }
   }
 
-  public GetActiveImpulseForFrame(frameNumber: number): FlatVec | undefined {
+  public GetImpulseForFrame(frameNumber: number): FlatVec | undefined {
+    if (this.Impulses === undefined) {
+      return undefined;
+    }
     return this.Impulses.get(frameNumber);
   }
 
-  public GetActiveHitBubblesForFrame(
+  public GetActiveBubblesForFrame(
     frameNumber: frameNumber,
     activeHBs: ActiveHitBubblesDTO
   ): ActiveHitBubblesDTO {
@@ -191,11 +194,9 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
       return;
     }
     const attack = this.attacks.get(attackId);
-
     if (attack === undefined) {
       return;
     }
-
     this.currentAttack = attack;
   }
 
