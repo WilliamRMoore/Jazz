@@ -1,10 +1,11 @@
 import { IJazz, JazzDebugger } from '../engine/jazz';
-import { STATE_IDS } from '../engine/finite-state-machine/PlayerStates';
 import { DebugRenderer, resolution } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput } from '../input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
+import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { FixedPoint } from '../engine/math/fixedPoint';
 
 const frameInterval = 1000 / 60;
 
@@ -19,11 +20,13 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   const engine = new JazzDebugger();
   const playerCount = playerInfo.length;
   //p1 spawn point
-  const positions = [{ X: 610, Y: 100 }] as Array<FlatVec>;
+  const positions = [
+    { X: new FixedPoint(610), Y: new FixedPoint(100) },
+  ] as Array<FlatVec>;
 
   if (playerCount == 2) {
     //p2 spawn point
-    positions.push({ X: 690, Y: 100 });
+    positions.push({ X: new FixedPoint(690), Y: new FixedPoint(100) });
   }
 
   engine.Init(playerCount, positions);

@@ -1,39 +1,56 @@
-import { FlatVec } from '../physics/vector';
+import { FixedPoint } from '../math/fixedPoint';
 import { IPooledObject } from './Pool';
 
 export class ClosestPointsResult implements IPooledObject {
-  private c1X: number = 0;
-  private c1Y: number = 0;
-  private c2X: number = 0;
-  private c2Y: number = 0;
+  private readonly c1X = new FixedPoint();
+  private readonly c1Y = new FixedPoint();
+  private readonly c2X = new FixedPoint();
+  private readonly c2Y = new FixedPoint();
 
-  public Zero(): void {
-    this.c1X = 0;
-    this.c1Y = 0;
-    this.c2X = 0;
-    this.c2Y = 0;
+  public Set(
+    c1X: FixedPoint,
+    c1Y: FixedPoint,
+    c2X: FixedPoint,
+    c2Y: FixedPoint
+  ) {
+    this.c1X.SetFromFp(c1X);
+    this.c1Y.SetFromFp(c1Y);
+    this.c2X.SetFromFp(c2X);
+    this.c2Y.SetFromFp(c2Y);
   }
 
-  public Set(c1X: number, c1Y: number, c2X: number, c2Y: number) {
-    this.c1X = c1X;
-    this.c1Y = c1Y;
-    this.c2X = c2X;
-    this.c2Y = c2Y;
+  public SetRaw(
+    c1XRaw: number,
+    c1YRaw: number,
+    c2XRaw: number,
+    c2YRaw: number
+  ) {
+    this.c1X.SetFromRaw(c1XRaw);
+    this.c1Y.SetFromRaw(c1YRaw);
+    this.c2X.SetFromRaw(c2XRaw);
+    this.c2Y.SetFromRaw(c2YRaw);
   }
 
-  public get C1X(): number {
+  public get C1X(): FixedPoint {
     return this.c1X;
   }
 
-  public get C1Y(): number {
+  public get C1Y(): FixedPoint {
     return this.c1Y;
   }
 
-  public get C2X(): number {
+  public get C2X(): FixedPoint {
     return this.c2X;
   }
 
-  public get C2Y(): number {
+  public get C2Y(): FixedPoint {
     return this.c2Y;
+  }
+
+  public Zero(): void {
+    this.c1X.Zero();
+    this.c1Y.Zero();
+    this.c2X.Zero();
+    this.c2Y.Zero();
   }
 }

@@ -1,47 +1,63 @@
+import { FixedPoint } from '../math/fixedPoint';
 import { IPooledObject } from './Pool';
 
 export interface ICollisionResult {
-  SetCollisionTrue(x: number, y: number, depth: number): void;
+  SetCollisionTrue(x: FixedPoint, y: FixedPoint, depth: FixedPoint): void;
   SetCollisionFalse(): void;
-  get NormX(): number;
-  get NormY(): number;
+  get NormX(): FixedPoint;
+  get NormY(): FixedPoint;
   get Collision(): boolean;
-  get Depth(): number;
+  get Depth(): FixedPoint;
 }
 
 export class CollisionResult implements ICollisionResult, IPooledObject {
   private collision: boolean = false;
-  private normX: number = 0;
-  private normY: number = 0;
-  private depth: number = 0;
+  private readonly normX = new FixedPoint();
+  private readonly normY = new FixedPoint();
+  private readonly depth = new FixedPoint();
 
-  public SetCollisionTrue(x: number, y: number, depth: number): void {
+  public SetCollisionTrue(
+    x: FixedPoint,
+    y: FixedPoint,
+    depth: FixedPoint
+  ): void {
     this.collision = true;
-    this.normX = x;
-    this.normY = y;
-    this.depth = depth;
+    this.normX.SetFromFp(x);
+    this.normY.SetFromFp(y);
+    this.depth.SetFromFp(depth);
+  }
+
+  public SetCollisionTrueRaw(
+    xRaw: number,
+    yRaw: number,
+    depthRaw: number
+  ): void {
+    this.collision = true;
+    this.normX.SetFromRaw(xRaw);
+    this.normY.SetFromRaw(yRaw);
+    this.depth.SetFromRaw(depthRaw);
   }
 
   public SetCollisionFalse(): void {
     this.collision = false;
-    this.normX = 0;
-    this.normY = 0;
-    this.depth = 0;
+    this.normX.Zero();
+    this.normY.Zero();
+    this.depth.Zero();
   }
 
   public get Collision(): boolean {
     return this.collision;
   }
 
-  public get Depth(): number {
+  public get Depth(): FixedPoint {
     return this.depth;
   }
 
-  public get NormX(): number {
+  public get NormX(): FixedPoint {
     return this.normX;
   }
 
-  public get NormY(): number {
+  public get NormY(): FixedPoint {
     return this.normY;
   }
 
