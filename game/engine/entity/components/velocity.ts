@@ -43,15 +43,6 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
     }
   }
 
-  public SnapShot(): VelocitySnapShot {
-    return { X: this.x.AsNumber, Y: this.y.AsNumber } as VelocitySnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: VelocitySnapShot): void {
-    this.x.SetFromNumber(snapShot.X);
-    this.y.SetFromNumber(snapShot.Y);
-  }
-
   public get X(): FixedPoint {
     return this.x;
   }
@@ -66,5 +57,14 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
 
   public set Y(val: FixedPoint) {
     this.y.SetFromFp(val);
+  }
+
+  public SnapShot(): VelocitySnapShot {
+    return { X: this.x.AsNumber, Y: this.y.AsNumber } as VelocitySnapShot;
+  }
+
+  public SetFromSnapShot(snapShot: VelocitySnapShot): void {
+    this.x.SetFromNumber(snapShot.X);
+    this.y.SetFromNumber(snapShot.Y);
   }
 }

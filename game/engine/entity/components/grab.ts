@@ -67,6 +67,24 @@ export class GrabBubble {
     const globalYRaw = yRaw + offset.Y.Raw;
     return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
+
+  public GetGlobalPositionRaw(
+    vecPool: Pool<PooledVector>,
+    playerXRaw: number,
+    playerYRaw: number,
+    facinRight: boolean,
+    grabFrameNumber: frameNumber
+  ): PooledVector | undefined {
+    const offset = this.frameOffsets.get(grabFrameNumber);
+    if (offset === undefined) {
+      return undefined;
+    }
+    const globalXRaw = facinRight
+      ? playerXRaw + offset.X.Raw
+      : playerXRaw - offset.X.Raw;
+    const globalYRaw = playerYRaw + offset.Y.Raw;
+    return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
+  }
 }
 
 export class Grab {

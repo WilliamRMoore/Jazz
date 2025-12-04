@@ -54,6 +54,19 @@ export function DotProductVectorRaw(vec1: PooledVector, vec2: PooledVector) {
   return DotProductRaw(vec1.X.Raw, vec1.Y.Raw, vec2.X.Raw, vec2.Y.Raw);
 }
 
+export function DistanceRaw(
+  x1Raw: number,
+  y1Raw: number,
+  x2Raw: number,
+  y2Raw: number
+) {
+  const dx = x1Raw - x2Raw;
+  const dy = y1Raw - y2Raw;
+  const dx2 = MultiplyRaw(dx, dx);
+  const dy2 = MultiplyRaw(dy, dy);
+  return SqrtRaw(dx2 + dy2);
+}
+
 export class FixedPoint implements IPooledObject {
   // The raw integer value representing the fixed-point number.
   private _rawValue: number;

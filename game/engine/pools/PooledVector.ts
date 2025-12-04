@@ -3,10 +3,9 @@ import {
   MultiplyRaw,
   SqrtRaw,
   DivideRaw,
-  DotProductRaw,
 } from '../math/fixedPoint';
 import { FlatVec } from '../physics/vector';
-import { IPooledObject, Pool } from './Pool';
+import { IPooledObject } from './Pool';
 
 export class PooledVector implements IPooledObject {
   private readonly x: FixedPoint = new FixedPoint(0);
@@ -67,17 +66,12 @@ export class PooledVector implements IPooledObject {
     return SqrtRaw(sum);
   }
 
-  public Distance(other: PooledVector, fpp: Pool<FixedPoint>): FixedPoint {
-    return fpp.Rent().SetFromRaw(this.DistanceRaw(other));
-  }
-
   public DistanceRaw(other: PooledVector): number {
     const dx = this.x.Raw - other.x.Raw;
     const dy = this.y.Raw - other.y.Raw;
     const dx2 = MultiplyRaw(dx, dx);
     const dy2 = MultiplyRaw(dy, dy);
-    const sum = dx2 + dy2;
-    return SqrtRaw(sum);
+    return SqrtRaw(dx2 + dy2);
   }
 
   public Normalize(): PooledVector {

@@ -61,7 +61,8 @@ class GAME_EVENTS {
   public readonly FALL_GE = seq.Next as GameEventId;
   public readonly LEDGE_GRAB_GE = seq.Next as GameEventId;
   public readonly HIT_STOP_GE = seq.Next as GameEventId;
-  public readonly HELD_GE = seq.Next as GameEventId;
+  public readonly GRAB_HELD_GE = seq.Next as GameEventId;
+  public readonly GRAB_HOLD_GE = seq.Next as GameEventId;
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
 }
