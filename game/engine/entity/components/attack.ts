@@ -18,13 +18,12 @@ export type frameNumber = number;
 
 export class HitBubble {
   public readonly BubbleId: bubbleId;
-  public readonly Damage: FixedPoint = new FixedPoint(0);
+  public readonly Damage = new FixedPoint(0);
   public readonly Priority: number;
-  public readonly Radius: FixedPoint = new FixedPoint(0);
-  public readonly launchAngle: FixedPoint = new FixedPoint(0);
-  public readonly activeStartFrame: frameNumber;
-  public readonly activeEndFrame: frameNumber;
-  public readonly frameOffsets: Map<frameNumber, FlatVec>;
+  public readonly Radius = new FixedPoint(0);
+  public readonly launchAngle = new FixedPoint(0);
+  public readonly activeFrames = new Set<number>();
+  public readonly frameOffsets = new Map<frameNumber, FlatVec>();
 
   constructor(hbc: HitBubblesConifg) {
     this.BubbleId = hbc.BubbleId;
@@ -32,22 +31,14 @@ export class HitBubble {
     this.Priority = hbc.Priority;
     this.Radius.SetFromNumber(hbc.Radius);
     this.launchAngle.SetFromNumber(hbc.LaunchAngle);
-    const activeframes = Array.from(hbc.frameOffsets.keys()).sort(
-      (a, b) => a - b
-    );
-    this.activeStartFrame = activeframes[0];
-    this.activeEndFrame = activeframes[activeframes.length - 1];
-    this.frameOffsets = new Map<frameNumber, FlatVec>();
     for (const [k, v] of hbc.frameOffsets) {
       this.frameOffsets.set(k, ToFV(v.x, v.y));
+      this.activeFrames.add(k);
     }
   }
 
   public IsActive(attackFrameNumber: frameNumber): boolean {
-    return (
-      attackFrameNumber >= this.activeStartFrame &&
-      attackFrameNumber <= this.activeEndFrame
-    );
+    return this.activeFrames.has(attackFrameNumber);
   }
 
   public GetLocalPosiitionOffsetForFrame(
@@ -92,7 +83,7 @@ export class Attack {
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
   public readonly onEnterCommands: Array<Command> = [];
-  public readonly onUpdateCommands: Map<number, Array<Command>> = new Map();
+  public readonly onUpdateCommands = new Map<number, Array<Command>>();
   public readonly onExitCommands: Array<Command> = [];
 
   constructor(conf: AttackConfig) {

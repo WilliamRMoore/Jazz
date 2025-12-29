@@ -24,13 +24,7 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   }
 
   public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    const newVelocityRaw = this.y.Raw + impulse.Raw;
-    const clampValueRaw = Math.abs(clamp.Raw);
-    if (newVelocityRaw > 0) {
-      this.y.SetFromRaw(Math.min(newVelocityRaw, clampValueRaw));
-    } else {
-      this.y.SetFromRaw(newVelocityRaw);
-    }
+    this.AddClampedYImpulseRaw(clamp.Raw, impulse.Raw);
   }
 
   public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {

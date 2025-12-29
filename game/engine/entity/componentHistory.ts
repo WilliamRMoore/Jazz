@@ -10,7 +10,7 @@ import { SensorSnapShot } from './components/sensor';
 import { ShieldSnapShot } from './components/shield';
 import { VelocitySnapShot } from './components/velocity';
 import { hitStunSnapShot } from './components/hitStun';
-import { PlayerPointsSnapShot } from './components/points';
+import { PlayerPointsSnapShot } from './components/damage';
 import { hitStopSnapShot } from './components/hitStop';
 import { GrabSnapShot } from './components/grab';
 
@@ -67,7 +67,7 @@ export class ComponentHistory {
     p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
     p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
     p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
-    p.Points.SetFromSnapShot(this.PlayerPointsHistory[frameNumber]);
+    p.Damage.SetFromSnapShot(this.PlayerPointsHistory[frameNumber]);
     p.HitStop.SetFromSnapShot(this.PlayerHitStopHistory[frameNumber]);
     p.HitStun.SetFromSnapShot(this.PlayerHitStunHistory[frameNumber]);
     p.Flags.SetFromSnapShot(this.FlagsHistory[frameNumber]);

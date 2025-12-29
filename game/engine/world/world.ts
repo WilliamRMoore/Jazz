@@ -144,7 +144,7 @@ export class World {
   public readonly Pools: PoolContainer = new PoolContainer();
 
   public get PreviousFrame(): number {
-    return this.localFrame - 1 >= 0 ? this.localFrame - 1 : 0;
+    return this.localFrame === 0 ? 0 : this.localFrame - 1;
   }
 
   public SetPlayer(p: Player): void {

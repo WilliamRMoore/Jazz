@@ -56,8 +56,7 @@ function KillPlayer(p: Player, sm: StateMachine): void {
   p.Jump.IncrementJumps();
   p.Velocity.X.Zero();
   p.Velocity.Y.Zero();
-  p.Points.SubtractMatchPoints(1);
-  p.Points.ResetDamagePoints();
+  p.Damage.ResetDamagePoints();
   p.Flags.FastFallOff();
   p.Flags.ZeroIntangabilityFrames();
   p.Flags.ZeroHitPauseFrames();

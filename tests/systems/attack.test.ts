@@ -71,7 +71,7 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
-    p1.FSMInfo._currentStaeFrame = 3; // Startup frames over, active frames
+    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
     PlayerAttacks(w.PlayerData, w.HistoryData, w.Pools, 3);
 
     expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(true);
@@ -99,7 +99,7 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
-    p1.FSMInfo._currentStaeFrame = 3; // Startup frames over, active frames
+    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
     PlayerAttacks(w.PlayerData, w.HistoryData, w.Pools, 3);
 
     expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(false);

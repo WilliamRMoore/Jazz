@@ -13,7 +13,7 @@ import { HitStunComponent } from './components/hitStun';
 import { HurtCapsulesComponent } from './components/hurtCircles';
 import { JumpComponent } from './components/jump';
 import { LedgeDetectorComponent } from './components/ledgeDetector';
-import { PlayerPointsComponent } from './components/points';
+import { PlayerDamageComponent } from './components/damage';
 import { PositionComponent } from './components/position';
 import { SensorComponent } from './components/sensor';
 import { ShieldComponent } from './components/shield';
@@ -24,6 +24,7 @@ import {
 import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
+import { GrabMeterComponent } from './components/grabMeter';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -32,7 +33,7 @@ export class Player {
   public readonly Velocity: VelocityComponent;
   public readonly Weight: WeightComponent;
   public readonly Flags: PlayerFlagsComponent;
-  public readonly Points: PlayerPointsComponent;
+  public readonly Damage: PlayerDamageComponent;
   public readonly HitStun: HitStunComponent;
   public readonly HitStop: HitStopComponent;
   public readonly Speeds: SpeedsComponent;
@@ -44,6 +45,7 @@ export class Player {
   public readonly Sensors: SensorComponent;
   public readonly Attacks: AttackComponment;
   public readonly Grabs: GrabComponent;
+  public readonly GrabMeter: GrabMeterComponent;
   public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
@@ -66,7 +68,7 @@ export class Player {
     this.Weight = new WeightComponent(cc.Weight);
     this.Speeds = sB.Build();
     this.Flags = new PlayerFlagsComponent();
-    this.Points = new PlayerPointsComponent();
+    this.Damage = new PlayerDamageComponent();
     this.HitStun = new HitStunComponent();
     this.HitStop = new HitStopComponent();
 
@@ -89,6 +91,7 @@ export class Player {
     this.Sensors = new SensorComponent();
     this.Attacks = new AttackComponment(cc.Attacks);
     this.Grabs = new GrabComponent(cc.Grabs);
+    this.GrabMeter = new GrabMeterComponent();
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
 }

@@ -13,7 +13,7 @@ import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { World } from '../world/world';
 
-export function Grab(w: World) {
+export function PlayerGrabs(w: World) {
   const pd = w.PlayerData;
   const pools = w.Pools;
   const componenetHistories = w.HistoryData.PlayerComponentHistories;
@@ -71,18 +71,18 @@ export function Grab(w: World) {
 
 const HOLD_DISTANCE = NumberToRaw(50);
 
-// we will add some very subtle rubber banding for losing players, they get port priority
+// we will add some very subtle rubber banding for losing players, they get priority
 function resolveDoubleGrab(
   grabberA: Player,
   grabberB: Player,
   grabberASm: StateMachine,
   grabberBSm: StateMachine
 ) {
-  if (grabberA.Points.Damage > grabberB.Points.Damage) {
+  if (grabberA.Damage.Damage > grabberB.Damage.Damage) {
     resolveGrab(grabberA, grabberB, grabberASm, grabberBSm);
     return;
   }
-  if (grabberB.Points.Damage > grabberA.Points.Damage) {
+  if (grabberB.Damage.Damage > grabberA.Damage.Damage) {
     resolveGrab(grabberB, grabberA, grabberBSm, grabberASm);
     return;
   }
@@ -103,26 +103,27 @@ function resolveGrab(
   grabeeSm.UpdateFromWorld(GAME_EVENT_IDS.GRAB_HELD_GE);
 
   const grabberPos = grabber.Position;
-  const grabberFacingRight = grabber.Flags.IsFacingRight;
-  const grabeeFacingRight = grabee.Flags.IsFacingRight;
+  const grabberDirection = grabber.Flags.IsFacingRight;
+  const grabbeeDirection = grabee.Flags.IsFacingRight;
 
-  if (grabberFacingRight == grabeeFacingRight) {
+  if (grabberDirection === grabbeeDirection) {
     grabee.Flags.ChangeDirections();
   }
 
   const grabeeNewPosY = grabberPos.Y.Raw;
-  const grabeeNewPosX = grabberFacingRight
+  const grabeeNewPosX = grabberDirection
     ? grabberPos.X.Raw + HOLD_DISTANCE
     : grabberPos.X.Raw - HOLD_DISTANCE;
 
   SetPlayerPositionRaw(grabee, grabeeNewPosX, grabeeNewPosY);
+  grabee.GrabMeter.SetHoldingPlayerId(grabber.ID);
 }
 
 const agbDto = new ActiveGrabBubblesDTO();
 function PAvsPB(
   pA: Player,
   pB: Player,
-  componenetHistories: Array<ComponentHistory>,
+  componentHistories: Array<ComponentHistory>,
   vecPool: Pool<PooledVector>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
   currentFrame: number
@@ -150,7 +151,7 @@ function PAvsPB(
   const pAPosition = pA.Position;
   const pBPosition = pB.Position;
   const pAFacingRight = pA.Flags.IsFacingRight;
-  const pAPosHistory = componenetHistories[pA.ID].PositionHistory;
+  const pAPosHistory = componentHistories[pA.ID].PositionHistory;
   const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
   const prevPostion = pAPosHistory[previousWorldFrame];
   const prevXRaw = NumberToRaw(prevPostion.X);

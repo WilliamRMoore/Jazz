@@ -76,7 +76,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const downChargeEx = GetDownChargeExtension();
     const dashAtk = GetDashAttack();
     const nSpecial = GetNSpecial();
-    // grab
+    const grab = GetGrab();
     // runGrab
     // side throw
     // down throw
@@ -97,6 +97,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
       .set(STATE_IDS.SHIELD_DROP_S, 6)
+      .set(STATE_IDS.GRAB_ESCAPE_S, 30)
+      .set(STATE_IDS.GRAB_RELEASE_S, 30)
       .set(STATE_IDS.JUMP_SQUAT_S, 4)
       .set(STATE_IDS.TURN_S, 3)
       .set(STATE_IDS.DASH_S, 20)
@@ -132,7 +134,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SIDE_SPCL_EX_AIR_S, sideSpecialExAir.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
-      .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength);
+      .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
+      .set(STATE_IDS.GRAB_S, grab.TotalFrameLength);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -221,6 +224,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(sideSpecialExAir.AttackId, sideSpecialExAir)
       .set(dashAtk.AttackId, dashAtk)
       .set(upSpecial.AttackId, upSpecial);
+
+    this.Grabs.set(grab.GrabId, grab);
   }
 
   private populateHurtCircles() {
@@ -1388,7 +1393,7 @@ function GetGrab() {
   const totalFrames = 30;
   const radius = 30;
   const bubble1Offsets = new Map<frameNumber, ConfigVec>();
-  const cv = toCv(50, -50);
+  const cv = toCv(65, -50);
   bubble1Offsets.set(6, cv).set(7, cv).set(8, cv).set(9, cv).set(10, cv);
 
   const bldr = new GrabConfigBuilder('Grab');

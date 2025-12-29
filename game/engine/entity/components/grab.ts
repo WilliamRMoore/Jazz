@@ -18,21 +18,15 @@ type bubbleId = number;
 export class GrabBubble {
   public readonly BubbleId: bubbleId;
   public readonly Radius: FixedPoint;
-  public readonly activeStartFrame: frameNumber;
-  public readonly activeEndFrame: frameNumber;
-  public readonly frameOffsets: Map<frameNumber, FlatVec>;
+  public readonly activeFrames = new Set<number>();
+  public readonly frameOffsets = new Map<frameNumber, FlatVec>();
 
   constructor(gbc: GrabBubbleConfig) {
     this.BubbleId = gbc.BubbleId;
     this.Radius = new FixedPoint(gbc.Radius);
-    const activeframes = Array.from(gbc.frameOffsets.keys()).sort(
-      (a, b) => a - b
-    );
-    this.activeStartFrame = activeframes[0];
-    this.activeEndFrame = activeframes[activeframes.length - 1];
-    this.frameOffsets = new Map<frameNumber, FlatVec>();
     for (const [k, v] of gbc.frameOffsets) {
       this.frameOffsets.set(k, ToFV(v.x, v.y));
+      this.activeFrames.add(k);
     }
   }
 
@@ -43,10 +37,7 @@ export class GrabBubble {
   }
 
   public IsActive(grabFrameNumber: frameNumber): boolean {
-    return (
-      grabFrameNumber >= this.activeStartFrame &&
-      grabFrameNumber <= this.activeEndFrame
-    );
+    return this.activeFrames.has(grabFrameNumber);
   }
 
   public GetGlobalPosition(
@@ -102,7 +93,7 @@ export class Grab {
     const gbs = conf.GrabBubbles.map((gbc) => new GrabBubble(gbc));
     this.GrabBubbles = gbs.sort((a, b) => a.BubbleId - b.BubbleId);
     if (conf.Impulses !== undefined) {
-      this.ImpulseClamp = new FixedPoint().SetFromNumber(conf.ImpulseClamp!);
+      this.ImpulseClamp = new FixedPoint(conf.ImpulseClamp!);
       this.Impulses = new Map<frameNumber, FlatVec>();
       for (const [k, v] of conf.Impulses) {
         this.Impulses.set(k, ToFV(v.x, v.y));

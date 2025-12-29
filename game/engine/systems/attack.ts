@@ -108,9 +108,9 @@ function resolveHitResult(
   vecPool: Pool<PooledVector>
 ): void {
   const atkDamage = pAHitsPbResult.Damage;
-  pB.Points.AddDamage(atkDamage);
+  pB.Damage.AddDamage(atkDamage);
 
-  const playerDamage = pB.Points.Damage;
+  const playerDamage = pB.Damage.Damage;
   const weight = pB.Weight.Value;
   const scailing = pAHitsPbResult.KnockBackScaling;
   const baseKnockBack = pAHitsPbResult.BaseKnockBack;

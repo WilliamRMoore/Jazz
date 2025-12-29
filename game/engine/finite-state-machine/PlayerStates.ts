@@ -51,6 +51,10 @@ import {
   InitDownChargeExRelations,
   ActionStateMappings,
   InitGrabRelations,
+  InitHoldRelations,
+  InitHeldRelations,
+  InitGrabReleaseRelations,
+  InitGrabEscapeRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -112,6 +116,10 @@ import {
   DownTilt,
   UpTilt,
   NuetralGrab,
+  Hold,
+  Held,
+  GrabEscape,
+  GrabRelease,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -164,6 +172,10 @@ const UP_CHARGE_EX_RELATIONS = InitiUpChargeExRelations();
 const DOWN_CHARGE_RELATIONS = InitDownChargeRelations();
 const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
 const GRAB_RELATIONS = InitGrabRelations();
+const GRAB_HOLD_RELATIONS = InitHoldRelations();
+const GRAB_HELD_RELATIONS = InitHeldRelations();
+const GRAB_RELEASE_RELATIONS = InitGrabReleaseRelations();
+const GRAB_ESCAPE_RELATIONS = InitGrabEscapeRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -215,7 +227,11 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings)
   .set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings)
   .set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings)
-  .set(GRAB_RELATIONS.stateId, GRAB_RELATIONS.mappings);
+  .set(GRAB_RELATIONS.stateId, GRAB_RELATIONS.mappings)
+  .set(GRAB_HOLD_RELATIONS.stateId, GRAB_HOLD_RELATIONS.mappings)
+  .set(GRAB_HELD_RELATIONS.stateId, GRAB_HELD_RELATIONS.mappings)
+  .set(GRAB_RELEASE_RELATIONS.stateId, GRAB_RELEASE_RELATIONS.mappings)
+  .set(GRAB_ESCAPE_RELATIONS.stateId, GRAB_ESCAPE_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -267,7 +283,11 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(Crouch.StateId, Crouch)
   .set(DownTilt.StateId, DownTilt)
   .set(UpTilt.StateId, UpTilt)
-  .set(NuetralGrab.StateId, NuetralGrab);
+  .set(NuetralGrab.StateId, NuetralGrab)
+  .set(Hold.StateId, Hold)
+  .set(Held.StateId, Held)
+  .set(GrabRelease.StateId, GrabRelease)
+  .set(GrabEscape.StateId, GrabEscape);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)

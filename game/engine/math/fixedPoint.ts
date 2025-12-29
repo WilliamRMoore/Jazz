@@ -72,7 +72,7 @@ export class FixedPoint implements IPooledObject {
   private _rawValue: number;
 
   constructor(value: number = 0) {
-    this._rawValue = ClampRaw(Math.trunc(value * SCALE));
+    this._rawValue = NumberToRaw(value);
   }
 
   // --- Value Conversion ---

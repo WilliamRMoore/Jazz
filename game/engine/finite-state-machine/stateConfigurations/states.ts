@@ -274,11 +274,7 @@ export const AirDodge: FSMState = {
 export const Helpless: FSMState = {
   StateName: 'Helpless',
   StateId: STATE_IDS.HELPLESS_S,
-  OnEnter: (p: Player, w: World) => {
-    if (p.Jump.OnFirstJump()) {
-      p.Jump.IncrementJumps();
-    }
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.localFrame;
@@ -373,7 +369,7 @@ export const ShieldRaise: FSMState = {
   StateId: STATE_IDS.SHIELD_RAISE_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p, w) => {},
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const Shield: FSMState = {
@@ -382,7 +378,13 @@ export const Shield: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.Shield.Active = true;
   },
-  OnUpdate: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const input = inputStore.GetInputForFrame(w.localFrame);
+    const triggerValue =
+      input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
+    p.Shield.ShrinkRaw(triggerValue);
+  },
   OnExit: (p, w) => {
     p.Shield.Active = false;
   },
@@ -822,13 +824,22 @@ export const Held: FSMState = {
   StateId: STATE_IDS.GRAB_HELD_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    const grabMeter = p.GrabMeter;
+    grabMeter.Meter.Zero();
+    grabMeter.ZeroHoldingPlayerId();
+  },
 };
 
 export const GrabRelease: FSMState = {
   StateName: 'GrabRelease',
   StateId: STATE_IDS.GRAB_RELEASE_S,
-  OnEnter: (p: Player, w: World) => {},
+  OnEnter: (p: Player, w: World) => {
+    const velocity = p.Velocity;
+    const flags = p.Flags;
+    const releaseVelocity = flags.IsFacingRight ? -6 : 6;
+    velocity.X.SetFromNumber(releaseVelocity);
+  },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {},
 };
@@ -836,7 +847,12 @@ export const GrabRelease: FSMState = {
 export const GrabEscape: FSMState = {
   StateName: 'GrabEscape',
   StateId: STATE_IDS.GRAB_ESCAPE_S,
-  OnEnter: (p: Player, w: World) => {},
+  OnEnter: (p: Player, w: World) => {
+    const velocity = p.Velocity;
+    const flags = p.Flags;
+    const releaseVelocity = flags.IsFacingRight ? -10 : 10;
+    velocity.X.SetFromNumber(releaseVelocity);
+  },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {},
 };

@@ -11,11 +11,13 @@ import {
   StaticHistory,
   ComponentHistory,
 } from '../engine/entity/componentHistory';
-import { FlatVec, Line } from '../engine/physics/vector';
+import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
 import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
+import { GrabSnapShot } from '../engine/entity/components/grab';
+import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
 
 function getAlpha(
   timeStampNow: number,
@@ -273,6 +275,16 @@ function drawPlayer(
     const lastPos = playerHistory!.PositionHistory[lastFrame];
     const flags = playerHistory!.FlagsHistory[currentFrame];
     drawSensors(ctx, alpha, pos, lastPos, flags, sensorsWrapper);
+  }
+
+  for (let i = 0; i < playerCount; i++) {
+    const playerHistory = world.GetComponentHistory(i);
+    const grab = playerHistory!.GrabHistory[currentFrame];
+    const fsm = playerHistory!.FsmInfoHistory[currentFrame];
+    const flags = playerHistory!.FlagsHistory[currentFrame];
+    const pos = playerHistory!.PositionHistory[currentFrame];
+    const lastPos = playerHistory!.PositionHistory[lastFrame];
+    drawGrabCircles(ctx, grab, fsm, flags, pos, lastPos, alpha);
   }
 
   for (let i = 0; i < playerCount; i++) {
@@ -618,11 +630,11 @@ function drawHitCircles(
   const interpolatedY = Lerp(lastPosition.Y, currentPosition.Y, alpha);
 
   for (let i = 0; i < length; i++) {
-    const circle = circles.AtIndex(i); //circles[i];
+    const circle = circles.AtIndex(i);
     if (circle === undefined) {
       continue;
     }
-    const offSet = circle?.GetLocalPosiitionOffsetForFrame(currentSateFrame); //circle.GetLocalOffSetForFrame(currentSateFrame);
+    const offSet = circle?.GetLocalPosiitionOffsetForFrame(currentSateFrame);
     if (offSet === undefined) {
       continue;
     }
@@ -633,8 +645,8 @@ function drawHitCircles(
 
     ctx.beginPath();
     ctx.arc(offsetX, offsetY, circle.Radius.AsNumber, 0, Math.PI * 2);
-    ctx.fill(); // Fill the circle with yellow
-    ctx.stroke(); // Draw the circle outline
+    ctx.fill();
+    ctx.stroke();
     ctx.closePath();
   }
   ctx.globalAlpha = 1.0;
@@ -684,6 +696,57 @@ function drawHurtCircles(
   }
 
   ctx.globalAlpha = 1.0; // Reset transparency to fully opaque
+}
+
+const gbDto = new ActiveGrabBubblesDTO();
+function drawGrabCircles(
+  ctx: CanvasRenderingContext2D,
+  grab: GrabSnapShot,
+  fsmInfo: FSMInfoSnapShot,
+  flags: FlagsSnapShot,
+  currentPosition: PositionSnapShot,
+  lastPosition: PositionSnapShot,
+  alpha: number
+) {
+  if (grab === undefined) {
+    return;
+  }
+
+  const currentSateFrame = fsmInfo.StateFrame;
+  const circles = grab.GetActiveBubblesForFrame(currentSateFrame, gbDto);
+
+  if (circles === undefined) {
+    return;
+  }
+
+  ctx.strokeStyle = 'purple';
+  ctx.fillStyle = 'purple';
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.4;
+  const length = circles.Length;
+
+  const interpolatedX = Lerp(lastPosition.X, currentPosition.X, alpha);
+  const interpolatedY = Lerp(lastPosition.Y, currentPosition.Y, alpha);
+  for (let i = 0; i < length; i++) {
+    const circle = circles.AtIndex(i); //circles[i];
+    if (circle === undefined) {
+      continue;
+    }
+    const offSet = circle?.GetLocalPositionOffsetForFrame(currentSateFrame);
+    if (offSet === undefined) {
+      continue;
+    }
+    const offsetX = flags.FacingRight
+      ? interpolatedX + offSet.X.AsNumber
+      : interpolatedX - offSet.X.AsNumber;
+    const offsetY = interpolatedY + offSet.Y.AsNumber;
+    ctx.beginPath();
+    ctx.arc(offsetX, offsetY, circle.Radius.AsNumber, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.closePath();
+  }
+  ctx.globalAlpha = 1.0;
 }
 
 function drawPositionMarker(
