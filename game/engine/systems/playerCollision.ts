@@ -2,15 +2,14 @@ import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import { NumberToRaw, DivideRaw } from '../math/fixedPoint';
 import { IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
-import { PlayerData, Pools } from '../world/world';
+import { World } from '../world/world';
 
 const MOVE_X = NumberToRaw(1.5);
 const TWO = NumberToRaw(2);
 
-export function PlayerCollisionDetection(
-  playerData: PlayerData,
-  pools: Pools
-): void {
+export function PlayerCollisionDetection(world: World): void {
+  const playerData = world.PlayerData;
+  const pools = world.Pools;
   const playerCount = playerData.PlayerCount;
   if (playerCount < 2) {
     return;

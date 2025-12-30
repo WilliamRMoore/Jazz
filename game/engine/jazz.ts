@@ -101,7 +101,7 @@ export class Jazz implements IJazz {
 
     ApplyVelocityDecay(world);
 
-    PlayerCollisionDetection(playerData, pools);
+    PlayerCollisionDetection(world);
 
     PlatformDetection(playerData, stageData, frame);
 
