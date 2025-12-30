@@ -25,7 +25,7 @@ describe('Velocity system tests', () => {
     const initialPositionX = p.Position.X.AsNumber;
     const initialPositionY = p.Position.Y.AsNumber;
 
-    ApplyVelocity(w.PlayerData);
+    ApplyVelocity(w);
 
     const expectedX = initialPositionX + p.Velocity.X.AsNumber;
     const expectedY = initialPositionY + p.Velocity.Y.AsNumber;
@@ -45,7 +45,7 @@ describe('Velocity system tests', () => {
     const initialPositionX = p.Position.X.AsNumber;
     const initialPositionY = p.Position.Y.AsNumber;
 
-    ApplyVelocity(w.PlayerData);
+    ApplyVelocity(w);
 
     expect(p.Position.X.AsNumber).toBe(initialPositionX);
     expect(p.Position.Y.AsNumber).toBe(initialPositionY);

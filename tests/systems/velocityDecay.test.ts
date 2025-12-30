@@ -26,7 +26,7 @@ describe('Velocity Decay system tests', () => {
     const initialVelocityX = p.Velocity.X.Raw;
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.X.Raw).toBe(initialVelocityX);
     expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
@@ -39,7 +39,7 @@ describe('Velocity Decay system tests', () => {
     const initialVelocityX = p.Velocity.X.Raw;
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.X.Raw).toBe(initialVelocityX);
     expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
@@ -50,12 +50,12 @@ describe('Velocity Decay system tests', () => {
     p.Velocity.X.SetFromNumber(10); // Positive X velocity
     const decayAmount = p.Speeds.GroundedVelocityDecayRaw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.X.Raw).toBe(NumberToRaw(10) - decayAmount);
 
     p.Velocity.X.SetFromNumber(-10); // Negative X velocity
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
     // It will be 10 - decay - decay
     expect(p.Velocity.X.Raw).toBe(NumberToRaw(-10) + decayAmount);
   });
@@ -64,7 +64,7 @@ describe('Velocity Decay system tests', () => {
     p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650)); // On ground
     p.Velocity.Y.SetFromNumber(10); // Positive Y velocity
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.Y.Raw).toBe(0);
   });
@@ -74,11 +74,11 @@ describe('Velocity Decay system tests', () => {
     p.Velocity.X.SetFromNumber(10);
     const decayAmount = p.Speeds.AerialVelocityDecayRaw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
     expect(p.Velocity.X.Raw).toBeCloseTo(NumberToRaw(10) - decayAmount);
 
     p.Velocity.X.SetFromNumber(-10);
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
     expect(p.Velocity.X.Raw).toBeCloseTo(NumberToRaw(-10) + decayAmount);
   });
 
@@ -88,7 +88,7 @@ describe('Velocity Decay system tests', () => {
     const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.Y.Raw).toBeCloseTo(initialVel - aerialDecay);
   });
@@ -99,7 +99,7 @@ describe('Velocity Decay system tests', () => {
     const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
 
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
 
     expect(p.Velocity.Y.Raw).toBeCloseTo(initialVel + aerialDecay);
   });
@@ -107,7 +107,7 @@ describe('Velocity Decay system tests', () => {
   test('X velocity is zeroed if it falls below threshold', () => {
     p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
     p.Velocity.X.SetFromRaw(NumberToRaw(0.1)); // Small X velocity
-    ApplyVelocityDecay(w.PlayerData, w.StageData);
+    ApplyVelocityDecay(w);
     expect(p.Velocity.X.Raw).toBe(0);
   });
 });

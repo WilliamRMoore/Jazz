@@ -5,12 +5,11 @@ import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { PlayerData, StageData } from '../world/world';
+import { World } from '../world/world';
 
-export function OutOfBoundsCheck(
-  playerData: PlayerData,
-  stageData: StageData
-): void {
+export function OutOfBoundsCheck(world: World): void {
+  const playerData = world.PlayerData;
+  const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {

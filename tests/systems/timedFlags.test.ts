@@ -17,21 +17,21 @@ describe('TimedFlags system tests', () => {
 
   test('hit pause frames are decremented', () => {
     p.Flags.SetHitPauseFrames(10);
-    TimedFlags(w.PlayerData);
+    TimedFlags(w);
     expect(p.Flags.IsInHitPause).toBe(true);
     expect(p.Flags['hitPauseFrames']).toBe(9);
   });
 
   test('intangibility frames are decremented', () => {
     p.Flags.SetIntangabilityFrames(10);
-    TimedFlags(w.PlayerData);
+    TimedFlags(w);
     expect(p.Flags.IsIntangible).toBe(true);
     expect(p.Flags.GetIntangabilityFrames()).toBe(9);
   });
 
   test('platform detection disabled frames are decremented', () => {
     p.Flags.SetDisablePlatFrames(10);
-    TimedFlags(w.PlayerData);
+    TimedFlags(w);
     expect(p.Flags.IsPlatDetectDisabled).toBe(true);
     expect(p.Flags['disablePlatformDetection']).toBe(9);
   });
@@ -40,7 +40,7 @@ describe('TimedFlags system tests', () => {
     p.Flags.SetHitPauseFrames(0);
     p.Flags.SetIntangabilityFrames(0);
     p.Flags.SetDisablePlatFrames(0);
-    TimedFlags(w.PlayerData);
+    TimedFlags(w);
     expect(p.Flags.IsInHitPause).toBe(false);
     expect(p.Flags.IsIntangible).toBe(false);
     expect(p.Flags.IsPlatDetectDisabled).toBe(false);

@@ -30,7 +30,7 @@ describe('Gravity system tests', () => {
     p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    Gravity(w.PlayerData, w.StageData);
+    Gravity(w);
 
     expect(p.Velocity.Y.Raw).toBeGreaterThan(initialVelocityY);
   });
@@ -40,7 +40,7 @@ describe('Gravity system tests', () => {
     p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650));
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    Gravity(w.PlayerData, w.StageData);
+    Gravity(w);
 
     expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
   });
@@ -56,7 +56,7 @@ describe('Gravity system tests', () => {
     for (const state of states) {
       p.FSMInfo.SetCurrentState({ StateId: state } as any);
       const initialVelocityY = p.Velocity.Y.Raw;
-      Gravity(w.PlayerData, w.StageData);
+      Gravity(w);
       expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
     }
   });
@@ -66,7 +66,7 @@ describe('Gravity system tests', () => {
     p.Flags.SetHitPauseFrames(10);
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    Gravity(w.PlayerData, w.StageData);
+    Gravity(w);
 
     expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
   });
@@ -85,7 +85,7 @@ describe('Gravity system tests', () => {
       p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
       const initialVelocityY = p.Velocity.Y.Raw;
 
-      Gravity(w.PlayerData, w.StageData);
+      Gravity(w);
       expect(p.Velocity.Y.Raw).toBe(initialVelocityY);
     } else {
       throw new Error('Attack config not found');
@@ -97,7 +97,7 @@ describe('Gravity system tests', () => {
     p.Flags.FastFallOn();
     const initialVelocityY = p.Velocity.Y.Raw;
 
-    Gravity(w.PlayerData, w.StageData);
+    Gravity(w);
 
     const expectedVel = initialVelocityY + p.Speeds.GravityRaw * 2;
     // use toBeCloseTo because of fixed point arithmetic

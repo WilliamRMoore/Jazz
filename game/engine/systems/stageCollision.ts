@@ -14,16 +14,15 @@ import {
   SetPlayerPositionRaw,
   AddToPlayerYPositionRaw,
 } from '../entity/playerOrchestrator';
-import { PlayerData, Pools, StageData } from '../world/world';
+import { PlayerData, Pools, StageData, World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
 
 const CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
 
-export function StageCollisionDetection(
-  playerData: PlayerData,
-  stageData: StageData,
-  pools: Pools
-): void {
+export function StageCollisionDetection(world: World): void {
+  const playerData: PlayerData = world.PlayerData;
+  const stageData: StageData = world.StageData;
+  const pools: Pools = world.Pools;
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
   const stageGround = stage.StageVerticies.GetGround();

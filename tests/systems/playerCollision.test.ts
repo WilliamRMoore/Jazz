@@ -32,7 +32,7 @@ describe('Player Collision system tests', () => {
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
 
-    PlayerCollisionDetection(w.PlayerData, w.Pools);
+    PlayerCollisionDetection(w);
 
     expect(p1.Position.X.AsNumber).not.toBe(p1InitialX);
     expect(p2.Position.X.AsNumber).not.toBe(p2InitialX);
@@ -50,7 +50,7 @@ describe('Player Collision system tests', () => {
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
 
-    PlayerCollisionDetection(w.PlayerData, w.Pools);
+    PlayerCollisionDetection(w);
 
     expect(p1.Position.X.AsNumber).toBe(p1InitialX);
     expect(p2.Position.X.AsNumber).toBe(p2InitialX);
@@ -68,7 +68,7 @@ describe('Player Collision system tests', () => {
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
 
-    PlayerCollisionDetection(w.PlayerData, w.Pools);
+    PlayerCollisionDetection(w);
 
     expect(p1.Position.X.AsNumber).toBe(p1InitialX);
     expect(p2.Position.X.AsNumber).toBe(p2InitialX);

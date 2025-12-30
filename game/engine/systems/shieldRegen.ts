@@ -1,6 +1,6 @@
 import { World } from '../world/world';
 
-export function SheildRegen(w: World) {
+export function ShieldRegen(w: World) {
   const pd = w.PlayerData;
   const playerCount = pd.PlayerCount;
   for (let i = 0; i < playerCount; i++) {

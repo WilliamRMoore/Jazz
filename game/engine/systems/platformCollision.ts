@@ -14,17 +14,16 @@ import {
   SetPlayerPositionRaw,
   Player,
 } from '../entity/playerOrchestrator';
-import { PlayerData, StageData } from '../world/world';
+import { World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
 const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
 
-export function PlatformDetection(
-  playerData: PlayerData,
-  stageData: StageData,
-  currentFrame: number
-): void {
+export function PlatformDetection(world: World): void {
+  const playerData = world.PlayerData;
+  const stageData = world.StageData;
+  const currentFrame = world.localFrame;
   const plats = stageData.Stage.Platforms;
 
   if (plats === undefined) {

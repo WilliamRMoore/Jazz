@@ -1,6 +1,7 @@
-import { PlayerData } from '../world/world';
+import { PlayerData, World } from '../world/world';
 
-export function TimedFlags(playerData: PlayerData): void {
+export function TimedFlags(world: World): void {
+  const playerData = world.PlayerData;
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);

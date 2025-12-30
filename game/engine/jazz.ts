@@ -15,7 +15,7 @@ import { PlatformDetection } from './systems/platformCollision';
 import { PlayerCollisionDetection } from './systems/playerCollision';
 import { PlayerInput } from './systems/playerInput';
 import { PlayerSensors } from './systems/sensors';
-import { SheildRegen } from './systems/shieldRegen';
+import { ShieldRegen } from './systems/shieldRegen';
 import { StageCollisionDetection } from './systems/stageCollision';
 import { TimedFlags } from './systems/timedFlags';
 import { ApplyVelocity } from './systems/velocity';
@@ -77,49 +77,45 @@ export class Jazz implements IJazz {
 
   private logic() {
     const world = this.world;
-    const frame = world.localFrame;
     const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
-    const stageData = world.StageData;
-    const historyData = world.HistoryData;
-    const pools = world.Pools;
 
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const player = playerData.Player(playerIndex);
       player?.ECB.UpdatePreviousECB();
     }
 
-    SheildRegen(world);
+    ShieldRegen(world);
 
-    TimedFlags(playerData);
+    TimedFlags(world);
 
-    PlayerInput(playerData, world);
+    PlayerInput(world);
 
-    Gravity(playerData, stageData);
+    Gravity(world);
 
-    ApplyVelocity(playerData);
+    ApplyVelocity(world);
 
-    ApplyVelocityDecay(playerData, stageData);
+    ApplyVelocityDecay(world);
 
-    PlayerCollisionDetection(playerData, pools);
+    PlayerCollisionDetection(world);
 
-    PlatformDetection(playerData, stageData, frame);
+    PlatformDetection(world);
 
-    StageCollisionDetection(playerData, stageData, pools);
+    StageCollisionDetection(world);
 
-    LedgeGrabDetection(playerData, stageData, pools);
+    LedgeGrabDetection(world);
 
-    PlayerSensors(world, playerData, pools);
+    PlayerSensors(world);
 
-    PlayerAttacks(playerData, historyData, pools, frame);
+    PlayerAttacks(world);
 
     GrabMeter(world);
 
     PlayerGrabs(world);
 
-    OutOfBoundsCheck(playerData, stageData);
+    OutOfBoundsCheck(world);
 
-    RecordHistory(world, playerData, historyData, frame);
+    RecordHistory(world);
   }
 }
 

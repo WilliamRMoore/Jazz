@@ -38,7 +38,7 @@ describe('Ledge Grab Detection system tests', () => {
     // p.ECB.UpdatePreviousECB();
     SetPlayerPositionRaw(p, NumberToRaw(1650), NumberToRaw(750));
 
-    LedgeGrabDetection(w.PlayerData, w.StageData, w.Pools);
+    LedgeGrabDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
   });
@@ -53,7 +53,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.ECB.UpdatePreviousECB();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
-    LedgeGrabDetection(w.PlayerData, w.StageData, w.Pools);
+    LedgeGrabDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
   });
 
@@ -67,7 +67,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.ECB.UpdatePreviousECB();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
-    LedgeGrabDetection(w.PlayerData, w.StageData, w.Pools);
+    LedgeGrabDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
   });
 
@@ -82,7 +82,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.ECB.UpdatePreviousECB();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
-    LedgeGrabDetection(w.PlayerData, w.StageData, w.Pools);
+    LedgeGrabDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
   });
 
@@ -97,7 +97,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.ECB.UpdatePreviousECB();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
-    LedgeGrabDetection(w.PlayerData, w.StageData, w.Pools);
+    LedgeGrabDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
   });
 });

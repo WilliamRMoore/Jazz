@@ -71,12 +71,13 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
+    w.localFrame = 3;
     p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
-    PlayerAttacks(w.PlayerData, w.HistoryData, w.Pools, 3);
 
-    expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(true);
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(true);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.HIT_STOP_S);
-    p1Sm.ForceState(STATE_IDS.IDLE_S);
   });
 
   test('Player should NOT register an attack hit', () => {
@@ -99,10 +100,12 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
+    w.localFrame = 3;
     p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
-    PlayerAttacks(w.PlayerData, w.HistoryData, w.Pools, 3);
 
-    expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(false);
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(false);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.IDLE_S);
   });
 });

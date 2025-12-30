@@ -64,11 +64,11 @@ describe('Sensor system tests', () => {
       sm.UpdateFromInput(blankInput, world);
 
       // Apply movement from impulses
-      ApplyVelocity(world.PlayerData);
-      ApplyVelocityDecay(world.PlayerData, world.StageData);
+      ApplyVelocity(world);
+      ApplyVelocityDecay(world);
 
       // Run the system under test
-      PlayerSensors(world, world.PlayerData, world.Pools);
+      PlayerSensors(world);
 
       if (playerA.FSMInfo.CurrentState.StateId === STATE_IDS.SIDE_SPCL_EX_S) {
         transitioned = true;
@@ -107,11 +107,11 @@ describe('Sensor system tests', () => {
       sm.UpdateFromInput(blankInput, world);
 
       // Apply movement from impulses
-      ApplyVelocity(world.PlayerData);
-      ApplyVelocityDecay(world.PlayerData, world.StageData);
+      ApplyVelocity(world);
+      ApplyVelocityDecay(world);
 
       // Run the system under test
-      PlayerSensors(world, world.PlayerData, world.Pools);
+      PlayerSensors(world);
 
       if (playerA.FSMInfo.CurrentState.StateId === STATE_IDS.SIDE_SPCL_EX_S) {
         transitioned = true;

@@ -1,6 +1,7 @@
 import { PlayerData, World } from '../world/world';
 
-export function PlayerInput(playerData: PlayerData, world: World): void {
+export function PlayerInput(world: World): void {
+  const playerData = world.PlayerData;
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
