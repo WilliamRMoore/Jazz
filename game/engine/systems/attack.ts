@@ -190,7 +190,7 @@ function PAvsPB(
     return atkResPool.Rent();
   }
 
-  if (pAAttack.HasHitPlayer(pB.ID)) {
+  if (pA.Attacks.HasHitPlayer(pB.ID)) {
     return atkResPool.Rent();
   }
 
@@ -276,7 +276,7 @@ function PAvsPB(
       );
 
       if (collision.Collision) {
-        pAAttack.HitPlayer(pB.ID);
+        pA.Attacks.HitPlayer(pB.ID);
         const attackResult = atkResPool.Rent();
         attackResult.SetShieldHitTrue(
           pB.ID,
@@ -365,7 +365,7 @@ function PAvsPB(
       );
 
       if (collision.Collision) {
-        pAAttack.HitPlayer(pB.ID);
+        pA.Attacks.HitPlayer(pB.ID);
         let attackResult = atkResPool.Rent();
         attackResult.SetHitTrue(
           pB.ID,

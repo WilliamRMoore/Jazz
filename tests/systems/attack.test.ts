@@ -76,7 +76,7 @@ describe('Attack systesm tests', () => {
 
     PlayerAttacks(w);
 
-    expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(true);
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(true);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.HIT_STOP_S);
   });
 
@@ -105,7 +105,7 @@ describe('Attack systesm tests', () => {
 
     PlayerAttacks(w);
 
-    expect(p1.Attacks.GetAttack()?.HasHitPlayer(1)).toBe(false);
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(false);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.IDLE_S);
   });
 });

@@ -78,7 +78,6 @@ export class Attack {
   public readonly BaseKnockBack = new FixedPoint(0);
   public readonly KnockBackScaling = new FixedPoint(0);
   public readonly ImpulseClamp: FixedPoint | undefined;
-  public readonly PlayerIdsHit = new Set<number>();
   public readonly Impulses: Map<frameNumber, FlatVec> | undefined;
   public readonly CanOnlyFallOffLedgeIfFacingAwayFromIt: boolean = false;
   public readonly HitBubbles: Array<HitBubble>;
@@ -146,25 +145,17 @@ export class Attack {
     }
     return activeHBs;
   }
-
-  public HitPlayer(playerID: number): void {
-    this.PlayerIdsHit.add(playerID);
-  }
-
-  public HasHitPlayer(playerID: number): boolean {
-    return this.PlayerIdsHit.has(playerID);
-  }
-
-  public ResetPlayerIdsHit(): void {
-    this.PlayerIdsHit.clear();
-  }
 }
 
-export type AttackSnapShot = Attack | undefined;
+export type AttackSnapShot = {
+  attack: Attack | undefined;
+  playersHit: Array<number> | undefined;
+};
 
 export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   private attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
+  public readonly PlayerIdsHit = new Set<number>();
 
   public constructor(attacksConfigs: Map<AttackId, AttackConfig>) {
     const attacks = new Map<AttackId, Attack>();
@@ -195,16 +186,46 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
     if (this.currentAttack === undefined) {
       return;
     }
-    this.currentAttack.ResetPlayerIdsHit();
+    this.ResetPlayerIdsHit();
     this.currentAttack = undefined;
   }
 
-  public SnapShot(): Attack | undefined {
-    return this.currentAttack;
+  public SnapShot(): AttackSnapShot {
+    const snapShot = {
+      attack: undefined,
+      playersHit: undefined,
+    } as AttackSnapShot;
+    if (this.currentAttack !== undefined) {
+      snapShot.attack = this.currentAttack;
+    }
+    if (this.PlayerIdsHit.size > 0) {
+      snapShot.playersHit = Array.from(this.PlayerIdsHit);
+    }
+    return snapShot;
   }
 
-  public SetFromSnapShot(snapShot: Attack | undefined): void {
-    this.currentAttack = snapShot;
+  public SetFromSnapShot(snapShot: AttackSnapShot): void {
+    this.currentAttack = snapShot.attack;
+    this.PlayerIdsHit.clear();
+    if (snapShot.playersHit !== undefined) {
+      for (let i = 0; i < snapShot.playersHit.length; i++) {
+        this.PlayerIdsHit.add(snapShot.playersHit[i]);
+      }
+    } else {
+      this.PlayerIdsHit.clear();
+    }
+  }
+
+  public HitPlayer(playerID: number): void {
+    this.PlayerIdsHit.add(playerID);
+  }
+
+  public HasHitPlayer(playerID: number): boolean {
+    return this.PlayerIdsHit.has(playerID);
+  }
+
+  public ResetPlayerIdsHit(): void {
+    this.PlayerIdsHit.clear();
   }
 
   public get _attacks(): Map<AttackId, Attack> {
