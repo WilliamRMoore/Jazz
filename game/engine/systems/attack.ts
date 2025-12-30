@@ -19,7 +19,7 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import { PlayerData, HistoryData, Pools } from '../world/world';
+import { PlayerData, World } from '../world/world';
 
 const POINT_ZERO_ONE_THREE = NumberToRaw(0.013);
 const POINT_FOUR = NumberToRaw(0.4);
@@ -35,12 +35,11 @@ const TWO_HUNDRED = NumberToRaw(200);
 const FULL_CIRCLE = NumberToRaw(360);
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
-export function PlayerAttacks(
-  playerData: PlayerData,
-  historyData: HistoryData,
-  pools: Pools,
-  currentFrame: number
-): void {
+export function PlayerAttacks(world: World): void {
+  const playerData: PlayerData = world.PlayerData;
+  const pools = world.Pools;
+  const historyData = world.HistoryData;
+  const currentFrame = world.localFrame;
   const playerCount = playerData.PlayerCount;
   if (playerCount === 1) {
     return;

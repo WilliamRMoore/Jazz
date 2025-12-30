@@ -111,7 +111,7 @@ export class Jazz implements IJazz {
 
     PlayerSensors(world);
 
-    PlayerAttacks(playerData, historyData, pools, frame);
+    PlayerAttacks(world);
 
     GrabMeter(world);
 
