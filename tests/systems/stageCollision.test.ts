@@ -11,6 +11,7 @@ import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigura
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
+import { RecordHistory } from '../../game/engine/systems/history';
 
 describe('Stage Collision system tests', () => {
   let p: Player;
@@ -32,7 +33,6 @@ describe('Stage Collision system tests', () => {
   });
 
   function applyVelocity() {
-    p.ECB.UpdatePreviousECB();
     ApplyVelocity(w);
   }
 
@@ -42,6 +42,8 @@ describe('Stage Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635)); // bottom at 645
     p.Velocity.Y.SetFromNumber(25);
 
+    RecordHistory(w);
+    w.localFrame = 1;
     applyVelocity(); // pos.y = 660, bottom at 670. Intersects ground.
     StageCollisionDetection(w);
 
@@ -59,7 +61,8 @@ describe('Stage Collision system tests', () => {
     // right most ECB point coords at pos 495@600
     SetPlayerPosition(p, new FixedPoint(460), new FixedPoint(735));
     p.Velocity.X.SetFromNumber(20); // move to the irght, ECB right most point should be making contact with stage
-
+    RecordHistory(w);
+    w.localFrame = 1;
     applyVelocity(); // pos: 480@735, right most ECB point:530@685,
     StageCollisionDetection(w);
 
@@ -71,7 +74,8 @@ describe('Stage Collision system tests', () => {
     // NeutralFall ECB: width 70 -> right is at pos.x + 35
     SetPlayerPosition(p, new FixedPoint(1640), new FixedPoint(735)); // right at 1595
     p.Velocity.X.SetFromNumber(-20);
-
+    RecordHistory(w);
+    w.localFrame = 1;
     applyVelocity(); // pos.x = 1580, right at 1615. Intersects wall.
     StageCollisionDetection(w);
 
@@ -83,8 +87,9 @@ describe('Stage Collision system tests', () => {
     // NeutralFall ECB: height 70, yOffset -25 -> top is at pos.y - 60
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(765)); // top at 705. Intersects ceiling
     //p.Velocity.Y.SetFromNumber(-20);
-
-    applyVelocity(); // pos.y = 745, top at 685.
+    RecordHistory(w);
+    w.localFrame = 1;
+    //applyVelocity(); // pos.y = 745, top at 685.
     StageCollisionDetection(w);
 
     // Player should be pushed down
@@ -96,7 +101,8 @@ describe('Stage Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(540), new FixedPoint(635)); // left at 505, bottom at 645
     p.Velocity.X.SetFromNumber(-20);
     p.Velocity.Y.SetFromNumber(25);
-
+    RecordHistory(w);
+    w.localFrame = 1;
     applyVelocity(); // pos becomes (520, 660). left at 485, bottom at 670
     StageCollisionDetection(w);
 

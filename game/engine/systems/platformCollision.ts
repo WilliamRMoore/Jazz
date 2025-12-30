@@ -16,6 +16,10 @@ import {
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
+import {
+  CreateDiamondFromHistory,
+  EcbHistoryDTO,
+} from '../entity/components/ecb';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
 const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
@@ -23,7 +27,9 @@ const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
 export function PlatformDetection(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
+  const histories = world.HistoryData;
   const currentFrame = world.localFrame;
+  const prevFrame = world.PreviousFrame;
   const plats = stageData.Stage.Platforms;
 
   if (plats === undefined) {
@@ -53,11 +59,14 @@ export function PlatformDetection(world: World): void {
       continue;
     }
 
+    const compHist = histories.PlayerComponentHistories[playerIndex];
     const ecb = p.ECB;
+    const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
+    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot);
 
     const wasOnPlat = PlayerOnPlats(
       stageData.Stage,
-      ecb.PrevBottom,
+      preEcb.Bottom,
       ecb.SensorDepth
     );
     const isOnPlat = PlayerOnPlats(
@@ -76,7 +85,7 @@ export function PlatformDetection(world: World): void {
         if (!canFall) {
           // Snap player back to the platform edge they fell from.
           // This is a simplified snap-back. A more robust solution might find the *actual* platform.
-          SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          SetPlayerPosition(p, preEcb.Bottom.X, preEcb.Bottom.Y);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -86,7 +95,7 @@ export function PlatformDetection(world: World): void {
         const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
         if (!canWalkOff) {
           // Player was not allowed to walk off in this state at all. Snap them back.
-          SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          SetPlayerPosition(p, preEcb.Bottom.X, preEcb.Bottom.Y);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -134,7 +143,7 @@ export function PlatformDetection(world: World): void {
       continue;
     }
 
-    const previousBottom = ecb.PrevBottom;
+    const previousBottom = preEcb.Bottom;
     const currentBottom = ecb.Bottom;
 
     for (let platIndex = 0; platIndex < platCount; platIndex++) {

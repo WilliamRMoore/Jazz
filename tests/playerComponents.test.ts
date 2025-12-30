@@ -48,14 +48,10 @@ describe('PlayerComponents ECB tests', () => {
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
-    expect(ecb.PrevBottom.X.AsNumber).toBe(10);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(20);
 
     ecb.SetInitialPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
-    expect(ecb.PrevBottom.X.AsNumber).toBe(30);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(40);
   });
 
   test('MoveToPosition and MoveToPositionRaw work correctly', () => {
@@ -69,16 +65,6 @@ describe('PlayerComponents ECB tests', () => {
     ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
-  });
-
-  test('UpdatePreviousECB works correctly', () => {
-    const x = new FixedPoint(10);
-    const y = new FixedPoint(20);
-    ecb.MoveToPosition(x, y);
-    ecb.UpdatePreviousECB();
-
-    expect(ecb.PrevBottom.X.AsNumber).toBe(10);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(20);
   });
 
   test('SetECBShape and ResetECBShape work correctly', () => {
@@ -103,7 +89,6 @@ describe('PlayerComponents ECB tests', () => {
     const x = 10;
     const y = 20;
     ecb.MoveToPositionRaw(NumberToRaw(x), NumberToRaw(y));
-    ecb.UpdatePreviousECB();
     ecb.SetECBShape(STATE_IDS.CROUCH_S);
 
     const snapshot = ecb.SnapShot();
@@ -111,8 +96,8 @@ describe('PlayerComponents ECB tests', () => {
     const newEcb = new ECBComponent(new Map(), 200, 200, 10);
     newEcb.SetFromSnapShot(snapshot);
 
-    expect(newEcb.Height.AsNumber).toBe(snapshot.Height);
-    expect(newEcb.Width.AsNumber).toBe(snapshot.Width);
+    expect(newEcb.Height.AsNumber).toBe(snapshot.ecbShape.height.AsNumber);
+    expect(newEcb.Width.AsNumber).toBe(snapshot.ecbShape.width.AsNumber);
     expect(newEcb.YOffset.AsNumber).toBe(snapshot.YOffset);
     expect(newEcb.Bottom.X.AsNumber).toBe(snapshot.posX);
     expect(newEcb.Bottom.Y.AsNumber).toBe(snapshot.posY + snapshot.YOffset);

@@ -80,10 +80,12 @@ export class Jazz implements IJazz {
     const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
 
-    for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const player = playerData.Player(playerIndex);
-      player?.ECB.UpdatePreviousECB();
-    }
+    // for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    //   const player = playerData.Player(playerIndex);
+    //   player?.ECB.UpdatePreviousECB();
+    // }
+
+    RecordHistory(world);
 
     ShieldRegen(world);
 
@@ -114,8 +116,6 @@ export class Jazz implements IJazz {
     PlayerGrabs(world);
 
     OutOfBoundsCheck(world);
-
-    RecordHistory(world);
   }
 }
 

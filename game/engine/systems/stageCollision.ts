@@ -4,7 +4,7 @@ import {
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
 import { NumberToRaw } from '../math/fixedPoint';
-import { IntersectsPolygons } from '../physics/collisions';
+import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,
   AddToPlayerPositionVec,
@@ -16,11 +16,18 @@ import {
 } from '../entity/playerOrchestrator';
 import { PlayerData, Pools, StageData, World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
+import {
+  CreateDiamondFromHistory,
+  ECBComponent,
+  EcbHistoryDTO,
+} from '../entity/components/ecb';
+import { FlatVec } from '../physics/vector';
 
 const CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
 
 export function StageCollisionDetection(world: World): void {
   const playerData: PlayerData = world.PlayerData;
+  const componentHistories = world.HistoryData.PlayerComponentHistories;
   const stageData: StageData = world.StageData;
   const pools: Pools = world.Pools;
   const playerCount = playerData.PlayerCount;
@@ -40,7 +47,9 @@ export function StageCollisionDetection(world: World): void {
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const ecb = p.ECB;
-
+    const prevEcbSnapShot =
+      componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
+    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot);
     const playerOnPlats = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
 
     if (playerOnPlats) {
@@ -48,9 +57,9 @@ export function StageCollisionDetection(world: World): void {
     }
 
     const sm = playerData.StateMachine(playerIndex);
-    const playerVerts = ecb.GetHull();
-    const fsmIno = p.FSMInfo;
-    const preResolutionStateId = fsmIno.CurrentStatetId;
+    const playerVerts = getHull(preEcb, ecb);
+    const fsmInfo = p.FSMInfo;
+    const preResolutionStateId = fsmInfo.CurrentStatetId;
     const preResolutionYOffsetRaw = ecb.YOffset.Raw;
     const stageVerts = stage.StageVerticies.GetVerts();
 
@@ -120,7 +129,7 @@ export function StageCollisionDetection(world: World): void {
 
     // --- 3. Grounded check and state update ---
     const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
-    const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+    const prvGrnd = PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth);
 
     if (prvGrnd && !grnd) {
       // Player has just walked off the stage. Check if they should be snapped back.
@@ -187,10 +196,23 @@ export function StageCollisionDetection(world: World): void {
     if (
       preResolutionStateId !== STATE_IDS.LAND_S &&
       preResolutionStateId !== STATE_IDS.SOFT_LAND_S &&
-      (fsmIno.CurrentStatetId === STATE_IDS.LAND_S ||
-        fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
+      (fsmInfo.CurrentStatetId === STATE_IDS.LAND_S ||
+        fsmInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
     ) {
       AddToPlayerYPositionRaw(p, preResolutionYOffsetRaw);
     }
   }
+}
+
+const combinedEcbVerts = new Array<FlatVec>();
+function getHull(prevEcb: EcbHistoryDTO, curEcb: ECBComponent) {
+  combinedEcbVerts.length = 0;
+  for (let i = 0; i < 4; i++) {
+    combinedEcbVerts.push(prevEcb.shape[i]);
+  }
+  for (let i = 0; i < 4; i++) {
+    combinedEcbVerts.push(curEcb.GetActiveVerts()[i]);
+  }
+  const hull = CreateConvexHull(combinedEcbVerts);
+  return hull;
 }
