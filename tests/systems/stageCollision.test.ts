@@ -43,7 +43,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.Y.SetFromNumber(25);
 
     applyVelocity(); // pos.y = 660, bottom at 670. Intersects ground.
-    StageCollisionDetection(w.PlayerData, w.StageData, w.Pools);
+    StageCollisionDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LAND_S);
     // Player's bottom should be at the ground level
@@ -61,7 +61,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.X.SetFromNumber(20); // move to the irght, ECB right most point should be making contact with stage
 
     applyVelocity(); // pos: 480@735, right most ECB point:530@685,
-    StageCollisionDetection(w.PlayerData, w.StageData, w.Pools);
+    StageCollisionDetection(w);
 
     expect(p.ECB.Right.X.AsNumber).toBeCloseTo(500, 0);
   });
@@ -73,7 +73,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.X.SetFromNumber(-20);
 
     applyVelocity(); // pos.x = 1580, right at 1615. Intersects wall.
-    StageCollisionDetection(w.PlayerData, w.StageData, w.Pools);
+    StageCollisionDetection(w);
 
     expect(p.ECB.Left.X.AsNumber).toBeCloseTo(1600, 0);
   });
@@ -85,7 +85,7 @@ describe('Stage Collision system tests', () => {
     //p.Velocity.Y.SetFromNumber(-20);
 
     applyVelocity(); // pos.y = 745, top at 685.
-    StageCollisionDetection(w.PlayerData, w.StageData, w.Pools);
+    StageCollisionDetection(w);
 
     // Player should be pushed down
     expect(p.ECB.Top.Y.AsNumber).toBeCloseTo(700, 0);
@@ -98,7 +98,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.Y.SetFromNumber(25);
 
     applyVelocity(); // pos becomes (520, 660). left at 485, bottom at 670
-    StageCollisionDetection(w.PlayerData, w.StageData, w.Pools);
+    StageCollisionDetection(w);
 
     expect(p.ECB.Left.X.AsNumber).toBeGreaterThanOrEqual(500);
     expect(p.ECB.Bottom.Y.AsNumber).toBeCloseTo(650, 0);
