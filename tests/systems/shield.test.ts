@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { SheildRegen } from '../../game/engine/systems/shieldRegen';
+import { ShieldRegen } from '../../game/engine/systems/shieldRegen';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/input/Input';
 import {
@@ -48,7 +48,7 @@ describe('Shield system tests', () => {
     p.Shield.CurrentRadius.SetFromNumber(50);
     const initialShieldValue = p.Shield.CurrentRadius.Raw;
 
-    SheildRegen(w);
+    ShieldRegen(w);
 
     expect(p.Shield.CurrentRadius.Raw).toBeGreaterThan(initialShieldValue);
   });
@@ -59,7 +59,7 @@ describe('Shield system tests', () => {
 
     // Grow for a few frames
     for (let i = 0; i < 10; i++) {
-      SheildRegen(w);
+      ShieldRegen(w);
     }
 
     expect(p.Shield.CurrentRadius.Raw).toBe(p.Shield.InitialRadius.Raw);

@@ -42,7 +42,7 @@ describe('OutOfBounds system tests', () => {
         p.Position.X.SetFromNumber(x);
         p.Position.Y.SetFromNumber(y);
 
-        OutOfBoundsCheck(w.PlayerData, w.StageData);
+        OutOfBoundsCheck(w);
 
         // Check position is reset
         expect(p.Position.X.Raw).toBe(NumberToRaw(610));
@@ -71,7 +71,7 @@ describe('OutOfBounds system tests', () => {
     const initialJumpCount = p.Jump.JumpCount;
     const initialState = p.FSMInfo.CurrentState.StateId;
 
-    OutOfBoundsCheck(w.PlayerData, w.StageData);
+    OutOfBoundsCheck(w);
 
     expect(p.Position.X.Raw).toBe(initialX);
     expect(p.Position.Y.Raw).toBe(initialY);

@@ -15,7 +15,7 @@ import { PlatformDetection } from './systems/platformCollision';
 import { PlayerCollisionDetection } from './systems/playerCollision';
 import { PlayerInput } from './systems/playerInput';
 import { PlayerSensors } from './systems/sensors';
-import { SheildRegen } from './systems/shieldRegen';
+import { ShieldRegen } from './systems/shieldRegen';
 import { StageCollisionDetection } from './systems/stageCollision';
 import { TimedFlags } from './systems/timedFlags';
 import { ApplyVelocity } from './systems/velocity';
@@ -82,14 +82,13 @@ export class Jazz implements IJazz {
     const playerCount = playerData.PlayerCount;
     const stageData = world.StageData;
     const historyData = world.HistoryData;
-    const pools = world.Pools;
 
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const player = playerData.Player(playerIndex);
       player?.ECB.UpdatePreviousECB();
     }
 
-    SheildRegen(world);
+    ShieldRegen(world);
 
     TimedFlags(world);
 
@@ -117,7 +116,7 @@ export class Jazz implements IJazz {
 
     PlayerGrabs(world);
 
-    OutOfBoundsCheck(playerData, stageData);
+    OutOfBoundsCheck(world);
 
     RecordHistory(world, playerData, historyData, frame);
   }
