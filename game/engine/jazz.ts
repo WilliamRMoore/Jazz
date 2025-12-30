@@ -97,7 +97,7 @@ export class Jazz implements IJazz {
 
     Gravity(world);
 
-    ApplyVelocity(playerData);
+    ApplyVelocity(world);
 
     ApplyVelocityDecay(playerData, stageData);
 

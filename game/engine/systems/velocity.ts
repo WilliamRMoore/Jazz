@@ -1,7 +1,8 @@
 import { AddToPlayerPositionFp } from '../entity/playerOrchestrator';
-import { PlayerData } from '../world/world';
+import { World } from '../world/world';
 
-export function ApplyVelocity(playerData: PlayerData): void {
+export function ApplyVelocity(w: World): void {
+  const playerData = w.PlayerData;
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
