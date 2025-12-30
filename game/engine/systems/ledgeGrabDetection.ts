@@ -9,15 +9,14 @@ import {
   PlayerOnStageOrPlats,
   SetPlayerPositionRaw,
 } from '../entity/playerOrchestrator';
-import { PlayerData, StageData, Pools } from '../world/world';
+import { PlayerData, StageData, Pools, World } from '../world/world';
 
 const TWO = NumberToRaw(2);
 
-export function LedgeGrabDetection(
-  playerData: PlayerData,
-  stageData: StageData,
-  pools: Pools
-): void {
+export function LedgeGrabDetection(world: World): void {
+  const playerData: PlayerData = world.PlayerData;
+  const stageData: StageData = world.StageData;
+  const pools: Pools = world.Pools;
   const stage = stageData.Stage;
   const ledges = stage.Ledges;
   const leftLedge = ledges.GetLeftLedge();

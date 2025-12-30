@@ -68,7 +68,7 @@ describe('Sensor system tests', () => {
       ApplyVelocityDecay(world);
 
       // Run the system under test
-      PlayerSensors(world, world.PlayerData, world.Pools);
+      PlayerSensors(world);
 
       if (playerA.FSMInfo.CurrentState.StateId === STATE_IDS.SIDE_SPCL_EX_S) {
         transitioned = true;
@@ -111,7 +111,7 @@ describe('Sensor system tests', () => {
       ApplyVelocityDecay(world);
 
       // Run the system under test
-      PlayerSensors(world, world.PlayerData, world.Pools);
+      PlayerSensors(world);
 
       if (playerA.FSMInfo.CurrentState.StateId === STATE_IDS.SIDE_SPCL_EX_S) {
         transitioned = true;

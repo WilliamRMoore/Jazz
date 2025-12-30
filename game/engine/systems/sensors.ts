@@ -8,13 +8,11 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import { World, PlayerData, Pools } from '../world/world';
+import { World } from '../world/world';
 
-export function PlayerSensors(
-  world: World,
-  playerData: PlayerData,
-  pools: Pools
-): void {
+export function PlayerSensors(world: World): void {
+  const playerData = world.PlayerData;
+  const pools = world.Pools;
   const playerCount = playerData.PlayerCount;
   if (playerCount < 2) {
     return;
