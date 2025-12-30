@@ -10,7 +10,7 @@ import { CollisionResult } from '../pools/CollisionResult';
 import { ProjectionResult } from '../pools/ProjectResult';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { FixedPoint } from '../math/fixedPoint';
 
 export type PlayerData = {
@@ -144,7 +144,7 @@ export class World {
   public readonly Pools: PoolContainer = new PoolContainer();
 
   public get PreviousFrame(): number {
-    return this.localFrame - 1 >= 0 ? this.localFrame - 1 : 0;
+    return this.localFrame === 0 ? 0 : this.localFrame - 1;
   }
 
   public SetPlayer(p: Player): void {

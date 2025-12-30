@@ -13,7 +13,7 @@ import {
 } from '../physics/collisions';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackHitBubbles';
+import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
@@ -108,9 +108,9 @@ function resolveHitResult(
   vecPool: Pool<PooledVector>
 ): void {
   const atkDamage = pAHitsPbResult.Damage;
-  pB.Points.AddDamage(atkDamage);
+  pB.Damage.AddDamage(atkDamage);
 
-  const playerDamage = pB.Points.Damage;
+  const playerDamage = pB.Damage.Damage;
   const weight = pB.Weight.Value;
   const scailing = pAHitsPbResult.KnockBackScaling;
   const baseKnockBack = pAHitsPbResult.BaseKnockBack;
@@ -195,7 +195,7 @@ function PAvsPB(
     return atkResPool.Rent();
   }
 
-  const pAHitBubbles = pAAttack.GetActiveHitBubblesForFrame(
+  const pAHitBubbles = pAAttack.GetActiveBubblesForFrame(
     pAstateFrame,
     activeHbPool.Rent()
   );
@@ -207,6 +207,18 @@ function PAvsPB(
   const hitLength = pAHitBubbles.Length;
   // Check shield impact
 
+  const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
+  const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
+  const prevPos = pAPositionHistory[previousWorldFrame];
+  const xRaw = NumberToRaw(prevPos.X);
+  const yRaw = NumberToRaw(prevPos.Y);
+
+  const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
+  const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);
+  const currentStateFrame = pAstateFrame;
+  const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
+  const pAFacingRight = pA.Flags.IsFacingRight;
+
   if (pB.Shield.Active) {
     const pBShield = pB.Shield;
     const radius = pBShield.CurrentRadius;
@@ -217,18 +229,6 @@ function PAvsPB(
 
     for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
-      const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
-      const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
-      const prevPos = pAPositionHistory[previousWorldFrame];
-      const xRaw = NumberToRaw(prevPos.X);
-      const yRaw = NumberToRaw(prevPos.Y);
-
-      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
-      const pACurPositionDto = vecPool
-        .Rent()
-        .SetXY(pA.Position.X, pA.Position.Y);
-      const currentStateFrame = pAstateFrame;
-      const pAFacingRight = pA.Flags.IsFacingRight;
 
       const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
         vecPool,
@@ -248,7 +248,7 @@ function PAvsPB(
           pAPrevPositionDto.X,
           pAPrevPositionDto.Y,
           pAFacingRight,
-          currentStateFrame - 1 < 0 ? 0 : currentStateFrame - 1
+          previousStateFrame
         ) ??
         vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
@@ -316,19 +316,6 @@ function PAvsPB(
 
     for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
-      const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
-      const previousWorldFrame = currentFrame - 1 < 0 ? 0 : currentFrame - 1;
-      const prevPos = pAPositionHistory[previousWorldFrame];
-      const prevXRaw = NumberToRaw(prevPos.X);
-      const prevYRaw = NumberToRaw(prevPos.Y);
-
-      const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
-      const pACurPositionDto = vecPool
-        .Rent()
-        .SetXY(pA.Position.X, pA.Position.Y);
-
-      const currentStateFrame = pAstateFrame;
-      const pAFacingRight = pA.Flags.IsFacingRight;
 
       const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
         vecPool,
@@ -348,7 +335,7 @@ function PAvsPB(
           pAPrevPositionDto.X,
           pAPrevPositionDto.Y,
           pAFacingRight,
-          currentStateFrame - 1 < 0 ? 0 : currentStateFrame - 1
+          previousStateFrame
         ) ??
         vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 

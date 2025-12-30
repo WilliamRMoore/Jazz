@@ -30,7 +30,7 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
     return this.currentState.StateId;
   }
 
-  public set _currentStaeFrame(frame: number) {
+  public set _currentStateFrame(frame: number) {
     this.currentStateFrame = frame;
   }
 

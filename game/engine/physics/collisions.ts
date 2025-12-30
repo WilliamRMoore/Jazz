@@ -14,6 +14,7 @@ import {
   MultiplyRaw,
   DivideRaw,
   MIN_RAW_VALUE,
+  DistanceRaw,
 } from '../math/fixedPoint';
 
 const ONE = NumberToRaw(1);
@@ -152,6 +153,22 @@ export function IntersectsCircles(
   returnValue.SetCollisionTrueRaw(norm.X.Raw, norm.Y.Raw, depthRaw);
 
   return returnValue;
+}
+
+export function IntersectsCirclesRawBool(
+  x1Raw: number,
+  y1Raw: number,
+  x2Raw: number,
+  y2Raw: number,
+  r1Raw: number,
+  r2Raw: number
+): boolean {
+  const distRaw = DistanceRaw(x1Raw, y1Raw, x2Raw, y2Raw);
+  const raddiRaw = r1Raw + r2Raw;
+  if (distRaw > raddiRaw) {
+    return false;
+  }
+  return true;
 }
 
 export function ClosestPointsBetweenSegments(

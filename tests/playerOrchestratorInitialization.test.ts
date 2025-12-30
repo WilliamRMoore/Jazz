@@ -72,7 +72,7 @@ describe('Player Orechstraotr Initialization', () => {
     expect(downSpecial.ImpulseClamp?.AsNumber).toBe(12);
     expect(downSpecial.HitBubbles.length).toBe(4);
 
-    const impulse = downSpecial.Impulses.get(23);
+    const impulse = downSpecial?.Impulses?.get(23);
     expect(impulse).toBeDefined();
     if (!impulse) return;
     expect(impulse.X.AsNumber).toBe(2);

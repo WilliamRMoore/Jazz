@@ -12,6 +12,7 @@ import { World } from '../../world/world';
 import { FSMState } from '../PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
+import { Grab } from '../../entity/components/grab';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
 const POINT_ONE_FIVE = NumberToRaw(0.15);
@@ -273,11 +274,7 @@ export const AirDodge: FSMState = {
 export const Helpless: FSMState = {
   StateName: 'Helpless',
   StateId: STATE_IDS.HELPLESS_S,
-  OnEnter: (p: Player, w: World) => {
-    if (p.Jump.OnFirstJump()) {
-      p.Jump.IncrementJumps();
-    }
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.localFrame;
@@ -372,7 +369,7 @@ export const ShieldRaise: FSMState = {
   StateId: STATE_IDS.SHIELD_RAISE_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p, w) => {},
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const Shield: FSMState = {
@@ -381,7 +378,13 @@ export const Shield: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.Shield.Active = true;
   },
-  OnUpdate: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
+    const input = inputStore.GetInputForFrame(w.localFrame);
+    const triggerValue =
+      input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
+    p.Shield.ShrinkRaw(triggerValue);
+  },
   OnExit: (p, w) => {
     p.Shield.Active = false;
   },
@@ -796,18 +799,71 @@ export const UpSpecial: FSMState = {
   OnExit: attackOnExit,
 };
 
+export const NuetralGrab: FSMState = {
+  StateName: 'Grab',
+  StateId: STATE_IDS.GRAB_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.GRAB_GE;
+    const stateId = STATE_IDS.GRAB_S;
+    grabOnEnter(p, geId, stateId);
+  },
+  OnUpdate: grabOnUpdate,
+  OnExit: grabOnExit,
+};
+
+export const Hold: FSMState = {
+  StateName: 'hold',
+  StateId: STATE_IDS.GRAB_HOLD_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
+export const Held: FSMState = {
+  StateName: 'Held',
+  StateId: STATE_IDS.GRAB_HELD_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    const grabMeter = p.GrabMeter;
+    grabMeter.Meter.Zero();
+    grabMeter.ZeroHoldingPlayerId();
+  },
+};
+
+export const GrabRelease: FSMState = {
+  StateName: 'GrabRelease',
+  StateId: STATE_IDS.GRAB_RELEASE_S,
+  OnEnter: (p: Player, w: World) => {
+    const velocity = p.Velocity;
+    const flags = p.Flags;
+    const releaseVelocity = flags.IsFacingRight ? -6 : 6;
+    velocity.X.SetFromNumber(releaseVelocity);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
+export const GrabEscape: FSMState = {
+  StateName: 'GrabEscape',
+  StateId: STATE_IDS.GRAB_ESCAPE_S,
+  OnEnter: (p: Player, w: World) => {
+    const velocity = p.Velocity;
+    const flags = p.Flags;
+    const releaseVelocity = flags.IsFacingRight ? -10 : 10;
+    velocity.X.SetFromNumber(releaseVelocity);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
 /**
  * Attack Grabs:
- * grab
- * run grab
- * hold
- * held
  * pummel
  * forward throw
  * up throw
  * back throw
  * down throw
- * release
  */
 
 /**
@@ -875,7 +931,7 @@ function attackOnUpdate(p: Player, w: World) {
   }
 
   const currentStateFrame = p.FSMInfo.CurrentStateFrame;
-  const impulse = attack.GetActiveImpulseForFrame(currentStateFrame);
+  const impulse = attack.GetImpulseForFrame(currentStateFrame);
 
   if (impulse !== undefined) {
     addAttackImpulseToPlayer(p, impulse, attack);
@@ -935,6 +991,52 @@ function addAttackImpulseToPlayer(p: Player, impulse: FlatVec, attack: Attack) {
   const xRaw = p.Flags.IsFacingRight ? impulse.X.Raw : -impulse.X.Raw;
   const yRaw = impulse.Y.Raw;
   const clampRaw = attack?.ImpulseClamp?.Raw;
+  const pVel = p.Velocity;
+  if (clampRaw !== undefined) {
+    pVel.AddClampedXImpulseRaw(clampRaw, xRaw);
+    pVel.AddClampedYImpulseRaw(clampRaw, yRaw);
+  }
+}
+
+function grabOnEnter(p: Player, gameEventId: GameEventId, stateId: StateId) {
+  const grabComp = p.Grabs;
+  grabComp.SetGrab(gameEventId);
+  const grab = grabComp.GetGrab();
+  if (grab === undefined) {
+    return;
+  }
+  p.ECB.SetECBShape(stateId);
+}
+
+function grabOnUpdate(p: Player, w: World) {
+  const grabs = p.Grabs;
+  const grab = grabs.GetGrab();
+  if (grab === undefined) {
+    return;
+  }
+
+  const currentStateFrame = p.FSMInfo.CurrentStateFrame;
+  const impulse = grab.GetImpulseForFrame(currentStateFrame);
+
+  if (impulse !== undefined) {
+    addGrabImpulseToPlayer(p, impulse, grab);
+  }
+}
+
+function grabOnExit(p: Player, w: World) {
+  const grabComp = p.Grabs;
+  const grab = grabComp.GetGrab();
+  if (grab === undefined) {
+    return;
+  }
+  grabComp.ZeroCurrentGrab();
+  p.ECB.ResetECBShape();
+}
+
+function addGrabImpulseToPlayer(p: Player, impulse: FlatVec, grab: Grab) {
+  const xRaw = p.Flags.IsFacingRight ? impulse.X.Raw : -impulse.X.Raw;
+  const yRaw = impulse.Y.Raw;
+  const clampRaw = grab?.ImpulseClamp?.Raw;
   const pVel = p.Velocity;
   if (clampRaw !== undefined) {
     pVel.AddClampedXImpulseRaw(clampRaw, xRaw);

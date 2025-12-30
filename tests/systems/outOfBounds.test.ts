@@ -24,8 +24,7 @@ describe('OutOfBounds system tests', () => {
     p.Position.Y.SetFromNumber(100);
     p.Velocity.X.SetFromNumber(10);
     p.Velocity.Y.SetFromNumber(10);
-    p.Points.AddMatchPoints(4);
-    p.Points.AddDamage(new FixedPoint(50));
+    p.Damage.AddDamage(new FixedPoint(50));
     p.Jump.Set(1);
   });
 
@@ -52,9 +51,8 @@ describe('OutOfBounds system tests', () => {
         // Check stats are reset
         expect(p.Velocity.X.Raw).toBe(0);
         expect(p.Velocity.Y.Raw).toBe(0);
-        expect(p.Points.Damage.Raw).toBe(0);
+        expect(p.Damage.Damage.Raw).toBe(0);
         // default is 4, so after 1 subtraction it should be 3
-        expect(p.Points.MatchPoints).toBe(3);
         // Jumps are reset and then incremented
         expect(p.Jump.JumpCount).toBe(1);
 
@@ -69,8 +67,7 @@ describe('OutOfBounds system tests', () => {
     const initialY = p.Position.Y.Raw;
     const initialVelX = p.Velocity.X.Raw;
     const initialVelY = p.Velocity.Y.Raw;
-    const initialMatchPoints = p.Points.MatchPoints;
-    const initialDamage = p.Points.Damage.Raw;
+    const initialDamage = p.Damage.Damage.Raw;
     const initialJumpCount = p.Jump.JumpCount;
     const initialState = p.FSMInfo.CurrentState.StateId;
 
@@ -80,8 +77,7 @@ describe('OutOfBounds system tests', () => {
     expect(p.Position.Y.Raw).toBe(initialY);
     expect(p.Velocity.X.Raw).toBe(initialVelX);
     expect(p.Velocity.Y.Raw).toBe(initialVelY);
-    expect(p.Points.MatchPoints).toBe(initialMatchPoints);
-    expect(p.Points.Damage.Raw).toBe(initialDamage);
+    expect(p.Damage.Damage.Raw).toBe(initialDamage);
     expect(p.Jump.JumpCount).toBe(initialJumpCount);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
   });

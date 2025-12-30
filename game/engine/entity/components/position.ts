@@ -8,18 +8,6 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
   private readonly x: FixedPoint = new FixedPoint();
   private readonly y: FixedPoint = new FixedPoint();
 
-  public SnapShot(): PositionSnapShot {
-    return {
-      X: this.x.AsNumber,
-      Y: this.y.AsNumber,
-    };
-  }
-
-  public SetFromSnapShot(snapShot: PositionSnapShot): void {
-    this.x.SetFromNumber(snapShot.X);
-    this.y.SetFromNumber(snapShot.Y);
-  }
-
   public get X(): FixedPoint {
     return this.x;
   }
@@ -34,5 +22,17 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
 
   public set Y(val: FixedPoint) {
     this.y.SetFromFp(val);
+  }
+
+  public SnapShot(): PositionSnapShot {
+    return {
+      X: this.x.AsNumber,
+      Y: this.y.AsNumber,
+    };
+  }
+
+  public SetFromSnapShot(snapShot: PositionSnapShot): void {
+    this.x.SetFromNumber(snapShot.X);
+    this.y.SetFromNumber(snapShot.Y);
   }
 }

@@ -110,6 +110,8 @@ export function InitIdleRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
     { geId: GAME_EVENT_IDS.GUARD_GE, sId: STATE_IDS.SHIELD_RAISE_S },
+    { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const condtions: Array<condition> = [
@@ -154,6 +156,7 @@ export function InitShieldRelations(): StateRelation {
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
   ]);
 
   translations.SetConditions([shieldToShieldDrop, ToSpotDodge, ToRollDodge]);
@@ -229,6 +232,7 @@ export function InitWalkRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
     { geId: GAME_EVENT_IDS.GUARD_GE, sId: STATE_IDS.SHIELD_RAISE_S },
+    { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
   ]);
 
   const conditions: Array<condition> = [
@@ -372,6 +376,7 @@ export function InitJumpSquatRelations(): StateRelation {
 
   jumpSquatTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
   ]);
 
   jumpSquatTranslations.SetDefaults([defaultJump]);
@@ -982,4 +987,68 @@ export function InitUpTiltRelations(): StateRelation {
   );
 
   return upTiltRelations;
+}
+
+export function InitGrabRelations(): StateRelation {
+  const grabmaps = new ActionStateMappings();
+
+  grabmaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HOLD_GE, sId: STATE_IDS.GRAB_HOLD_S },
+  ]);
+
+  grabmaps.SetDefaults([defaultIdle]);
+
+  const grabRelations = new StateRelation(STATE_IDS.GRAB_S, grabmaps);
+
+  return grabRelations;
+}
+
+export function InitHoldRelations(): StateRelation {
+  const holdMaps = new ActionStateMappings();
+  holdMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_RELEASE_GE, sId: STATE_IDS.GRAB_RELEASE_S },
+  ]);
+
+  const holdRelations = new StateRelation(STATE_IDS.GRAB_HOLD_S, holdMaps);
+
+  return holdRelations;
+}
+
+export function InitHeldRelations(): StateRelation {
+  const heldMaps = new ActionStateMappings();
+  heldMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.GRAB_ESCAPE_GE, sId: STATE_IDS.GRAB_ESCAPE_S },
+  ]);
+  const heldRelations = new StateRelation(STATE_IDS.GRAB_HELD_S, heldMaps);
+
+  return heldRelations;
+}
+
+export function InitGrabReleaseRelations(): StateRelation {
+  const grabReleaseMaps = new ActionStateMappings();
+  grabReleaseMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+  grabReleaseMaps.SetDefaults([defaultIdle]);
+
+  const grabReleaseRelations = new StateRelation(
+    STATE_IDS.GRAB_RELEASE_S,
+    grabReleaseMaps
+  );
+
+  return grabReleaseRelations;
+}
+
+export function InitGrabEscapeRelations(): StateRelation {
+  const grabEscapeMaps = new ActionStateMappings();
+  grabEscapeMaps.SetDefaults([defaultIdle]);
+
+  const grabEscapeRelations = new StateRelation(
+    STATE_IDS.GRAB_ESCAPE_S,
+    grabEscapeMaps
+  );
+
+  return grabEscapeRelations;
 }

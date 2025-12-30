@@ -40,8 +40,8 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
 
   public Zero(): void {
     this.framesOfHitStun = 0;
-    this.xVelocity.SetFromNumber(0);
-    this.yVelocity.SetFromNumber(0);
+    this.xVelocity.Zero();
+    this.yVelocity.Zero();
   }
 
   public SnapShot(): hitStunSnapShot {

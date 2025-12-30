@@ -15,12 +15,14 @@ import { PlatformDetection } from './systems/platformCollision';
 import { PlayerCollisionDetection } from './systems/playerCollision';
 import { PlayerInput } from './systems/playerInput';
 import { PlayerSensors } from './systems/sensors';
-import { PlayerShields } from './systems/shield';
+import { SheildRegen } from './systems/shieldRegen';
 import { StageCollisionDetection } from './systems/stageCollision';
 import { TimedFlags } from './systems/timedFlags';
 import { ApplyVelocity } from './systems/velocity';
 import { ApplyVelocityDecay } from './systems/velocityDecay';
 import { World } from './world/world';
+import { PlayerGrabs } from './systems/grab';
+import { GrabMeter } from './systems/grabMeter';
 
 export interface IJazz {
   get World(): World | undefined;
@@ -87,7 +89,7 @@ export class Jazz implements IJazz {
       player?.ECB.UpdatePreviousECB();
     }
 
-    PlayerShields(playerData, frame);
+    SheildRegen(world);
 
     TimedFlags(playerData);
 
@@ -110,6 +112,10 @@ export class Jazz implements IJazz {
     PlayerSensors(world, playerData, pools);
 
     PlayerAttacks(playerData, historyData, pools, frame);
+
+    GrabMeter(world);
+
+    PlayerGrabs(world);
 
     OutOfBoundsCheck(playerData, stageData);
 

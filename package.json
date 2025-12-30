@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "build": "esbuild game/index.ts --bundle --outfile=public/index.js && node -e \"require('fs').copyFileSync('index.html', 'public/index.html')\"",
+    "build": "node esbuild.config.js",
     "start": "esbuild game/index.ts --bundle --outfile=public/index.js --servedir=public --watch",
     "deploy": "npm run build && gh-pages -d public"
   },

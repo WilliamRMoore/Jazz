@@ -10,32 +10,10 @@ import { SensorSnapShot } from './components/sensor';
 import { ShieldSnapShot } from './components/shield';
 import { VelocitySnapShot } from './components/velocity';
 import { hitStunSnapShot } from './components/hitStun';
-import { PlayerPointsSnapShot } from './components/points';
+import { PlayerPointsSnapShot } from './components/damage';
 import { hitStopSnapShot } from './components/hitStop';
-
-/***
- * TODO:
- * Add shield component
- * Add projectile component
- */
-
-/**
- * This file contains everything pertaining to player components.
- *
- * Player Componenets: Components are the building blocks for game features.
- * Entities (Player, in this case) are componesed of components like these.
- *
- * Guide Line:
- * 1. Components should not contain other components.
- * 2. Components should not reference state outside of themselves.
- * 3. Components should be atomic and behave similar to primitives.
- * 4. Components should try to make as much state private as possible.
- *
- * ComponentHistory:
- * ComponentHistory is used to get a snap shot of each components state once per frame.
- * Every component that is stateful and mutative needs to implement the IHistoryEnabled Interface.
- * This is necessary for rollback.
- */
+import { GrabSnapShot } from './components/grab';
+import { GrabMeterSnapShot } from './components/grabMeter';
 
 export class StaticHistory {
   public ledgDetecorHeight: number = 0;
@@ -59,13 +37,15 @@ export class ComponentHistory {
   readonly LedgeDetectorHistory: Array<LedgeDetectorSnapShot> = [];
   readonly SensorsHistory: Array<SensorSnapShot> = [];
   readonly AttackHistory: Array<AttackSnapShot> = [];
+  readonly GrabHistory: Array<GrabSnapShot> = [];
+  readonly GrabMeterHistory: Array<GrabMeterSnapShot> = [];
 
   public SetPlayerToFrame(p: Player, frameNumber: number) {
     p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
     p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
     p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
     p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
-    p.Points.SetFromSnapShot(this.PlayerPointsHistory[frameNumber]);
+    p.Damage.SetFromSnapShot(this.PlayerPointsHistory[frameNumber]);
     p.HitStop.SetFromSnapShot(this.PlayerHitStopHistory[frameNumber]);
     p.HitStun.SetFromSnapShot(this.PlayerHitStunHistory[frameNumber]);
     p.Flags.SetFromSnapShot(this.FlagsHistory[frameNumber]);
@@ -74,6 +54,8 @@ export class ComponentHistory {
     p.Sensors.SetFromSnapShot(this.SensorsHistory[frameNumber]);
     p.Jump.SetFromSnapShot(this.JumpHistroy[frameNumber]);
     p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
+    p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
+    p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
   }
 
   public static GetRightXFromEcbHistory(ecb: ECBSnapShot): number {
