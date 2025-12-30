@@ -99,7 +99,7 @@ export class Jazz implements IJazz {
 
     ApplyVelocity(world);
 
-    ApplyVelocityDecay(playerData, stageData);
+    ApplyVelocityDecay(world);
 
     PlayerCollisionDetection(playerData, pools);
 

@@ -1,13 +1,12 @@
 import { NumberToRaw } from '../math/fixedPoint';
 import { PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
-import { PlayerData, StageData } from '../world/world';
+import { World } from '../world/world';
 
 const POINT_TWO = NumberToRaw(0.2);
 
-export function ApplyVelocityDecay(
-  playerData: PlayerData,
-  stageData: StageData
-): void {
+export function ApplyVelocityDecay(world: World): void {
+  const playerData = world.PlayerData;
+  const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
   const stage = stageData.Stage;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {

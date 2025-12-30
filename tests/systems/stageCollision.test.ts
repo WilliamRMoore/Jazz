@@ -33,7 +33,7 @@ describe('Stage Collision system tests', () => {
 
   function applyVelocity() {
     p.ECB.UpdatePreviousECB();
-    ApplyVelocity(w.PlayerData);
+    ApplyVelocity(w);
   }
 
   test('Player should land on the ground when falling', () => {

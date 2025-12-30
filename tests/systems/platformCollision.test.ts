@@ -29,7 +29,7 @@ describe('Platform Collision system tests', () => {
   function fallOneFrame() {
     p.ECB.UpdatePreviousECB();
     p.Velocity.Y.SetFromNumber(25);
-    ApplyVelocity(w.PlayerData);
+    ApplyVelocity(w);
   }
 
   test('Player should land on a platform when falling on it', () => {
