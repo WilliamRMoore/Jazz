@@ -24,6 +24,7 @@ export function RecordHistory(
     history.JumpHistroy[frameNumber] = p.Jump.SnapShot();
     history.AttackHistory[frameNumber] = p.Attacks.SnapShot();
     history.GrabHistory[frameNumber] = p.Grabs.SnapShot();
+    history.GrabMeterHistory[frameNumber] = p.GrabMeter.SnapShot();
   }
   w.SetPoolHistory();
 }

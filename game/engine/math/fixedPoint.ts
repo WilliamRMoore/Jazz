@@ -1,4 +1,4 @@
-import { Pool, IPooledObject } from '../pools/Pool';
+import { IPooledObject } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 
 // Q-format: 16.10 (1 sign bit, 15 integer bits, 10 fractional bits)

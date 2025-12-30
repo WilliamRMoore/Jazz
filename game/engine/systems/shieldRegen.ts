@@ -1,4 +1,4 @@
-import { PlayerData, World } from '../world/world';
+import { World } from '../world/world';
 
 export function SheildRegen(w: World) {
   const pd = w.PlayerData;

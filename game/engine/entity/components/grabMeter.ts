@@ -1,7 +1,7 @@
 import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { IHistoryEnabled } from '../componentHistory';
 
-type GrabMeterSnapShot = {
+export type GrabMeterSnapShot = {
   meter: number;
   holdingPlayerId: number | undefined;
 };
