@@ -91,11 +91,11 @@ export class Jazz implements IJazz {
 
     SheildRegen(world);
 
-    TimedFlags(playerData);
+    TimedFlags(world);
 
-    PlayerInput(playerData, world);
+    PlayerInput(world);
 
-    Gravity(playerData, stageData);
+    Gravity(world);
 
     ApplyVelocity(playerData);
 

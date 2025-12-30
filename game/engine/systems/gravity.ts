@@ -2,9 +2,11 @@ import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import { NumberToRaw, MultiplyRaw } from '../math/fixedPoint';
 import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
-import { PlayerData, StageData } from '../world/world';
+import { World } from '../world/world';
 
-export function Gravity(playerData: PlayerData, stageData: StageData): void {
+export function Gravity(world: World): void {
+  const playerData = world.PlayerData;
+  const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
