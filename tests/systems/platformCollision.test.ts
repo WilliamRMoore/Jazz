@@ -37,12 +37,13 @@ describe('Platform Collision system tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(0, input);
     w.PlayerData.InputStore(0).StoreInputForFrame(1, input);
     w.PlayerData.Player(0).FSMInfo.SetCurrentState(NeutralFall);
+    w.localFrame = 1;
     // Platform is at y=300
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(280));
 
     fallOneFrame();
 
-    PlatformDetection(w.PlayerData, w.StageData, 1);
+    PlatformDetection(w);
 
     expect(p.ECB.Bottom.Y.AsNumber).toBeCloseTo(300, 0);
 
@@ -59,6 +60,7 @@ describe('Platform Collision system tests', () => {
     p.FSMInfo.SetCurrentState(NeutralFall);
 
     const frame = 10;
+    w.localFrame = frame;
     const prevInput = NewInputAction();
     prevInput.LYAxis.SetFromNumber(0);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, prevInput);
@@ -75,7 +77,7 @@ describe('Platform Collision system tests', () => {
       )
       .mockReturnValue(MOCK_Y_COORD);
 
-    PlatformDetection(w.PlayerData, w.StageData, frame);
+    PlatformDetection(w);
 
     expect(p.Flags.IsPlatDetectDisabled).toBe(true);
   });
@@ -86,6 +88,7 @@ describe('Platform Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(initialY));
 
     const frame = 10;
+    w.localFrame = frame;
     const prevInput = NewInputAction();
     const input = NewInputAction();
     input.LYAxis.SetFromNumber(-0.9);
@@ -95,7 +98,7 @@ describe('Platform Collision system tests', () => {
 
     fallOneFrame();
 
-    PlatformDetection(w.PlayerData, w.StageData, frame);
+    PlatformDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).not.toBe(STATE_IDS.LAND_S);
     expect(p.FSMInfo.CurrentState.StateId).not.toBe(STATE_IDS.SOFT_LAND_S);
@@ -107,6 +110,7 @@ describe('Platform Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(280));
 
     const frame = 10;
+    w.localFrame = frame;
     const input = NewInputAction();
     input.LYAxis.SetFromNumber(0);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, input);
@@ -114,7 +118,7 @@ describe('Platform Collision system tests', () => {
     p.FSMInfo.SetCurrentState(NeutralFall);
     fallOneFrame();
 
-    PlatformDetection(w.PlayerData, w.StageData, frame);
+    PlatformDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LAND_S);
     expect(p.ECB.Bottom.Y.AsNumber).toBeCloseTo(300, 0);
