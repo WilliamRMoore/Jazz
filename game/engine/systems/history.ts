@@ -1,11 +1,9 @@
 import { World, PlayerData, HistoryData } from '../world/world';
 
-export function RecordHistory(
-  w: World,
-  playerData: PlayerData,
-  historyData: HistoryData,
-  frameNumber: number
-): void {
+export function RecordHistory(w: World): void {
+  const playerData = w.PlayerData;
+  const historyData = w.HistoryData;
+  const frameNumber = w.localFrame;
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);

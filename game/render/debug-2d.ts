@@ -81,7 +81,7 @@ export class DebugRenderer {
     const playerFsmState =
       playerStateHistory?.FsmInfoHistory[localFrame]?.State?.StateName ?? 'N/A';
     const currentAttack = playerStateHistory?.AttackHistory[localFrame];
-    const currentAttackString = currentAttack?.Name;
+    const currentAttackString = currentAttack?.attack?.Name;
 
     if (localFrame === 0) {
       return;
@@ -609,12 +609,15 @@ function drawHitCircles(
   lastPosition: PositionSnapShot,
   alpha: number
 ) {
-  if (attack === undefined) {
+  if (attack.attack === undefined) {
     return;
   }
   adto.Zero();
   const currentSateFrame = fsmInfo.StateFrame;
-  const circles = attack.GetActiveBubblesForFrame(currentSateFrame, adto); //.GetHitBubblesForFrame(currentSateFrame);
+  const circles = attack.attack.GetActiveBubblesForFrame(
+    currentSateFrame,
+    adto
+  ); //.GetHitBubblesForFrame(currentSateFrame);
 
   if (circles === undefined) {
     return;

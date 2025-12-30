@@ -77,11 +77,8 @@ export class Jazz implements IJazz {
 
   private logic() {
     const world = this.world;
-    const frame = world.localFrame;
     const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
-    const stageData = world.StageData;
-    const historyData = world.HistoryData;
 
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const player = playerData.Player(playerIndex);
@@ -118,7 +115,7 @@ export class Jazz implements IJazz {
 
     OutOfBoundsCheck(world);
 
-    RecordHistory(world, playerData, historyData, frame);
+    RecordHistory(world);
   }
 }
 
