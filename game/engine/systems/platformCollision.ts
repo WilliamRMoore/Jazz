@@ -16,10 +16,7 @@ import {
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
-import {
-  CreateDiamondFromHistory,
-  EcbHistoryDTO,
-} from '../entity/components/ecb';
+import { CreateDiamondFromHistory } from '../entity/components/ecb';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
 const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
@@ -59,10 +56,11 @@ export function PlatformDetection(world: World): void {
       continue;
     }
 
+    const dPool = world.Pools.DiamondPool;
     const compHist = histories.PlayerComponentHistories[playerIndex];
     const ecb = p.ECB;
     const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
-    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot);
+    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
 
     const wasOnPlat = PlayerOnPlats(
       stageData.Stage,

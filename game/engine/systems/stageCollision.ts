@@ -49,7 +49,7 @@ export function StageCollisionDetection(world: World): void {
     const ecb = p.ECB;
     const prevEcbSnapShot =
       componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
-    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot);
+    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
     const playerOnPlats = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
 
     if (playerOnPlats) {

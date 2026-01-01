@@ -2,6 +2,7 @@ import { ECBShapesConfig } from '../../../character/shared';
 import { StateId } from '../../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint, NumberToRaw, MultiplyRaw } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
+import { IPooledObject, Pool } from '../../pools/Pool';
 import { FillArrayWithFlatVec } from '../../utils';
 import { IHistoryEnabled } from '../componentHistory';
 
@@ -16,7 +17,7 @@ export type EcbHistoryDTO = {
   readonly Zero: () => void;
 };
 
-class prevEcbDTO implements EcbHistoryDTO {
+export class DiamondDTO implements EcbHistoryDTO, IPooledObject {
   readonly shape: Array<FlatVec>;
 
   constructor() {
@@ -48,10 +49,15 @@ class prevEcbDTO implements EcbHistoryDTO {
   }
 }
 
-const diamondDTO = new prevEcbDTO();
+//const diamondDTO = new prevEcbDTO();
 
-export function CreateDiamondFromHistory(ecbSnapshot: ECBSnapShot): prevEcbDTO {
-  diamondDTO.Zero();
+export function CreateDiamondFromHistory(
+  ecbSnapshot: ECBSnapShot,
+  pool: Pool<DiamondDTO>
+): DiamondDTO {
+  //diamondDTO.Zero();
+
+  const diamondDTO = pool.Rent();
 
   const posX = NumberToRaw(ecbSnapshot.posX);
   const posY = NumberToRaw(ecbSnapshot.posY);

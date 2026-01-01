@@ -1,6 +1,7 @@
 import { AttackSnapShot } from '../engine/entity/components/attack';
 import {
   CreateDiamondFromHistory,
+  DiamondDTO,
   ECBSnapShot,
 } from '../engine/entity/components/ecb';
 import { FlagsSnapShot } from '../engine/entity/components/flags';
@@ -21,6 +22,9 @@ import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
 import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
+import { Pool } from '../engine/pools/Pool';
+
+const DiamondPool = new Pool<DiamondDTO>(20, () => new DiamondDTO());
 
 function getAlpha(
   timeStampNow: number,
@@ -141,6 +145,7 @@ export class DebugRenderer {
     }
 
     this.lastFrame = localFrame;
+    DiamondPool.Zero();
   }
 }
 
@@ -215,6 +220,8 @@ function drawPlayer(
   const playerCount = world.PlayerData.PlayerCount;
   const currentFrame = world.localFrame - 1;
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
+  const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
+
   for (let i = 0; i < playerCount; i++) {
     const playerHistory = world.GetComponentHistory(i);
     const shield = playerHistory!.ShieldHistory[currentFrame];
@@ -222,6 +229,7 @@ function drawPlayer(
     const shieldYOffset = playerHistory!.StaticPlayerHistory.ShieldOffset;
     const pos = playerHistory!.PositionHistory[currentFrame];
     const lastPos = playerHistory!.PositionHistory[lastFrame];
+    const lastLastPosition = playerHistory!.PositionHistory[theFrameBeforeLast];
     const circlesHistory = playerHistory!.StaticPlayerHistory.HurtCapsules;
     const flags = playerHistory!.FlagsHistory[currentFrame];
     const lastFlags = playerHistory!.FlagsHistory[lastFrame];
@@ -236,8 +244,8 @@ function drawPlayer(
     const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
 
     //drawHull(ctx, player);
-    drawPrevEcb(ctx, ecb, lastEcb, alpha);
-    drawCurrentECB(ctx, ecb, lastEcb, alpha);
+    drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha);
+    drawCurrentECB(ctx, ecb, lastPos, pos, alpha);
     drawHurtCircles(
       ctx,
       currentFrame,
@@ -445,8 +453,8 @@ function drawDirectionMarker(
 ) {
   const yOffset = ecb.ecbShape.yOffset.AsNumber;
   ctx.strokeStyle = 'white';
-  const curEcbDiamond = CreateDiamondFromHistory(ecb);
-  const lastEcbDiamond = CreateDiamondFromHistory(lastEcb);
+  const curEcbDiamond = CreateDiamondFromHistory(ecb, DiamondPool);
+  const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
   if (facingRight) {
     const curRightX = curEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(ecb);
     const curRightY = curEcbDiamond.Right.Y.AsNumber + yOffset; //ComponentHistory.GetRightYFromEcbHistory(ecb) + yOffset;
@@ -482,53 +490,72 @@ function drawDirectionMarker(
 
 function drawPrevEcb(
   ctx: CanvasRenderingContext2D,
-  curEcb: ECBSnapShot,
   lastEcb: ECBSnapShot,
+  lastLastPosition: PositionSnapShot,
+  lastPos: PositionSnapShot,
   alpha: number
 ) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
 
-  const curYOffset = curEcb.ecbShape.yOffset.AsNumber;
-  const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
-  const curEcbDiamond = CreateDiamondFromHistory(curEcb);
-  const lastEcbDiamond = CreateDiamondFromHistory(lastEcb);
+  // //const curYOffset = curEcb.ecbShape.yOffset.AsNumber;
+  // const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
+  // //const curEcbDiamond = CreateDiamondFromHistory(curEcb, DiamondPool);
+  // const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
 
-  const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(curEcb);
-  const curLeftY = curEcbDiamond.Left.Y.AsNumber + curYOffset;
-  //ComponentHistory.GetPrevLeftYFromEcbHistory(curEcb) + curYOffset;
-  const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(curEcb);
-  const curTopY = curEcbDiamond.Top.Y.AsNumber + curYOffset;
-  //ComponentHistory.GetPrevTopYFromEcbHistory(curEcb) + curYOffset;
-  const curRightX = curEcbDiamond.Right.X.AsNumber; // //ComponentHistory.GetPrevRightXFromEcbHistory(curEcb);
-  const curRightY = curEcbDiamond.Right.Y.AsNumber + curYOffset;
-  //ComponentHistory.GetPrevRightYFromEcbHistory(curEcb) + curYOffset;
-  const curBottomX = curEcbDiamond.Bottom.X.AsNumber; // //ComponentHistory.GetPrevBottomXFromEcbHistory(curEcb);
-  const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curYOffset;
+  // // const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(curEcb);
+  // // const curLeftY = curEcbDiamond.Left.Y.AsNumber + curYOffset;
+  // // //ComponentHistory.GetPrevLeftYFromEcbHistory(curEcb) + curYOffset;
+  // // const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(curEcb);
+  // // const curTopY = curEcbDiamond.Top.Y.AsNumber + curYOffset;
+  // // //ComponentHistory.GetPrevTopYFromEcbHistory(curEcb) + curYOffset;
+  // // const curRightX = curEcbDiamond.Right.X.AsNumber; // //ComponentHistory.GetPrevRightXFromEcbHistory(curEcb);
+  // // const curRightY = curEcbDiamond.Right.Y.AsNumber + curYOffset;
+  // // //ComponentHistory.GetPrevRightYFromEcbHistory(curEcb) + curYOffset;
+  // // const curBottomX = curEcbDiamond.Bottom.X.AsNumber; // //ComponentHistory.GetPrevBottomXFromEcbHistory(curEcb);
+  // // const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curYOffset;
 
-  //ComponentHistory.GetPrevBottomYFromEcbHistory(curEcb) + curYOffset;
+  // //ComponentHistory.GetPrevBottomYFromEcbHistory(curEcb) + curYOffset;
 
-  const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(lastEcb);
-  const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetPrevLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(lastEcb);
-  const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetPrevTopYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetPrevRightXFromEcbHistory(lastEcb);
-  const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetPrevRightYFromEcbHistory(lastEcb) + prevYOffset;
-  const LastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetPrevBottomXFromEcbHistory(lastEcb);
-  const LastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetPrevBottomYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(lastEcb);
+  // const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetPrevLeftYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(lastEcb);
+  // const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetPrevTopYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetPrevRightXFromEcbHistory(lastEcb);
+  // const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetPrevRightYFromEcbHistory(lastEcb) + prevYOffset;
+  // const LastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetPrevBottomXFromEcbHistory(lastEcb);
+  // const LastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetPrevBottomYFromEcbHistory(lastEcb) + prevYOffset;
 
-  const leftX = Lerp(lastLeftX, curLeftX, alpha);
-  const leftY = Lerp(lastLeftY, curLeftY, alpha);
-  const topX = Lerp(lastTopX, curTopX, alpha);
-  const topY = Lerp(lastTopY, curTopY, alpha);
-  const rightX = Lerp(lastRightX, curRightX, alpha);
-  const rightY = Lerp(lastRightY, curRightY, alpha);
-  const bottomX = Lerp(LastBottomX, curBottomX, alpha);
-  const bottomY = Lerp(LastBottomY, curBottomY, alpha);
+  // const leftX = lastLeftX; //Lerp(lastLeftX, curLeftX, alpha);
+  // const leftY = lastLeftY; // Lerp(lastLeftY, curLeftY, alpha);
+  // const topX = lastTopX; // Lerp(lastTopX, curTopX, alpha);
+  // const topY = lastTopY; // Lerp(lastTopY, curTopY, alpha);
+  // const rightX = lastRightX; // Lerp(lastRightX, curRightX, alpha);
+  // const rightY = lastRightY; //Lerp(lastRightY, curRightY, alpha);
+  // const bottomX = LastBottomX; //Lerp(LastBottomX, curBottomX, alpha);
+  // const bottomY = LastBottomY; //Lerp(LastBottomY, curBottomY, alpha);
+
+  const interpolatedX = Lerp(lastLastPosition.X, lastPos.X, alpha);
+  const interpolatedY = Lerp(lastLastPosition.Y, lastPos.Y, alpha);
+
+  const leftX = interpolatedX - lastEcb.ecbShape.width.AsNumber / 2;
+  const leftY =
+    interpolatedY -
+    lastEcb.ecbShape.height.AsNumber +
+    lastEcb.ecbShape.yOffset.AsNumber / 2;
+  const topX = interpolatedX;
+  const topY =
+    interpolatedY -
+    lastEcb.ecbShape.height.AsNumber +
+    lastEcb.ecbShape.yOffset.AsNumber;
+  const rightX = interpolatedX + lastEcb.ecbShape.width.AsNumber / 2;
+  const rightY = interpolatedY + lastEcb.ecbShape.yOffset.AsNumber;
+  const bottomX = interpolatedX;
+  const bottomY = interpolatedY + lastEcb.ecbShape.yOffset.AsNumber;
 
   // draw previous ECB
   ctx.strokeStyle = 'black';
@@ -557,44 +584,61 @@ function drawPrevEcb(
 function drawCurrentECB(
   ctx: CanvasRenderingContext2D,
   ecb: ECBSnapShot,
-  lastEcb: ECBSnapShot,
+  lasPos: PositionSnapShot,
+  pos: PositionSnapShot,
   alpha: number
 ) {
-  const curyOffset = ecb.ecbShape.yOffset.AsNumber;
-  const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
-  const curEcbDiamond = CreateDiamondFromHistory(ecb);
-  const lastEcbDiamond = CreateDiamondFromHistory(lastEcb);
-  const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(ecb);
-  const curLeftY = curEcbDiamond.Left.Y.AsNumber + curyOffset; //ComponentHistory.GetLeftYFromEcbHistory(ecb) + curyOffset;
-  const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(ecb);
-  const curTopY = curEcbDiamond.Top.Y.AsNumber + curyOffset; //ComponentHistory.GetTopYFromEcbHistory(ecb) + curyOffset;
-  const curRightX = curEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(ecb);
-  const curRightY = curEcbDiamond.Right.Y.AsNumber + curyOffset; //ComponentHistory.GetRightYFromEcbHistory(ecb) + curyOffset;
-  const curBottomX = curEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(ecb);
-  const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curyOffset;
-  //ComponentHistory.GetBottomYFromEcbHistory(ecb) + curyOffset;
+  // const curyOffset = ecb.ecbShape.yOffset.AsNumber;
+  // const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
+  // const curEcbDiamond = CreateDiamondFromHistory(ecb, DiamondPool);
+  // const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
+  // const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(ecb);
+  // const curLeftY = curEcbDiamond.Left.Y.AsNumber + curyOffset; //ComponentHistory.GetLeftYFromEcbHistory(ecb) + curyOffset;
+  // const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(ecb);
+  // const curTopY = curEcbDiamond.Top.Y.AsNumber + curyOffset; //ComponentHistory.GetTopYFromEcbHistory(ecb) + curyOffset;
+  // const curRightX = curEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(ecb);
+  // const curRightY = curEcbDiamond.Right.Y.AsNumber + curyOffset; //ComponentHistory.GetRightYFromEcbHistory(ecb) + curyOffset;
+  // const curBottomX = curEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(ecb);
+  // const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curyOffset;
+  // //ComponentHistory.GetBottomYFromEcbHistory(ecb) + curyOffset;
 
-  const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-  const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(lastEcb);
-  const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetTopYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-  const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetRightYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(lastEcb);
-  const lastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
-  //ComponentHistory.GetBottomYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
+  // const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(lastEcb);
+  // const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetTopYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(lastEcb);
+  // const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetRightYFromEcbHistory(lastEcb) + prevYOffset;
+  // const lastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(lastEcb);
+  // const lastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
+  // //ComponentHistory.GetBottomYFromEcbHistory(lastEcb) + prevYOffset;
 
-  const leftX = Lerp(lastLeftX, curLeftX, alpha);
-  const leftY = Lerp(lastLeftY, curLeftY, alpha);
-  const topX = Lerp(lastTopX, curTopX, alpha);
-  const topY = Lerp(lastTopY, curTopY, alpha);
-  const rightX = Lerp(lastRightX, curRightX, alpha);
-  const rightY = Lerp(lastRightY, curRightY, alpha);
-  const bottomX = Lerp(lastBottomX, curBottomX, alpha);
-  const bottomY = Lerp(lastBottomY, curBottomY, alpha);
+  // const leftX = Lerp(lastLeftX, curLeftX, alpha);
+  // const leftY = Lerp(lastLeftY, curLeftY, alpha);
+  // const topX = Lerp(lastTopX, curTopX, alpha);
+  // const topY = Lerp(lastTopY, curTopY, alpha);
+  // const rightX = Lerp(lastRightX, curRightX, alpha);
+  // const rightY = Lerp(lastRightY, curRightY, alpha);
+  // const bottomX = Lerp(lastBottomX, curBottomX, alpha);
+  // const bottomY = Lerp(lastBottomY, curBottomY, alpha);
+
+  const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
+  const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
+
+  const leftX = interpolatedX - ecb.ecbShape.width.AsNumber / 2;
+  const leftY =
+    interpolatedY -
+    ecb.ecbShape.height.AsNumber +
+    ecb.ecbShape.yOffset.AsNumber / 2;
+  const topX = pos.X;
+  const topY =
+    pos.Y - ecb.ecbShape.height.AsNumber + ecb.ecbShape.yOffset.AsNumber;
+  const rightX = pos.X + ecb.ecbShape.width.AsNumber / 2;
+  const rightY = pos.Y + ecb.ecbShape.yOffset.AsNumber;
+  const bottomX = pos.X;
+  const bottomY = pos.Y + ecb.ecbShape.yOffset.AsNumber;
 
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'purple';

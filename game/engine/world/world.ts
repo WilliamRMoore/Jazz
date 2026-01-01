@@ -12,6 +12,7 @@ import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { FixedPoint } from '../math/fixedPoint';
+import { DiamondDTO } from '../entity/components/ecb';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -28,13 +29,13 @@ export type StageData = {
 };
 
 export type Pools = {
-  Fpp: Pool<FixedPoint>;
   ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
   VecPool: Pool<PooledVector>;
   ColResPool: Pool<CollisionResult>;
   ProjResPool: Pool<ProjectionResult>;
   AtkResPool: Pool<AttackResult>;
   ClstsPntsResPool: Pool<ClosestPointsResult>;
+  DiamondPool: Pool<DiamondDTO>;
   Zero: () => void;
 };
 
@@ -86,16 +87,15 @@ class StageWorldState implements StageData {
 }
 
 class PoolContainer implements Pools {
-  public readonly Fpp: Pool<FixedPoint>;
   public readonly ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
   public readonly VecPool: Pool<PooledVector>;
   public readonly ColResPool: Pool<CollisionResult>;
   public readonly ProjResPool: Pool<ProjectionResult>;
   public readonly AtkResPool: Pool<AttackResult>;
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
+  public readonly DiamondPool: Pool<DiamondDTO>;
 
   constructor() {
-    this.Fpp = new Pool<FixedPoint>(10000, () => new FixedPoint());
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
       20,
       () => new ActiveHitBubblesDTO()
@@ -114,6 +114,7 @@ class PoolContainer implements Pools {
       400,
       () => new ClosestPointsResult()
     );
+    this.DiamondPool = new Pool<DiamondDTO>(50, () => new DiamondDTO());
   }
   public Zero(): void {
     this.ActiveHitBubbleDtoPool.Zero();
@@ -122,6 +123,7 @@ class PoolContainer implements Pools {
     this.ProjResPool.Zero();
     this.AtkResPool.Zero();
     this.ClstsPntsResPool.Zero();
+    this.DiamondPool.Zero();
   }
 }
 
