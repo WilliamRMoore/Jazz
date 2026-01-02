@@ -1,6 +1,6 @@
 import { Stage } from '../stage/stageMain';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
-import { FlatVec } from '../physics/vector';
+import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
 import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
@@ -259,6 +259,37 @@ export function PlayerOnPlatsReturnsYCoord(
       )
     ) {
       return plat.Y1;
+    }
+  }
+  return undefined;
+}
+
+export function PlayerOnPlatsReturnsPlatform(
+  s: Stage,
+  ecbBottom: FlatVec,
+  ecbSensorDepth: FixedPoint
+): Line | undefined {
+  const plats = s.Platforms;
+  if (plats === undefined) {
+    return undefined;
+  }
+  const platLength = plats.length;
+
+  for (let i = 0; i < platLength; i++) {
+    const plat = plats[i];
+    if (
+      LineSegmentIntersectionRaw(
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        plat.X1.Raw,
+        plat.Y1.Raw,
+        plat.X2.Raw,
+        plat.Y2.Raw
+      )
+    ) {
+      return plat;
     }
   }
   return undefined;

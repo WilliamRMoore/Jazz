@@ -11,8 +11,7 @@ import { ProjectionResult } from '../pools/ProjectResult';
 import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
-import { FixedPoint } from '../math/fixedPoint';
-import { DiamondDTO } from '../entity/components/ecb';
+import { DiamondDTO } from '../pools/ECBDiamonDTO';
 
 export type PlayerData = {
   PlayerCount: number;

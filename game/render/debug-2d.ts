@@ -1,9 +1,5 @@
 import { AttackSnapShot } from '../engine/entity/components/attack';
-import {
-  CreateDiamondFromHistory,
-  DiamondDTO,
-  ECBSnapShot,
-} from '../engine/entity/components/ecb';
+import { ECBSnapShot } from '../engine/entity/components/ecb';
 import { FlagsSnapShot } from '../engine/entity/components/flags';
 import { FSMInfoSnapShot } from '../engine/entity/components/fsmInfo';
 import { HurtCapsule } from '../engine/entity/components/hurtCircles';
@@ -11,10 +7,7 @@ import { LedgeDetectorSnapShot } from '../engine/entity/components/ledgeDetector
 import { PositionSnapShot } from '../engine/entity/components/position';
 import { SensorSnapShot } from '../engine/entity/components/sensor';
 import { ShieldSnapShot } from '../engine/entity/components/shield';
-import {
-  StaticHistory,
-  ComponentHistory,
-} from '../engine/entity/componentHistory';
+import { StaticHistory } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
@@ -22,9 +15,6 @@ import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
 import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
-import { Pool } from '../engine/pools/Pool';
-
-const DiamondPool = new Pool<DiamondDTO>(20, () => new DiamondDTO());
 
 function getAlpha(
   timeStampNow: number,
@@ -145,7 +135,6 @@ export class DebugRenderer {
     }
 
     this.lastFrame = localFrame;
-    DiamondPool.Zero();
   }
 }
 
@@ -257,7 +246,7 @@ function drawPlayer(
     );
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
-    drawDirectionMarker(ctx, lerpDirection, ecb, lastEcb, alpha);
+    drawDirectionMarker(ctx, lerpDirection, ecb, pos, lastPos, alpha);
 
     const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
 
@@ -448,22 +437,20 @@ function drawDirectionMarker(
   ctx: CanvasRenderingContext2D,
   facingRight: boolean,
   ecb: ECBSnapShot,
-  lastEcb: ECBSnapShot,
+  pos: PositionSnapShot,
+  lastPos: PositionSnapShot,
   alpha: number
 ) {
-  const yOffset = ecb.ecbShape.yOffset.AsNumber;
   ctx.strokeStyle = 'white';
-  const curEcbDiamond = CreateDiamondFromHistory(ecb, DiamondPool);
-  const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
-  if (facingRight) {
-    const curRightX = curEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(ecb);
-    const curRightY = curEcbDiamond.Right.Y.AsNumber + yOffset; //ComponentHistory.GetRightYFromEcbHistory(ecb) + yOffset;
-    const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-    const lastRightY = lastEcbDiamond.Right.Y.AsNumber + yOffset;
-    //ComponentHistory.GetRightYFromEcbHistory(lastEcb) + yOffset;
+  const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
+  const interpolatedY = Lerp(lastPos.Y, pos.Y, alpha);
+  const height = ecb.ecbShape.height.AsNumber;
+  const width = ecb.ecbShape.width.AsNumber;
+  const yOffset = ecb.ecbShape.yOffset.AsNumber;
 
-    const rightX = Lerp(lastRightX, curRightX, alpha);
-    const rightY = Lerp(lastRightY, curRightY, alpha);
+  if (facingRight) {
+    const rightX = interpolatedX + width / 2;
+    const rightY = interpolatedY + yOffset - height / 2;
 
     ctx.beginPath();
     ctx.moveTo(rightX, rightY);
@@ -471,14 +458,8 @@ function drawDirectionMarker(
     ctx.stroke();
     ctx.closePath();
   } else {
-    const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(ecb);
-    const curLeftY = curEcbDiamond.Left.Y.AsNumber + yOffset; //ComponentHistory.GetLeftYFromEcbHistory(ecb) + yOffset;
-    const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-    const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + yOffset;
-    //ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + yOffset;
-
-    const leftX = Lerp(lastLeftX, curLeftX, alpha);
-    const leftY = Lerp(lastLeftY, curLeftY, alpha);
+    const leftX = interpolatedX - width / 2;
+    const leftY = interpolatedY + yOffset - height / 2;
 
     ctx.beginPath();
     ctx.moveTo(leftX, leftY);
@@ -498,64 +479,20 @@ function drawPrevEcb(
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
 
-  // //const curYOffset = curEcb.ecbShape.yOffset.AsNumber;
-  // const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
-  // //const curEcbDiamond = CreateDiamondFromHistory(curEcb, DiamondPool);
-  // const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
-
-  // // const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(curEcb);
-  // // const curLeftY = curEcbDiamond.Left.Y.AsNumber + curYOffset;
-  // // //ComponentHistory.GetPrevLeftYFromEcbHistory(curEcb) + curYOffset;
-  // // const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(curEcb);
-  // // const curTopY = curEcbDiamond.Top.Y.AsNumber + curYOffset;
-  // // //ComponentHistory.GetPrevTopYFromEcbHistory(curEcb) + curYOffset;
-  // // const curRightX = curEcbDiamond.Right.X.AsNumber; // //ComponentHistory.GetPrevRightXFromEcbHistory(curEcb);
-  // // const curRightY = curEcbDiamond.Right.Y.AsNumber + curYOffset;
-  // // //ComponentHistory.GetPrevRightYFromEcbHistory(curEcb) + curYOffset;
-  // // const curBottomX = curEcbDiamond.Bottom.X.AsNumber; // //ComponentHistory.GetPrevBottomXFromEcbHistory(curEcb);
-  // // const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curYOffset;
-
-  // //ComponentHistory.GetPrevBottomYFromEcbHistory(curEcb) + curYOffset;
-
-  // const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetPrevLeftXFromEcbHistory(lastEcb);
-  // const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetPrevLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  // const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetPrevTopXFromEcbHistory(lastEcb);
-  // const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetPrevTopYFromEcbHistory(lastEcb) + prevYOffset;
-  // const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetPrevRightXFromEcbHistory(lastEcb);
-  // const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetPrevRightYFromEcbHistory(lastEcb) + prevYOffset;
-  // const LastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetPrevBottomXFromEcbHistory(lastEcb);
-  // const LastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetPrevBottomYFromEcbHistory(lastEcb) + prevYOffset;
-
-  // const leftX = lastLeftX; //Lerp(lastLeftX, curLeftX, alpha);
-  // const leftY = lastLeftY; // Lerp(lastLeftY, curLeftY, alpha);
-  // const topX = lastTopX; // Lerp(lastTopX, curTopX, alpha);
-  // const topY = lastTopY; // Lerp(lastTopY, curTopY, alpha);
-  // const rightX = lastRightX; // Lerp(lastRightX, curRightX, alpha);
-  // const rightY = lastRightY; //Lerp(lastRightY, curRightY, alpha);
-  // const bottomX = LastBottomX; //Lerp(LastBottomX, curBottomX, alpha);
-  // const bottomY = LastBottomY; //Lerp(LastBottomY, curBottomY, alpha);
-
   const interpolatedX = Lerp(lastLastPosition.X, lastPos.X, alpha);
   const interpolatedY = Lerp(lastLastPosition.Y, lastPos.Y, alpha);
+  const height = lastEcb.ecbShape.height.AsNumber;
+  const width = lastEcb.ecbShape.width.AsNumber;
+  const yOffset = lastEcb.ecbShape.yOffset.AsNumber;
 
-  const leftX = interpolatedX - lastEcb.ecbShape.width.AsNumber / 2;
-  const leftY =
-    interpolatedY -
-    lastEcb.ecbShape.height.AsNumber +
-    lastEcb.ecbShape.yOffset.AsNumber / 2;
-  const topX = interpolatedX;
-  const topY =
-    interpolatedY -
-    lastEcb.ecbShape.height.AsNumber +
-    lastEcb.ecbShape.yOffset.AsNumber;
-  const rightX = interpolatedX + lastEcb.ecbShape.width.AsNumber / 2;
-  const rightY = interpolatedY + lastEcb.ecbShape.yOffset.AsNumber;
   const bottomX = interpolatedX;
-  const bottomY = interpolatedY + lastEcb.ecbShape.yOffset.AsNumber;
+  const bottomY = interpolatedY + yOffset;
+  const topX = interpolatedX;
+  const topY = interpolatedY + yOffset - height;
+  const leftX = interpolatedX - width / 2;
+  const leftY = interpolatedY + yOffset - height / 2;
+  const rightX = interpolatedX + width / 2;
+  const rightY = interpolatedY + yOffset - height / 2;
 
   // draw previous ECB
   ctx.strokeStyle = 'black';
@@ -569,18 +506,6 @@ function drawPrevEcb(
   ctx.fill();
 }
 
-// function drawHull(ctx: CanvasRenderingContext2D, player: PlayerRenderData) {
-//   const ccHull = player.hull;
-//   //draw hull
-//   ctx.beginPath();
-//   ctx.moveTo(ccHull[0].X, ccHull[0].Y);
-//   for (let i = 0; i < ccHull.length; i++) {
-//     ctx.lineTo(ccHull[i].X, ccHull[i].Y);
-//   }
-//   ctx.closePath();
-//   ctx.fill();
-// }
-
 function drawCurrentECB(
   ctx: CanvasRenderingContext2D,
   ecb: ECBSnapShot,
@@ -588,60 +513,23 @@ function drawCurrentECB(
   pos: PositionSnapShot,
   alpha: number
 ) {
-  // const curyOffset = ecb.ecbShape.yOffset.AsNumber;
-  // const prevYOffset = lastEcb.ecbShape.yOffset.AsNumber;
-  // const curEcbDiamond = CreateDiamondFromHistory(ecb, DiamondPool);
-  // const lastEcbDiamond = CreateDiamondFromHistory(lastEcb, DiamondPool);
-  // const curLeftX = curEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(ecb);
-  // const curLeftY = curEcbDiamond.Left.Y.AsNumber + curyOffset; //ComponentHistory.GetLeftYFromEcbHistory(ecb) + curyOffset;
-  // const curTopX = curEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(ecb);
-  // const curTopY = curEcbDiamond.Top.Y.AsNumber + curyOffset; //ComponentHistory.GetTopYFromEcbHistory(ecb) + curyOffset;
-  // const curRightX = curEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(ecb);
-  // const curRightY = curEcbDiamond.Right.Y.AsNumber + curyOffset; //ComponentHistory.GetRightYFromEcbHistory(ecb) + curyOffset;
-  // const curBottomX = curEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(ecb);
-  // const curBottomY = curEcbDiamond.Bottom.Y.AsNumber + curyOffset;
-  // //ComponentHistory.GetBottomYFromEcbHistory(ecb) + curyOffset;
-
-  // const lastLeftX = lastEcbDiamond.Left.X.AsNumber; //ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-  // const lastLeftY = lastEcbDiamond.Left.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  // const lastTopX = lastEcbDiamond.Top.X.AsNumber; //ComponentHistory.GetTopXFromEcbHistory(lastEcb);
-  // const lastTopY = lastEcbDiamond.Top.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetTopYFromEcbHistory(lastEcb) + prevYOffset;
-  // const lastRightX = lastEcbDiamond.Right.X.AsNumber; //ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-  // const lastRightY = lastEcbDiamond.Right.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetRightYFromEcbHistory(lastEcb) + prevYOffset;
-  // const lastBottomX = lastEcbDiamond.Bottom.X.AsNumber; //ComponentHistory.GetBottomXFromEcbHistory(lastEcb);
-  // const lastBottomY = lastEcbDiamond.Bottom.Y.AsNumber + prevYOffset;
-  // //ComponentHistory.GetBottomYFromEcbHistory(lastEcb) + prevYOffset;
-
-  // const leftX = Lerp(lastLeftX, curLeftX, alpha);
-  // const leftY = Lerp(lastLeftY, curLeftY, alpha);
-  // const topX = Lerp(lastTopX, curTopX, alpha);
-  // const topY = Lerp(lastTopY, curTopY, alpha);
-  // const rightX = Lerp(lastRightX, curRightX, alpha);
-  // const rightY = Lerp(lastRightY, curRightY, alpha);
-  // const bottomX = Lerp(lastBottomX, curBottomX, alpha);
-  // const bottomY = Lerp(lastBottomY, curBottomY, alpha);
-
   const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
   const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
+  const height = ecb.ecbShape.height.AsNumber;
+  const width = ecb.ecbShape.width.AsNumber;
+  const yOffset = ecb.ecbShape.yOffset.AsNumber;
 
-  const leftX = interpolatedX - ecb.ecbShape.width.AsNumber / 2;
-  const leftY =
-    interpolatedY -
-    ecb.ecbShape.height.AsNumber +
-    ecb.ecbShape.yOffset.AsNumber / 2;
-  const topX = pos.X;
-  const topY =
-    pos.Y - ecb.ecbShape.height.AsNumber + ecb.ecbShape.yOffset.AsNumber;
-  const rightX = pos.X + ecb.ecbShape.width.AsNumber / 2;
-  const rightY = pos.Y + ecb.ecbShape.yOffset.AsNumber;
-  const bottomX = pos.X;
-  const bottomY = pos.Y + ecb.ecbShape.yOffset.AsNumber;
+  const bottomX = interpolatedX;
+  const bottomY = interpolatedY + yOffset;
+  const topX = interpolatedX;
+  const topY = interpolatedY + yOffset - height;
+  const leftX = interpolatedX - width / 2;
+  const leftY = interpolatedY + yOffset - height / 2;
+  const rightX = interpolatedX + width / 2;
+  const rightY = interpolatedY + yOffset - height / 2;
 
   ctx.fillStyle = 'orange';
-  ctx.strokeStyle = 'purple';
+  ctx.strokeStyle = 'black';
   ctx.beginPath();
   ctx.moveTo(leftX, leftY);
   ctx.lineTo(topX, topY);
@@ -670,7 +558,7 @@ function drawHitCircles(
   const circles = attack.attack.GetActiveBubblesForFrame(
     currentSateFrame,
     adto
-  ); //.GetHitBubblesForFrame(currentSateFrame);
+  );
 
   if (circles === undefined) {
     return;

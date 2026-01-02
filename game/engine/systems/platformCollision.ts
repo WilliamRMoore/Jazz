@@ -13,6 +13,7 @@ import {
   PlayerOnPlatsReturnsYCoord,
   SetPlayerPositionRaw,
   Player,
+  PlayerOnPlatsReturnsPlatform,
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
@@ -20,6 +21,7 @@ import { CreateDiamondFromHistory } from '../entity/components/ecb';
 
 const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
 const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
+const POINT_FOUR = NumberToRaw(0.4);
 
 export function PlatformDetection(world: World): void {
   const playerData = world.PlayerData;
@@ -62,11 +64,14 @@ export function PlatformDetection(world: World): void {
     const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
     const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
 
-    const wasOnPlat = PlayerOnPlats(
+    const playerPlat = PlayerOnPlatsReturnsPlatform(
       stageData.Stage,
       preEcb.Bottom,
       ecb.SensorDepth
     );
+
+    const wasOnPlat = playerPlat !== undefined;
+
     const isOnPlat = PlayerOnPlats(
       stageData.Stage,
       ecb.Bottom,
@@ -79,11 +84,21 @@ export function PlatformDetection(world: World): void {
         const isFacingRight = p.Flags.IsFacingRight;
         const isMovingRight = p.Velocity.X.Raw > 0;
         const canFall = isFacingRight === isMovingRight;
+        const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
 
         if (!canFall) {
           // Snap player back to the platform edge they fell from.
           // This is a simplified snap-back. A more robust solution might find the *actual* platform.
-          SetPlayerPosition(p, preEcb.Bottom.X, preEcb.Bottom.Y);
+          if (rightOfTheRight) {
+            SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
+            p.Position.X.SubtractRaw(POINT_FOUR);
+            playerData
+              .StateMachine(playerIndex)
+              .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+            continue;
+          }
+          SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
+          p.Position.X.AddRaw(POINT_FOUR);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -91,14 +106,26 @@ export function PlatformDetection(world: World): void {
         }
       } else {
         const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
-        if (!canWalkOff) {
-          // Player was not allowed to walk off in this state at all. Snap them back.
-          SetPlayerPosition(p, preEcb.Bottom.X, preEcb.Bottom.Y);
+        if (canWalkOff) {
+          continue;
+        }
+
+        const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
+
+        if (rightOfTheRight) {
+          SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
+          p.Position.X.SubtractRaw(POINT_FOUR);
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
           continue;
         }
+        SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
+        p.Position.X.AddRaw(POINT_FOUR);
+        playerData
+          .StateMachine(playerIndex)
+          .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+        continue;
       }
     }
 
