@@ -78,13 +78,6 @@ export class Jazz implements IJazz {
 
   private logic() {
     const world = this.world;
-    const playerData = world.PlayerData;
-    //const playerCount = playerData.PlayerCount;
-
-    // for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-    //   const player = playerData.Player(playerIndex);
-    //   player?.ECB.UpdatePreviousECB();
-    // }
 
     ShieldRegen(world);
 
