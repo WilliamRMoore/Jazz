@@ -21894,7 +21894,6 @@
     constructor(conf) {
       this.BaseKnockBack = new FixedPoint(0);
       this.KnockBackScaling = new FixedPoint(0);
-      this.PlayerIdsHit = /* @__PURE__ */ new Set();
       this.CanOnlyFallOffLedgeIfFacingAwayFromIt = false;
       this.onEnterCommands = [];
       this.onUpdateCommands = /* @__PURE__ */ new Map();
@@ -21946,19 +21945,11 @@
       }
       return activeHBs;
     }
-    HitPlayer(playerID) {
-      this.PlayerIdsHit.add(playerID);
-    }
-    HasHitPlayer(playerID) {
-      return this.PlayerIdsHit.has(playerID);
-    }
-    ResetPlayerIdsHit() {
-      this.PlayerIdsHit.clear();
-    }
   };
   var AttackComponment = class {
     constructor(attacksConfigs) {
       this.currentAttack = void 0;
+      this.PlayerIdsHit = /* @__PURE__ */ new Set();
       const attacks = /* @__PURE__ */ new Map();
       attacksConfigs.forEach((ac) => {
         const atk = new Attack(ac);
@@ -21984,14 +21975,41 @@
       if (this.currentAttack === void 0) {
         return;
       }
-      this.currentAttack.ResetPlayerIdsHit();
+      this.ResetPlayerIdsHit();
       this.currentAttack = void 0;
     }
     SnapShot() {
-      return this.currentAttack;
+      const snapShot = {
+        attack: void 0,
+        playersHit: void 0
+      };
+      if (this.currentAttack !== void 0) {
+        snapShot.attack = this.currentAttack;
+      }
+      if (this.PlayerIdsHit.size > 0) {
+        snapShot.playersHit = Array.from(this.PlayerIdsHit);
+      }
+      return snapShot;
     }
     SetFromSnapShot(snapShot) {
-      this.currentAttack = snapShot;
+      this.currentAttack = snapShot.attack;
+      this.PlayerIdsHit.clear();
+      if (snapShot.playersHit !== void 0) {
+        for (let i = 0; i < snapShot.playersHit.length; i++) {
+          this.PlayerIdsHit.add(snapShot.playersHit[i]);
+        }
+      } else {
+        this.PlayerIdsHit.clear();
+      }
+    }
+    HitPlayer(playerID) {
+      this.PlayerIdsHit.add(playerID);
+    }
+    HasHitPlayer(playerID) {
+      return this.PlayerIdsHit.has(playerID);
+    }
+    ResetPlayerIdsHit() {
+      this.PlayerIdsHit.clear();
     }
     get _attacks() {
       return this.attacks;
@@ -21999,28 +22017,38 @@
   };
 
   // game/engine/entity/components/ecb.ts
+  var POINT_FIVE = NumberToRaw(0.5);
+  function CreateDiamondFromHistory(ecbSnapshot, pool) {
+    const diamondDTO = pool.Rent();
+    const posX = NumberToRaw(ecbSnapshot.posX);
+    const posY = NumberToRaw(ecbSnapshot.posY);
+    const ecbShape = ecbSnapshot.ecbShape;
+    const height = ecbShape.height.Raw;
+    const width = ecbShape.width.Raw;
+    const yOffset = ecbShape.yOffset.Raw;
+    const halfWidth = MultiplyRaw(width, POINT_FIVE);
+    const halfHeight = MultiplyRaw(height, POINT_FIVE);
+    diamondDTO.Bottom.X.SetFromRaw(posX);
+    diamondDTO.Bottom.Y.SetFromRaw(posY + yOffset);
+    diamondDTO.Left.X.SetFromRaw(posX - halfWidth);
+    diamondDTO.Left.Y.SetFromRaw(posY + yOffset - halfHeight);
+    diamondDTO.Top.X.SetFromRaw(posX);
+    diamondDTO.Top.Y.SetFromRaw(posY + yOffset - height);
+    diamondDTO.Right.X.SetFromRaw(posX + halfWidth);
+    diamondDTO.Right.Y.SetFromRaw(posY + yOffset - halfHeight);
+    return diamondDTO;
+  }
   var ECBComponent = class {
     constructor(shapes, height = 100, width = 100, yOffset = 0) {
       this.SensorDepth = new FixedPoint(1);
-      this.yOffset = new FixedPoint(0);
       this.x = new FixedPoint(0);
       this.y = new FixedPoint(0);
-      this.prevX = new FixedPoint(0);
-      this.prevY = new FixedPoint(0);
-      this.height = new FixedPoint(0);
-      this.width = new FixedPoint(0);
-      this.originalHeight = new FixedPoint(0);
-      this.originalWidth = new FixedPoint(0);
-      this.originalYOffset = new FixedPoint(0);
       this.curVerts = new Array(4);
-      this.prevVerts = new Array(4);
-      this.allVerts = new Array(8);
-      this.height.SetFromNumber(height);
-      this.width.SetFromNumber(width);
-      this.originalHeight.SetFromNumber(height);
-      this.originalWidth.SetFromNumber(width);
-      this.originalYOffset.SetFromNumber(yOffset);
-      this.yOffset.SetFromNumber(yOffset);
+      this.OriginalShape = {
+        height: new FixedPoint(height),
+        width: new FixedPoint(width),
+        yOffset: new FixedPoint(yOffset)
+      };
       this.ecbStateShapes = /* @__PURE__ */ new Map();
       for (const [Key, val] of shapes) {
         this.ecbStateShapes.set(Key, {
@@ -22029,40 +22057,20 @@
           yOffset: new FixedPoint(val.yOffset)
         });
       }
+      this.currentShape = this.OriginalShape;
       FillArrayWithFlatVec(this.curVerts);
-      FillArrayWithFlatVec(this.prevVerts);
-      this.loadAllVerts();
       this.update();
-    }
-    GetHull() {
-      return CreateConvexHull(this.allVerts);
     }
     GetActiveVerts() {
       return this.curVerts;
     }
-    UpdatePreviousECB() {
-      this.prevX.SetFromFp(this.x);
-      this.prevY.SetFromFp(this.y);
-      const prevVert = this.prevVerts;
-      const curVert = this.curVerts;
-      prevVert[0].X.SetFromFp(curVert[0].X);
-      prevVert[0].Y.SetFromFp(curVert[0].Y);
-      prevVert[1].X.SetFromFp(curVert[1].X);
-      prevVert[1].Y.SetFromFp(curVert[1].Y);
-      prevVert[2].X.SetFromFp(curVert[2].X);
-      prevVert[2].Y.SetFromFp(curVert[2].Y);
-      prevVert[3].X.SetFromFp(curVert[3].X);
-      prevVert[3].Y.SetFromFp(curVert[3].Y);
-    }
     SetInitialPosition(x, y) {
       this.MoveToPosition(x, y);
-      this.UpdatePreviousECB();
     }
     SetInitialPositionRaw(xRaw, yRaw) {
       this.x.SetFromRaw(xRaw);
       this.y.SetFromRaw(yRaw);
       this.update();
-      this.UpdatePreviousECB();
     }
     MoveToPosition(x, y) {
       this.x.SetFromFp(x);
@@ -22075,26 +22083,17 @@
       this.update();
     }
     SetECBShape(stateId) {
-      const shape = this.ecbStateShapes.get(stateId);
-      if (shape === void 0) {
-        this.yOffset.SetFromFp(this.originalYOffset);
-        this.height.SetFromFp(this.originalHeight);
-        this.width.SetFromFp(this.originalWidth);
-        this.update();
-        return;
-      }
-      this.yOffset.SetFromFp(shape.yOffset);
-      this.height.SetFromFp(shape.height);
-      this.width.SetFromFp(shape.width);
+      this.currentShape = this.ecbStateShapes.get(stateId) || this.OriginalShape;
       this.update();
     }
     update() {
-      const half = NumberToRaw(0.5);
+      const half = POINT_FIVE;
       const px = this.x.Raw;
       const py = this.y.Raw;
-      const height = this.height.Raw;
-      const width = this.width.Raw;
-      const yOffset = this.yOffset.Raw;
+      const shape = this.currentShape;
+      const height = shape.height.Raw;
+      const width = shape.width.Raw;
+      const yOffset = shape.yOffset.Raw;
       const bottomX = px;
       const bottomY = py + yOffset;
       const topX = px;
@@ -22117,98 +22116,43 @@
     get Bottom() {
       return this.curVerts[0];
     }
-    get PrevBottom() {
-      return this.prevVerts[0];
-    }
     get Left() {
       return this.curVerts[1];
-    }
-    get PrevLeft() {
-      return this.prevVerts[1];
     }
     get Top() {
       return this.curVerts[2];
     }
-    get PrevTop() {
-      return this.prevVerts[2];
-    }
     get Right() {
       return this.curVerts[3];
     }
-    get PrevRight() {
-      return this.prevVerts[3];
-    }
     get Height() {
-      return this.height;
+      return this.currentShape.height;
     }
     get Width() {
-      return this.width;
+      return this.currentShape.width;
     }
     get YOffset() {
-      return this.yOffset;
+      return this.currentShape.yOffset;
     }
     get _ecbShapes() {
       return this.ecbStateShapes;
     }
     ResetECBShape() {
-      this.height.SetFromFp(this.originalHeight);
-      this.width.SetFromFp(this.originalWidth);
-      this.yOffset.SetFromFp(this.originalYOffset);
+      this.currentShape = this.OriginalShape;
       this.update();
     }
     SnapShot() {
       return {
         posX: this.x.AsNumber,
         posY: this.y.AsNumber,
-        prevPosX: this.prevX.AsNumber,
-        prevPosY: this.prevY.AsNumber,
-        YOffset: this.yOffset.AsNumber,
-        Height: this.height.AsNumber,
-        Width: this.width.AsNumber
+        ecbShape: this.currentShape
       };
     }
     SetFromSnapShot(snapShot) {
       this.x.SetFromNumber(snapShot.posX);
       this.y.SetFromNumber(snapShot.posY);
-      this.prevX.SetFromNumber(snapShot.prevPosX);
-      this.prevY.SetFromNumber(snapShot.prevPosY);
-      this.yOffset.SetFromNumber(snapShot.YOffset);
-      this.height.SetFromNumber(snapShot.Height);
-      this.width.SetFromNumber(snapShot.Width);
+      this.currentShape = snapShot.ecbShape;
       this.update();
-      const half = NumberToRaw(0.5);
-      const px = this.prevX.Raw;
-      const py = this.prevY.Raw;
-      const height = this.height.Raw;
-      const width = this.width.Raw;
-      const yOffset = this.yOffset.Raw;
-      const bottomX = px;
-      const bottomY = py + yOffset;
-      const topX = px;
-      const topY = bottomY - height;
-      const halfWidth = MultiplyRaw(width, half);
-      const halfHeight = MultiplyRaw(height, half);
-      const leftX = bottomX - halfWidth;
-      const leftY = bottomY - halfHeight;
-      const rightX = bottomX + halfWidth;
-      const rightY = leftY;
-      this.prevVerts[0].X.SetFromRaw(bottomX);
-      this.prevVerts[0].Y.SetFromRaw(bottomY);
-      this.prevVerts[1].X.SetFromRaw(leftX);
-      this.prevVerts[1].Y.SetFromRaw(leftY);
-      this.prevVerts[2].X.SetFromRaw(topX);
-      this.prevVerts[2].Y.SetFromRaw(topY);
-      this.prevVerts[3].X.SetFromRaw(rightX);
-      this.prevVerts[3].Y.SetFromRaw(rightY);
-    }
-    loadAllVerts() {
-      this.allVerts.length = 0;
-      for (let i = 0; i < 4; i++) {
-        this.allVerts.push(this.prevVerts[i]);
-      }
-      for (let i = 0; i < 4; i++) {
-        this.allVerts.push(this.curVerts[i]);
-      }
     }
   };
 
@@ -23297,6 +23241,29 @@
     }
     return void 0;
   }
+  function PlayerOnPlatsReturnsPlatform(s, ecbBottom, ecbSensorDepth) {
+    const plats = s.Platforms;
+    if (plats === void 0) {
+      return void 0;
+    }
+    const platLength = plats.length;
+    for (let i = 0; i < platLength; i++) {
+      const plat = plats[i];
+      if (LineSegmentIntersectionRaw(
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw,
+        ecbBottom.X.Raw,
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        plat.X1.Raw,
+        plat.Y1.Raw,
+        plat.X2.Raw,
+        plat.Y2.Raw
+      )) {
+        return plat;
+      }
+    }
+    return void 0;
+  }
   function PlayerOnStageOrPlats(s, p) {
     const ecbBottom = p.ECB.Bottom;
     const ecbSensorDepth = p.ECB.SensorDepth;
@@ -23431,7 +23398,11 @@
   var TWO_HUNDRED = NumberToRaw(200);
   var FULL_CIRCLE = NumberToRaw(360);
   var LUT_SIZE2 = NumberToRaw(LUT_SIZE);
-  function PlayerAttacks(playerData, historyData, pools, currentFrame) {
+  function PlayerAttacks(world) {
+    const playerData = world.PlayerData;
+    const pools = world.Pools;
+    const historyData = world.HistoryData;
+    const currentFrame = world.localFrame;
     const playerCount = playerData.PlayerCount;
     if (playerCount === 1) {
       return;
@@ -23535,7 +23506,7 @@
     if (pB.Flags.IsIntangible) {
       return atkResPool.Rent();
     }
-    if (pAAttack.HasHitPlayer(pB.ID)) {
+    if (pA.Attacks.HasHitPlayer(pB.ID)) {
       return atkResPool.Rent();
     }
     const pAHitBubbles = pAAttack.GetActiveBubblesForFrame(
@@ -23598,7 +23569,7 @@
           pAHitBubble.Radius
         );
         if (collision.Collision) {
-          pAAttack.HitPlayer(pB.ID);
+          pA.Attacks.HitPlayer(pB.ID);
           const attackResult = atkResPool.Rent();
           attackResult.SetShieldHitTrue(
             pB.ID,
@@ -23669,7 +23640,7 @@
           pBRadius
         );
         if (collision.Collision) {
-          pAAttack.HitPlayer(pB.ID);
+          pA.Attacks.HitPlayer(pB.ID);
           let attackResult = atkResPool.Rent();
           attackResult.SetHitTrue(
             pB.ID,
@@ -23726,7 +23697,9 @@
   }
 
   // game/engine/systems/gravity.ts
-  function Gravity(playerData, stageData) {
+  function Gravity(world) {
+    const playerData = world.PlayerData;
+    const stageData = world.StageData;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
@@ -23768,7 +23741,10 @@
   }
 
   // game/engine/systems/history.ts
-  function RecordHistory(w, playerData, historyData, frameNumber) {
+  function RecordHistory(w) {
+    const playerData = w.PlayerData;
+    const historyData = w.HistoryData;
+    const frameNumber = w.localFrame;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
@@ -23794,7 +23770,10 @@
 
   // game/engine/systems/ledgeGrabDetection.ts
   var TWO4 = NumberToRaw(2);
-  function LedgeGrabDetection(playerData, stageData, pools) {
+  function LedgeGrabDetection(world) {
+    const playerData = world.PlayerData;
+    const stageData = world.StageData;
+    const pools = world.Pools;
     const stage = stageData.Stage;
     const ledges = stage.Ledges;
     const leftLedge = ledges.GetLeftLedge();
@@ -23857,7 +23836,9 @@
   }
 
   // game/engine/systems/outOfBounds.ts
-  function OutOfBoundsCheck(playerData, stageData) {
+  function OutOfBoundsCheck(world) {
+    const playerData = world.PlayerData;
+    const stageData = world.StageData;
     const playerCount = playerData.PlayerCount;
     const stage = stageData.Stage;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
@@ -23909,7 +23890,13 @@
   // game/engine/systems/platformCollision.ts
   var NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
   var NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
-  function PlatformDetection(playerData, stageData, currentFrame) {
+  var POINT_FOUR2 = NumberToRaw(0.4);
+  function PlatformDetection(world) {
+    const playerData = world.PlayerData;
+    const stageData = world.StageData;
+    const histories = world.HistoryData;
+    const currentFrame = world.localFrame;
+    const prevFrame = world.PreviousFrame;
     const plats = stageData.Stage.Platforms;
     if (plats === void 0) {
       return;
@@ -23929,12 +23916,17 @@
       if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
         continue;
       }
+      const dPool = world.Pools.DiamondPool;
+      const compHist = histories.PlayerComponentHistories[playerIndex];
       const ecb = p.ECB;
-      const wasOnPlat = PlayerOnPlats(
+      const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
+      const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
+      const playerPlat = PlayerOnPlatsReturnsPlatform(
         stageData.Stage,
-        ecb.PrevBottom,
+        preEcb.Bottom,
         ecb.SensorDepth
       );
+      const wasOnPlat = playerPlat !== void 0;
       const isOnPlat = PlayerOnPlats(
         stageData.Stage,
         ecb.Bottom,
@@ -23945,18 +23937,35 @@
           const isFacingRight = p.Flags.IsFacingRight;
           const isMovingRight = p.Velocity.X.Raw > 0;
           const canFall = isFacingRight === isMovingRight;
+          const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
           if (!canFall) {
-            SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
+            if (rightOfTheRight) {
+              SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
+              p.Position.X.SubtractRaw(POINT_FOUR2);
+              playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+              continue;
+            }
+            SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
+            p.Position.X.AddRaw(POINT_FOUR2);
             playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
             continue;
           }
         } else {
           const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
-          if (!canWalkOff) {
-            SetPlayerPosition(p, ecb.PrevBottom.X, ecb.PrevBottom.Y);
+          if (canWalkOff) {
+            continue;
+          }
+          const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
+          if (rightOfTheRight) {
+            SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
+            p.Position.X.SubtractRaw(POINT_FOUR2);
             playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
             continue;
           }
+          SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
+          p.Position.X.AddRaw(POINT_FOUR2);
+          playerData.StateMachine(playerIndex).UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
+          continue;
         }
       }
       const landingYCoord = PlayerOnPlatsReturnsYCoord(
@@ -23984,7 +23993,7 @@
       if (ia.LYAxis.Raw < NEG_ZERO_POINT_EIGHT && fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S) {
         continue;
       }
-      const previousBottom = ecb.PrevBottom;
+      const previousBottom = preEcb.Bottom;
       const currentBottom = ecb.Bottom;
       for (let platIndex = 0; platIndex < platCount; platIndex++) {
         const plat = plats[platIndex];
@@ -24044,7 +24053,9 @@
   // game/engine/systems/playerCollision.ts
   var MOVE_X = NumberToRaw(1.5);
   var TWO5 = NumberToRaw(2);
-  function PlayerCollisionDetection(playerData, pools) {
+  function PlayerCollisionDetection(world) {
+    const playerData = world.PlayerData;
+    const pools = world.Pools;
     const playerCount = playerData.PlayerCount;
     if (playerCount < 2) {
       return;
@@ -24106,7 +24117,8 @@
   }
 
   // game/engine/systems/playerInput.ts
-  function PlayerInput(playerData, world) {
+  function PlayerInput(world) {
+    const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
@@ -24121,7 +24133,9 @@
   }
 
   // game/engine/systems/sensors.ts
-  function PlayerSensors(world, playerData, pools) {
+  function PlayerSensors(world) {
+    const playerData = world.PlayerData;
+    const pools = world.Pools;
     const playerCount = playerData.PlayerCount;
     if (playerCount < 2) {
       return;
@@ -24208,7 +24222,7 @@
   }
 
   // game/engine/systems/shieldRegen.ts
-  function SheildRegen(w) {
+  function ShieldRegen(w) {
     const pd = w.PlayerData;
     const playerCount = pd.PlayerCount;
     for (let i = 0; i < playerCount; i++) {
@@ -24222,7 +24236,11 @@
 
   // game/engine/systems/stageCollision.ts
   var CORNER_JITTER_CORRECTION_RAW = NumberToRaw(2);
-  function StageCollisionDetection(playerData, stageData, pools) {
+  function StageCollisionDetection(world) {
+    const playerData = world.PlayerData;
+    const componentHistories = world.HistoryData.PlayerComponentHistories;
+    const stageData = world.StageData;
+    const pools = world.Pools;
     const playerCount = playerData.PlayerCount;
     const stage = stageData.Stage;
     const stageGround = stage.StageVerticies.GetGround();
@@ -24239,14 +24257,16 @@
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
       const ecb = p.ECB;
+      const prevEcbSnapShot = componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
+      const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
       const playerOnPlats = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
       if (playerOnPlats) {
         continue;
       }
       const sm = playerData.StateMachine(playerIndex);
-      const playerVerts = ecb.GetHull();
-      const fsmIno = p.FSMInfo;
-      const preResolutionStateId = fsmIno.CurrentStatetId;
+      const playerVerts = getHull(preEcb, ecb);
+      const fsmInfo = p.FSMInfo;
+      const preResolutionStateId = fsmInfo.CurrentStatetId;
       const preResolutionYOffsetRaw = ecb.YOffset.Raw;
       const stageVerts = stage.StageVerticies.GetVerts();
       const collisionResult = IntersectsPolygons(
@@ -24290,7 +24310,7 @@
         );
       }
       const grnd = PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth);
-      const prvGrnd = PlayerOnStage(stage, p.ECB.PrevBottom, p.ECB.SensorDepth);
+      const prvGrnd = PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth);
       if (prvGrnd && !grnd) {
         let shouldSnapBack = false;
         if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
@@ -24332,14 +24352,27 @@
           ShouldSoftlandRaw(p.Velocity.Y.Raw) ? GAME_EVENT_IDS.SOFT_LAND_GE : GAME_EVENT_IDS.LAND_GE
         );
       }
-      if (preResolutionStateId !== STATE_IDS.LAND_S && preResolutionStateId !== STATE_IDS.SOFT_LAND_S && (fsmIno.CurrentStatetId === STATE_IDS.LAND_S || fsmIno.CurrentStatetId === STATE_IDS.SOFT_LAND_S)) {
+      if (preResolutionStateId !== STATE_IDS.LAND_S && preResolutionStateId !== STATE_IDS.SOFT_LAND_S && (fsmInfo.CurrentStatetId === STATE_IDS.LAND_S || fsmInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S)) {
         AddToPlayerYPositionRaw(p, preResolutionYOffsetRaw);
       }
     }
   }
+  var combinedEcbVerts = new Array();
+  function getHull(prevEcb, curEcb) {
+    combinedEcbVerts.length = 0;
+    for (let i = 0; i < 4; i++) {
+      combinedEcbVerts.push(prevEcb.shape[i]);
+    }
+    for (let i = 0; i < 4; i++) {
+      combinedEcbVerts.push(curEcb.GetActiveVerts()[i]);
+    }
+    const hull = CreateConvexHull(combinedEcbVerts);
+    return hull;
+  }
 
   // game/engine/systems/timedFlags.ts
-  function TimedFlags(playerData) {
+  function TimedFlags(world) {
+    const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
@@ -24357,7 +24390,8 @@
   }
 
   // game/engine/systems/velocity.ts
-  function ApplyVelocity(playerData) {
+  function ApplyVelocity(w) {
+    const playerData = w.PlayerData;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
       const p = playerData.Player(playerIndex);
@@ -24371,7 +24405,9 @@
 
   // game/engine/systems/velocityDecay.ts
   var POINT_TWO = NumberToRaw(0.2);
-  function ApplyVelocityDecay(playerData, stageData) {
+  function ApplyVelocityDecay(world) {
+    const playerData = world.PlayerData;
+    const stageData = world.StageData;
     const playerCount = playerData.PlayerCount;
     const stage = stageData.Stage;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
@@ -24622,54 +24658,6 @@
       p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
       p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
       p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
-    }
-    static GetRightXFromEcbHistory(ecb) {
-      return ecb.posX + ecb.Width / 2;
-    }
-    static GetRightYFromEcbHistory(ecb) {
-      return ecb.posY - ecb.Height / 2;
-    }
-    static GetLeftXFromEcbHistory(ecb) {
-      return ecb.posX - ecb.Width / 2;
-    }
-    static GetLeftYFromEcbHistory(ecb) {
-      return ecb.posY - ecb.Height / 2;
-    }
-    static GetTopXFromEcbHistory(ecb) {
-      return ecb.posX;
-    }
-    static GetTopYFromEcbHistory(ecb) {
-      return ecb.posY - ecb.Height;
-    }
-    static GetBottomXFromEcbHistory(ecb) {
-      return ecb.posX;
-    }
-    static GetBottomYFromEcbHistory(ecb) {
-      return ecb.posY;
-    }
-    static GetPrevRightXFromEcbHistory(ecb) {
-      return ecb.prevPosX + ecb.Width / 2;
-    }
-    static GetPrevRightYFromEcbHistory(ecb) {
-      return ecb.prevPosY - ecb.Height / 2;
-    }
-    static GetPrevLeftXFromEcbHistory(ecb) {
-      return ecb.prevPosX - ecb.Width / 2;
-    }
-    static GetPrevLeftYFromEcbHistory(ecb) {
-      return ecb.prevPosY - ecb.Height / 2;
-    }
-    static GetPrevTopXFromEcbHistory(ecb) {
-      return ecb.prevPosX;
-    }
-    static GetPrevTopYFromEcbHistory(ecb) {
-      return ecb.prevPosY - ecb.Height;
-    }
-    static GetPrevBottomXFromEcbHistory(ecb) {
-      return ecb.prevPosX;
-    }
-    static GetPrevBottomYFromEcbHistory(ecb) {
-      return ecb.prevPosY;
     }
   };
 
@@ -25049,6 +25037,32 @@
     }
   };
 
+  // game/engine/pools/ECBDiamonDTO.ts
+  var DiamondDTO = class {
+    constructor() {
+      this.shape = new Array(4);
+      FillArrayWithFlatVec(this.shape);
+    }
+    get Bottom() {
+      return this.shape[0];
+    }
+    get Left() {
+      return this.shape[1];
+    }
+    get Top() {
+      return this.shape[2];
+    }
+    get Right() {
+      return this.shape[3];
+    }
+    Zero() {
+      for (let i = 0; i < this.shape.length; i++) {
+        this.shape[i].X.Zero();
+        this.shape[i].Y.Zero();
+      }
+    }
+  };
+
   // game/engine/world/world.ts
   var PlayerState = class {
     constructor() {
@@ -25082,7 +25096,6 @@
   };
   var PoolContainer = class {
     constructor() {
-      this.Fpp = new Pool(1e4, () => new FixedPoint());
       this.ActiveHitBubbleDtoPool = new Pool(
         20,
         () => new ActiveHitBubblesDTO()
@@ -25101,6 +25114,7 @@
         400,
         () => new ClosestPointsResult()
       );
+      this.DiamondPool = new Pool(50, () => new DiamondDTO());
     }
     Zero() {
       this.ActiveHitBubbleDtoPool.Zero();
@@ -25109,6 +25123,7 @@
       this.ProjResPool.Zero();
       this.AtkResPool.Zero();
       this.ClstsPntsResPool.Zero();
+      this.DiamondPool.Zero();
     }
   };
   var History = class {
@@ -25373,7 +25388,7 @@
 
   // game/engine/systems/grabMeter.ts
   var POINT_TWO_FIVE = NumberToRaw(0.25);
-  var POINT_FOUR2 = NumberToRaw(0.4);
+  var POINT_FOUR3 = NumberToRaw(0.4);
   var ONE_POINT_FIVE = NumberToRaw(1.5);
   var TWO6 = NumberToRaw(2);
   var BASE_METER = NumberToRaw(60);
@@ -25395,16 +25410,16 @@
       const currentInput2 = iS.GetInputForFrame(w.localFrame);
       const actionBonusDecay = previousInput.Action !== currentInput2.Action ? ONE_POINT_FIVE : 0;
       let stickbonusDecay = 0;
-      if (Math.abs(previousInput.LXAxis.Raw - currentInput2.LXAxis.Raw) > POINT_FOUR2) {
+      if (Math.abs(previousInput.LXAxis.Raw - currentInput2.LXAxis.Raw) > POINT_FOUR3) {
         stickbonusDecay += POINT_TWO_FIVE;
       }
-      if (Math.abs(previousInput.LYAxis.Raw - currentInput2.LYAxis.Raw) > POINT_FOUR2) {
+      if (Math.abs(previousInput.LYAxis.Raw - currentInput2.LYAxis.Raw) > POINT_FOUR3) {
         stickbonusDecay += POINT_TWO_FIVE;
       }
-      if (Math.abs(previousInput.RXAxis.Raw - currentInput2.RXAxis.Raw) > POINT_FOUR2) {
+      if (Math.abs(previousInput.RXAxis.Raw - currentInput2.RXAxis.Raw) > POINT_FOUR3) {
         stickbonusDecay += POINT_TWO_FIVE;
       }
-      if (Math.abs(previousInput.RYAxis.Raw - currentInput2.RYAxis.Raw) > POINT_FOUR2) {
+      if (Math.abs(previousInput.RYAxis.Raw - currentInput2.RYAxis.Raw) > POINT_FOUR3) {
         stickbonusDecay += POINT_TWO_FIVE;
       }
       const decay = baseDecay + actionBonusDecay + stickbonusDecay;
@@ -25437,6 +25452,7 @@
       }
       const s = defaultStage();
       this.world.SetStage(s);
+      RecordHistory(this.world);
     }
     UpdateInputForCurrentFrame(ia, pIndex) {
       this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
@@ -25445,43 +25461,33 @@
       );
     }
     Tick() {
+      const world = this.World;
+      world.Pools.Zero();
       let frameTimeStart = performance.now();
       this.logic();
       let frameTimeDelta = performance.now() - frameTimeStart;
-      const world = this.World;
       world.SetFrameTimeForFrame(world.localFrame, frameTimeDelta);
       world.SetFrameTimeStampForFrame(world.localFrame, frameTimeStart);
-      world.Pools.Zero();
       world.localFrame++;
     }
     logic() {
       const world = this.world;
-      const frame = world.localFrame;
-      const playerData = world.PlayerData;
-      const playerCount = playerData.PlayerCount;
-      const stageData = world.StageData;
-      const historyData = world.HistoryData;
-      const pools = world.Pools;
-      for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-        const player = playerData.Player(playerIndex);
-        player?.ECB.UpdatePreviousECB();
-      }
-      SheildRegen(world);
-      TimedFlags(playerData);
-      PlayerInput(playerData, world);
-      Gravity(playerData, stageData);
-      ApplyVelocity(playerData);
-      ApplyVelocityDecay(playerData, stageData);
-      PlayerCollisionDetection(playerData, pools);
-      PlatformDetection(playerData, stageData, frame);
-      StageCollisionDetection(playerData, stageData, pools);
-      LedgeGrabDetection(playerData, stageData, pools);
-      PlayerSensors(world, playerData, pools);
-      PlayerAttacks(playerData, historyData, pools, frame);
+      ShieldRegen(world);
+      TimedFlags(world);
+      PlayerInput(world);
+      Gravity(world);
+      ApplyVelocity(world);
+      ApplyVelocityDecay(world);
+      PlayerCollisionDetection(world);
+      PlatformDetection(world);
+      StageCollisionDetection(world);
+      LedgeGrabDetection(world);
+      PlayerSensors(world);
+      PlayerAttacks(world);
       GrabMeter(world);
       PlayerGrabs(world);
-      OutOfBoundsCheck(playerData, stageData);
-      RecordHistory(world, playerData, historyData, frame);
+      OutOfBoundsCheck(world);
+      RecordHistory(world);
     }
   };
   var JazzDebugger = class {
@@ -25571,7 +25577,7 @@
       const playerFacingRight = playerStateHistory?.FlagsHistory[localFrame]?.FacingRight ?? true;
       const playerFsmState = playerStateHistory?.FsmInfoHistory[localFrame]?.State?.StateName ?? "N/A";
       const currentAttack = playerStateHistory?.AttackHistory[localFrame];
-      const currentAttackString = currentAttack?.Name;
+      const currentAttackString = currentAttack?.attack?.Name;
       if (localFrame === 0) {
         return;
       }
@@ -25672,6 +25678,7 @@
     const playerCount = world.PlayerData.PlayerCount;
     const currentFrame = world.localFrame - 1;
     const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
+    const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
     for (let i = 0; i < playerCount; i++) {
       const playerHistory = world.GetComponentHistory(i);
       const shield = playerHistory.ShieldHistory[currentFrame];
@@ -25679,6 +25686,7 @@
       const shieldYOffset = playerHistory.StaticPlayerHistory.ShieldOffset;
       const pos = playerHistory.PositionHistory[currentFrame];
       const lastPos = playerHistory.PositionHistory[lastFrame];
+      const lastLastPosition = playerHistory.PositionHistory[theFrameBeforeLast];
       const circlesHistory = playerHistory.StaticPlayerHistory.HurtCapsules;
       const flags = playerHistory.FlagsHistory[currentFrame];
       const lastFlags = playerHistory.FlagsHistory[lastFrame];
@@ -25691,8 +25699,8 @@
       const isIntangible = flags.IntangabilityFrames > 0;
       const wasIntangible = lastFlags.IntangabilityFrames > 0;
       const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
-      drawPrevEcb(ctx, ecb, lastEcb, alpha);
-      drawCurrentECB(ctx, ecb, lastEcb, alpha);
+      drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha);
+      drawCurrentECB(ctx, ecb, lastPos, pos, alpha);
       drawHurtCircles(
         ctx,
         currentFrame,
@@ -25704,7 +25712,7 @@
       );
       drawPositionMarker(ctx, pos, lastPos, alpha);
       const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
-      drawDirectionMarker(ctx, lerpDirection, ecb, lastEcb, alpha);
+      drawDirectionMarker(ctx, lerpDirection, ecb, pos, lastPos, alpha);
       const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
       if (isShieldActive) {
         drawShield(ctx, pos, lastPos, shield, shieldYOffset, alpha);
@@ -25846,28 +25854,24 @@
     ctx.closePath();
     ctx.stroke();
   }
-  function drawDirectionMarker(ctx, facingRight, ecb, lastEcb, alpha) {
-    const yOffset = ecb.YOffset;
+  function drawDirectionMarker(ctx, facingRight, ecb, pos, lastPos, alpha) {
     ctx.strokeStyle = "white";
+    const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
+    const interpolatedY = Lerp(lastPos.Y, pos.Y, alpha);
+    const height = ecb.ecbShape.height.AsNumber;
+    const width = ecb.ecbShape.width.AsNumber;
+    const yOffset = ecb.ecbShape.yOffset.AsNumber;
     if (facingRight) {
-      const curRightX = ComponentHistory.GetRightXFromEcbHistory(ecb);
-      const curRightY = ComponentHistory.GetRightYFromEcbHistory(ecb) + yOffset;
-      const lastRightX = ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-      const lastRightY = ComponentHistory.GetRightYFromEcbHistory(lastEcb) + yOffset;
-      const rightX = Lerp(lastRightX, curRightX, alpha);
-      const rightY = Lerp(lastRightY, curRightY, alpha);
+      const rightX = interpolatedX + width / 2;
+      const rightY = interpolatedY + yOffset - height / 2;
       ctx.beginPath();
       ctx.moveTo(rightX, rightY);
       ctx.lineTo(rightX + 10, rightY);
       ctx.stroke();
       ctx.closePath();
     } else {
-      const curLeftX = ComponentHistory.GetLeftXFromEcbHistory(ecb);
-      const curLeftY = ComponentHistory.GetLeftYFromEcbHistory(ecb) + yOffset;
-      const lastLeftX = ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-      const lastLeftY = ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + yOffset;
-      const leftX = Lerp(lastLeftX, curLeftX, alpha);
-      const leftY = Lerp(lastLeftY, curLeftY, alpha);
+      const leftX = interpolatedX - width / 2;
+      const leftY = interpolatedY + yOffset - height / 2;
       ctx.beginPath();
       ctx.moveTo(leftX, leftY);
       ctx.lineTo(leftX - 10, leftY);
@@ -25875,35 +25879,22 @@
       ctx.closePath();
     }
   }
-  function drawPrevEcb(ctx, curEcb, lastEcb, alpha) {
+  function drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha) {
     ctx.fillStyle = "red";
     ctx.lineWidth = 3;
-    const curYOffset = curEcb.YOffset;
-    const prevYOffset = lastEcb.YOffset;
-    const curLeftX = ComponentHistory.GetPrevLeftXFromEcbHistory(curEcb);
-    const curLeftY = ComponentHistory.GetPrevLeftYFromEcbHistory(curEcb) + curYOffset;
-    const curTopX = ComponentHistory.GetPrevTopXFromEcbHistory(curEcb);
-    const curTopY = ComponentHistory.GetPrevTopYFromEcbHistory(curEcb) + curYOffset;
-    const curRightX = ComponentHistory.GetPrevRightXFromEcbHistory(curEcb);
-    const curRightY = ComponentHistory.GetPrevRightYFromEcbHistory(curEcb) + curYOffset;
-    const curBottomX = ComponentHistory.GetPrevBottomXFromEcbHistory(curEcb);
-    const curBottomY = ComponentHistory.GetPrevBottomYFromEcbHistory(curEcb) + curYOffset;
-    const lastLeftX = ComponentHistory.GetPrevLeftXFromEcbHistory(lastEcb);
-    const lastLeftY = ComponentHistory.GetPrevLeftYFromEcbHistory(lastEcb) + prevYOffset;
-    const lastTopX = ComponentHistory.GetPrevTopXFromEcbHistory(lastEcb);
-    const lastTopY = ComponentHistory.GetPrevTopYFromEcbHistory(lastEcb) + prevYOffset;
-    const lastRightX = ComponentHistory.GetPrevRightXFromEcbHistory(lastEcb);
-    const lastRightY = ComponentHistory.GetPrevRightYFromEcbHistory(lastEcb) + prevYOffset;
-    const LastBottomX = ComponentHistory.GetPrevBottomXFromEcbHistory(lastEcb);
-    const LastBottomY = ComponentHistory.GetPrevBottomYFromEcbHistory(lastEcb) + prevYOffset;
-    const leftX = Lerp(lastLeftX, curLeftX, alpha);
-    const leftY = Lerp(lastLeftY, curLeftY, alpha);
-    const topX = Lerp(lastTopX, curTopX, alpha);
-    const topY = Lerp(lastTopY, curTopY, alpha);
-    const rightX = Lerp(lastRightX, curRightX, alpha);
-    const rightY = Lerp(lastRightY, curRightY, alpha);
-    const bottomX = Lerp(LastBottomX, curBottomX, alpha);
-    const bottomY = Lerp(LastBottomY, curBottomY, alpha);
+    const interpolatedX = Lerp(lastLastPosition.X, lastPos.X, alpha);
+    const interpolatedY = Lerp(lastLastPosition.Y, lastPos.Y, alpha);
+    const height = lastEcb.ecbShape.height.AsNumber;
+    const width = lastEcb.ecbShape.width.AsNumber;
+    const yOffset = lastEcb.ecbShape.yOffset.AsNumber;
+    const bottomX = interpolatedX;
+    const bottomY = interpolatedY + yOffset;
+    const topX = interpolatedX;
+    const topY = interpolatedY + yOffset - height;
+    const leftX = interpolatedX - width / 2;
+    const leftY = interpolatedY + yOffset - height / 2;
+    const rightX = interpolatedX + width / 2;
+    const rightY = interpolatedY + yOffset - height / 2;
     ctx.strokeStyle = "black";
     ctx.beginPath();
     ctx.moveTo(leftX, leftY);
@@ -25914,35 +25905,22 @@
     ctx.stroke();
     ctx.fill();
   }
-  function drawCurrentECB(ctx, ecb, lastEcb, alpha) {
-    const curyOffset = ecb.YOffset;
-    const prevYOffset = lastEcb.YOffset;
-    const curLeftX = ComponentHistory.GetLeftXFromEcbHistory(ecb);
-    const curLeftY = ComponentHistory.GetLeftYFromEcbHistory(ecb) + curyOffset;
-    const curTopX = ComponentHistory.GetTopXFromEcbHistory(ecb);
-    const curTopY = ComponentHistory.GetTopYFromEcbHistory(ecb) + curyOffset;
-    const curRightX = ComponentHistory.GetRightXFromEcbHistory(ecb);
-    const curRightY = ComponentHistory.GetRightYFromEcbHistory(ecb) + curyOffset;
-    const curBottomX = ComponentHistory.GetBottomXFromEcbHistory(ecb);
-    const curBottomY = ComponentHistory.GetBottomYFromEcbHistory(ecb) + curyOffset;
-    const lastLeftX = ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-    const lastLeftY = ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + prevYOffset;
-    const lastTopX = ComponentHistory.GetTopXFromEcbHistory(lastEcb);
-    const lastTopY = ComponentHistory.GetTopYFromEcbHistory(lastEcb) + prevYOffset;
-    const lastRightX = ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-    const lastRightY = ComponentHistory.GetRightYFromEcbHistory(lastEcb) + prevYOffset;
-    const lastBottomX = ComponentHistory.GetBottomXFromEcbHistory(lastEcb);
-    const lastBottomY = ComponentHistory.GetBottomYFromEcbHistory(lastEcb) + prevYOffset;
-    const leftX = Lerp(lastLeftX, curLeftX, alpha);
-    const leftY = Lerp(lastLeftY, curLeftY, alpha);
-    const topX = Lerp(lastTopX, curTopX, alpha);
-    const topY = Lerp(lastTopY, curTopY, alpha);
-    const rightX = Lerp(lastRightX, curRightX, alpha);
-    const rightY = Lerp(lastRightY, curRightY, alpha);
-    const bottomX = Lerp(lastBottomX, curBottomX, alpha);
-    const bottomY = Lerp(lastBottomY, curBottomY, alpha);
+  function drawCurrentECB(ctx, ecb, lasPos, pos, alpha) {
+    const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
+    const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
+    const height = ecb.ecbShape.height.AsNumber;
+    const width = ecb.ecbShape.width.AsNumber;
+    const yOffset = ecb.ecbShape.yOffset.AsNumber;
+    const bottomX = interpolatedX;
+    const bottomY = interpolatedY + yOffset;
+    const topX = interpolatedX;
+    const topY = interpolatedY + yOffset - height;
+    const leftX = interpolatedX - width / 2;
+    const leftY = interpolatedY + yOffset - height / 2;
+    const rightX = interpolatedX + width / 2;
+    const rightY = interpolatedY + yOffset - height / 2;
     ctx.fillStyle = "orange";
-    ctx.strokeStyle = "purple";
+    ctx.strokeStyle = "black";
     ctx.beginPath();
     ctx.moveTo(leftX, leftY);
     ctx.lineTo(topX, topY);
@@ -25954,12 +25932,15 @@
   }
   var adto = new ActiveHitBubblesDTO();
   function drawHitCircles(ctx, attack, fsmInfo, flags, currentPosition, lastPosition, alpha) {
-    if (attack === void 0) {
+    if (attack.attack === void 0) {
       return;
     }
     adto.Zero();
     const currentSateFrame = fsmInfo.StateFrame;
-    const circles = attack.GetActiveBubblesForFrame(currentSateFrame, adto);
+    const circles = attack.attack.GetActiveBubblesForFrame(
+      currentSateFrame,
+      adto
+    );
     if (circles === void 0) {
       return;
     }
