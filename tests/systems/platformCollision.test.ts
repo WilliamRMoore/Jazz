@@ -5,12 +5,16 @@ import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/input/Input';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
-import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';
+import {
+  Idle,
+  NeutralFall,
+} from '../../game/engine/finite-state-machine/stateConfigurations/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import {
   Player,
   SetPlayerPosition,
 } from '../../game/engine/entity/playerOrchestrator';
+import { RecordHistory } from '../../game/engine/systems/history';
 
 describe('Platform Collision system tests', () => {
   let p: Player;
@@ -27,7 +31,6 @@ describe('Platform Collision system tests', () => {
   });
 
   function fallOneFrame() {
-    p.ECB.UpdatePreviousECB();
     p.Velocity.Y.SetFromNumber(25);
     ApplyVelocity(w);
   }
@@ -37,9 +40,10 @@ describe('Platform Collision system tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(0, input);
     w.PlayerData.InputStore(0).StoreInputForFrame(1, input);
     w.PlayerData.Player(0).FSMInfo.SetCurrentState(NeutralFall);
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(280));
+    RecordHistory(w);
     w.localFrame = 1;
     // Platform is at y=300
-    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(280));
 
     fallOneFrame();
 
@@ -57,7 +61,7 @@ describe('Platform Collision system tests', () => {
       new FixedPoint(1000),
       new FixedPoint(300 - p.ECB.Height.AsNumber)
     );
-    p.FSMInfo.SetCurrentState(NeutralFall);
+    p.FSMInfo.SetCurrentState(Idle);
 
     const frame = 10;
     w.localFrame = frame;
@@ -68,6 +72,10 @@ describe('Platform Collision system tests', () => {
     const currentInput = NewInputAction();
     currentInput.LYAxis.SetFromNumber(-0.9);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, currentInput);
+
+    w.localFrame = frame - 1;
+    RecordHistory(w);
+    w.localFrame = frame;
 
     const MOCK_Y_COORD = new FixedPoint(300);
     jest
@@ -95,7 +103,9 @@ describe('Platform Collision system tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, input);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, prevInput);
     p.FSMInfo.SetCurrentState(NeutralFall);
-
+    w.localFrame = frame - 1;
+    RecordHistory(w);
+    w.localFrame = frame;
     fallOneFrame();
 
     PlatformDetection(w);
@@ -116,6 +126,9 @@ describe('Platform Collision system tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(frame, input);
     w.PlayerData.InputStore(0).StoreInputForFrame(frame - 1, input);
     p.FSMInfo.SetCurrentState(NeutralFall);
+    w.localFrame = frame - 1;
+    RecordHistory(w);
+    w.localFrame = frame;
     fallOneFrame();
 
     PlatformDetection(w);

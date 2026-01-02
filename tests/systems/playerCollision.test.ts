@@ -26,8 +26,6 @@ describe('Player Collision system tests', () => {
   test('Players are moved apart when overlapping', () => {
     p1.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(500));
     p2.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(500));
-    p1.ECB.UpdatePreviousECB();
-    p2.ECB.UpdatePreviousECB();
 
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
@@ -44,8 +42,6 @@ describe('Player Collision system tests', () => {
   test('Players are not moved when not overlapping', () => {
     p1.ECB.MoveToPosition(new FixedPoint(300), new FixedPoint(500));
     p2.ECB.MoveToPosition(new FixedPoint(700), new FixedPoint(500));
-    p1.ECB.UpdatePreviousECB();
-    p2.ECB.UpdatePreviousECB();
 
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
@@ -59,8 +55,6 @@ describe('Player Collision system tests', () => {
   test('Players are not moved if one is in ledge grab state', () => {
     p1.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(500));
     p2.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(500));
-    p1.ECB.UpdatePreviousECB();
-    p2.ECB.UpdatePreviousECB();
 
     const fsm1 = w.PlayerData.StateMachine(p1.ID);
     fsm1.ForceState(STATE_IDS.LEDGE_GRAB_S);

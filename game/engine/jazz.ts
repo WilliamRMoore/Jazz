@@ -52,6 +52,7 @@ export class Jazz implements IJazz {
     }
     const s = defaultStage();
     this.world.SetStage(s);
+    RecordHistory(this.world);
   }
 
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
@@ -62,28 +63,21 @@ export class Jazz implements IJazz {
   }
 
   public Tick() {
+    const world = this.World;
+    world.Pools.Zero();
     let frameTimeStart = performance.now();
 
     this.logic();
 
     let frameTimeDelta = performance.now() - frameTimeStart;
 
-    const world = this.World;
     world.SetFrameTimeForFrame(world.localFrame, frameTimeDelta);
     world.SetFrameTimeStampForFrame(world.localFrame, frameTimeStart);
-    world.Pools.Zero();
     world.localFrame++;
   }
 
   private logic() {
     const world = this.world;
-    const playerData = world.PlayerData;
-    const playerCount = playerData.PlayerCount;
-
-    for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      const player = playerData.Player(playerIndex);
-      player?.ECB.UpdatePreviousECB();
-    }
 
     ShieldRegen(world);
 

@@ -29,6 +29,7 @@ export class Pool<T extends IPooledObject> {
       return item;
     }
 
+    //console.error('Pool is full', this.constructorFunc);
     return this.constructorFunc();
   }
 

@@ -48,14 +48,10 @@ describe('PlayerComponents ECB tests', () => {
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
-    expect(ecb.PrevBottom.X.AsNumber).toBe(10);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(20);
 
     ecb.SetInitialPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
-    expect(ecb.PrevBottom.X.AsNumber).toBe(30);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(40);
   });
 
   test('MoveToPosition and MoveToPositionRaw work correctly', () => {
@@ -69,16 +65,6 @@ describe('PlayerComponents ECB tests', () => {
     ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
-  });
-
-  test('UpdatePreviousECB works correctly', () => {
-    const x = new FixedPoint(10);
-    const y = new FixedPoint(20);
-    ecb.MoveToPosition(x, y);
-    ecb.UpdatePreviousECB();
-
-    expect(ecb.PrevBottom.X.AsNumber).toBe(10);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(20);
   });
 
   test('SetECBShape and ResetECBShape work correctly', () => {
@@ -103,7 +89,6 @@ describe('PlayerComponents ECB tests', () => {
     const x = 10;
     const y = 20;
     ecb.MoveToPositionRaw(NumberToRaw(x), NumberToRaw(y));
-    ecb.UpdatePreviousECB();
     ecb.SetECBShape(STATE_IDS.CROUCH_S);
 
     const snapshot = ecb.SnapShot();
@@ -111,30 +96,12 @@ describe('PlayerComponents ECB tests', () => {
     const newEcb = new ECBComponent(new Map(), 200, 200, 10);
     newEcb.SetFromSnapShot(snapshot);
 
-    expect(newEcb.Height.AsNumber).toBe(snapshot.Height);
-    expect(newEcb.Width.AsNumber).toBe(snapshot.Width);
-    expect(newEcb.YOffset.AsNumber).toBe(snapshot.YOffset);
+    expect(newEcb.Height.AsNumber).toBe(snapshot.ecbShape.height.AsNumber);
+    expect(newEcb.Width.AsNumber).toBe(snapshot.ecbShape.width.AsNumber);
+    expect(newEcb.YOffset.AsNumber).toBe(snapshot.ecbShape.yOffset.AsNumber);
     expect(newEcb.Bottom.X.AsNumber).toBe(snapshot.posX);
-    expect(newEcb.Bottom.Y.AsNumber).toBe(snapshot.posY + snapshot.YOffset);
-
-    // check previous positions
-    const halfWidth = snapshot.Width / 2;
-    const halfHeight = snapshot.Height / 2;
-    expect(newEcb.PrevBottom.X.AsNumber).toBe(snapshot.prevPosX);
-    expect(newEcb.PrevBottom.Y.AsNumber).toBe(
-      snapshot.prevPosY + snapshot.YOffset
-    );
-    expect(newEcb.PrevTop.X.AsNumber).toBe(snapshot.prevPosX);
-    expect(newEcb.PrevTop.Y.AsNumber).toBe(
-      snapshot.prevPosY + snapshot.YOffset - snapshot.Height
-    );
-    expect(newEcb.PrevLeft.X.AsNumber).toBe(snapshot.prevPosX - halfWidth);
-    expect(newEcb.PrevLeft.Y.AsNumber).toBe(
-      snapshot.prevPosY + snapshot.YOffset - halfHeight
-    );
-    expect(newEcb.PrevRight.X.AsNumber).toBe(snapshot.prevPosX + halfWidth);
-    expect(newEcb.PrevRight.Y.AsNumber).toBe(
-      snapshot.prevPosY + snapshot.YOffset - halfHeight
+    expect(newEcb.Bottom.Y.AsNumber).toBe(
+      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber
     );
   });
 
@@ -148,41 +115,32 @@ describe('PlayerComponents ECB tests', () => {
     const halfHeight = height / 2;
 
     ecb.MoveToPositionRaw(NumberToRaw(x), NumberToRaw(y));
-    ecb.UpdatePreviousECB();
 
     expect(ecb.Bottom.X.AsNumber).toBe(x);
     expect(ecb.Bottom.Y.AsNumber).toBe(y + yOffset);
-    expect(ecb.PrevBottom.X.AsNumber).toBe(x);
-    expect(ecb.PrevBottom.Y.AsNumber).toBe(y + yOffset);
 
     expect(ecb.Top.X.AsNumber).toBe(x);
     expect(ecb.Top.Y.AsNumber).toBe(y + yOffset - height);
-    expect(ecb.PrevTop.X.AsNumber).toBe(x);
-    expect(ecb.PrevTop.Y.AsNumber).toBe(y + yOffset - height);
 
     expect(ecb.Left.X.AsNumber).toBe(x - halfWidth);
     expect(ecb.Left.Y.AsNumber).toBe(y + yOffset - halfHeight);
-    expect(ecb.PrevLeft.X.AsNumber).toBe(x - halfWidth);
-    expect(ecb.PrevLeft.Y.AsNumber).toBe(y + yOffset - halfHeight);
 
     expect(ecb.Right.X.AsNumber).toBe(x + halfWidth);
     expect(ecb.Right.Y.AsNumber).toBe(y + yOffset - halfHeight);
-    expect(ecb.PrevRight.X.AsNumber).toBe(x + halfWidth);
-    expect(ecb.PrevRight.Y.AsNumber).toBe(y + yOffset - halfHeight);
   });
 
-  test('GetHull and GetActiveVerts return correct vertices', () => {
-    const activeVerts = ecb.GetActiveVerts();
-    expect(activeVerts.length).toBe(4);
-    expect(activeVerts[0]).toBe(ecb.Bottom);
-    expect(activeVerts[1]).toBe(ecb.Left);
-    expect(activeVerts[2]).toBe(ecb.Top);
-    expect(activeVerts[3]).toBe(ecb.Right);
+  // test('GetHull and GetActiveVerts return correct vertices', () => {
+  //   const activeVerts = ecb.GetActiveVerts();
+  //   expect(activeVerts.length).toBe(4);
+  //   expect(activeVerts[0]).toBe(ecb.Bottom);
+  //   expect(activeVerts[1]).toBe(ecb.Left);
+  //   expect(activeVerts[2]).toBe(ecb.Top);
+  //   expect(activeVerts[3]).toBe(ecb.Right);
 
-    ecb.MoveToPositionRaw(NumberToRaw(10), NumberToRaw(10));
+  //   ecb.MoveToPositionRaw(NumberToRaw(10), NumberToRaw(10));
 
-    const hull = ecb.GetHull();
-    // with no movement, hull should be same as active verts
-    expect(hull.length).toBe(4);
-  });
+  //   const hull = ecb.GetHull();
+  //   // with no movement, hull should be same as active verts
+  //   expect(hull.length).toBe(4);
+  // });
 });

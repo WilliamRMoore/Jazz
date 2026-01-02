@@ -7,10 +7,7 @@ import { LedgeDetectorSnapShot } from '../engine/entity/components/ledgeDetector
 import { PositionSnapShot } from '../engine/entity/components/position';
 import { SensorSnapShot } from '../engine/entity/components/sensor';
 import { ShieldSnapShot } from '../engine/entity/components/shield';
-import {
-  StaticHistory,
-  ComponentHistory,
-} from '../engine/entity/componentHistory';
+import { StaticHistory } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
@@ -212,6 +209,8 @@ function drawPlayer(
   const playerCount = world.PlayerData.PlayerCount;
   const currentFrame = world.localFrame - 1;
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
+  const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
+
   for (let i = 0; i < playerCount; i++) {
     const playerHistory = world.GetComponentHistory(i);
     const shield = playerHistory!.ShieldHistory[currentFrame];
@@ -219,6 +218,7 @@ function drawPlayer(
     const shieldYOffset = playerHistory!.StaticPlayerHistory.ShieldOffset;
     const pos = playerHistory!.PositionHistory[currentFrame];
     const lastPos = playerHistory!.PositionHistory[lastFrame];
+    const lastLastPosition = playerHistory!.PositionHistory[theFrameBeforeLast];
     const circlesHistory = playerHistory!.StaticPlayerHistory.HurtCapsules;
     const flags = playerHistory!.FlagsHistory[currentFrame];
     const lastFlags = playerHistory!.FlagsHistory[lastFrame];
@@ -233,8 +233,8 @@ function drawPlayer(
     const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
 
     //drawHull(ctx, player);
-    drawPrevEcb(ctx, ecb, lastEcb, alpha);
-    drawCurrentECB(ctx, ecb, lastEcb, alpha);
+    drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha);
+    drawCurrentECB(ctx, ecb, lastPos, pos, alpha);
     drawHurtCircles(
       ctx,
       currentFrame,
@@ -246,7 +246,7 @@ function drawPlayer(
     );
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
-    drawDirectionMarker(ctx, lerpDirection, ecb, lastEcb, alpha);
+    drawDirectionMarker(ctx, lerpDirection, ecb, pos, lastPos, alpha);
 
     const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
 
@@ -437,20 +437,20 @@ function drawDirectionMarker(
   ctx: CanvasRenderingContext2D,
   facingRight: boolean,
   ecb: ECBSnapShot,
-  lastEcb: ECBSnapShot,
+  pos: PositionSnapShot,
+  lastPos: PositionSnapShot,
   alpha: number
 ) {
-  const yOffset = ecb.YOffset;
   ctx.strokeStyle = 'white';
-  if (facingRight) {
-    const curRightX = ComponentHistory.GetRightXFromEcbHistory(ecb);
-    const curRightY = ComponentHistory.GetRightYFromEcbHistory(ecb) + yOffset;
-    const lastRightX = ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-    const lastRightY =
-      ComponentHistory.GetRightYFromEcbHistory(lastEcb) + yOffset;
+  const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
+  const interpolatedY = Lerp(lastPos.Y, pos.Y, alpha);
+  const height = ecb.ecbShape.height.AsNumber;
+  const width = ecb.ecbShape.width.AsNumber;
+  const yOffset = ecb.ecbShape.yOffset.AsNumber;
 
-    const rightX = Lerp(lastRightX, curRightX, alpha);
-    const rightY = Lerp(lastRightY, curRightY, alpha);
+  if (facingRight) {
+    const rightX = interpolatedX + width / 2;
+    const rightY = interpolatedY + yOffset - height / 2;
 
     ctx.beginPath();
     ctx.moveTo(rightX, rightY);
@@ -458,14 +458,8 @@ function drawDirectionMarker(
     ctx.stroke();
     ctx.closePath();
   } else {
-    const curLeftX = ComponentHistory.GetLeftXFromEcbHistory(ecb);
-    const curLeftY = ComponentHistory.GetLeftYFromEcbHistory(ecb) + yOffset;
-    const lastLeftX = ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-    const lastLeftY =
-      ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + yOffset;
-
-    const leftX = Lerp(lastLeftX, curLeftX, alpha);
-    const leftY = Lerp(lastLeftY, curLeftY, alpha);
+    const leftX = interpolatedX - width / 2;
+    const leftY = interpolatedY + yOffset - height / 2;
 
     ctx.beginPath();
     ctx.moveTo(leftX, leftY);
@@ -477,50 +471,28 @@ function drawDirectionMarker(
 
 function drawPrevEcb(
   ctx: CanvasRenderingContext2D,
-  curEcb: ECBSnapShot,
   lastEcb: ECBSnapShot,
+  lastLastPosition: PositionSnapShot,
+  lastPos: PositionSnapShot,
   alpha: number
 ) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
 
-  const curYOffset = curEcb.YOffset;
-  const prevYOffset = lastEcb.YOffset;
+  const interpolatedX = Lerp(lastLastPosition.X, lastPos.X, alpha);
+  const interpolatedY = Lerp(lastLastPosition.Y, lastPos.Y, alpha);
+  const height = lastEcb.ecbShape.height.AsNumber;
+  const width = lastEcb.ecbShape.width.AsNumber;
+  const yOffset = lastEcb.ecbShape.yOffset.AsNumber;
 
-  const curLeftX = ComponentHistory.GetPrevLeftXFromEcbHistory(curEcb);
-  const curLeftY =
-    ComponentHistory.GetPrevLeftYFromEcbHistory(curEcb) + curYOffset;
-  const curTopX = ComponentHistory.GetPrevTopXFromEcbHistory(curEcb);
-  const curTopY =
-    ComponentHistory.GetPrevTopYFromEcbHistory(curEcb) + curYOffset;
-  const curRightX = ComponentHistory.GetPrevRightXFromEcbHistory(curEcb);
-  const curRightY =
-    ComponentHistory.GetPrevRightYFromEcbHistory(curEcb) + curYOffset;
-  const curBottomX = ComponentHistory.GetPrevBottomXFromEcbHistory(curEcb);
-  const curBottomY =
-    ComponentHistory.GetPrevBottomYFromEcbHistory(curEcb) + curYOffset;
-
-  const lastLeftX = ComponentHistory.GetPrevLeftXFromEcbHistory(lastEcb);
-  const lastLeftY =
-    ComponentHistory.GetPrevLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastTopX = ComponentHistory.GetPrevTopXFromEcbHistory(lastEcb);
-  const lastTopY =
-    ComponentHistory.GetPrevTopYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastRightX = ComponentHistory.GetPrevRightXFromEcbHistory(lastEcb);
-  const lastRightY =
-    ComponentHistory.GetPrevRightYFromEcbHistory(lastEcb) + prevYOffset;
-  const LastBottomX = ComponentHistory.GetPrevBottomXFromEcbHistory(lastEcb);
-  const LastBottomY =
-    ComponentHistory.GetPrevBottomYFromEcbHistory(lastEcb) + prevYOffset;
-
-  const leftX = Lerp(lastLeftX, curLeftX, alpha);
-  const leftY = Lerp(lastLeftY, curLeftY, alpha);
-  const topX = Lerp(lastTopX, curTopX, alpha);
-  const topY = Lerp(lastTopY, curTopY, alpha);
-  const rightX = Lerp(lastRightX, curRightX, alpha);
-  const rightY = Lerp(lastRightY, curRightY, alpha);
-  const bottomX = Lerp(LastBottomX, curBottomX, alpha);
-  const bottomY = Lerp(LastBottomY, curBottomY, alpha);
+  const bottomX = interpolatedX;
+  const bottomY = interpolatedY + yOffset;
+  const topX = interpolatedX;
+  const topY = interpolatedY + yOffset - height;
+  const leftX = interpolatedX - width / 2;
+  const leftY = interpolatedY + yOffset - height / 2;
+  const rightX = interpolatedX + width / 2;
+  const rightY = interpolatedY + yOffset - height / 2;
 
   // draw previous ECB
   ctx.strokeStyle = 'black';
@@ -534,61 +506,30 @@ function drawPrevEcb(
   ctx.fill();
 }
 
-// function drawHull(ctx: CanvasRenderingContext2D, player: PlayerRenderData) {
-//   const ccHull = player.hull;
-//   //draw hull
-//   ctx.beginPath();
-//   ctx.moveTo(ccHull[0].X, ccHull[0].Y);
-//   for (let i = 0; i < ccHull.length; i++) {
-//     ctx.lineTo(ccHull[i].X, ccHull[i].Y);
-//   }
-//   ctx.closePath();
-//   ctx.fill();
-// }
-
 function drawCurrentECB(
   ctx: CanvasRenderingContext2D,
   ecb: ECBSnapShot,
-  lastEcb: ECBSnapShot,
+  lasPos: PositionSnapShot,
+  pos: PositionSnapShot,
   alpha: number
 ) {
-  const curyOffset = ecb.YOffset;
-  const prevYOffset = lastEcb.YOffset;
+  const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
+  const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
+  const height = ecb.ecbShape.height.AsNumber;
+  const width = ecb.ecbShape.width.AsNumber;
+  const yOffset = ecb.ecbShape.yOffset.AsNumber;
 
-  const curLeftX = ComponentHistory.GetLeftXFromEcbHistory(ecb);
-  const curLeftY = ComponentHistory.GetLeftYFromEcbHistory(ecb) + curyOffset;
-  const curTopX = ComponentHistory.GetTopXFromEcbHistory(ecb);
-  const curTopY = ComponentHistory.GetTopYFromEcbHistory(ecb) + curyOffset;
-  const curRightX = ComponentHistory.GetRightXFromEcbHistory(ecb);
-  const curRightY = ComponentHistory.GetRightYFromEcbHistory(ecb) + curyOffset;
-  const curBottomX = ComponentHistory.GetBottomXFromEcbHistory(ecb);
-  const curBottomY =
-    ComponentHistory.GetBottomYFromEcbHistory(ecb) + curyOffset;
-
-  const lastLeftX = ComponentHistory.GetLeftXFromEcbHistory(lastEcb);
-  const lastLeftY =
-    ComponentHistory.GetLeftYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastTopX = ComponentHistory.GetTopXFromEcbHistory(lastEcb);
-  const lastTopY =
-    ComponentHistory.GetTopYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastRightX = ComponentHistory.GetRightXFromEcbHistory(lastEcb);
-  const lastRightY =
-    ComponentHistory.GetRightYFromEcbHistory(lastEcb) + prevYOffset;
-  const lastBottomX = ComponentHistory.GetBottomXFromEcbHistory(lastEcb);
-  const lastBottomY =
-    ComponentHistory.GetBottomYFromEcbHistory(lastEcb) + prevYOffset;
-
-  const leftX = Lerp(lastLeftX, curLeftX, alpha);
-  const leftY = Lerp(lastLeftY, curLeftY, alpha);
-  const topX = Lerp(lastTopX, curTopX, alpha);
-  const topY = Lerp(lastTopY, curTopY, alpha);
-  const rightX = Lerp(lastRightX, curRightX, alpha);
-  const rightY = Lerp(lastRightY, curRightY, alpha);
-  const bottomX = Lerp(lastBottomX, curBottomX, alpha);
-  const bottomY = Lerp(lastBottomY, curBottomY, alpha);
+  const bottomX = interpolatedX;
+  const bottomY = interpolatedY + yOffset;
+  const topX = interpolatedX;
+  const topY = interpolatedY + yOffset - height;
+  const leftX = interpolatedX - width / 2;
+  const leftY = interpolatedY + yOffset - height / 2;
+  const rightX = interpolatedX + width / 2;
+  const rightY = interpolatedY + yOffset - height / 2;
 
   ctx.fillStyle = 'orange';
-  ctx.strokeStyle = 'purple';
+  ctx.strokeStyle = 'black';
   ctx.beginPath();
   ctx.moveTo(leftX, leftY);
   ctx.lineTo(topX, topY);
@@ -617,7 +558,7 @@ function drawHitCircles(
   const circles = attack.attack.GetActiveBubblesForFrame(
     currentSateFrame,
     adto
-  ); //.GetHitBubblesForFrame(currentSateFrame);
+  );
 
   if (circles === undefined) {
     return;
