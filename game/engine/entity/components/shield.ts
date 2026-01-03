@@ -65,6 +65,10 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     }
   }
 
+  public get IsBroken(): boolean {
+    return this.CurrentRadius.Raw <= 0;
+  }
+
   public Reset() {
     this.CurrentRadius.SetFromFp(this.InitialRadius);
   }

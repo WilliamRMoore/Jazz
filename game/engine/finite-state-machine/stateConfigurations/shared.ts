@@ -67,6 +67,7 @@ class GAME_EVENTS {
   public readonly GRAB_ESCAPE_GE = seq.Next as GameEventId;
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
+  public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -123,6 +124,10 @@ class STATES {
   public readonly SHIELD_RAISE_S = seq.Next as StateId;
   public readonly SHIELD_S = seq.Next as StateId;
   public readonly SHIELD_DROP_S = seq.Next as StateId;
+  public readonly SHIELD_BREAK_S = seq.Next as StateId;
+  public readonly SHIELD_BREAK_TUMBLE_S = seq.Next as StateId;
+  public readonly SHIELD_BREAK_LAND_S = seq.Next as StateId;
+  public readonly DIZZY_S = seq.Next as StateId;
   public readonly SPOT_DODGE_S = seq.Next as StateId;
   public readonly ROLL_DODGE_S = seq.Next as StateId;
   public readonly GRAB_S = seq.Next as StateId;

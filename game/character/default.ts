@@ -97,6 +97,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
       .set(STATE_IDS.SHIELD_DROP_S, 6)
+      .set(STATE_IDS.SHIELD_BREAK_S, 10)
+      .set(STATE_IDS.SHIELD_BREAK_LAND_S, 8)
+      .set(STATE_IDS.DIZZY_S, 300)
       .set(STATE_IDS.GRAB_ESCAPE_S, 30)
       .set(STATE_IDS.GRAB_RELEASE_S, 30)
       .set(STATE_IDS.JUMP_SQUAT_S, 4)
@@ -163,7 +166,23 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.UP_CHARGE_EX_S, { height: 110, width: 85, yOffset: 0 })
       .set(STATE_IDS.SIDE_CHARGE_S, { height: 100, width: 85, yOffset: 0 })
       .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
-      .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 });
+      .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 })
+      .set(STATE_IDS.SHIELD_BREAK_S, { height: 90, width: 60, yOffset: 0 })
+      .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
+        height: 60,
+        width: 60,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.SHIELD_BREAK_LAND_S, {
+        height: 40,
+        width: 100,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.DIZZY_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0,
+      });
 
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);

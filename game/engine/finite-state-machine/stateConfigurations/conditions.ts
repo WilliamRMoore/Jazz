@@ -1149,6 +1149,22 @@ export const ToRollDodge: condition = {
   StateId: STATE_IDS.ROLL_DODGE_S,
 };
 
+export const shieldBreakDefaultShieldTumble: condition = {
+  Name: 'ShieldBreakToShieldLaunch',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S,
+};
+
+export const shieldBreakLandDefaultToDizzy: condition = {
+  Name: 'ShieldBreakToDizzy',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.DIZZY_S,
+};
+
 export const defaultWalk: condition = {
   Name: 'Walk',
   ConditionFunc: (w: World, playerIndex: number) => {

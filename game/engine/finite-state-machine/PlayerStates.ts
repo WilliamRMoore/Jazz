@@ -55,6 +55,10 @@ import {
   InitHeldRelations,
   InitGrabReleaseRelations,
   InitGrabEscapeRelations,
+  InitShieldBreakLandRelations,
+  InitShieldBreakRelations,
+  initShieldTubmleRelations,
+  InitDizzyRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -120,6 +124,10 @@ import {
   Held,
   GrabEscape,
   GrabRelease,
+  ShieldBreak,
+  ShieldBreakTumble,
+  ShieldBreakLand,
+  dizzy,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -176,6 +184,10 @@ const GRAB_HOLD_RELATIONS = InitHoldRelations();
 const GRAB_HELD_RELATIONS = InitHeldRelations();
 const GRAB_RELEASE_RELATIONS = InitGrabReleaseRelations();
 const GRAB_ESCAPE_RELATIONS = InitGrabEscapeRelations();
+const SHIELD_BREAK_RELATIONS = InitShieldBreakRelations();
+const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
+const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
+const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -231,7 +243,20 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(GRAB_HOLD_RELATIONS.stateId, GRAB_HOLD_RELATIONS.mappings)
   .set(GRAB_HELD_RELATIONS.stateId, GRAB_HELD_RELATIONS.mappings)
   .set(GRAB_RELEASE_RELATIONS.stateId, GRAB_RELEASE_RELATIONS.mappings)
-  .set(GRAB_ESCAPE_RELATIONS.stateId, GRAB_ESCAPE_RELATIONS.mappings);
+  .set(GRAB_ESCAPE_RELATIONS.stateId, GRAB_ESCAPE_RELATIONS.mappings)
+  .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
+  .set(
+    SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
+    SHIELD_BREAK_TUMBLE_RELATIONS.mappings
+  )
+  .set(
+    SHIELD_BREAK_LAND_RELATIONS.stateId,
+    SHIELD_BREAK_LAND_RELATIONS.mappings
+  )
+  .set(
+    SHIELD_BREAK_DIZZY_RELATIONS.stateId,
+    SHIELD_BREAK_DIZZY_RELATIONS.mappings
+  );
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -287,7 +312,11 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(Hold.StateId, Hold)
   .set(Held.StateId, Held)
   .set(GrabRelease.StateId, GrabRelease)
-  .set(GrabEscape.StateId, GrabEscape);
+  .set(GrabEscape.StateId, GrabEscape)
+  .set(ShieldBreak.StateId, ShieldBreak)
+  .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
+  .set(ShieldBreakLand.StateId, ShieldBreakLand)
+  .set(dizzy.StateId, dizzy);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)

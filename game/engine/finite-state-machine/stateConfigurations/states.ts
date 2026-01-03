@@ -857,6 +857,56 @@ export const GrabEscape: FSMState = {
   OnExit: (p: Player, w: World) => {},
 };
 
+export const ShieldBreak: FSMState = {
+  StateName: 'ShieldBreak',
+  StateId: STATE_IDS.SHIELD_BREAK_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Velocity.X.Zero();
+    p.Velocity.Y.SetFromNumber(-30);
+    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const ShieldBreakTumble: FSMState = {
+  StateName: 'ShieldBreakTumble',
+  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_TUMBLE_S);
+  },
+  OnUpdate: (p, w) => {},
+  OnExit: (p, w) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const ShieldBreakLand: FSMState = {
+  StateName: 'ShieldBreakLand',
+  StateId: STATE_IDS.SHIELD_BREAK_LAND_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_LAND_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const dizzy: FSMState = {
+  StateName: 'Dizzy',
+  StateId: STATE_IDS.DIZZY_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.DIZZY_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
 /**
  * Attack Grabs:
  * pummel
@@ -870,7 +920,6 @@ export const GrabEscape: FSMState = {
  * TODO
  * neutralSpecial EX
  * upSpecial EX
- * shieldBreak
  * tech
  * wallSlide
  * wallKick
