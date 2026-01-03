@@ -21793,7 +21793,7 @@
     StateId: STATE_IDS.SHIELD_BREAK_S,
     OnEnter: (p, w) => {
       p.Velocity.X.Zero();
-      p.Velocity.Y.SetFromNumber(-10);
+      p.Velocity.Y.SetFromNumber(-30);
       p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_S);
     },
     OnUpdate: (p, w) => {
@@ -22967,6 +22967,9 @@
       if (curRadius.Raw < 0) {
         this.CurrentRadius.SetFromRaw(0);
       }
+    }
+    get IsBroken() {
+      return this.CurrentRadius.Raw <= 0;
     }
     Reset() {
       this.CurrentRadius.SetFromFp(this.InitialRadius);
@@ -24413,6 +24416,11 @@
       const shield = p.Shield;
       if (!shield.Active) {
         shield.Grow();
+        continue;
+      }
+      if (shield.IsBroken) {
+        const sm = pd.StateMachine(i);
+        sm.UpdateFromWorld(GAME_EVENT_IDS.SHIELD_BREAK_GE);
       }
     }
   }
