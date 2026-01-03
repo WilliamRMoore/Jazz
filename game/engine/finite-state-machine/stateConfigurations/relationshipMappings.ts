@@ -28,6 +28,8 @@ import {
   RunToDashAttack,
   RunToRunStopByGuard,
   RunToTurn,
+  shieldBreakDefaultShieldTumble,
+  shieldBreakLandDefaultToDizzy,
   shieldToShieldDrop,
   SideChargeToEx,
   ToAirDodge,
@@ -141,6 +143,7 @@ export function InitShieldRaiseRelations(): StateRelation {
   shieldRaiseTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   shieldRaiseTranslations.SetConditions([ToSpotDodge, ToRollDodge]);
@@ -157,6 +160,8 @@ export function InitShieldRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
     { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+    { geId: GAME_EVENT_IDS.SHIELD_BREAK_GE, sId: STATE_IDS.SHIELD_BREAK_S },
   ]);
 
   translations.SetConditions([shieldToShieldDrop, ToSpotDodge, ToRollDodge]);
@@ -170,6 +175,7 @@ export function InitShieldDropRelations(): StateRelation {
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -177,11 +183,64 @@ export function InitShieldDropRelations(): StateRelation {
   return new StateRelation(STATE_IDS.SHIELD_DROP_S, translations);
 }
 
+export function InitShieldBreakRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
+  translation.SetDefaults([shieldBreakDefaultShieldTumble]);
+
+  return new StateRelation(STATE_IDS.SHIELD_BREAK_S, translation);
+}
+
+export function initShieldTubmleRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+    { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.SHIELD_BREAK_LAND_S },
+    { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SHIELD_BREAK_LAND_S },
+  ]);
+
+  return new StateRelation(STATE_IDS.SHIELD_BREAK_TUMBLE_S, translation);
+}
+
+export function InitShieldBreakLandRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
+  translation.SetDefaults([shieldBreakLandDefaultToDizzy]);
+
+  return new StateRelation(STATE_IDS.SHIELD_BREAK_LAND_S, translation);
+}
+
+export function InitDizzyRelations(): StateRelation {
+  const translation = new ActionStateMappings();
+
+  translation.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
+  translation.SetDefaults([defaultIdle]);
+
+  return new StateRelation(STATE_IDS.DIZZY_S, translation);
+}
+
 export function InitSpotDodgeRelations(): StateRelation {
   const translations = new ActionStateMappings();
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -193,6 +252,7 @@ export function InitRollDodgeRelations(): StateRelation {
   const translations = new ActionStateMappings();
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -206,6 +266,7 @@ export function InitTurnRelations(): StateRelation {
   turnTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const defaultConditions: Array<condition> = [
@@ -233,6 +294,7 @@ export function InitWalkRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
     { geId: GAME_EVENT_IDS.GUARD_GE, sId: STATE_IDS.SHIELD_RAISE_S },
     { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const conditions: Array<condition> = [
@@ -259,6 +321,7 @@ export function InitDashRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const conditions: Array<condition> = [
@@ -285,6 +348,7 @@ export function InitDashTurnRelations(): StateRelation {
   dashTrunTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   dashTrunTranslations.SetConditions([ToSideSpecial]);
@@ -308,6 +372,7 @@ export function InitRunRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const conditions: Array<condition> = [
@@ -331,6 +396,7 @@ export function InitRunTurnRelations(): StateRelation {
   runTurnMapping.SetMappings([
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   runTurnMapping.SetConditions([ToSideSpecial, ToUpSpecial]);
@@ -355,6 +421,7 @@ export function InitStopRunRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.DOWN_GE, sId: STATE_IDS.CROUCH_S },
     { geId: GAME_EVENT_IDS.SIDE_SPCL_GE, sId: STATE_IDS.SIDE_SPCL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const conditions: Array<condition> = [RunStopToTurn, ToUpSpecial];
@@ -377,6 +444,7 @@ export function InitJumpSquatRelations(): StateRelation {
   jumpSquatTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   jumpSquatTranslations.SetDefaults([defaultJump]);
@@ -394,6 +462,7 @@ export function InitJumpRelations(): StateRelation {
 
   jumpTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   jumpTranslations.SetConditions([ToJump, ToAirDodge]);
@@ -413,6 +482,7 @@ export function InitNeutralFallRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   nFallTranslations.SetConditions([
@@ -442,6 +512,7 @@ export function InitLandRelations(): StateRelation {
   landTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   landTranslations.SetDefaults([LandToIdle, LandToWalk, LandToTurn]);
@@ -457,6 +528,7 @@ export function InitSoftLandRelations(): StateRelation {
   softLandTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   softLandTranslations.SetDefaults([LandToIdle, LandToWalk, LandToTurn]);
@@ -490,6 +562,7 @@ export function InitAirDodgeRelations(): StateRelation {
   airDodgeTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.LAND_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   airDodgeTranslations.SetDefaults([defaultHelpess]);
@@ -509,6 +582,7 @@ export function InitHelpessRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const HelplessRelations = new StateRelation(
@@ -521,6 +595,11 @@ export function InitHelpessRelations(): StateRelation {
 
 export function InitAttackRelations(): StateRelation {
   const attackTranslations = new ActionStateMappings();
+
+  attackTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
 
   attackTranslations.SetDefaults([defaultIdle]);
 
@@ -537,6 +616,7 @@ export function InitDashAttackRelations(): StateRelation {
 
   dashAtkTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   dashAtkTranslations.SetDefaults([defaultIdle]);
@@ -554,6 +634,7 @@ export function InitSideChargeRelations(): StateRelation {
 
   sideChargeTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   sideChargeTranslations.SetConditions([SideChargeToEx]);
@@ -573,6 +654,7 @@ export function InitSideChargeExRelations(): StateRelation {
 
   sideChargeExTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   sideChargeExTranslations.SetDefaults([defaultIdle]);
@@ -590,6 +672,7 @@ export function InitUpChargeRelations(): StateRelation {
 
   upChargeRelations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   upChargeRelations.SetConditions([UpChargeToEx]);
@@ -606,6 +689,7 @@ export function InitiUpChargeExRelations(): StateRelation {
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -620,6 +704,7 @@ export function InitDownChargeRelations(): StateRelation {
 
   downChargeRelations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   downChargeRelations.SetConditions([DownChargeToEx]);
@@ -639,6 +724,7 @@ export function InitDownChargeExRelations(): StateRelation {
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultIdle]);
@@ -657,6 +743,7 @@ export function InitAirAttackRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const airAttackRelations = new StateRelation(
@@ -676,6 +763,7 @@ export function InitFAirAttackRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   const fAirTranslations = new StateRelation(
@@ -693,6 +781,7 @@ export function InitUAirRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   uAirTranslations.SetDefaults([defaultNFall]);
@@ -709,6 +798,7 @@ export function InitBAirRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   bAirTranslations.SetDefaults([defaultNFall]);
@@ -725,6 +815,7 @@ export function InitDAirRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   dAirTranslations.SetDefaults([defaultNFall]);
@@ -739,6 +830,7 @@ export function InitNSpecialRelations(): StateRelation {
 
   nSpecialTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   nSpecialTranslations.SetDefaults([defaultIdle]);
@@ -761,6 +853,7 @@ export function InitSideSpecialRelations(): StateRelation {
       geId: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
       sId: STATE_IDS.SIDE_SPCL_EX_S,
     },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   sideSpclTranslations.SetDefaults([defaultIdle]);
@@ -778,6 +871,7 @@ export function InitSideSpecialExtensionRelations(): StateRelation {
 
   sideSpclExTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   sideSpclExTranslations.SetDefaults([defaultIdle]);
@@ -799,6 +893,7 @@ export function InitSideSpecialAirRelations(): StateRelation {
       geId: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE,
       sId: STATE_IDS.SIDE_SPCL_EX_AIR_S,
     },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translation.SetDefaults([defaultHelpess]);
@@ -813,6 +908,7 @@ export function InitSideSpecialExAirRelations(): StateRelation {
 
   translations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translations.SetDefaults([defaultHelpess]);
@@ -830,6 +926,7 @@ export function InitUpSpecialRelations(): StateRelation {
 
   translation.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translation.SetDefaults([defaultHelpess]);
@@ -841,6 +938,12 @@ export function InitUpSpecialRelations(): StateRelation {
 
 export function InitDownSpecialRelations(): StateRelation {
   const downSpecialTranslations = new ActionStateMappings();
+
+  downSpecialTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
   downSpecialTranslations.SetDefaults([defaultIdle]);
 
   const downSpecRelations = new StateRelation(
@@ -857,6 +960,7 @@ export function InitDownSpecialAirRelations(): StateRelation {
   translation.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   translation.SetDefaults([defaultNFall]);
@@ -888,6 +992,7 @@ export function InitTumbleRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.LAND_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   TumbleTranslations.SetConditions([ToJump]);
@@ -902,6 +1007,10 @@ export function InitTumbleRelations(): StateRelation {
 
 export function InitLaunchRelations(): StateRelation {
   const launchTranslations = new ActionStateMappings();
+
+  launchTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
 
   launchTranslations.SetConditions([LaunchToTumble]);
 
@@ -923,6 +1032,7 @@ export function InitCrouchRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.MOVE_FAST_GE, sId: STATE_IDS.DASH_S },
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
   crouchTranslations.SetConditions([ToDownSpecial, ToDownTilt]);

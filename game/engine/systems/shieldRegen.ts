@@ -1,3 +1,4 @@
+import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import { World } from '../world/world';
 
 export function ShieldRegen(w: World) {
@@ -8,6 +9,11 @@ export function ShieldRegen(w: World) {
     const shield = p.Shield;
     if (!shield.Active) {
       shield.Grow();
+      continue;
+    }
+    if (shield.IsBroken) {
+      const sm = pd.StateMachine(i);
+      sm.UpdateFromWorld(GAME_EVENT_IDS.SHIELD_BREAK_GE);
     }
   }
 }
