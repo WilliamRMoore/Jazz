@@ -54,7 +54,7 @@ describe('Player Orechstraotr Initialization', () => {
   test('Should have shield component configured correctly', () => {
     const shield = po.Shield;
     expect(shield.InitialRadius.AsNumber).toBe(75);
-    expect(shield.YOffset.AsNumber).toBe(-50);
+    expect(shield.YOffsetConstant.AsNumber).toBe(-50);
   });
 
   test('Should have down special attack properties', () => {

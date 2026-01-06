@@ -6,7 +6,10 @@ import { HurtCapsule } from '../engine/entity/components/hurtCircles';
 import { LedgeDetectorSnapShot } from '../engine/entity/components/ledgeDetector';
 import { PositionSnapShot } from '../engine/entity/components/position';
 import { SensorSnapShot } from '../engine/entity/components/sensor';
-import { ShieldSnapShot } from '../engine/entity/components/shield';
+import {
+  CalculateRadiusFromTriggerRaw,
+  ShieldSnapShot,
+} from '../engine/entity/components/shield';
 import { StaticHistory } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
@@ -15,6 +18,8 @@ import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
 import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
+import { InputAction } from '../input/Input';
+import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
 
 function getAlpha(
   timeStampNow: number,
@@ -80,6 +85,8 @@ export class DebugRenderer {
     const currentAttack = playerStateHistory?.AttackHistory[localFrame];
     const currentAttackString = currentAttack?.attack?.Name;
 
+    const input = world.PlayerData.InputStore(0).GetInputForFrame(localFrame);
+
     if (localFrame === 0) {
       return;
     }
@@ -99,27 +106,32 @@ export class DebugRenderer {
     ctx.fillText(`Frame: ${localFrame}`, 10, 30);
     ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
     ctx.fillText(`PlayerState: ${playerFsmState}`, 10, 90);
-    ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 120);
+    ctx.fillText(
+      `input:[ Action:${input.Action} | LX: ${input.LXAxis.AsNumber} | LY: ${input.LYAxis.AsNumber} | RX: ${input.RXAxis.AsNumber} | RY: ${input.RYAxis.AsNumber} | RT: ${input.RTVal.AsNumber} | LT: ${input.LTVal.AsNumber} ]`,
+      10,
+      120
+    );
+    ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 150);
     ctx.fillText(
       `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
-      10,
-      150
-    );
-    ctx.fillText(
-      `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
       10,
       180
     );
     ctx.fillText(
-      `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
+      `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
       10,
       210
+    );
+    ctx.fillText(
+      `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
+      10,
+      240
     );
 
     ctx.fillText(
       `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
       10,
-      240
+      270
     );
 
     ctx.fillText(
@@ -127,11 +139,11 @@ export class DebugRenderer {
         localFrame
       )}`,
       10,
-      270
+      300
     );
 
     if (currentAttackString !== undefined) {
-      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 300);
+      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 330);
     }
 
     this.lastFrame = localFrame;
@@ -231,6 +243,8 @@ function drawPlayer(
     const isIntangible = flags.IntangabilityFrames > 0;
     const wasIntangible = lastFlags.IntangabilityFrames > 0;
     const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
+    const inputStore = world.PlayerData.InputStore(i);
+    const input = inputStore.GetInputForFrame(currentFrame);
 
     //drawHull(ctx, player);
     drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha);
@@ -251,7 +265,7 @@ function drawPlayer(
     const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
 
     if (isShieldActive) {
-      drawShield(ctx, pos, lastPos, shield, shieldYOffset, alpha);
+      drawShield(ctx, input, pos, lastPos, shield, shieldYOffset, alpha);
     }
 
     drawLedgeDetectors(
@@ -332,15 +346,25 @@ function drawSensors(
 
 function drawShield(
   ctx: CanvasRenderingContext2D,
+  ia: InputAction,
   curPosition: PositionSnapShot,
   lastPosition: PositionSnapShot,
   shield: ShieldSnapShot,
   shieldYOffset: number,
   alpha: number
 ) {
-  const x = Lerp(lastPosition.X, curPosition.X, alpha);
-  const y = Lerp(lastPosition.Y, curPosition.Y, alpha) + shieldYOffset;
-  const radius = shield.CurrentRadius;
+  const x = Lerp(lastPosition.X, curPosition.X, alpha) + shield.ShieldTiltX;
+  const y =
+    Lerp(lastPosition.Y, curPosition.Y, alpha) +
+    shieldYOffset +
+    shield.ShieldTiltY;
+  const triggerValue = ia.RTValRaw > ia.LTValRaw ? ia.RTValRaw : ia.LTValRaw;
+  const radius = RawToNumber(
+    CalculateRadiusFromTriggerRaw(
+      triggerValue,
+      NumberToRaw(shield.CurrentRadius)
+    )
+  );
   ctx.strokeStyle = 'blue';
   ctx.fillStyle = 'blue';
   ctx.globalAlpha = 0.4;

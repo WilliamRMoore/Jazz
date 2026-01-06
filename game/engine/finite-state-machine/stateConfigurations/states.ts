@@ -1,5 +1,10 @@
 import { HandleCommand } from '../../command/command';
-import { NumberToRaw, DivideRaw, MultiplyRaw } from '../../math/fixedPoint';
+import {
+  NumberToRaw,
+  DivideRaw,
+  MultiplyRaw,
+  SqrtRaw,
+} from '../../math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../../math/LUTS';
 import { FlatVec } from '../../physics/vector';
 import {
@@ -379,11 +384,43 @@ export const Shield: FSMState = {
     p.Shield.Active = true;
   },
   OnUpdate: (p: Player, w: World) => {
+    // shrink shield
     const inputStore = w.PlayerData.InputStore(p.ID);
     const input = inputStore.GetInputForFrame(w.localFrame);
+    const s = p.Shield;
     const triggerValue =
       input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
-    p.Shield.ShrinkRaw(triggerValue);
+    s.ShrinkRaw(triggerValue);
+    // tilt shield
+    const lxAxis = input.LXAxis;
+    const lyAxis = input.LYAxis;
+    if (lxAxis.Raw === 0 && lyAxis.Raw === 0) {
+      s.ShieldTiltX.Zero();
+      s.ShieldTiltY.Zero();
+      return;
+    }
+    const magSqr =
+      MultiplyRaw(lxAxis.Raw, lxAxis.Raw) + MultiplyRaw(lyAxis.Raw, lyAxis.Raw);
+    if (magSqr > ONE) {
+      const mag = SqrtRaw(magSqr);
+      const clampedXRaw = DivideRaw(lxAxis.Raw, mag);
+      const clampedYRaw = -DivideRaw(lyAxis.Raw, mag);
+      const newoffsetXRaw = MultiplyRaw(
+        clampedXRaw,
+        s.maxShieldOffSetRadius.Raw
+      );
+      const newoffsetYRaw = MultiplyRaw(
+        clampedYRaw,
+        s.maxShieldOffSetRadius.Raw
+      );
+      s.ShieldTiltX.SetFromRaw(newoffsetXRaw);
+      s.ShieldTiltY.SetFromRaw(newoffsetYRaw);
+      return;
+    }
+    const newoffsetXRaw = MultiplyRaw(lxAxis.Raw, s.maxShieldOffSetRadius.Raw);
+    const newoffsetYRaw = -MultiplyRaw(lyAxis.Raw, s.maxShieldOffSetRadius.Raw);
+    s.ShieldTiltX.SetFromRaw(newoffsetXRaw);
+    s.ShieldTiltY.SetFromRaw(newoffsetYRaw);
   },
   OnExit: (p, w) => {
     p.Shield.Active = false;
@@ -877,8 +914,8 @@ export const ShieldBreakTumble: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_TUMBLE_S);
   },
-  OnUpdate: (p, w) => {},
-  OnExit: (p, w) => {
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
   },
 };
@@ -888,6 +925,7 @@ export const ShieldBreakLand: FSMState = {
   StateId: STATE_IDS.SHIELD_BREAK_LAND_S,
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_LAND_S);
+    p.Velocity.Y.Zero();
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {

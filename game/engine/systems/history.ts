@@ -1,4 +1,4 @@
-import { World, PlayerData, HistoryData } from '../world/world';
+import { World } from '../world/world';
 
 export function RecordHistory(w: World): void {
   const playerData = w.PlayerData;
