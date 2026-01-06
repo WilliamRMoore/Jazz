@@ -157,7 +157,8 @@ export class World {
       p.LedgeDetector.Width.AsNumber;
     compHist.StaticPlayerHistory.ledgDetecorHeight =
       p.LedgeDetector.Height.AsNumber;
-    compHist.StaticPlayerHistory.ShieldOffset = p.Shield.YOffset.AsNumber;
+    compHist.StaticPlayerHistory.ShieldOffset =
+      p.Shield.YOffsetConstant.AsNumber;
     p.HurtCircles.HurtCapsules.forEach((hc) =>
       compHist.StaticPlayerHistory.HurtCapsules.push(hc)
     );

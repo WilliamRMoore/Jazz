@@ -24,13 +24,13 @@ describe('Shield system tests', () => {
     p = w.PlayerData.Player(0)!;
     localFrame = 0;
     // Set a known initial radius for predictable testing
-    p.Shield.CurrentRadius.SetFromNumber(100);
+    p.Shield.PreModeCurrentRadius.SetFromNumber(100);
     p.Shield.InitialRadius.SetFromNumber(100);
   });
 
   test('Shield shrinks when trigger is held', () => {
     p.Shield.Active = true;
-    const initialShieldValue = p.Shield.CurrentRadius.Raw;
+    const initialShieldValue = p.Shield.PreModeCurrentRadius.Raw;
     const input = NewInputAction();
     input.Action = GAME_EVENT_IDS.GUARD_GE;
     input.LTVal.SetFromNumber(1); // 1 is max trigger value
@@ -39,30 +39,32 @@ describe('Shield system tests', () => {
     sm.ForceState(STATE_IDS.SHIELD_S);
     sm.UpdateFromInput(input, w);
 
-    expect(p.Shield.CurrentRadius.Raw).toBeLessThan(initialShieldValue);
+    expect(p.Shield.PreModeCurrentRadius.Raw).toBeLessThan(initialShieldValue);
   });
 
   test('Shield grows when not active', () => {
     p.Shield.Active = false;
     // Set shield to less than initial radius to allow it to grow
-    p.Shield.CurrentRadius.SetFromNumber(50);
-    const initialShieldValue = p.Shield.CurrentRadius.Raw;
+    p.Shield.PreModeCurrentRadius.SetFromNumber(50);
+    const initialShieldValue = p.Shield.PreModeCurrentRadius.Raw;
 
     ShieldRegen(w);
 
-    expect(p.Shield.CurrentRadius.Raw).toBeGreaterThan(initialShieldValue);
+    expect(p.Shield.PreModeCurrentRadius.Raw).toBeGreaterThan(
+      initialShieldValue
+    );
   });
 
   test('Shield does not grow past initial radius', () => {
     p.Shield.Active = false;
-    p.Shield.CurrentRadius.SetFromNumber(99);
+    p.Shield.PreModeCurrentRadius.SetFromNumber(99);
 
     // Grow for a few frames
     for (let i = 0; i < 10; i++) {
       ShieldRegen(w);
     }
 
-    expect(p.Shield.CurrentRadius.Raw).toBe(p.Shield.InitialRadius.Raw);
+    expect(p.Shield.PreModeCurrentRadius.Raw).toBe(p.Shield.InitialRadius.Raw);
   });
 
   test('Shield shrinks proportionally to trigger value', () => {
@@ -75,11 +77,11 @@ describe('Shield system tests', () => {
     input1.LTVal.SetFromNumber(0.5);
     w.PlayerData.InputStore(0).StoreInputForFrame(localFrame, input1);
     sm.UpdateFromInput(input1, w);
-    const shieldValue1 = p.Shield.CurrentRadius.Raw;
+    const shieldValue1 = p.Shield.PreModeCurrentRadius.Raw;
     const shrinkAmount1 = initialShieldValue - shieldValue1;
 
     // Reset shield for next part of test
-    p.Shield.CurrentRadius.SetFromRaw(initialShieldValue);
+    p.Shield.PreModeCurrentRadius.SetFromRaw(initialShieldValue);
     p.FSMInfo.SetStateFrameToZero();
 
     const input2 = NewInputAction();
@@ -87,7 +89,7 @@ describe('Shield system tests', () => {
     input2.LTVal.SetFromNumber(1);
     w.PlayerData.InputStore(0).StoreInputForFrame(localFrame, input2);
     sm.UpdateFromInput(input2, w);
-    const shieldValue2 = p.Shield.CurrentRadius.Raw;
+    const shieldValue2 = p.Shield.PreModeCurrentRadius.Raw;
     const shrinkAmount2 = initialShieldValue - shieldValue2;
 
     expect(shrinkAmount2).toBeGreaterThan(shrinkAmount1);
@@ -95,7 +97,7 @@ describe('Shield system tests', () => {
 
   test('Shield uses the higher of the two trigger values', () => {
     p.Shield.Active = true;
-    const initialShieldValue = p.Shield.CurrentRadius.Raw;
+    const initialShieldValue = p.Shield.PreModeCurrentRadius.Raw;
 
     const input1 = NewInputAction();
     input1.Action = GAME_EVENT_IDS.GUARD_GE;
@@ -106,10 +108,11 @@ describe('Shield system tests', () => {
     const sm = w.PlayerData.StateMachine(0)!;
     sm.ForceState(STATE_IDS.SHIELD_S);
     sm.UpdateFromInput(input1, w);
-    const shrinkAmount1 = initialShieldValue - p.Shield.CurrentRadius.Raw;
+    const shrinkAmount1 =
+      initialShieldValue - p.Shield.PreModeCurrentRadius.Raw;
 
     // Reset shield for next part of test
-    p.Shield.CurrentRadius.SetFromRaw(initialShieldValue);
+    p.Shield.PreModeCurrentRadius.SetFromRaw(initialShieldValue);
     p.FSMInfo.SetStateFrameToZero();
 
     const input2 = NewInputAction();
@@ -118,14 +121,15 @@ describe('Shield system tests', () => {
     input2.RTVal.SetFromNumber(0.8);
     w.PlayerData.InputStore(0).StoreInputForFrame(localFrame, input2);
     sm.UpdateFromInput(input2, w);
-    const shrinkAmount2 = initialShieldValue - p.Shield.CurrentRadius.Raw;
+    const shrinkAmount2 =
+      initialShieldValue - p.Shield.PreModeCurrentRadius.Raw;
 
     expect(shrinkAmount1).toBe(shrinkAmount2);
   });
 
   test('Shield does not go below zero', () => {
     p.Shield.Active = true;
-    p.Shield.CurrentRadius.SetFromNumber(0.1);
+    p.Shield.PreModeCurrentRadius.SetFromNumber(0.1);
     const input = NewInputAction();
     input.Action = GAME_EVENT_IDS.GUARD_GE;
     input.LTVal.SetFromNumber(1);
@@ -135,7 +139,7 @@ describe('Shield system tests', () => {
     sm.ForceState(STATE_IDS.SHIELD_S);
     sm.UpdateFromInput(input, w);
 
-    expect(p.Shield.CurrentRadius.Raw).not.toBeLessThan(0);
-    expect(p.Shield.CurrentRadius.Raw).not.toBeGreaterThan(0);
+    expect(p.Shield.PreModeCurrentRadius.Raw).not.toBeLessThan(0);
+    expect(p.Shield.PreModeCurrentRadius.Raw).not.toBeGreaterThan(0);
   });
 });

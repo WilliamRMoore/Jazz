@@ -155,6 +155,30 @@ export function IntersectsCircles(
   return returnValue;
 }
 
+export function IntersectsCirclesRaw(
+  colResPool: Pool<CollisionResult>,
+  x1Raw: number,
+  y1Raw: number,
+  x2Raw: number,
+  y2Raw: number,
+  r1Raw: number,
+  r2Raw: number
+): CollisionResult {
+  const distRaw = DistanceRaw(x1Raw, y1Raw, x2Raw, y2Raw);
+  const raddiRaw = r1Raw + r2Raw;
+  if (distRaw > raddiRaw) {
+    return colResPool.Rent();
+  }
+  const xr = x1Raw - x2Raw;
+  const yr = y1Raw - y2Raw;
+  const normX = DivideRaw(xr, distRaw);
+  const normY = DivideRaw(yr, distRaw);
+  const depthRaw = raddiRaw - distRaw;
+  const returnValue = colResPool.Rent();
+  returnValue.SetCollisionTrueRaw(normX, normY, depthRaw);
+  return returnValue;
+}
+
 export function IntersectsCirclesRawBool(
   x1Raw: number,
   y1Raw: number,

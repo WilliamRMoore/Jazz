@@ -10,6 +10,7 @@ import { COS_LUT, LUT_SIZE as LUT_SIZE_OG, SIN_LUT } from '../math/LUTS';
 import {
   ClosestPointsBetweenSegments,
   IntersectsCircles,
+  IntersectsCirclesRaw,
 } from '../physics/collisions';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
@@ -20,6 +21,8 @@ import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, World } from '../world/world';
+import { InputStoreLocal } from '../engine-state-management/Managers';
+import { InputAction } from '../../input/Input';
 
 const POINT_ZERO_ONE_THREE = NumberToRaw(0.013);
 const POINT_FOUR = NumberToRaw(0.4);
@@ -47,8 +50,11 @@ export function PlayerAttacks(world: World): void {
 
   for (let outerPIdx = 0; outerPIdx < playerCount - 1; outerPIdx++) {
     const p1 = playerData.Player(outerPIdx);
+    const p1InputStore = playerData.InputStore(p1.ID);
+
     for (let innerPIdx = outerPIdx + 1; innerPIdx < playerCount; innerPIdx++) {
       const p2 = playerData.Player(innerPIdx);
+      const p2InputStore = playerData.InputStore(p2.ID);
 
       const p1HitsP2Result = PAvsPB(
         currentFrame,
@@ -58,6 +64,7 @@ export function PlayerAttacks(world: World): void {
         pools.ColResPool,
         pools.ClstsPntsResPool,
         historyData.PlayerComponentHistories,
+        p1InputStore,
         p1,
         p2
       );
@@ -69,6 +76,7 @@ export function PlayerAttacks(world: World): void {
         pools.ColResPool,
         pools.ClstsPntsResPool,
         historyData.PlayerComponentHistories,
+        p2InputStore,
         p2,
         p1
       );
@@ -176,21 +184,18 @@ function PAvsPB(
   colResPool: Pool<CollisionResult>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
   componentHistories: Array<ComponentHistory>,
+  pAInputStore: InputStoreLocal<InputAction>,
   pA: Player,
   pB: Player
 ): AttackResult {
   const pAstateFrame = pA.FSMInfo.CurrentStateFrame;
   const pAAttack = pA.Attacks.GetAttack();
 
-  if (pAAttack === undefined) {
-    return atkResPool.Rent();
-  }
-
-  if (pB.Flags.IsIntangible) {
-    return atkResPool.Rent();
-  }
-
-  if (pA.Attacks.HasHitPlayer(pB.ID)) {
+  if (
+    pAAttack === undefined ||
+    pB.Flags.IsIntangible ||
+    pA.Attacks.HasHitPlayer(pB.ID)
+  ) {
     return atkResPool.Rent();
   }
 
@@ -217,14 +222,19 @@ function PAvsPB(
   const currentStateFrame = pAstateFrame;
   const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
   const pAFacingRight = pA.Flags.IsFacingRight;
+  const pAIa = pAInputStore.GetInputForFrame(currentFrame);
+  const paTriggerValue =
+    pAIa.RTValRaw > pAIa.LTValRaw ? pAIa.RTValRaw : pAIa.LTValRaw;
 
   if (pB.Shield.Active) {
     const pBShield = pB.Shield;
-    const radius = pBShield.CurrentRadius;
-    const shieldYOffset = pBShield.YOffset;
+    const radiusRaw = pBShield.CalculateCurrentRadiusRaw(paTriggerValue);
+    const shieldYOffset = pBShield.YOffsetConstant;
+    const tiltXRaw = pBShield.ShieldTiltX.Raw;
+    const tiltYRaw = pBShield.ShieldTiltY.Raw + shieldYOffset.Raw;
     const shieldPos = vecPool
       .Rent()
-      .SetXYRaw(pB.Position.X.Raw, pB.Position.Y.Raw + shieldYOffset.Raw);
+      .SetXYRaw(pB.Position.X.Raw + tiltXRaw, pB.Position.Y.Raw + tiltYRaw);
 
     for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
       const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
@@ -260,19 +270,14 @@ function PAvsPB(
         clstsPntsResPool
       );
 
-      const testPoint1 = vecPool
-        .Rent()
-        .SetXY(closestPoints.C1X, closestPoints.C1Y);
-      const testPoint2 = vecPool
-        .Rent()
-        .SetXY(closestPoints.C2X, closestPoints.C2Y);
-
-      const collision = IntersectsCircles(
+      const collision = IntersectsCirclesRaw(
         colResPool,
-        testPoint1,
-        testPoint2,
-        radius,
-        pAHitBubble.Radius
+        closestPoints.C1X.Raw,
+        closestPoints.C1Y.Raw,
+        closestPoints.C2X.Raw,
+        closestPoints.C2Y.Raw,
+        radiusRaw,
+        pAHitBubble.Radius.Raw
       );
 
       if (collision.Collision) {

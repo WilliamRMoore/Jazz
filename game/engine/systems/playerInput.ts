@@ -1,4 +1,4 @@
-import { PlayerData, World } from '../world/world';
+import { World } from '../world/world';
 
 export function PlayerInput(world: World): void {
   const playerData = world.PlayerData;
