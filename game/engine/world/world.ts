@@ -135,17 +135,35 @@ class History implements HistoryData {
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
 }
 
+export class WorldFrameReference {
+  private frame = 0;
+  public get Frame(): number {
+    return this.frame;
+  }
+  public SetFrame(f: number): void {
+    this.frame = f;
+  }
+}
+
 export class World {
+  private localFrame = 0;
   public readonly StageData: StageWorldState = new StageWorldState();
   public readonly PlayerData: PlayerState = new PlayerState();
   public readonly HistoryData: History = new History();
-  public localFrame = 0;
   private readonly FrameTimes: Array<number> = [];
   private readonly FrameTimeStamps: Array<number> = [];
   public readonly Pools: PoolContainer = new PoolContainer();
 
   public get PreviousFrame(): number {
     return this.localFrame === 0 ? 0 : this.localFrame - 1;
+  }
+
+  public get LocalFrame(): number {
+    return this.localFrame;
+  }
+
+  public set LocalFrame(f: number) {
+    this.localFrame = f;
   }
 
   public SetPlayer(p: Player): void {
@@ -210,7 +228,7 @@ export class World {
   }
 
   public SetPoolHistory(): void {
-    const frame = this.localFrame;
+    const frame = this.LocalFrame;
     const histDat = this.HistoryData;
     const pools = this.Pools;
     histDat.RentedVecHistory[frame] = pools.VecPool.ActiveCount;

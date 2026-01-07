@@ -23,41 +23,53 @@ import { ApplyVelocityDecay } from './systems/velocityDecay';
 import { World } from './world/world';
 import { PlayerGrabs } from './systems/grab';
 import { GrabMeter } from './systems/grabMeter';
+import { CharacterConfig } from '../character/shared';
 
 export interface IJazz {
   get World(): World | undefined;
-  Init(numberOfPlayers: number, positions: Array<FlatVec>): void;
+  Init(CharacterConfig: Array<CharacterConfig>): void;
   UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void;
   Tick(): void;
 }
 
 export class Jazz implements IJazz {
   private readonly world: World;
+  private loop: (w: World) => void;
 
   constructor() {
     this.world = new World();
+    this.loop = TestLoop;
   }
 
   public get World(): World {
     return this.world;
   }
 
-  public Init(numberOfPlayers: number, positions: Array<FlatVec>): void {
-    for (let i = 0; i < numberOfPlayers; i++) {
-      const pos = positions[i];
-      const charConfig = new DefaultCharacterConfig();
-      const p = new Player(i, charConfig);
-      this.world.SetPlayer(p);
-      SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
-    }
+  public Init(
+    cc: Array<CharacterConfig>,
+    positions: Array<FlatVec> | undefined = undefined
+  ): void {
     const s = defaultStage();
     this.world.SetStage(s);
+    const numberOfPlayers = cc.length;
+    for (let i = 0; i < numberOfPlayers; i++) {
+      this.AddPlayerEntity(cc[i], positions?.[i]);
+    }
+
     RecordHistory(this.world);
+  }
+
+  public AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined) {
+    const p = new Player(this.world.PlayerData.PlayerCount, cc);
+    if (pos !== undefined) {
+      SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
+    }
+    this.world.SetPlayer(p);
   }
 
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
     this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
-      this.world.localFrame,
+      this.world.LocalFrame,
       ia
     );
   }
@@ -67,50 +79,48 @@ export class Jazz implements IJazz {
     world.Pools.Zero();
     let frameTimeStart = performance.now();
 
-    this.logic();
+    this.loop(this.World);
 
     let frameTimeDelta = performance.now() - frameTimeStart;
 
-    world.SetFrameTimeForFrame(world.localFrame, frameTimeDelta);
-    world.SetFrameTimeStampForFrame(world.localFrame, frameTimeStart);
-    world.localFrame++;
+    world.SetFrameTimeForFrame(world.LocalFrame, frameTimeDelta);
+    world.SetFrameTimeStampForFrame(world.LocalFrame, frameTimeStart);
+    world.LocalFrame++;
   }
+}
 
-  private logic() {
-    const world = this.world;
+function TestLoop(w: World) {
+  PlayerInput(w);
 
-    ShieldRegen(world);
+  Gravity(w);
 
-    TimedFlags(world);
+  ApplyVelocity(w);
 
-    PlayerInput(world);
+  ApplyVelocityDecay(w);
 
-    Gravity(world);
+  PlayerCollisionDetection(w);
 
-    ApplyVelocity(world);
+  PlatformDetection(w);
 
-    ApplyVelocityDecay(world);
+  StageCollisionDetection(w);
 
-    PlayerCollisionDetection(world);
+  LedgeGrabDetection(w);
 
-    PlatformDetection(world);
+  PlayerSensors(w);
 
-    StageCollisionDetection(world);
+  PlayerAttacks(w);
 
-    LedgeGrabDetection(world);
+  ShieldRegen(w);
 
-    PlayerSensors(world);
+  GrabMeter(w);
 
-    PlayerAttacks(world);
+  PlayerGrabs(w);
 
-    GrabMeter(world);
+  OutOfBoundsCheck(w);
 
-    PlayerGrabs(world);
+  TimedFlags(w);
 
-    OutOfBoundsCheck(world);
-
-    RecordHistory(world);
-  }
+  RecordHistory(w);
 }
 
 export class JazzDebugger implements IJazz {
@@ -139,8 +149,11 @@ export class JazzDebugger implements IJazz {
     this.previousInput = ia;
   }
 
-  public Init(numberOfPlayers: number, positions: Array<FlatVec>): void {
-    this.jazz.Init(numberOfPlayers, positions);
+  public Init(
+    ccs: Array<CharacterConfig>,
+    positions: Array<FlatVec> | undefined = undefined
+  ): void {
+    this.jazz.Init(ccs, positions);
   }
 
   public Tick(): void {

@@ -91,16 +91,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.curVerts;
   }
 
-  public SetInitialPosition(x: FixedPoint, y: FixedPoint): void {
-    this.MoveToPosition(x, y);
-  }
-
-  public SetInitialPositionRaw(xRaw: number, yRaw: number): void {
-    this.x.SetFromRaw(xRaw);
-    this.y.SetFromRaw(yRaw);
-    this.update();
-  }
-
   public MoveToPosition(x: FixedPoint, y: FixedPoint): void {
     this.x.SetFromFp(x);
     this.y.SetFromFp(y);
@@ -204,7 +194,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.x.SetFromNumber(snapShot.posX);
     this.y.SetFromNumber(snapShot.posY);
     this.currentShape = snapShot.ecbShape;
-
     this.update();
   }
 }

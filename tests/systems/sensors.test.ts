@@ -55,7 +55,7 @@ describe('Sensor system tests', () => {
     const maxFrames = 20;
     let transitioned = false;
     for (let i = 0; i < maxFrames; i++) {
-      world.localFrame = i;
+      world.LocalFrame = i;
 
       // Update the FSM to process OnUpdate events (like activating sensors and applying impulses)
       const blankInput = NewInputAction();
@@ -98,7 +98,7 @@ describe('Sensor system tests', () => {
     const maxFrames = 20;
     let transitioned = false;
     for (let i = 0; i < maxFrames; i++) {
-      world.localFrame = i;
+      world.LocalFrame = i;
 
       // Update the FSM to process OnUpdate events (like activating sensors and applying impulses)
       const blankInput = NewInputAction();

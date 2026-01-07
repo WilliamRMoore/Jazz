@@ -9,7 +9,7 @@ export function PlayerInput(world: World): void {
       continue;
     }
     const input = world.PlayerData.InputStore(playerIndex).GetInputForFrame(
-      world.localFrame
+      world.LocalFrame
     );
     playerData.StateMachine(playerIndex).UpdateFromInput(input, world);
   }

@@ -23,7 +23,7 @@ export class StaticHistory {
 }
 
 export class ComponentHistory {
-  public readonly StaticPlayerHistory = new StaticHistory();
+  readonly StaticPlayerHistory = new StaticHistory();
   readonly ShieldHistory: Array<ShieldSnapShot> = [];
   readonly PositionHistory: Array<PositionSnapShot> = [];
   readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];

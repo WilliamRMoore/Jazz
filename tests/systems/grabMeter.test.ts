@@ -50,8 +50,8 @@ describe('GrabMeter system tests', () => {
   test('grabMeterShould decay over time when held', () => {
     const p1IAia = NewInputAction();
     const p2IA = NewInputAction();
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IAia);
-    p2InputStore.StoreInputForFrame(w.localFrame, p2IA);
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IAia);
+    p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     const initialMeter = p2.GrabMeter.Meter.Raw;
 
     GrabMeter(w);
@@ -67,11 +67,11 @@ describe('GrabMeter system tests', () => {
     const p2IA1 = NewInputAction();
     const p2IA2 = NewInputAction();
     p2IA2.Action = GAME_EVENT_IDS.JUMP_GE;
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IA1);
-    p1InputStore.StoreInputForFrame(w.localFrame + 1, p1IA2);
-    p2InputStore.StoreInputForFrame(w.localFrame, p2IA1);
-    p2InputStore.StoreInputForFrame(w.localFrame + 1, p2IA2);
-    w.localFrame++;
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA1);
+    p1InputStore.StoreInputForFrame(w.LocalFrame + 1, p1IA2);
+    p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA1);
+    p2InputStore.StoreInputForFrame(w.LocalFrame + 1, p2IA2);
+    w.LocalFrame++;
     const initialMeter = p2.GrabMeter.Meter.Raw;
 
     GrabMeter(w);
@@ -93,11 +93,11 @@ describe('GrabMeter system tests', () => {
     p2IA2.LYAxis.SetFromNumber(1);
     p2IA2.RXAxis.SetFromNumber(1);
     p2IA2.RYAxis.SetFromNumber(1);
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IA1);
-    p1InputStore.StoreInputForFrame(w.localFrame + 1, p1IA2);
-    p2InputStore.StoreInputForFrame(w.localFrame, p2IA1);
-    p2InputStore.StoreInputForFrame(w.localFrame + 1, p2IA2);
-    w.localFrame++;
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA1);
+    p1InputStore.StoreInputForFrame(w.LocalFrame + 1, p1IA2);
+    p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA1);
+    p2InputStore.StoreInputForFrame(w.LocalFrame + 1, p2IA2);
+    w.LocalFrame++;
     const initialMeter = p2.GrabMeter.Meter.Raw;
 
     GrabMeter(w);
@@ -114,8 +114,8 @@ describe('GrabMeter system tests', () => {
     p2.GrabMeter.Meter.SetFromNumber(59);
     const p1IA = NewInputAction();
     const p2IA = NewInputAction();
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IA);
-    p2InputStore.StoreInputForFrame(w.localFrame, p2IA);
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
+    p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
     expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_ESCAPE_S);
   });
@@ -125,8 +125,8 @@ describe('GrabMeter system tests', () => {
     p2.GrabMeter.Meter.SetFromNumber(59);
     const p1IA = NewInputAction();
     const p2IA = NewInputAction();
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IA);
-    p2InputStore.StoreInputForFrame(w.localFrame, p2IA);
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
+    p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
     expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HELD_S);
   });

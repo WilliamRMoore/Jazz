@@ -98,6 +98,9 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
 
   public Reset() {
     this.currentRadius.SetFromFp(this.InitialRadius);
+    this.ShieldTiltX.Zero();
+    this.ShieldTiltY.Zero();
+    this.Active = false;
   }
 }
 

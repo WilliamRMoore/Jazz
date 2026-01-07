@@ -26,7 +26,7 @@ export function GrabMeter(w: World) {
     const maxMeter = BASE_METER + MultiplyRaw(damage.Raw, TWO);
     const iS = pd.InputStore(playerIndex);
     const previousInput = iS.GetInputForFrame(w.PreviousFrame);
-    const currentInput = iS.GetInputForFrame(w.localFrame);
+    const currentInput = iS.GetInputForFrame(w.LocalFrame);
     const actionBonusDecay =
       previousInput.Action !== currentInput.Action ? ONE_POINT_FIVE : 0;
     let stickbonusDecay = 0;

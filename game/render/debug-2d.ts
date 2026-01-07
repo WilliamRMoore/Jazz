@@ -63,7 +63,7 @@ export class DebugRenderer {
   }
 
   render(world: World, timeStampNow: number) {
-    const localFrame = world.localFrame - 1 < 0 ? 0 : world.localFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
+    const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
       localFrame === 0 ? 0 : localFrame - 1
     );
@@ -219,7 +219,7 @@ function drawPlayer(
   alpha: number
 ) {
   const playerCount = world.PlayerData.PlayerCount;
-  const currentFrame = world.localFrame - 1;
+  const currentFrame = world.LocalFrame - 1;
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
   const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
 

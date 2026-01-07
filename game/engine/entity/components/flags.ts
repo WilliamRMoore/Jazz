@@ -98,15 +98,15 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   }
 
   public get IsInHitPause(): boolean {
-    return this.hitPauseFrames > 0;
+    return this.hitPauseFrames >= 0;
   }
 
   public get IsIntangible(): boolean {
-    return this.intangabilityFrames > 0;
+    return this.intangabilityFrames >= 0;
   }
 
   public get IsPlatDetectDisabled(): boolean {
-    return this.disablePlatformDetection > 0;
+    return this.disablePlatformDetection >= 0;
   }
 
   public GetIntangabilityFrames(): number {

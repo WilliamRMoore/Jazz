@@ -6,6 +6,8 @@ import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../engine/math/fixedPoint';
+import { DefaultCharacterConfig } from '../character/default';
+import { CharacterConfig } from '../character/shared';
 
 const frameInterval = 1000 / 60;
 
@@ -18,6 +20,7 @@ export type playerControllerInfo = {
 
 export function start(playerInfo: Array<playerControllerInfo>) {
   const engine = new JazzDebugger();
+  const ccs = new Array<CharacterConfig>();
   const playerCount = playerInfo.length;
   //p1 spawn point
   const positions = [
@@ -29,7 +32,13 @@ export function start(playerInfo: Array<playerControllerInfo>) {
     positions.push({ X: new FixedPoint(690), Y: new FixedPoint(100) });
   }
 
-  engine.Init(playerCount, positions);
+  ccs.push(new DefaultCharacterConfig());
+
+  if (playerCount == 2) {
+    ccs.push(new DefaultCharacterConfig());
+  }
+
+  engine.Init(ccs, positions);
 
   for (let i = 0; i < playerCount; i++) {
     const sm = engine.World.PlayerData.StateMachine(i)!;

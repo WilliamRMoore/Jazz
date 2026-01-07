@@ -33,7 +33,7 @@ describe('Player states tests', () => {
   test('test Air Dodge', () => {
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     const lx = 0.707;
@@ -127,7 +127,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(0.5); // Simulate walking right
@@ -148,7 +148,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(-0.5); // Simulate walking left
@@ -187,7 +187,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(0.7); // Simulate strong right input

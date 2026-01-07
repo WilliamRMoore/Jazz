@@ -42,7 +42,7 @@ export function PlayerAttacks(world: World): void {
   const playerData: PlayerData = world.PlayerData;
   const pools = world.Pools;
   const historyData = world.HistoryData;
-  const currentFrame = world.localFrame;
+  const currentFrame = world.LocalFrame;
   const playerCount = playerData.PlayerCount;
   if (playerCount === 1) {
     return;
@@ -211,11 +211,25 @@ function PAvsPB(
   const hitLength = pAHitBubbles.Length;
   // Check shield impact
 
-  const pAPositionHistory = componentHistories[pA.ID].PositionHistory;
+  const pAPCompHist = componentHistories[pA.ID];
   const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
-  const prevPos = pAPositionHistory[previousWorldFrame];
-  const xRaw = NumberToRaw(prevPos.X);
-  const yRaw = NumberToRaw(prevPos.Y);
+  const prevPosRes = pAPCompHist.PositionHistory[previousWorldFrame];
+
+  let prevXRaw = 0;
+  let prevYRaw = 0;
+
+  if (prevPosRes !== undefined) {
+    prevXRaw = NumberToRaw(prevPosRes.X);
+    prevYRaw = NumberToRaw(prevPosRes.Y);
+  } else {
+    prevXRaw = pA.Position.X.Raw;
+    prevYRaw = pA.Position.Y.Raw;
+  }
+
+  const xRaw = prevXRaw;
+  const yRaw = prevYRaw;
+  //const xRaw = NumberToRaw(prevPos.X);
+  //const yRaw = NumberToRaw(prevPos.Y);
 
   const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
   const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);

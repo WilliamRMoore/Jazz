@@ -44,12 +44,12 @@ describe('PlayerComponents ECB tests', () => {
   test('SetInitialPosition and SetInitialPositionRaw work correctly', () => {
     const x = new FixedPoint(10);
     const y = new FixedPoint(20);
-    ecb.SetInitialPosition(x, y);
+    ecb.MoveToPosition(x, y);
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
 
-    ecb.SetInitialPositionRaw(NumberToRaw(30), NumberToRaw(40));
+    ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
   });

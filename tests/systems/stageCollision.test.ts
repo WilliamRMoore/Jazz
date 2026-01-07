@@ -43,7 +43,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.Y.SetFromNumber(25);
 
     RecordHistory(w);
-    w.localFrame = 1;
+    w.LocalFrame = 1;
     applyVelocity(); // pos.y = 660, bottom at 670. Intersects ground.
     StageCollisionDetection(w);
 
@@ -62,7 +62,7 @@ describe('Stage Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(460), new FixedPoint(735));
     p.Velocity.X.SetFromNumber(20); // move to the irght, ECB right most point should be making contact with stage
     RecordHistory(w);
-    w.localFrame = 1;
+    w.LocalFrame = 1;
     applyVelocity(); // pos: 480@735, right most ECB point:530@685,
     StageCollisionDetection(w);
 
@@ -75,7 +75,7 @@ describe('Stage Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1640), new FixedPoint(735)); // right at 1595
     p.Velocity.X.SetFromNumber(-20);
     RecordHistory(w);
-    w.localFrame = 1;
+    w.LocalFrame = 1;
     applyVelocity(); // pos.x = 1580, right at 1615. Intersects wall.
     StageCollisionDetection(w);
 
@@ -88,7 +88,7 @@ describe('Stage Collision system tests', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(765)); // top at 705. Intersects ceiling
     //p.Velocity.Y.SetFromNumber(-20);
     RecordHistory(w);
-    w.localFrame = 1;
+    w.LocalFrame = 1;
     //applyVelocity(); // pos.y = 745, top at 685.
     StageCollisionDetection(w);
 
@@ -102,7 +102,7 @@ describe('Stage Collision system tests', () => {
     p.Velocity.X.SetFromNumber(-20);
     p.Velocity.Y.SetFromNumber(25);
     RecordHistory(w);
-    w.localFrame = 1;
+    w.LocalFrame = 1;
     applyVelocity(); // pos becomes (520, 660). left at 485, bottom at 670
     StageCollisionDetection(w);
 

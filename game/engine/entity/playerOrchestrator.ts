@@ -113,7 +113,7 @@ export function SetPlayerInitialPositionRaw(
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.SetInitialPositionRaw(xRaw, yRaw);
+  p.ECB.MoveToPositionRaw(xRaw, yRaw);
   p.LedgeDetector.MoveToRaw(xRaw, yRaw);
 }
 

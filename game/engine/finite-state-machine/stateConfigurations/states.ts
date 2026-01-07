@@ -40,7 +40,7 @@ export const Walk: FSMState = {
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia !== undefined) {
       AddWalkImpulseToPlayer(p, ia.LXAxis);
@@ -74,7 +74,7 @@ export const Dash: FSMState = {
   },
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const speedsComp = p.Speeds;
     const dashSpeedMultiplierRaw = speedsComp.DashMultiplierRaw;
@@ -101,7 +101,7 @@ export const Run: FSMState = {
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia !== undefined) {
       const speeds = p.Speeds;
@@ -239,7 +239,7 @@ export const AirDodge: FSMState = {
     const pVel = p.Velocity;
     const ecb = p.ECB;
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const angleIndexRaw = GetAtan2IndexRaw(ia!.LYAxis.Raw, ia!.LXAxis.Raw);
     let speed = p.Speeds.AirDogeSpeedRaw;
@@ -282,7 +282,7 @@ export const Helpless: FSMState = {
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const speeds = p.Speeds;
     const airSpeedRaw = MultiplyRaw(
@@ -345,7 +345,7 @@ export const Tumble: FSMState = {
     p.Jump.IncrementJumps();
   },
   OnUpdate: (p: Player, w: World) => {
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
     const speeds = p.Speeds;
     const airSpeedRaw = speeds.AerialSpeedInpulseLimitRaw;
@@ -386,7 +386,7 @@ export const Shield: FSMState = {
   OnUpdate: (p: Player, w: World) => {
     // shrink shield
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const input = inputStore.GetInputForFrame(w.localFrame);
+    const input = inputStore.GetInputForFrame(w.LocalFrame);
     const s = p.Shield;
     const triggerValue =
       input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
@@ -424,6 +424,8 @@ export const Shield: FSMState = {
   },
   OnExit: (p, w) => {
     p.Shield.Active = false;
+    p.Shield.ShieldTiltX.Zero();
+    p.Shield.ShieldTiltY.Zero();
   },
 };
 
@@ -443,7 +445,7 @@ export const RollDodge: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const pd = w.PlayerData;
     const inputStore = pd.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.LXAxis.Raw > 0) {
       p.Flags.FaceLeft();
@@ -529,7 +531,7 @@ export const SideTilt: FSMState = {
   StateId: STATE_IDS.SIDE_TILT_S,
   OnEnter: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const stateId = STATE_IDS.SIDE_TILT_S;
     if (ia.LYAxis.Raw > POINT_ONE_FIVE) {
@@ -563,7 +565,7 @@ export const SideCharge: FSMState = {
   StateId: STATE_IDS.SIDE_CHARGE_S,
   OnEnter: (p: Player, w: World) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const rXAxis = ia.RXAxis;
     if (rXAxis.Raw > 0) {
@@ -731,7 +733,7 @@ export const SideSpecial: FSMState = {
   StateName: 'SideSpecial',
   StateId: STATE_IDS.SIDE_SPCL_S,
   OnEnter: (p: Player, w: World) => {
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
     const lxAxis = ia.LXAxis;
     if (lxAxis.Raw < 0) {
@@ -764,7 +766,7 @@ export const SideSpecialAir: FSMState = {
   StateName: 'SideSpecialAir',
   StateId: STATE_IDS.SIDE_SPCL_AIR_S,
   OnEnter: (p: Player, w: World) => {
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(curFrame);
     const lxAxis = ia.LXAxis;
     if (lxAxis.Raw < 0) {
@@ -821,7 +823,7 @@ export const UpSpecial: FSMState = {
   StateName: 'UpSpecial',
   StateId: STATE_IDS.UP_SPCL_S,
   OnEnter: (p: Player, w: World) => {
-    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(w.localFrame);
+    const ia = w.PlayerData.InputStore(p.ID).GetInputForFrame(w.LocalFrame);
     if (ia.LXAxis.Raw > 0) {
       p.Flags.FaceRight();
     }
@@ -976,7 +978,7 @@ export const dizzy: FSMState = {
 
 function fastFallCheck(p: Player, w: World) {
   const inputStore = w.PlayerData.InputStore(p.ID);
-  const curFrame = w.localFrame;
+  const curFrame = w.LocalFrame;
   const prevFrame = w.PreviousFrame;
   const ia = inputStore.GetInputForFrame(curFrame);
   const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -1037,7 +1039,7 @@ function attackOnUpdate(p: Player, w: World) {
 
 function aerialInputOnUpdate(p: Player, w: World) {
   const inputStore = w.PlayerData.InputStore(p.ID);
-  const curFrame = w.localFrame;
+  const curFrame = w.LocalFrame;
   const ia = inputStore.GetInputForFrame(curFrame);
   const speedsComp = p.Speeds;
 

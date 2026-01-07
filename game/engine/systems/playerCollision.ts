@@ -11,9 +11,7 @@ export function PlayerCollisionDetection(world: World): void {
   const playerData = world.PlayerData;
   const pools = world.Pools;
   const playerCount = playerData.PlayerCount;
-  if (playerCount < 2) {
-    return;
-  }
+
   for (let pIOuter = 0; pIOuter < playerCount; pIOuter++) {
     const checkPlayer = playerData.Player(pIOuter);
     const checkPlayerStateId = checkPlayer.FSMInfo.CurrentState.StateId;

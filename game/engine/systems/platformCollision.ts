@@ -27,7 +27,7 @@ export function PlatformDetection(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const histories = world.HistoryData;
-  const currentFrame = world.localFrame;
+  const currentFrame = world.LocalFrame;
   const prevFrame = world.PreviousFrame;
   const plats = stageData.Stage.Platforms;
 
