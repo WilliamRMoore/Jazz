@@ -1,4 +1,5 @@
 import { FixedPoint } from '../../math/fixedPoint';
+import { FlatVec } from '../../physics/vector';
 import { IHistoryEnabled } from '../componentHistory';
 
 export type PositionSnapShot = { readonly X: number; readonly Y: number };
@@ -22,6 +23,11 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
 
   public set Y(val: FixedPoint) {
     this.y.SetFromFp(val);
+  }
+
+  public SetFromFv(fv: FlatVec) {
+    this.x.SetFromFp(fv.X);
+    this.y.SetFromFp(fv.Y);
   }
 
   public SnapShot(): PositionSnapShot {

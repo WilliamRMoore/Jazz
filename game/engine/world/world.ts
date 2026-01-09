@@ -12,6 +12,7 @@ import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
+import { InitPlayerHistory } from '../systems/history';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -135,16 +136,6 @@ class History implements HistoryData {
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
 }
 
-export class WorldFrameReference {
-  private frame = 0;
-  public get Frame(): number {
-    return this.frame;
-  }
-  public SetFrame(f: number): void {
-    this.frame = f;
-  }
-}
-
 export class World {
   private localFrame = 0;
   public readonly StageData: StageWorldState = new StageWorldState();
@@ -164,13 +155,18 @@ export class World {
 
   public set LocalFrame(f: number) {
     this.localFrame = f;
+    if (Number.isInteger(f) === false) {
+      console.error(
+        'World local frame was set to a number value other than an integer.'
+      );
+    }
   }
 
   public SetPlayer(p: Player): void {
     this.PlayerData.AddPlayer(p);
     this.PlayerData.AddStateMachine(new StateMachine(p, this));
     this.PlayerData.AddInputStore(new InputStoreLocal<InputAction>());
-    const compHist = new ComponentHistory();
+    const compHist = new ComponentHistory(p);
     compHist.StaticPlayerHistory.LedgeDetectorWidth =
       p.LedgeDetector.Width.AsNumber;
     compHist.StaticPlayerHistory.ledgDetecorHeight =
@@ -181,6 +177,7 @@ export class World {
       compHist.StaticPlayerHistory.HurtCapsules.push(hc)
     );
     this.HistoryData.PlayerComponentHistories.push(compHist);
+    InitPlayerHistory(p, this);
   }
 
   public SetStage(s: Stage) {

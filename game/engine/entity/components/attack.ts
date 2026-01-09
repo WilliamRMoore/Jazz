@@ -71,6 +71,7 @@ export class HitBubble {
 }
 
 export class Attack {
+  public readonly AttackId: AttackId;
   public readonly Name: string;
   public readonly TotalFrameLength: number;
   public readonly InteruptableFrame: number;
@@ -86,6 +87,7 @@ export class Attack {
   public readonly onExitCommands: Array<Command> = [];
 
   constructor(conf: AttackConfig) {
+    this.AttackId = conf.AttackId;
     this.Name = conf.Name;
     this.TotalFrameLength = conf.TotalFrameLength;
     this.InteruptableFrame = conf.InteruptableFrame;

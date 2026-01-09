@@ -53,13 +53,11 @@ export class Jazz implements IJazz {
     this.world.SetStage(s);
     const numberOfPlayers = cc.length;
     for (let i = 0; i < numberOfPlayers; i++) {
-      this.AddPlayerEntity(cc[i], positions?.[i]);
+      this.addPlayerEntity(cc[i], positions?.[i]);
     }
-
-    RecordHistory(this.world);
   }
 
-  public AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined) {
+  private addPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined) {
     const p = new Player(this.world.PlayerData.PlayerCount, cc);
     if (pos !== undefined) {
       SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
@@ -121,70 +119,4 @@ function TestLoop(w: World) {
   TimedFlags(w);
 
   RecordHistory(w);
-}
-
-export class JazzDebugger implements IJazz {
-  private jazz: Jazz;
-  private paused: boolean = false;
-  private previousInput: InputAction | undefined = undefined;
-  private advanceFrame: boolean = false;
-
-  constructor() {
-    this.jazz = new Jazz();
-  }
-
-  public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void {
-    this.togglePause(ia);
-
-    if (this.paused) {
-      if (this.advanceOneFrame(ia)) {
-        this.advanceFrame = true;
-        this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
-      }
-      this.previousInput = ia;
-      return;
-    }
-
-    this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
-    this.previousInput = ia;
-  }
-
-  public Init(
-    ccs: Array<CharacterConfig>,
-    positions: Array<FlatVec> | undefined = undefined
-  ): void {
-    this.jazz.Init(ccs, positions);
-  }
-
-  public Tick(): void {
-    if (this.paused && this.advanceFrame) {
-      this.advanceFrame = false;
-      this.jazz.Tick();
-      return;
-    }
-
-    if (!this.paused) {
-      this.jazz.Tick();
-    }
-  }
-
-  public get World(): World {
-    return this.jazz.World;
-  }
-
-  private togglePause(ia: InputAction): void {
-    const PausedPreviouisInput = this.previousInput?.Start ?? false;
-    const PausedCurrentInput = ia.Start ?? false;
-
-    if (PausedPreviouisInput === false && PausedCurrentInput) {
-      this.paused = !this.paused;
-    }
-  }
-
-  private advanceOneFrame(ia: InputAction): boolean {
-    const selectPressed = ia.Select ?? false;
-    const selectHeld = this.previousInput?.Select ?? false;
-
-    return selectPressed && !selectHeld;
-  }
 }

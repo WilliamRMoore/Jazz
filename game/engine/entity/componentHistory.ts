@@ -10,10 +10,11 @@ import { SensorSnapShot } from './components/sensor';
 import { ShieldSnapShot } from './components/shield';
 import { VelocitySnapShot } from './components/velocity';
 import { hitStunSnapShot } from './components/hitStun';
-import { PlayerPointsSnapShot } from './components/damage';
+import { DamageSnapShot } from './components/damage';
 import { hitStopSnapShot } from './components/hitStop';
 import { GrabSnapShot } from './components/grab';
 import { GrabMeterSnapShot } from './components/grabMeter';
+import { DebugSnapShot } from './components/debug';
 
 export class StaticHistory {
   public ledgDetecorHeight: number = 0;
@@ -22,12 +23,31 @@ export class StaticHistory {
   public ShieldOffset: number = 0;
 }
 
+export type PlayerSnapShot = {
+  Shield: ShieldSnapShot;
+  Position: PositionSnapShot;
+  FSMInfo: FSMInfoSnapShot;
+  Damage: DamageSnapShot;
+  Velocity: VelocitySnapShot;
+  Flags: FlagsSnapShot;
+  PlayerHitStop: hitStopSnapShot;
+  PlayerHitStun: hitStunSnapShot;
+  LedgeDetector: LedgeDetectorSnapShot;
+  Sensors: SensorSnapShot;
+  Ecb: ECBSnapShot;
+  Jump: number;
+  Attack: AttackSnapShot;
+  Grab: GrabSnapShot;
+  GrabMeter: GrabMeterSnapShot;
+};
+
 export class ComponentHistory {
+  readonly _deb_hist: DebugSnapShot[] | undefined;
   readonly StaticPlayerHistory = new StaticHistory();
   readonly ShieldHistory: Array<ShieldSnapShot> = [];
   readonly PositionHistory: Array<PositionSnapShot> = [];
   readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
-  readonly PlayerPointsHistory: Array<PlayerPointsSnapShot> = [];
+  readonly DamageHistory: Array<DamageSnapShot> = [];
   readonly PlayerHitStunHistory: Array<hitStunSnapShot> = [];
   readonly PlayerHitStopHistory: Array<hitStopSnapShot> = [];
   readonly VelocityHistory: Array<VelocitySnapShot> = [];
@@ -40,12 +60,16 @@ export class ComponentHistory {
   readonly GrabHistory: Array<GrabSnapShot> = [];
   readonly GrabMeterHistory: Array<GrabMeterSnapShot> = [];
 
+  constructor(p: Player) {
+    this._deb_hist = p._db === undefined ? undefined : [];
+  }
+
   public SetPlayerToFrame(p: Player, frameNumber: number) {
     p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
     p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
     p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
     p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
-    p.Damage.SetFromSnapShot(this.PlayerPointsHistory[frameNumber]);
+    p.Damage.SetFromSnapShot(this.DamageHistory[frameNumber]);
     p.HitStop.SetFromSnapShot(this.PlayerHitStopHistory[frameNumber]);
     p.HitStun.SetFromSnapShot(this.PlayerHitStunHistory[frameNumber]);
     p.Flags.SetFromSnapShot(this.FlagsHistory[frameNumber]);
@@ -56,6 +80,9 @@ export class ComponentHistory {
     p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
     p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
     p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
+    if (p._db !== undefined) {
+      p._db.SetFromSnapShot(this._deb_hist![frameNumber]);
+    }
   }
 }
 

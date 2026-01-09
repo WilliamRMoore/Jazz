@@ -12,6 +12,10 @@ export class FlatVec {
     return new FlatVec(x, y);
   }
 
+  static FromNumbers(x: number, y: number) {
+    return new FlatVec(new FixedPoint(x), new FixedPoint(y));
+  }
+
   constructor(x: FixedPoint, y: FixedPoint) {
     this.X.SetFromFp(x);
     this.Y.SetFromFp(y);

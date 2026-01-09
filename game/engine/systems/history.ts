@@ -20,7 +20,7 @@ function record(p: Player, h: ComponentHistory, fn: frameNumber) {
   h.ShieldHistory[fn] = p.Shield.SnapShot();
   h.PositionHistory[fn] = p.Position.SnapShot();
   h.FsmInfoHistory[fn] = p.FSMInfo.SnapShot();
-  h.PlayerPointsHistory[fn] = p.Damage.SnapShot();
+  h.DamageHistory[fn] = p.Damage.SnapShot();
   h.VelocityHistory[fn] = p.Velocity.SnapShot();
   h.FlagsHistory[fn] = p.Flags.SnapShot();
   h.PlayerHitStopHistory[fn] = p.HitStop.SnapShot();
@@ -34,7 +34,7 @@ function record(p: Player, h: ComponentHistory, fn: frameNumber) {
   h.GrabMeterHistory[fn] = p.GrabMeter.SnapShot();
 }
 
-function InitPlayerHistory(p: Player, w: World) {
+export function InitPlayerHistory(p: Player, w: World) {
   const pId = p.ID;
   const hist = w.HistoryData.PlayerComponentHistories[pId];
   const lastFrame = w.LocalFrame === 0 ? 0 : w.LocalFrame - 1;

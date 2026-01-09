@@ -4,7 +4,7 @@ import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
 import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
-import { AttackComponment } from './components/attack';
+import { AttackComponment, frameNumber } from './components/attack';
 import { ECBComponent } from './components/ecb';
 import { PlayerFlagsComponent } from './components/flags';
 import { FSMInfoComponent } from './components/fsmInfo';
@@ -25,10 +25,17 @@ import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
+import { DebugComponent } from './components/debug';
+import { World } from '../world/world';
+import { StateId } from '../finite-state-machine/stateConfigurations/shared';
+import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { InputStoreLocal } from '../engine-state-management/Managers';
+import { InputAction } from '../../input/Input';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
 export class Player {
+  public readonly _db: DebugComponent | undefined;
   public readonly Position: PositionComponent;
   public readonly Velocity: VelocityComponent;
   public readonly Weight: WeightComponent;
@@ -51,6 +58,7 @@ export class Player {
 
   constructor(Id: number, cc: CharacterConfig) {
     const sB = new SpeedsComponentConfigBuilder();
+    this._db = new DebugComponent();
     sB.SetWalkSpeeds(cc.MaxWalkSpeed, cc.WalkSpeedMulitplier);
     sB.SetRunSpeeds(cc.MaxRunSpeed, cc.RunSpeedMultiplier);
     sB.SetFallSpeeds(cc.FastFallSpeed, cc.FallSpeed, cc.Gravity);

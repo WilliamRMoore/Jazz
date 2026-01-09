@@ -187,6 +187,21 @@ class GRABS {
 
 export const GRAB_IDS = new GRABS();
 
+export const StateIdToNameMap = new Map<StateId, string>();
+Object.entries(STATE_IDS).forEach(([key, value]) => {
+  StateIdToNameMap.set(value, key);
+});
+
+export const AttackIdToNameMap = new Map<AttackId, string>();
+Object.entries(ATTACK_IDS).forEach(([key, value]) => {
+  AttackIdToNameMap.set(value, key);
+});
+
+export const GrabIdToNameMap = new Map<GrabId, string>();
+Object.entries(GRAB_IDS).forEach(([key, value]) => {
+  GrabIdToNameMap.set(value, key);
+});
+
 export function CanStateWalkOffLedge(stateId: StateId): boolean {
   switch (stateId) {
     case STATE_IDS.IDLE_S:
