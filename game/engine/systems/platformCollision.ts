@@ -147,8 +147,9 @@ export function PlatformDetection(world: World): void {
       const inLanding =
         p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
         p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
+      const isSpotDodge = p.FSMInfo.CurrentStatetId === STATE_IDS.SPOT_DODGE_S;
 
-      if (checkValueRaw <= NEG_ZERO_POINT_FIVE && !inLanding) {
+      if (checkValueRaw <= NEG_ZERO_POINT_FIVE && !inLanding && !isSpotDodge) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
         flags.FastFallOff();
         flags.SetDisablePlatFrames(11);

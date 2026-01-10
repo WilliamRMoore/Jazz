@@ -20,7 +20,10 @@ import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
 import { InputAction } from '../input/Input';
 import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
-import { deBugInfoTree } from '../engine/debug/debugUtils';
+import {
+  deBugInfoTree,
+  StructurePlayerSnapShotForPrinting,
+} from '../engine/debug/debugUtils';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 
 function getAlpha(
@@ -43,21 +46,41 @@ function getAlpha(
 
   return alpha;
 }
+export type resolution = {
+  x: number;
+  y: number;
+};
+
+export type window = {
+  canvas: HTMLCanvasElement;
+  resX: number;
+  resY: number;
+};
 
 export class DebugRenderer {
   private canvas: HTMLCanvasElement;
+  private debugInfoCanvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private dbICtx: CanvasRenderingContext2D;
   private xRes: number;
   private yRes: number;
+  private dbxRes: number;
+  private dbyRes: number;
   private lastFrame: number = 0;
 
-  constructor(canvas: HTMLCanvasElement, res: resolution) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
-    this.xRes = res.x;
-    this.yRes = res.y;
+  constructor(mainWindow: window, debugInfoWindow: window) {
+    this.canvas = mainWindow.canvas;
+    this.xRes = mainWindow.resX;
+    this.yRes = mainWindow.resY;
+    this.debugInfoCanvas = debugInfoWindow.canvas;
+    this.ctx = mainWindow.canvas.getContext('2d')!;
+    this.dbICtx = debugInfoWindow.canvas.getContext('2d')!;
+    this.dbxRes = debugInfoWindow.resX;
+    this.dbyRes = debugInfoWindow.resY;
     this.canvas.width = this.xRes;
     this.canvas.height = this.yRes;
+    this.debugInfoCanvas.width = this.dbxRes;
+    this.debugInfoCanvas.height = this.dbyRes;
   }
 
   render(jazz: JazzDebugger, timeStampNow: number) {
@@ -145,14 +168,26 @@ export class DebugRenderer {
       ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 330);
     }
 
+    this.renderLiveDebugInfo(jazz);
+
     this.lastFrame = localFrame;
   }
-}
 
-export type resolution = {
-  x: number;
-  y: number;
-};
+  renderLiveDebugInfo(jazz: JazzDebugger) {
+    this.dbICtx.fillStyle = 'black';
+    this.dbICtx.fillRect(0, 0, this.dbxRes, this.dbyRes); // Fill the entire canvas with grey
+    const pdbs = jazz.playerDebuggers;
+    const dbL = pdbs.length;
+    let x = 10;
+    const y = 30;
+    for (let i = 0; i < dbL; i++) {
+      const pdb = pdbs[i];
+      const root = StructurePlayerSnapShotForPrinting(pdb.LiveStateData);
+      PrintDataTreeRoot(x, y, root, this.dbICtx);
+      x += 200;
+    }
+  }
+}
 
 function drawStage(ctx: CanvasRenderingContext2D, world: World) {
   const stage = world.StageData.Stage;
@@ -783,26 +818,56 @@ function PrintDataTreeRoot(
   tree: deBugInfoTree,
   ctx: CanvasRenderingContext2D
 ) {
-  let curX = x;
-  let curY = y;
-  ctx.fillStyle = 'darkblue';
+  ctx.fillStyle = 'white';
+  printDataTreeNode(tree, x, y, ctx);
 }
 
-function PrintDataTreeNode(
+const indent = 13;
+
+const colorLevelMap = new Map<number, string>([
+  [0, 'white'],
+  [1, 'blue'],
+  [2, 'green'],
+  [3, 'purple'],
+  [4, 'yellow'],
+  [5, 'magenta'],
+]);
+
+function getColor(level: number) {
+  const mpLength = colorLevelMap.size;
+  const i = level % mpLength;
+  return colorLevelMap.get(i)!;
+}
+
+function printDataTreeNode(
   d: deBugInfoTree,
   x: number,
   y: number,
-  ctx: CanvasRenderingContext2D
-) {
+  ctx: CanvasRenderingContext2D,
+  level = 0
+): number {
+  //ctx.fillStyle = getColor(level);
   if (d.kind === 1) {
-    ctx.fillText(`${d.label}: ${d.data}`, x, y);
-    return;
+    const originalStyle = ctx.fillStyle;
+
+    ctx.fillStyle = '#4bff14'; // Sage green
+    ctx.fillText(d.label, x, y);
+    const labelWidth = ctx.measureText(d.label).width;
+    ctx.fillStyle = 'white';
+    ctx.fillText(String(d.data), x + labelWidth + 5, y); // 5px padding
+
+    ctx.fillStyle = originalStyle;
+    return y + indent;
   } else if (d.kind === 2) {
+    ctx.fillStyle = 'cyan';
     ctx.fillText(d.label, x, y);
     const dLength = d.data.length;
+    let currentY = y + indent;
     for (let i = 0; i < dLength; i++) {
       const child = d.data[i];
-      PrintDataTreeNode(child, x + 20, y + 20, ctx);
+      currentY = printDataTreeNode(child, x + indent, currentY, ctx, level + 1);
     }
+    return currentY;
   }
+  return y + indent;
 }

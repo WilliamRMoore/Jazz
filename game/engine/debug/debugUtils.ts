@@ -23,52 +23,57 @@ export type aVal = {
 
 export type deBugInfoTree = node;
 
-const Player_State = 'Player State';
-const Position = 'Position';
-const Velocity = 'Velocity';
-const Frame = 'Frame';
-const State = 'State';
-const State_Id = 'State Id';
-const Name = 'Name';
-const Direction = 'Direction';
+const Player_State = 'Player State:';
+const Position = 'Position:';
+const Velocity = 'Velocity:';
+const Frame = 'Frame:';
+const State = 'State:';
+const State_Id = 'State Id:';
+const Name = 'Name:';
+const Direction = 'Direction:';
+const LeftLabel = 'Left:';
+const RightLabel = 'Right:';
 const Left = 'Left';
 const Right = 'Right';
-const ECB = 'ECB';
-const Top = 'Top';
-const Bottom = 'Bottom';
-const Damage = 'Damage';
-const HitStun = 'HitStun';
-const X = 'X';
-const Y = 'Y';
-const Vx = 'Vx';
-const Vy = 'Vy';
+const ECB = 'ECB:';
+const Top = 'Top:';
+const Bottom = 'Bottom:';
+const Damage = 'Damage:';
+const HitStun = 'HitStun:';
+const X = 'X:';
+const Y = 'Y:';
+const Vx = 'Vx:';
+const Vy = 'Vy:';
 const T = 'T';
 const F = 'F';
-const Flags = 'Flags';
-const FastFalling = 'FastFalling';
-const VelocityDecay = 'VelocityDecay';
-const HitPauseFrames = 'HitPauseFrames';
-const IntangabilityFrames = 'IntangabilityFrames';
-const PlatFormDetection = 'PlatFormDetection';
-const Jump = 'Jump';
-const Count = 'Count';
-const Grab = 'Grab';
-const GrabIdLabel = 'GrabId';
-const GrabIdName = 'GrabIdName';
-const GrabConfigName = 'GrabConfigName';
-const GrabMeter = 'GrabMeter';
-const Meter = 'Meter';
-const HoldingPlayerId = 'HoldingPlayerId';
-const AttackConfigName = 'AttackConfigName';
-const AttackIdName = 'AttackIdName';
-const PlayersHit = 'Player Ids Hit';
-const CurrentRadius = 'CurrentRadius';
+const Flags = 'Flags:';
+const FastFalling = 'FastFalling:';
+const VelocityDecay = 'VelocityDecay:';
+const HitPauseFrames = 'HitPauseFrames:';
+const IntangabilityFrames = 'IntangabilityFrames:';
+const PlatFormDetection = 'PlatFormDetection:';
+const Jump = 'Jump:';
+const Count = 'Count:';
+const Grab = 'Grab:';
+const GrabIdLabel = 'GrabId:';
+const GrabIdName = 'GrabIdName:';
+const GrabConfigName = 'GrabConfigName:';
+const GrabMeter = 'GrabMeter:';
+const Meter = 'Meter:';
+const HoldingPlayerId = 'HoldingPlayerId:';
+const AttackConfigName = 'AttackConfigName:';
+const AttackIdName = 'AttackIdName:';
+const PlayersHit = 'Player Ids Hit:';
+const CurrentRadius = 'CurrentRadius:';
 const Active = 'Active';
-const Tilt = 'Tilt';
-const Middle = 'Middle';
-const ledgeGrabCount = 'LedgeGrabCount';
-const Radius = 'Radius';
-const Sensors = 'Sensors';
+const Tilt = 'Tilt:';
+const Middle = 'Middle:';
+const ledgeGrabCount = 'LedgeGrabCount:';
+const Radius = 'Radius:';
+const Sensors = 'Sensors:';
+const Shield = 'Shield:';
+const LedgeDetector = 'LedgeDetector:';
+const Attack = 'Attack:';
 
 export function StructurePlayerSnapShotForPrinting(
   ps: PlayerSnapShot
@@ -210,7 +215,7 @@ function ecbNode(ps: PlayerSnapShot): node {
       },
       {
         kind: 2,
-        label: Left,
+        label: LeftLabel,
         data: [
           {
             kind: 1,
@@ -231,7 +236,7 @@ function ecbNode(ps: PlayerSnapShot): node {
       },
       {
         kind: 2,
-        label: Right,
+        label: RightLabel,
         data: [
           {
             kind: 1,
@@ -383,7 +388,7 @@ function grabMeterNode(ps: PlayerSnapShot): node {
 function attackNode(ps: PlayerSnapShot): node {
   return {
     kind: 2,
-    label: 'Attack',
+    label: Attack,
     data: [
       {
         kind: 1,
@@ -413,7 +418,7 @@ function attackNode(ps: PlayerSnapShot): node {
 function shieldNode(ps: PlayerSnapShot): node {
   return {
     kind: 2,
-    label: 'Shield',
+    label: Shield,
     data: [
       {
         kind: 1,
@@ -448,7 +453,7 @@ function shieldNode(ps: PlayerSnapShot): node {
 function ledgeDetectorNode(ps: PlayerSnapShot): node {
   return {
     kind: 2,
-    label: 'Ledge Detector',
+    label: LedgeDetector,
     data: [
       {
         kind: 2,

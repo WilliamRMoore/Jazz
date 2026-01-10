@@ -1,5 +1,5 @@
 import { IJazz } from '../engine/jazz';
-import { DebugRenderer, resolution } from '../render/debug-2d';
+import { DebugRenderer, resolution, window } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput } from '../input/Input';
 import { World } from '../engine/world/world';
@@ -58,8 +58,19 @@ function LOGIC_LOOP(engine: IJazz, gpInfo: Array<playerControllerInfo>) {
 
 function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
-  const resolution: resolution = { x: 1920, y: 1080 };
-  const dbRenderer = new DebugRenderer(canvas, resolution);
+  const dbCanvas = document.getElementById('debugInfo') as HTMLCanvasElement;
+  const mainWindow: window = {
+    canvas: canvas,
+    resX: 1920,
+    resY: 1080,
+  };
+  const dbWindow: window = {
+    canvas: dbCanvas,
+    resX: 600,
+    resY: 1200,
+  };
+
+  const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
   RENDERFPS60Loop((timeStamp: number) => {
     dbRenderer.render(jazzDebugger, timeStamp);
   });
