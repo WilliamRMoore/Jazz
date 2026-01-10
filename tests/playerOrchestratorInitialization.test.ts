@@ -44,7 +44,7 @@ describe('Player Orechstraotr Initialization', () => {
   });
 
   test('Should have shape', () => {
-    const shapes = po.ECB._ecbShapes;
+    const shapes = po.ECB._db_ecbShapes;
     const jumpShape = shapes.get(STATE_IDS.JUMP_S)!;
     expect(jumpShape.height.AsNumber).toBe(60);
     expect(jumpShape.width.AsNumber).toBe(70);

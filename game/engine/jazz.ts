@@ -89,34 +89,19 @@ export class Jazz implements IJazz {
 
 function TestLoop(w: World) {
   PlayerInput(w);
-
   Gravity(w);
-
   ApplyVelocity(w);
-
   ApplyVelocityDecay(w);
-
   PlayerCollisionDetection(w);
-
   PlatformDetection(w);
-
   StageCollisionDetection(w);
-
   LedgeGrabDetection(w);
-
   PlayerSensors(w);
-
   PlayerAttacks(w);
-
   ShieldRegen(w);
-
   GrabMeter(w);
-
   PlayerGrabs(w);
-
   OutOfBoundsCheck(w);
-
   TimedFlags(w);
-
   RecordHistory(w);
 }

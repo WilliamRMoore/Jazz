@@ -9,13 +9,13 @@ import {
 } from '../finite-state-machine/stateConfigurations/shared';
 type node = sVal | aVal;
 
-type sVal = {
+export type sVal = {
   kind: 1;
   label: string;
   data: string;
 };
 
-type aVal = {
+export type aVal = {
   kind: 2;
   label: string;
   data: node[];
@@ -204,7 +204,7 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: Y,
-            data: ps.Ecb.posY + ps.Ecb.ecbShape.yOffset.AsNumber.toString(),
+            data: (ps.Ecb.posY + ps.Ecb.ecbShape.yOffset.AsNumber).toString(),
           },
         ],
       },

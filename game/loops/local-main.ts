@@ -47,7 +47,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   }
 
   LOGIC_LOOP(engine, playerInfo);
-  RENDER_LOOP(engine.World);
+  RENDER_LOOP(engine);
 }
 
 function LOGIC_LOOP(engine: IJazz, gpInfo: Array<playerControllerInfo>) {
@@ -56,12 +56,12 @@ function LOGIC_LOOP(engine: IJazz, gpInfo: Array<playerControllerInfo>) {
   }, frameInterval);
 }
 
-function RENDER_LOOP(world: World) {
+function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
   const resolution: resolution = { x: 1920, y: 1080 };
   const dbRenderer = new DebugRenderer(canvas, resolution);
   RENDERFPS60Loop((timeStamp: number) => {
-    dbRenderer.render(world, timeStamp);
+    dbRenderer.render(jazzDebugger, timeStamp);
   });
 }
 

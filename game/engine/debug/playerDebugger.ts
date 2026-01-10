@@ -50,7 +50,7 @@ export class PlayerDebugAdapter {
   }
 
   public ForceStateFrame(frame: frameNumber) {
-    this.player.FSMInfo._currentStateFrame = frame;
+    this.player.FSMInfo._db_currentStateFrame = frame;
   }
 
   public LookLeft() {

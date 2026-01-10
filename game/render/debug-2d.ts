@@ -20,6 +20,8 @@ import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
 import { InputAction } from '../input/Input';
 import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
+import { deBugInfoTree } from '../engine/debug/debugUtils';
+import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 
 function getAlpha(
   timeStampNow: number,
@@ -49,11 +51,7 @@ export class DebugRenderer {
   private yRes: number;
   private lastFrame: number = 0;
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    res: resolution,
-    numberOfPlayers: number = 1
-  ) {
+  constructor(canvas: HTMLCanvasElement, res: resolution) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d')!;
     this.xRes = res.x;
@@ -62,7 +60,8 @@ export class DebugRenderer {
     this.canvas.height = this.yRes;
   }
 
-  render(world: World, timeStampNow: number) {
+  render(jazz: JazzDebugger, timeStampNow: number) {
+    const world = jazz.World;
     const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
       localFrame === 0 ? 0 : localFrame - 1
@@ -776,4 +775,34 @@ function drawCapsule(
   // Fill and stroke the capsule
   ctx.fill();
   ctx.stroke();
+}
+
+function PrintDataTreeRoot(
+  x: number,
+  y: number,
+  tree: deBugInfoTree,
+  ctx: CanvasRenderingContext2D
+) {
+  let curX = x;
+  let curY = y;
+  ctx.fillStyle = 'darkblue';
+}
+
+function PrintDataTreeNode(
+  d: deBugInfoTree,
+  x: number,
+  y: number,
+  ctx: CanvasRenderingContext2D
+) {
+  if (d.kind === 1) {
+    ctx.fillText(`${d.label}: ${d.data}`, x, y);
+    return;
+  } else if (d.kind === 2) {
+    ctx.fillText(d.label, x, y);
+    const dLength = d.data.length;
+    for (let i = 0; i < dLength; i++) {
+      const child = d.data[i];
+      PrintDataTreeNode(child, x + 20, y + 20, ctx);
+    }
+  }
 }

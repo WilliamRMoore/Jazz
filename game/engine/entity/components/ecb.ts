@@ -173,7 +173,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.currentShape.yOffset;
   }
 
-  public get _ecbShapes(): ECBShapes {
+  public get _db_ecbShapes(): ECBShapes {
     return this.ecbStateShapes;
   }
 

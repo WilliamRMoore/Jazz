@@ -72,7 +72,7 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
     w.LocalFrame = 2;
-    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
+    p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
     PlayerAttacks(w);
 
@@ -101,7 +101,7 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
     w.LocalFrame = 2;
-    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
+    p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
     PlayerAttacks(w);
 

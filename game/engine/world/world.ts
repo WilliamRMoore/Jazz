@@ -13,6 +13,7 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { InitPlayerHistory } from '../systems/history';
+import { PlayerDebugAdapter } from '../debug/playerDebugger';
 
 export type PlayerData = {
   PlayerCount: number;

@@ -26,11 +26,6 @@ import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
 import { DebugComponent } from './components/debug';
-import { World } from '../world/world';
-import { StateId } from '../finite-state-machine/stateConfigurations/shared';
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { InputStoreLocal } from '../engine-state-management/Managers';
-import { InputAction } from '../../input/Input';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 

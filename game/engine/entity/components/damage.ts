@@ -35,4 +35,8 @@ export class PlayerDamageComponent implements IHistoryEnabled<DamageSnapShot> {
   public SetFromSnapShot(snapShot: DamageSnapShot): void {
     this.damagePoints.SetFromNumber(snapShot.damagePoints);
   }
+
+  public _db_set_damage(number: number): void {
+    this.damagePoints.SetFromNumber(number);
+  }
 }
