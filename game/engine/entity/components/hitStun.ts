@@ -16,6 +16,10 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
     this.framesOfHitStun = hitStunFrames;
   }
 
+  public get FramesOfHitStun(): number {
+    return this.framesOfHitStun;
+  }
+
   public get VX(): FixedPoint {
     return this.xVelocity;
   }
@@ -27,7 +31,7 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
   public SetHitStun(
     hitStunFrames: number,
     vx: FixedPoint,
-    vy: FixedPoint
+    vy: FixedPoint,
   ): void {
     this.framesOfHitStun = hitStunFrames;
     this.xVelocity.SetFromFp(vx);

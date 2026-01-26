@@ -28,7 +28,10 @@ export class JazzDebugger implements IJazzDebugger {
     this.world = this.jazz.World;
   }
 
-  public AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined): void {
+  public AddPlayerEntity(
+    cc: CharacterConfig,
+    pos: FlatVec | undefined,
+  ): PlayerDebugAdapter {
     const p = new Player(this.World.PlayerData.PlayerCount, cc);
     if (pos !== undefined) {
       SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
@@ -36,14 +39,20 @@ export class JazzDebugger implements IJazzDebugger {
     this.jazz.World.SetPlayer(p);
     const pd = new PlayerDebugAdapter(p, this.world);
     this.playerDebuggers.push(pd);
+    return pd;
   }
 
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void {
-    this.togglePause(ia);
+    if (pIndex === 0) {
+      this.togglePause(ia);
+    }
+
     const frame = this.world.LocalFrame;
     if (this.paused) {
-      if (this.advanceOneFrame(ia)) {
+      if (pIndex === 0 && this.advanceOneFrame(ia)) {
         this.advanceFrame = true;
+      }
+      if (this.advanceFrame) {
         if (
           this.world.PlayerData.InputStore(pIndex).GetInputForFrame(frame) ===
           undefined
@@ -51,7 +60,9 @@ export class JazzDebugger implements IJazzDebugger {
           this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
         }
       }
-      this.previousInput = ia;
+      if (pIndex === 0) {
+        this.previousInput = ia;
+      }
       return;
     }
 
@@ -62,19 +73,21 @@ export class JazzDebugger implements IJazzDebugger {
       this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
     }
 
-    this.previousInput = ia;
+    if (pIndex === 0) {
+      this.previousInput = ia;
+    }
   }
 
   public Init(
     ccs: Array<CharacterConfig>,
-    positions: Array<FlatVec> | undefined = undefined
+    positions: Array<FlatVec> | undefined = undefined,
   ): void {
     this.jazz.Init(ccs, positions);
     const pl = this.world.PlayerData.PlayerCount;
     for (let i = 0; i < pl; i++) {
       const pd = new PlayerDebugAdapter(
         this.world.PlayerData.Player(i),
-        this.world
+        this.world,
       );
       this.playerDebuggers.push(pd);
     }
@@ -116,7 +129,7 @@ export class JazzDebugger implements IJazzDebugger {
 function GetPlayerDataForFrame(
   pId: number,
   frame: number,
-  w: World
+  w: World,
 ): PlayerSnapShot {
   const hist = w.HistoryData.PlayerComponentHistories[pId];
 

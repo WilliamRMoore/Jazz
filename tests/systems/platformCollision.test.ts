@@ -59,7 +59,7 @@ describe('Platform Collision system tests', () => {
     SetPlayerPosition(
       p,
       new FixedPoint(1000),
-      new FixedPoint(300 - p.ECB.Height.AsNumber)
+      new FixedPoint(300 - p.ECB.Height.AsNumber),
     );
     p.FSMInfo.SetCurrentState(Idle);
 
@@ -81,7 +81,7 @@ describe('Platform Collision system tests', () => {
     jest
       .spyOn(
         require('../../game/engine/entity/playerOrchestrator'),
-        'PlayerOnPlatsReturnsYCoord'
+        'PlayerOnPlatsReturnsYCoord',
       )
       .mockReturnValue(MOCK_Y_COORD);
 

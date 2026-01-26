@@ -101,7 +101,7 @@ describe('PlayerComponents ECB tests', () => {
     expect(newEcb.YOffset.AsNumber).toBe(snapshot.ecbShape.yOffset.AsNumber);
     expect(newEcb.Bottom.X.AsNumber).toBe(snapshot.posX);
     expect(newEcb.Bottom.Y.AsNumber).toBe(
-      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber
+      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber,
     );
   });
 

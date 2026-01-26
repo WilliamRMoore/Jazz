@@ -1,5 +1,5 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { InputAction } from '../../input/Input';
+import { InputAction, NewInputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
@@ -14,6 +14,7 @@ import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { InitPlayerHistory } from '../systems/history';
 import { PlayerDebugAdapter } from '../debug/playerDebugger';
+import { frameNumber } from '../entity/components/attack';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -22,7 +23,10 @@ export type PlayerData = {
   Player: (playerId: number) => Player;
   AddPlayer: (p: Player) => void;
   AddStateMachine: (sm: StateMachine) => void;
-  AddInputStore: (is: InputStoreLocal<InputAction>) => void;
+  AddInputStore: (
+    is: InputStoreLocal<InputAction>,
+    currentFrame: frameNumber,
+  ) => void;
 };
 
 export type StageData = {
@@ -74,7 +78,13 @@ class PlayerState implements PlayerData {
     this.stateMachines.push(sm);
   }
 
-  public AddInputStore(is: InputStoreLocal<InputAction>): void {
+  public AddInputStore(
+    is: InputStoreLocal<InputAction>,
+    currentFrame: frameNumber,
+  ): void {
+    for (let i = 0; i <= currentFrame; i++) {
+      is.StoreInputForFrame(i, NewInputAction());
+    }
     this.inputStore.push(is);
   }
 
@@ -98,24 +108,24 @@ class PoolContainer implements Pools {
 
   constructor() {
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
-      20,
-      () => new ActiveHitBubblesDTO()
+      500,
+      () => new ActiveHitBubblesDTO(),
     );
     this.VecPool = new Pool<PooledVector>(500, () => new PooledVector());
     this.ColResPool = new Pool<CollisionResult>(
-      100,
-      () => new CollisionResult()
+      1000,
+      () => new CollisionResult(),
     );
     this.ProjResPool = new Pool<ProjectionResult>(
-      200,
-      () => new ProjectionResult()
+      500,
+      () => new ProjectionResult(),
     );
     this.AtkResPool = new Pool<AttackResult>(100, () => new AttackResult());
     this.ClstsPntsResPool = new Pool<ClosestPointsResult>(
-      400,
-      () => new ClosestPointsResult()
+      500,
+      () => new ClosestPointsResult(),
     );
-    this.DiamondPool = new Pool<DiamondDTO>(50, () => new DiamondDTO());
+    this.DiamondPool = new Pool<DiamondDTO>(500, () => new DiamondDTO());
   }
   public Zero(): void {
     this.ActiveHitBubbleDtoPool.Zero();
@@ -158,7 +168,7 @@ export class World {
     this.localFrame = f;
     if (Number.isInteger(f) === false) {
       console.error(
-        'World local frame was set to a number value other than an integer.'
+        'World local frame was set to a number value other than an integer.',
       );
     }
   }
@@ -166,16 +176,18 @@ export class World {
   public SetPlayer(p: Player): void {
     this.PlayerData.AddPlayer(p);
     this.PlayerData.AddStateMachine(new StateMachine(p, this));
-    this.PlayerData.AddInputStore(new InputStoreLocal<InputAction>());
-    const compHist = new ComponentHistory(p);
-    compHist.StaticPlayerHistory.LedgeDetectorWidth =
+    this.PlayerData.AddInputStore(
+      new InputStoreLocal<InputAction>(),
+      this.localFrame,
+    );
+    const compHist = new ComponentHistory();
+    compHist.BaseConfigValues.LedgeDetectorWidth =
       p.LedgeDetector.Width.AsNumber;
-    compHist.StaticPlayerHistory.ledgDetecorHeight =
+    compHist.BaseConfigValues.ledgDetecorHeight =
       p.LedgeDetector.Height.AsNumber;
-    compHist.StaticPlayerHistory.ShieldOffset =
-      p.Shield.YOffsetConstant.AsNumber;
+    compHist.BaseConfigValues.ShieldOffset = p.Shield.YOffsetConstant.AsNumber;
     p.HurtCircles.HurtCapsules.forEach((hc) =>
-      compHist.StaticPlayerHistory.HurtCapsules.push(hc)
+      compHist.BaseConfigValues.HurtCapsules.push(hc),
     );
     this.HistoryData.PlayerComponentHistories.push(compHist);
     InitPlayerHistory(p, this);

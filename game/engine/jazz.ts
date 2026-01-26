@@ -32,13 +32,15 @@ export interface IJazz {
   Tick(): void;
 }
 
+export type GameLoop = (w: World) => void;
+
 export class Jazz implements IJazz {
   private readonly world: World;
-  private loop: (w: World) => void;
+  private loop: GameLoop;
 
-  constructor() {
+  constructor(customLoop?: GameLoop) {
     this.world = new World();
-    this.loop = TestLoop;
+    this.loop = customLoop || DefaultGameLoop;
   }
 
   public get World(): World {
@@ -47,7 +49,7 @@ export class Jazz implements IJazz {
 
   public Init(
     cc: Array<CharacterConfig>,
-    positions: Array<FlatVec> | undefined = undefined
+    positions: Array<FlatVec> | undefined = undefined,
   ): void {
     const s = defaultStage();
     this.world.SetStage(s);
@@ -68,7 +70,7 @@ export class Jazz implements IJazz {
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
     this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
       this.world.LocalFrame,
-      ia
+      ia,
     );
   }
 
@@ -87,7 +89,7 @@ export class Jazz implements IJazz {
   }
 }
 
-function TestLoop(w: World) {
+export const DefaultGameLoop: GameLoop = (w: World) => {
   PlayerInput(w);
   Gravity(w);
   ApplyVelocity(w);
@@ -104,4 +106,4 @@ function TestLoop(w: World) {
   OutOfBoundsCheck(w);
   TimedFlags(w);
   RecordHistory(w);
-}
+};

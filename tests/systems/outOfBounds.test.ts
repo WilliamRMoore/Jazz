@@ -58,7 +58,7 @@ describe('OutOfBounds system tests', () => {
 
         // Check state is reset
         expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.N_FALL_S);
-      }
+      },
     );
   });
 

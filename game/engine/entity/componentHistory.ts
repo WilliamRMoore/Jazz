@@ -3,7 +3,6 @@ import { AttackSnapShot } from './components/attack';
 import { ECBSnapShot } from './components/ecb';
 import { FlagsSnapShot } from './components/flags';
 import { FSMInfoSnapShot } from './components/fsmInfo';
-import { HurtCapsule } from './components/hurtCircles';
 import { LedgeDetectorSnapShot } from './components/ledgeDetector';
 import { PositionSnapShot } from './components/position';
 import { SensorSnapShot } from './components/sensor';
@@ -15,8 +14,9 @@ import { hitStopSnapShot } from './components/hitStop';
 import { GrabSnapShot } from './components/grab';
 import { GrabMeterSnapShot } from './components/grabMeter';
 import { DebugSnapShot } from './components/debug';
+import { HurtCapsule } from './components/hurtCircles';
 
-export class StaticHistory {
+export class BaseConfigValues {
   public ledgDetecorHeight: number = 0;
   public LedgeDetectorWidth: number = 0;
   public HurtCapsules: Array<HurtCapsule> = [];
@@ -42,8 +42,8 @@ export type PlayerSnapShot = {
 };
 
 export class ComponentHistory {
-  readonly _deb_hist: DebugSnapShot[] | undefined;
-  readonly StaticPlayerHistory = new StaticHistory();
+  // readonly _deb_hist: DebugSnapShot[] | undefined;
+  readonly BaseConfigValues = new BaseConfigValues();
   readonly ShieldHistory: Array<ShieldSnapShot> = [];
   readonly PositionHistory: Array<PositionSnapShot> = [];
   readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
@@ -59,10 +59,6 @@ export class ComponentHistory {
   readonly AttackHistory: Array<AttackSnapShot> = [];
   readonly GrabHistory: Array<GrabSnapShot> = [];
   readonly GrabMeterHistory: Array<GrabMeterSnapShot> = [];
-
-  constructor(p: Player) {
-    this._deb_hist = p._db === undefined ? undefined : [];
-  }
 
   public SetPlayerToFrame(p: Player, frameNumber: number) {
     p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
@@ -80,9 +76,6 @@ export class ComponentHistory {
     p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
     p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
     p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
-    if (p._db !== undefined) {
-      p._db.SetFromSnapShot(this._deb_hist![frameNumber]);
-    }
   }
 }
 

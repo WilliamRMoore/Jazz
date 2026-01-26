@@ -48,10 +48,10 @@ describe('Player states tests', () => {
     const angleIndex = GetAtan2IndexRaw(input.LYAxis.Raw, input.LXAxis.Raw);
     const expectedSpeedRaw = p.Speeds.AirDogeSpeedRaw;
     const expectedVelXRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw)
+      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw),
     );
     const expectedVelYRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw)
+      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw),
     );
 
     expect(p.Velocity.X.Raw).toBeCloseTo(expectedVelXRaw, -1);
@@ -208,7 +208,7 @@ describe('Player states tests', () => {
 
     // Expect velocity to decrease further (become more negative), clamped by MaxDashSpeed
     expect(p.Velocity.X.AsNumber).toBeGreaterThanOrEqual(
-      -p.Speeds.MaxDashSpeedRaw
+      -p.Speeds.MaxDashSpeedRaw,
     );
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelocityXLeft);
   });

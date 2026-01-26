@@ -10,7 +10,7 @@ import {
   CalculateRadiusFromTriggerRaw,
   ShieldSnapShot,
 } from '../engine/entity/components/shield';
-import { StaticHistory } from '../engine/entity/componentHistory';
+import { BaseConfigValues } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
@@ -31,7 +31,7 @@ function getAlpha(
   lastFrame: number,
   localFrame: number,
   previousFrameTimeStamp: number,
-  currentFrameTimeStamp: number
+  currentFrameTimeStamp: number,
 ): number {
   const preClampAlpha =
     (timeStampNow - previousFrameTimeStamp) /
@@ -51,7 +51,7 @@ export type resolution = {
   y: number;
 };
 
-export type window = {
+export type renderTarget = {
   canvas: HTMLCanvasElement;
   resX: number;
   resY: number;
@@ -67,8 +67,9 @@ export class DebugRenderer {
   private dbxRes: number;
   private dbyRes: number;
   private lastFrame: number = 0;
+  public PlayerDeBugInfo: boolean = false;
 
-  constructor(mainWindow: window, debugInfoWindow: window) {
+  constructor(mainWindow: renderTarget, debugInfoWindow: renderTarget) {
     this.canvas = mainWindow.canvas;
     this.xRes = mainWindow.resX;
     this.yRes = mainWindow.resY;
@@ -87,7 +88,7 @@ export class DebugRenderer {
     const world = jazz.World;
     const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
-      localFrame === 0 ? 0 : localFrame - 1
+      localFrame === 0 ? 0 : localFrame - 1,
     );
     const currentFrameTimeStamp = world.GetFrameTimeStampForFrame(localFrame);
 
@@ -96,7 +97,7 @@ export class DebugRenderer {
       this.lastFrame,
       localFrame,
       previousFrameTimeStamp,
-      currentFrameTimeStamp
+      currentFrameTimeStamp,
     );
 
     const playerStateHistory = world.GetComponentHistory(0); // hard coded to player 1 right now
@@ -125,50 +126,52 @@ export class DebugRenderer {
 
     ctx.fillStyle = 'darkblue';
 
-    ctx.fillText(`Frame: ${localFrame}`, 10, 30);
-    ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
-    ctx.fillText(`PlayerState: ${playerFsmState}`, 10, 90);
+    // ctx.fillText(`Frame: ${localFrame}`, 10, 30);
+    // ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
+    // ctx.fillText(`PlayerState: ${playerFsmState}`, 10, 90);
     ctx.fillText(
       `input:[ Action:${input.Action} | LX: ${input.LXAxis.AsNumber} | LY: ${input.LYAxis.AsNumber} | RX: ${input.RXAxis.AsNumber} | RY: ${input.RYAxis.AsNumber} | RT: ${input.RTVal.AsNumber} | LT: ${input.LTVal.AsNumber} ]`,
       10,
-      120
+      120,
     );
-    ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 150);
-    ctx.fillText(
-      `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
-      10,
-      180
-    );
-    ctx.fillText(
-      `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
-      10,
-      210
-    );
-    ctx.fillText(
-      `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
-      10,
-      240
-    );
+    // ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 150);
+    // ctx.fillText(
+    //   `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
+    //   10,
+    //   180,
+    // );
+    // ctx.fillText(
+    //   `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
+    //   10,
+    //   210,
+    // );
+    // ctx.fillText(
+    //   `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
+    //   10,
+    //   240,
+    // );
 
-    ctx.fillText(
-      `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
-      10,
-      270
-    );
+    // ctx.fillText(
+    //   `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
+    //   10,
+    //   270,
+    // );
 
-    ctx.fillText(
-      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
-        localFrame
-      )}`,
-      10,
-      300
-    );
+    // ctx.fillText(
+    //   `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
+    //     localFrame,
+    //   )}`,
+    //   10,
+    //   300,
+    // );
 
     if (currentAttackString !== undefined) {
       ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 330);
     }
 
-    this.renderLiveDebugInfo(jazz);
+    if (this.PlayerDeBugInfo) {
+      this.renderLiveDebugInfo(jazz);
+    }
 
     this.lastFrame = localFrame;
   }
@@ -227,7 +230,7 @@ function drawStage(ctx: CanvasRenderingContext2D, world: World) {
 
 function drawPlatforms(
   ctx: CanvasRenderingContext2D,
-  plats?: Array<Line>
+  plats?: Array<Line>,
 ): void {
   if (plats === undefined || plats.length === 0) {
     return;
@@ -250,7 +253,7 @@ function drawPlatforms(
 function drawPlayer(
   ctx: CanvasRenderingContext2D,
   world: World,
-  alpha: number
+  alpha: number,
 ) {
   const playerCount = world.PlayerData.PlayerCount;
   const currentFrame = world.LocalFrame - 1;
@@ -261,11 +264,11 @@ function drawPlayer(
     const playerHistory = world.GetComponentHistory(i);
     const shield = playerHistory!.ShieldHistory[currentFrame];
     const lastShield = playerHistory!.ShieldHistory[lastFrame];
-    const shieldYOffset = playerHistory!.StaticPlayerHistory.ShieldOffset;
+    const shieldYOffset = playerHistory!.BaseConfigValues.ShieldOffset;
     const pos = playerHistory!.PositionHistory[currentFrame];
     const lastPos = playerHistory!.PositionHistory[lastFrame];
     const lastLastPosition = playerHistory!.PositionHistory[theFrameBeforeLast];
-    const circlesHistory = playerHistory!.StaticPlayerHistory.HurtCapsules;
+    const circlesHistory = playerHistory!.BaseConfigValues.HurtCapsules;
     const flags = playerHistory!.FlagsHistory[currentFrame];
     const lastFlags = playerHistory!.FlagsHistory[lastFrame];
     const ecb = playerHistory!.EcbHistory[currentFrame];
@@ -290,7 +293,7 @@ function drawPlayer(
       lastPos,
       circlesHistory,
       intangible,
-      alpha
+      alpha,
     );
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
@@ -305,10 +308,10 @@ function drawPlayer(
     drawLedgeDetectors(
       ctx,
       facingRight,
-      playerHistory!.StaticPlayerHistory,
+      playerHistory!.BaseConfigValues,
       lD,
       lastLd,
-      alpha
+      alpha,
     );
   }
 
@@ -352,7 +355,7 @@ function drawSensors(
   curPos: PositionSnapShot,
   lastPos: PositionSnapShot,
   flags: FlagsSnapShot,
-  sensorsWrapper: SensorSnapShot
+  sensorsWrapper: SensorSnapShot,
 ) {
   ctx.strokeStyle = 'white';
   ctx.fillStyle = 'white';
@@ -385,7 +388,7 @@ function drawShield(
   lastPosition: PositionSnapShot,
   shield: ShieldSnapShot,
   shieldYOffset: number,
-  alpha: number
+  alpha: number,
 ) {
   const x = Lerp(lastPosition.X, curPosition.X, alpha) + shield.ShieldTiltX;
   const y =
@@ -396,8 +399,8 @@ function drawShield(
   const radius = RawToNumber(
     CalculateRadiusFromTriggerRaw(
       triggerValue,
-      NumberToRaw(shield.CurrentRadius)
-    )
+      NumberToRaw(shield.CurrentRadius),
+    ),
   );
   ctx.strokeStyle = 'blue';
   ctx.fillStyle = 'blue';
@@ -414,10 +417,10 @@ function drawShield(
 function drawLedgeDetectors(
   ctx: CanvasRenderingContext2D,
   facingRight: boolean,
-  staticHistory: StaticHistory,
+  staticHistory: BaseConfigValues,
   ledgeDetectorHistory: LedgeDetectorSnapShot,
   lastLedgeDetectorHistory: LedgeDetectorSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   const ldHeight = staticHistory.ledgDetecorHeight;
   const ldWidth = staticHistory.LedgeDetectorWidth;
@@ -497,7 +500,7 @@ function drawDirectionMarker(
   ecb: ECBSnapShot,
   pos: PositionSnapShot,
   lastPos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   ctx.strokeStyle = 'white';
   const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
@@ -532,7 +535,7 @@ function drawPrevEcb(
   lastEcb: ECBSnapShot,
   lastLastPosition: PositionSnapShot,
   lastPos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
@@ -569,7 +572,7 @@ function drawCurrentECB(
   ecb: ECBSnapShot,
   lasPos: PositionSnapShot,
   pos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
   const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
@@ -606,7 +609,7 @@ function drawHitCircles(
   flags: FlagsSnapShot,
   currentPosition: PositionSnapShot,
   lastPosition: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   if (attack.attack === undefined) {
     return;
@@ -615,7 +618,7 @@ function drawHitCircles(
   const currentSateFrame = fsmInfo.StateFrame;
   const circles = attack.attack.GetActiveBubblesForFrame(
     currentSateFrame,
-    adto
+    adto,
   );
 
   if (circles === undefined) {
@@ -650,6 +653,10 @@ function drawHitCircles(
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
+
+    ctx.fillStyle = 'darkblue';
+    ctx.fillText(circle.Priority.toString(), offsetX, offsetY);
+    ctx.fillStyle = 'red';
   }
   ctx.globalAlpha = 1.0;
 }
@@ -661,7 +668,7 @@ function drawHurtCircles(
   lasPosition: PositionSnapShot,
   hurtCapsules: Array<HurtCapsule>,
   instangible: boolean,
-  alpha: number
+  alpha: number,
 ) {
   ctx.strokeStyle = 'yellow'; // Set the stroke color for the circles
   ctx.fillStyle = 'yellow'; // Set the fill color for the circles
@@ -693,7 +700,7 @@ function drawHurtCircles(
       globalStartY,
       globalEndX,
       globalEndY,
-      hurtCapsule.Radius.AsNumber
+      hurtCapsule.Radius.AsNumber,
     );
   }
 
@@ -708,7 +715,7 @@ function drawGrabCircles(
   flags: FlagsSnapShot,
   currentPosition: PositionSnapShot,
   lastPosition: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   if (grab === undefined) {
     return;
@@ -755,7 +762,7 @@ function drawPositionMarker(
   ctx: CanvasRenderingContext2D,
   posHistory: PositionSnapShot,
   lastPosHistory: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   const playerPosX = Lerp(lastPosHistory.X, posHistory.X, alpha);
   const playerPosY = Lerp(lastPosHistory.Y, posHistory.Y, alpha);
@@ -785,7 +792,7 @@ function drawCapsule(
   y1: number,
   x2: number,
   y2: number,
-  radius: number
+  radius: number,
 ) {
   // Calculate the angle of the capsule
   const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -816,7 +823,7 @@ function PrintDataTreeRoot(
   x: number,
   y: number,
   tree: deBugInfoTree,
-  ctx: CanvasRenderingContext2D
+  ctx: CanvasRenderingContext2D,
 ) {
   ctx.fillStyle = 'white';
   printDataTreeNode(tree, x, y, ctx);
@@ -844,7 +851,7 @@ function printDataTreeNode(
   x: number,
   y: number,
   ctx: CanvasRenderingContext2D,
-  level = 0
+  level = 0,
 ): number {
   //ctx.fillStyle = getColor(level);
   if (d.kind === 1) {

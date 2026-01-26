@@ -164,7 +164,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
 
       // Angle = 45. cos(45) = 0.707, sin(45) = 0.707
@@ -187,7 +187,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
 
       // Angle is 180 - 45 = 135. cos(135) = -0.707, sin(135) = 0.707
@@ -205,7 +205,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
       // cos(0) = 1, sin(0) = 0
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(100, 0);
@@ -220,7 +220,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
       // cos(90) = 0, sin(90) = 1
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(0, 0);

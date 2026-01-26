@@ -31,7 +31,7 @@ export class GrabBubble {
   }
 
   public GetLocalPositionOffsetForFrame(
-    frameNumber: frameNumber
+    frameNumber: frameNumber,
   ): FlatVec | undefined {
     return this.frameOffsets.get(frameNumber);
   }
@@ -45,7 +45,7 @@ export class GrabBubble {
     playerX: FixedPoint,
     playerY: FixedPoint,
     facinRight: boolean,
-    grabFrameNumber: frameNumber
+    grabFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
@@ -64,7 +64,7 @@ export class GrabBubble {
     playerXRaw: number,
     playerYRaw: number,
     facinRight: boolean,
-    grabFrameNumber: frameNumber
+    grabFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
@@ -110,7 +110,7 @@ export class Grab {
 
   public GetActiveBubblesForFrame(
     frame: number,
-    activeGbs: ActiveGrabBubblesDTO
+    activeGbs: ActiveGrabBubblesDTO,
   ) {
     const gbLength = this.GrabBubbles.length;
     if (gbLength === 0) {

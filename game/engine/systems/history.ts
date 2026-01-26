@@ -36,9 +36,14 @@ function record(p: Player, h: ComponentHistory, fn: frameNumber) {
 
 export function InitPlayerHistory(p: Player, w: World) {
   const pId = p.ID;
+  const curFrame = w.LocalFrame;
   const hist = w.HistoryData.PlayerComponentHistories[pId];
-  const lastFrame = w.LocalFrame === 0 ? 0 : w.LocalFrame - 1;
-  const lastLastFrame = lastFrame === 0 ? 0 : lastFrame - 1;
-  record(p, hist, lastFrame);
-  record(p, hist, lastLastFrame);
+  for (let i = 0; i <= curFrame; i++) {
+    record(p, hist, i);
+  }
+  // const hist = w.HistoryData.PlayerComponentHistories[pId];
+  // const lastFrame = w.LocalFrame === 0 ? 0 : w.LocalFrame - 1;
+  // const lastLastFrame = lastFrame === 0 ? 0 : lastFrame - 1;
+  // record(p, hist, lastFrame);
+  // record(p, hist, lastLastFrame);
 }

@@ -4,13 +4,14 @@ import {
   DivideRaw,
   MultiplyRaw,
   SqrtRaw,
+  DistanceRaw,
 } from '../../math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../../math/LUTS';
 import { FlatVec } from '../../physics/vector';
 import {
   Player,
-  AddWalkImpulseToPlayer,
   AddToPlayerYPositionRaw,
+  AddToPlayerXPostionRaw,
 } from '../../entity/playerOrchestrator';
 import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
@@ -39,11 +40,40 @@ export const Walk: FSMState = {
   StateId: STATE_IDS.WALK_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
+    const speeds = p.Speeds;
+    const vel = p.Velocity;
+
+    const absWalkMaxSpeed = Math.abs(speeds.MaxWalkSpeedRaw);
+    const absXVel = Math.abs(vel.X.Raw);
+
+    if (absXVel >= absWalkMaxSpeed) {
+      return;
+    }
+
+    const isFacingRight = p.Flags.IsFacingRight;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-    if (ia !== undefined) {
-      AddWalkImpulseToPlayer(p, ia.LXAxis);
+    //2
+    const impulse = MultiplyRaw(ia.LXAxisRaw, speeds.WalkSpeedMulitplierRaw);
+
+    if (isFacingRight) {
+      //1   //10              //9
+      const diff = absWalkMaxSpeed - vel.X.Raw;
+      if (diff >= impulse) {
+        vel.X.SetFromRaw(vel.X.Raw + impulse);
+      } else if (diff > 0) {
+        vel.X.SetFromRaw(vel.X.Raw + diff);
+      }
+    } else {
+      //1       //10            //-9
+      const diff = absWalkMaxSpeed + vel.X.Raw;
+      //-2
+      if (diff >= -impulse) {
+        vel.X.SetFromRaw(vel.X.Raw + impulse);
+      } else if (diff > 0) {
+        vel.X.SetFromRaw(vel.X.Raw - diff);
+      }
     }
   },
   OnExit: (p: Player, w: World) => {},
@@ -107,7 +137,7 @@ export const Run: FSMState = {
       const speeds = p.Speeds;
       p.Velocity.AddClampedXImpulseRaw(
         speeds.MaxRunSpeedRaw,
-        MultiplyRaw(ia.LXAxis.Raw, speeds.RunSpeedMultiplierRaw)
+        MultiplyRaw(ia.LXAxis.Raw, speeds.RunSpeedMultiplierRaw),
       );
     }
   },
@@ -253,7 +283,7 @@ export const AirDodge: FSMState = {
   },
   OnUpdate: (p: Player, w: World) => {
     const frameLength = p.FSMInfo.GetFrameLengthForState(
-      STATE_IDS.AIR_DODGE_S
+      STATE_IDS.AIR_DODGE_S,
     )!;
     const currentFrameForState = p.FSMInfo.CurrentStateFrame;
     const currentFrameFpRaw = NumberToRaw(currentFrameForState);
@@ -287,15 +317,15 @@ export const Helpless: FSMState = {
     const speeds = p.Speeds;
     const airSpeedRaw = MultiplyRaw(
       speeds.AerialSpeedInpulseLimitRaw,
-      POINT_SIX
+      POINT_SIX,
     );
     const airMultRaw = MultiplyRaw(
       speeds.ArielVelocityMultiplierRaw,
-      POINT_SIX
+      POINT_SIX,
     );
     p.Velocity.AddClampedXImpulseRaw(
       airSpeedRaw,
-      MultiplyRaw(ia!.LXAxis.Raw, airMultRaw)
+      MultiplyRaw(ia!.LXAxis.Raw, airMultRaw),
     );
   },
   OnExit: (p: Player, w: World) => {},
@@ -330,7 +360,7 @@ export const Launch: FSMState = {
     }
   },
   OnUpdate: (p: Player, w: World) => {
-    p.HitStun.DecrementHitStun();
+    if (p) p.HitStun.DecrementHitStun();
   },
   OnExit: (p, w) => {
     p.HitStun.Zero();
@@ -407,11 +437,11 @@ export const Shield: FSMState = {
       const clampedYRaw = -DivideRaw(lyAxis.Raw, mag);
       const newoffsetXRaw = MultiplyRaw(
         clampedXRaw,
-        s.maxShieldOffSetRadius.Raw
+        s.maxShieldOffSetRadius.Raw,
       );
       const newoffsetYRaw = MultiplyRaw(
         clampedYRaw,
-        s.maxShieldOffSetRadius.Raw
+        s.maxShieldOffSetRadius.Raw,
       );
       s.ShieldTiltX.SetFromRaw(newoffsetXRaw);
       s.ShieldTiltY.SetFromRaw(newoffsetYRaw);
@@ -462,7 +492,7 @@ export const RollDodge: FSMState = {
     const currentFrameRaw = NumberToRaw(fsmInfo.CurrentStateFrame);
     const normalizedTimeRaw = DivideRaw(
       currentFrameRaw,
-      NumberToRaw(totalFrames)
+      NumberToRaw(totalFrames),
     );
     const clampedNormalizedTimeRaw = Math.min(normalizedTimeRaw, ONE);
     const easeRaw = EaseInRaw(clampedNormalizedTimeRaw);
@@ -470,7 +500,7 @@ export const RollDodge: FSMState = {
     const oneMinusEaseRaw = ONE - easeRaw;
     const direction = p.Flags.IsFacingRight ? NumberToRaw(-1) : NumberToRaw(1);
     p.Velocity.X.SetFromRaw(
-      MultiplyRaw(direction, MultiplyRaw(maxSpeedRaw, oneMinusEaseRaw))
+      MultiplyRaw(direction, MultiplyRaw(maxSpeedRaw, oneMinusEaseRaw)),
     );
   },
   OnExit: (p, w) => {
@@ -947,6 +977,49 @@ export const dizzy: FSMState = {
   },
 };
 
+export const legdeGetUp: FSMState = {
+  StateName: 'LedgeGetUp',
+  StateId: STATE_IDS.LEDGE_GUA_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.LEDGE_GUA_S);
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
+    const currentFrame = p.FSMInfo.CurrentStateFrame;
+    const remainingFrames = framesToStage - currentFrame;
+
+    const stage = w.StageData.Stage;
+    const ground = stage.StageVerticies.GetGround();
+    let targetXRaw = 0;
+    let targetYRaw = 0;
+
+    if (p.Flags.IsFacingRight) {
+      const leftCorner = ground[0];
+      targetXRaw = leftCorner.X1.Raw;
+      targetYRaw = leftCorner.Y1.Raw;
+    } else {
+      const rightCorner = ground[ground.length - 1];
+      targetXRaw = rightCorner.X2.Raw;
+      targetYRaw = rightCorner.Y2.Raw;
+    }
+
+    const diffXRaw = targetXRaw - p.Position.X.Raw;
+    const diffYRaw = targetYRaw - p.Position.Y.Raw;
+    const remainingFramesRaw = NumberToRaw(remainingFrames);
+
+    const stepXRaw = DivideRaw(diffXRaw, remainingFramesRaw);
+    const stepYRaw = DivideRaw(diffYRaw, remainingFramesRaw);
+
+    AddToPlayerXPostionRaw(p, stepXRaw);
+    AddToPlayerYPositionRaw(p, stepYRaw);
+  },
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
 /**
  * Attack Grabs:
  * pummel
@@ -995,7 +1068,7 @@ function attackOnEnter(
   p: Player,
   w: World,
   gameEventId: GameEventId,
-  stateId: StateId
+  stateId: StateId,
 ) {
   const attackComp = p.Attacks;
   attackComp.SetCurrentAttack(gameEventId);
@@ -1049,7 +1122,7 @@ function aerialInputOnUpdate(p: Player, w: World) {
 
   p.Velocity.AddClampedXImpulseRaw(
     speedsComp.AerialSpeedInpulseLimitRaw,
-    MultiplyRaw(ia.LXAxis.Raw, speedsComp.ArielVelocityMultiplierRaw)
+    MultiplyRaw(ia.LXAxis.Raw, speedsComp.ArielVelocityMultiplierRaw),
   );
 }
 
@@ -1071,7 +1144,7 @@ function attackOnExit(p: Player, w: World) {
 
 function ShouldFastFall(
   curLYAxsisRaw: number,
-  prevLYAxsisRaw: number
+  prevLYAxsisRaw: number,
 ): boolean {
   return curLYAxsisRaw < -POINT_EIGHT && prevLYAxsisRaw > -POINT_EIGHT;
 }

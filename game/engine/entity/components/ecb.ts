@@ -19,7 +19,7 @@ export type EcbHistoryDTO = {
 
 export function CreateDiamondFromHistory(
   ecbSnapshot: ECBSnapShot,
-  pool: Pool<DiamondDTO>
+  pool: Pool<DiamondDTO>,
 ): DiamondDTO {
   const diamondDTO = pool.Rent();
 

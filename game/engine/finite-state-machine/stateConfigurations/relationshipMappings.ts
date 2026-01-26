@@ -32,6 +32,7 @@ import {
   shieldBreakLandDefaultToDizzy,
   shieldToShieldDrop,
   SideChargeToEx,
+  SideTiltToWalk,
   ToAirDodge,
   ToBAir,
   ToDAir,
@@ -1064,6 +1065,8 @@ export function InitDownTiltRelations(): StateRelation {
 
 export function InitSideTiltRelations(): StateRelation {
   const sideTiltTrnalsations = new ActionStateMappings();
+
+  sideTiltTrnalsations.SetConditions([SideTiltToWalk]);
 
   sideTiltTrnalsations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
