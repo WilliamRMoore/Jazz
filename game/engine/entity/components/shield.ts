@@ -10,10 +10,10 @@ const ONE = NumberToRaw(1);
 const TWO = NumberToRaw(2);
 
 export type ShieldSnapShot = {
-  readonly CurrentRadius: number;
-  readonly Active: boolean;
-  readonly ShieldTiltX: number;
-  readonly ShieldTiltY: number;
+  CurrentRadius: number;
+  Active: boolean;
+  ShieldTiltX: number;
+  ShieldTiltY: number;
 };
 
 export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
@@ -65,7 +65,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   public ShrinkRaw(intensityRaw: number): void {
     if (this.currentRadius.Raw > 0) {
       this.currentRadius.SetFromRaw(
-        this.currentRadius.Raw - MultiplyRaw(this.step.Raw, intensityRaw)
+        this.currentRadius.Raw - MultiplyRaw(this.step.Raw, intensityRaw),
       );
     }
 
@@ -106,7 +106,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
 
 export function CalculateRadiusFromTriggerRaw(
   triggerValueRaw: number,
-  raddiusRaw: number
+  raddiusRaw: number,
 ): number {
   return (
     raddiusRaw + MultiplyRaw(raddiusRaw, DivideRaw(ONE - triggerValueRaw, TWO))

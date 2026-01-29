@@ -71,30 +71,30 @@ describe('DebugUtils', () => {
     expect(positionNode).toBeDefined();
     const posXNode = findNode(positionNode!, 'X:');
     expect(posXNode?.kind).toBe(1);
-    expect(posXNode?.data).toBe(testPosition.x.toString());
+    expect(posXNode?.data).toBe(testPosition.x);
     const posYNode = findNode(positionNode!, 'Y:');
     expect(posYNode?.kind).toBe(1);
-    expect(posYNode?.data).toBe(testPosition.y.toString());
+    expect(posYNode?.data).toBe(testPosition.y);
 
     // Check Velocity
     const velocityNode = findNode(debugTree, 'Velocity:');
     expect(velocityNode).toBeDefined();
     const velXNode = findNode(velocityNode!, 'Vx:');
     expect(velXNode?.kind).toBe(1);
-    expect(velXNode?.data).toBe(testVelocity.x.toString());
+    expect(velXNode?.data).toBe(testVelocity.x);
     const velYNode = findNode(velocityNode!, 'Vy:');
     expect(velYNode?.kind).toBe(1);
-    expect(velYNode?.data).toBe(testVelocity.y.toString());
+    expect(velYNode?.data).toBe(testVelocity.y);
 
     // Check State
     const stateNode = findNode(debugTree, 'State:');
     expect(stateNode).toBeDefined();
     const stateIdNode = findNode(stateNode!, 'State Id:');
-    expect(stateIdNode?.data).toBe(testStateId.toString());
+    expect(stateIdNode?.data).toBe(testStateId);
     const stateNameNode = findNode(stateNode!, 'Name:');
     expect(stateNameNode?.data).toBe('WALK_S');
     const frameNode = findNode(stateNode!, 'Frame:');
-    expect(frameNode?.data).toBe(testStateFrame.toString());
+    expect(frameNode?.data).toBe(testStateFrame);
 
     // Check Direction
     const directionNode = findNode(debugTree, 'Direction:');
@@ -104,7 +104,7 @@ describe('DebugUtils', () => {
     // Check Damage
     const damageNode = findNode(debugTree, 'Damage:');
     expect(damageNode?.kind).toBe(1);
-    expect(damageNode?.data).toBe(testDamage.toString());
+    expect(damageNode?.data).toBe(testDamage);
 
     // Check ECB (and the bug fix)
     const ecbNode = findNode(debugTree, 'ECB:');
@@ -116,6 +116,6 @@ describe('DebugUtils', () => {
 
     const expectedEcbBottomY =
       snapshot.Ecb.posY + snapshot.Ecb.ecbShape.yOffset.AsNumber;
-    expect(ecbBottomYNode!.data).toBe(expectedEcbBottomY.toString());
+    expect(ecbBottomYNode!.data).toBe(expectedEcbBottomY);
   });
 });

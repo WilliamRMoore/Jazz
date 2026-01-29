@@ -13,8 +13,8 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { InitPlayerHistory } from '../systems/history';
-import { PlayerDebugAdapter } from '../debug/playerDebugger';
 import { frameNumber } from '../entity/components/attack';
+import { envConfig, MainConfig } from '../config/main-config';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -51,6 +51,8 @@ export type HistoryData = {
   RentedProjResHistory: Array<number>;
   RentedAtkResHistory: Array<number>;
   RentedAtiveHitBubHistory: Array<number>;
+  RentedClosestPoints: Array<number>;
+  RedntedECBDtos: Array<number>;
 };
 
 class PlayerState implements PlayerData {
@@ -106,26 +108,35 @@ class PoolContainer implements Pools {
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
   public readonly DiamondPool: Pool<DiamondDTO>;
 
-  constructor() {
+  constructor(mc: MainConfig) {
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
-      500,
+      mc.get('PoolSizes.ActiveHitBubblesDTOCount') as number,
       () => new ActiveHitBubblesDTO(),
     );
-    this.VecPool = new Pool<PooledVector>(500, () => new PooledVector());
+    this.VecPool = new Pool<PooledVector>(
+      mc.get('PoolSizes.PooledVectorCount') as number,
+      () => new PooledVector(),
+    );
     this.ColResPool = new Pool<CollisionResult>(
-      1000,
+      mc.get('PoolSizes.CollisionResultCount') as number,
       () => new CollisionResult(),
     );
     this.ProjResPool = new Pool<ProjectionResult>(
-      500,
+      mc.get('PoolSizes.ProjectionResultCount') as number,
       () => new ProjectionResult(),
     );
-    this.AtkResPool = new Pool<AttackResult>(100, () => new AttackResult());
+    this.AtkResPool = new Pool<AttackResult>(
+      mc.get('PoolSizes.AttackResultCount') as number,
+      () => new AttackResult(),
+    );
     this.ClstsPntsResPool = new Pool<ClosestPointsResult>(
-      500,
+      mc.get('PoolSizes.ClosestPointsResultCount') as number,
       () => new ClosestPointsResult(),
     );
-    this.DiamondPool = new Pool<DiamondDTO>(500, () => new DiamondDTO());
+    this.DiamondPool = new Pool<DiamondDTO>(
+      mc.get('PoolSizes.DiamondDTOCount') as number,
+      () => new DiamondDTO(),
+    );
   }
   public Zero(): void {
     this.ActiveHitBubbleDtoPool.Zero();
@@ -145,6 +156,8 @@ class History implements HistoryData {
   public readonly RentedProjResHistory: Array<number> = [];
   public readonly RentedAtkResHistory: Array<number> = [];
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
+  public readonly RentedClosestPoints: Array<number> = [];
+  public readonly RedntedECBDtos: Array<number> = [];
 }
 
 export class World {
@@ -154,7 +167,14 @@ export class World {
   public readonly HistoryData: History = new History();
   private readonly FrameTimes: Array<number> = [];
   private readonly FrameTimeStamps: Array<number> = [];
-  public readonly Pools: PoolContainer = new PoolContainer();
+  public readonly Pools: PoolContainer;
+
+  constructor(mc: MainConfig | undefined = undefined) {
+    if (mc === undefined) {
+      mc = envConfig as MainConfig;
+    }
+    this.Pools = new PoolContainer(mc);
+  }
 
   public get PreviousFrame(): number {
     return this.localFrame === 0 ? 0 : this.localFrame - 1;
@@ -183,7 +203,7 @@ export class World {
     const compHist = new ComponentHistory();
     compHist.BaseConfigValues.LedgeDetectorWidth =
       p.LedgeDetector.Width.AsNumber;
-    compHist.BaseConfigValues.ledgDetecorHeight =
+    compHist.BaseConfigValues.LedgeDetectorHeight =
       p.LedgeDetector.Height.AsNumber;
     compHist.BaseConfigValues.ShieldOffset = p.Shield.YOffsetConstant.AsNumber;
     p.HurtCircles.HurtCapsules.forEach((hc) =>
@@ -237,6 +257,14 @@ export class World {
     return this.HistoryData.RentedAtiveHitBubHistory[frame];
   }
 
+  public GetRentedClosestPointsForFrame(frame: number): number {
+    return this.HistoryData.RentedClosestPoints[frame];
+  }
+
+  public GetRentedECBDtosForFrame(frame: number): number {
+    return this.HistoryData.RedntedECBDtos[frame];
+  }
+
   public SetPoolHistory(): void {
     const frame = this.LocalFrame;
     const histDat = this.HistoryData;
@@ -247,5 +275,7 @@ export class World {
     histDat.RentedAtkResHistory[frame] = pools.AtkResPool.ActiveCount;
     histDat.RentedAtiveHitBubHistory[frame] =
       pools.ActiveHitBubbleDtoPool.ActiveCount;
+    histDat.RentedClosestPoints[frame] = pools.ClstsPntsResPool.ActiveCount;
+    histDat.RedntedECBDtos[frame] = pools.DiamondPool.ActiveCount;
   }
 }

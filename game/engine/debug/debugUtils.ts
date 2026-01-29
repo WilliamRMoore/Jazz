@@ -12,7 +12,7 @@ type node = sVal | aVal;
 export type sVal = {
   kind: 1;
   label: string;
-  data: string;
+  data: string | number;
 };
 
 export type aVal = {
@@ -76,7 +76,7 @@ const LedgeDetector = 'LedgeDetector:';
 const Attack = 'Attack:';
 
 export function StructurePlayerSnapShotForPrinting(
-  ps: PlayerSnapShot
+  ps: PlayerSnapShot,
 ): deBugInfoTree {
   const root: node = {
     kind: 2,
@@ -110,12 +110,12 @@ function positionNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: X,
-        data: ps.Position.X.toString(),
+        data: ps.Position.X,
       },
       {
         kind: 1,
         label: Y,
-        data: ps.Position.Y.toString(),
+        data: ps.Position.Y,
       },
     ],
   };
@@ -129,12 +129,12 @@ function velocityNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: Vx,
-        data: ps.Velocity.X.toString(),
+        data: ps.Velocity.X,
       },
       {
         kind: 1,
         label: Vy,
-        data: ps.Velocity.Y.toString(),
+        data: ps.Velocity.Y,
       },
     ],
   };
@@ -148,7 +148,7 @@ function stateNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: State_Id,
-        data: ps.FSMInfo.State.StateId.toString(),
+        data: ps.FSMInfo.State.StateId,
       },
       {
         kind: 1,
@@ -158,7 +158,7 @@ function stateNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: Frame,
-        data: ps.FSMInfo.StateFrame.toString(),
+        data: ps.FSMInfo.StateFrame,
       },
     ],
   };
@@ -184,16 +184,15 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX.toString(),
+            data: ps.Ecb.posX,
           },
           {
             kind: 1,
             label: Y,
-            data: (
+            data:
               ps.Ecb.posY +
               ps.Ecb.ecbShape.yOffset.AsNumber +
-              ps.Ecb.ecbShape.height.AsNumber
-            ).toString(),
+              ps.Ecb.ecbShape.height.AsNumber,
           },
         ],
       },
@@ -204,12 +203,12 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX.toString(),
+            data: ps.Ecb.posX,
           },
           {
             kind: 1,
             label: Y,
-            data: (ps.Ecb.posY + ps.Ecb.ecbShape.yOffset.AsNumber).toString(),
+            data: ps.Ecb.posY + ps.Ecb.ecbShape.yOffset.AsNumber,
           },
         ],
       },
@@ -220,17 +219,16 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: (ps.Ecb.posX - ps.Ecb.ecbShape.width.AsNumber / 2).toString(),
+            data: ps.Ecb.posX - ps.Ecb.ecbShape.width.AsNumber / 2,
           },
           {
             kind: 1,
             label: Y,
-            data: (
+            data:
               ps.Ecb.posY +
               (ps.Ecb.ecbShape.yOffset.AsNumber +
                 ps.Ecb.ecbShape.height.AsNumber) /
-                2
-            ).toString(),
+                2,
           },
         ],
       },
@@ -241,17 +239,16 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: (ps.Ecb.posX + ps.Ecb.ecbShape.width.AsNumber / 2).toString(),
+            data: ps.Ecb.posX + ps.Ecb.ecbShape.width.AsNumber / 2,
           },
           {
             kind: 1,
             label: Y,
-            data: (
+            data:
               ps.Ecb.posY +
               (ps.Ecb.ecbShape.yOffset.AsNumber +
                 ps.Ecb.ecbShape.height.AsNumber) /
-                2
-            ).toString(),
+                2,
           },
         ],
       },
@@ -263,7 +260,7 @@ function damageNode(ps: PlayerSnapShot): node {
   return {
     kind: 1,
     label: Damage,
-    data: ps.Damage.damagePoints.toString(),
+    data: ps.Damage.damagePoints,
   };
 }
 
@@ -275,17 +272,17 @@ function hitStunNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: Frame,
-        data: ps.PlayerHitStun.hitStunFrames.toString(),
+        data: ps.PlayerHitStun.hitStunFrames,
       },
       {
         kind: 1,
         label: Vx,
-        data: ps.PlayerHitStun.vx.toString(),
+        data: ps.PlayerHitStun.vx,
       },
       {
         kind: 1,
         label: Vy,
-        data: ps.PlayerHitStun.vy.toString(),
+        data: ps.PlayerHitStun.vy,
       },
     ],
   };
@@ -309,17 +306,17 @@ function flagsNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: HitPauseFrames,
-        data: ps.Flags.HitPauseFrames.toString(),
+        data: ps.Flags.HitPauseFrames,
       },
       {
         kind: 1,
         label: IntangabilityFrames,
-        data: ps.Flags.IntangabilityFrames.toString(),
+        data: ps.Flags.IntangabilityFrames,
       },
       {
         kind: 1,
         label: PlatFormDetection,
-        data: ps.Flags.DisablePlatDetection.toString(),
+        data: ps.Flags.DisablePlatDetection,
       },
     ],
   };
@@ -333,7 +330,7 @@ function jumpNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: Count,
-        data: ps.Jump.toString(),
+        data: ps.Jump,
       },
     ],
   };
@@ -347,7 +344,7 @@ function grabNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: GrabIdLabel,
-        data: ps.Grab?.GrabId.toString() ?? '',
+        data: ps.Grab?.GrabId ?? '',
       },
       {
         kind: 1,
@@ -371,15 +368,12 @@ function grabMeterNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: Meter,
-        data: ps.GrabMeter.meter.toString(),
+        data: ps.GrabMeter.meter,
       },
       {
         kind: 1,
         label: HoldingPlayerId,
-        data:
-          ps.GrabMeter.holdingPlayerId === undefined
-            ? ''
-            : ps.GrabMeter.holdingPlayerId.toString(),
+        data: ps.GrabMeter.holdingPlayerId ?? '',
       },
     ],
   };
@@ -423,7 +417,7 @@ function shieldNode(ps: PlayerSnapShot): node {
       {
         kind: 1,
         label: CurrentRadius,
-        data: ps.Shield.CurrentRadius.toString(),
+        data: ps.Shield.CurrentRadius,
       },
       {
         kind: 1,
@@ -437,12 +431,12 @@ function shieldNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Shield.ShieldTiltX.toString(),
+            data: ps.Shield.ShieldTiltX,
           },
           {
             kind: 1,
             label: Y,
-            data: ps.Shield.ShieldTiltY.toString(),
+            data: ps.Shield.ShieldTiltY,
           },
         ],
       },
@@ -462,19 +456,19 @@ function ledgeDetectorNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.LedgeDetector.middleX.toString(),
+            data: ps.LedgeDetector.middleX,
           },
           {
             kind: 1,
             label: Y,
-            data: ps.LedgeDetector.middleY.toString(),
+            data: ps.LedgeDetector.middleY,
           },
         ],
       },
       {
         kind: 1,
         label: ledgeGrabCount,
-        data: ps.LedgeDetector.numberOfLedgeGrabs.toString(),
+        data: ps.LedgeDetector.numberOfLedgeGrabs,
       },
     ],
   };
@@ -502,17 +496,17 @@ function sensorsNode(ps: PlayerSnapShot) {
         {
           kind: 1,
           label: Radius,
-          data: s.radius.toString(),
+          data: s.radius,
         },
         {
           kind: 1,
           label: X,
-          data: (s.xOffset + ps.Position.X).toString(),
+          data: s.xOffset + ps.Position.X,
         },
         {
           kind: 1,
           label: Y,
-          data: (s.yOffset + ps.Position.Y).toString(),
+          data: s.yOffset + ps.Position.Y,
         },
       ],
     });

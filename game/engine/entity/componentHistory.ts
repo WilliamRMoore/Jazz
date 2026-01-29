@@ -17,7 +17,7 @@ import { DebugSnapShot } from './components/debug';
 import { HurtCapsule } from './components/hurtCircles';
 
 export class BaseConfigValues {
-  public ledgDetecorHeight: number = 0;
+  public LedgeDetectorHeight: number = 0;
   public LedgeDetectorWidth: number = 0;
   public HurtCapsules: Array<HurtCapsule> = [];
   public ShieldOffset: number = 0;

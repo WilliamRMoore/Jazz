@@ -2,9 +2,9 @@ import { FixedPoint } from '../../math/fixedPoint';
 import { IHistoryEnabled } from '../componentHistory';
 
 export type hitStunSnapShot = {
-  readonly hitStunFrames: number;
-  readonly vx: number;
-  readonly vy: number;
+  hitStunFrames: number;
+  vx: number;
+  vy: number;
 };
 
 export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {

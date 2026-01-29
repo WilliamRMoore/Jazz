@@ -1,7 +1,7 @@
 import { FixedPoint } from '../../math/fixedPoint';
 import { IHistoryEnabled } from '../componentHistory';
 
-export type VelocitySnapShot = { readonly X: number; readonly Y: number };
+export type VelocitySnapShot = { X: number; Y: number };
 
 export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   private readonly x: FixedPoint = new FixedPoint();

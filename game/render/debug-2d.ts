@@ -100,16 +100,6 @@ export class DebugRenderer {
       currentFrameTimeStamp,
     );
 
-    const playerStateHistory = world.GetComponentHistory(0); // hard coded to player 1 right now
-    const playerFacingRight =
-      playerStateHistory?.FlagsHistory[localFrame]?.FacingRight ?? true;
-    const playerFsmState =
-      playerStateHistory?.FsmInfoHistory[localFrame]?.State?.StateName ?? 'N/A';
-    const currentAttack = playerStateHistory?.AttackHistory[localFrame];
-    const currentAttackString = currentAttack?.attack?.Name;
-
-    const input = world.PlayerData.InputStore(0).GetInputForFrame(localFrame);
-
     if (localFrame === 0) {
       return;
     }
@@ -126,48 +116,48 @@ export class DebugRenderer {
 
     ctx.fillStyle = 'darkblue';
 
-    // ctx.fillText(`Frame: ${localFrame}`, 10, 30);
-    // ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
-    // ctx.fillText(`PlayerState: ${playerFsmState}`, 10, 90);
+    ctx.fillText(`Frame: ${localFrame}`, 10, 30);
+    ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
     ctx.fillText(
-      `input:[ Action:${input.Action} | LX: ${input.LXAxis.AsNumber} | LY: ${input.LYAxis.AsNumber} | RX: ${input.RXAxis.AsNumber} | RY: ${input.RYAxis.AsNumber} | RT: ${input.RTVal.AsNumber} | LT: ${input.LTVal.AsNumber} ]`,
+      `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
+      10,
+      90,
+    );
+    ctx.fillText(
+      `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
       10,
       120,
     );
-    // ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 150);
-    // ctx.fillText(
-    //   `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
-    //   10,
-    //   180,
-    // );
-    // ctx.fillText(
-    //   `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
-    //   10,
-    //   210,
-    // );
-    // ctx.fillText(
-    //   `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
-    //   10,
-    //   240,
-    // );
+    ctx.fillText(
+      `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
+      10,
+      150,
+    );
+    ctx.fillText(
+      `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
+      10,
+      180,
+    );
+    ctx.fillText(
+      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
+        localFrame,
+      )}`,
+      10,
+      210,
+    );
+    ctx.fillText(
+      `ClosestPointsRented: ${world.GetRentedClosestPointsForFrame(
+        localFrame,
+      )}`,
+      10,
+      240,
+    );
 
-    // ctx.fillText(
-    //   `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
-    //   10,
-    //   270,
-    // );
-
-    // ctx.fillText(
-    //   `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
-    //     localFrame,
-    //   )}`,
-    //   10,
-    //   300,
-    // );
-
-    if (currentAttackString !== undefined) {
-      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 330);
-    }
+    ctx.fillText(
+      `ECBDiamondDTOsRented: ${world.GetRentedECBDtosForFrame(localFrame)}`,
+      10,
+      270,
+    );
 
     if (this.PlayerDeBugInfo) {
       this.renderLiveDebugInfo(jazz);
@@ -422,7 +412,7 @@ function drawLedgeDetectors(
   lastLedgeDetectorHistory: LedgeDetectorSnapShot,
   alpha: number,
 ) {
-  const ldHeight = staticHistory.ledgDetecorHeight;
+  const ldHeight = staticHistory.LedgeDetectorHeight;
   const ldWidth = staticHistory.LedgeDetectorWidth;
   const curMiddleTopX = ledgeDetectorHistory.middleX;
   const curMiddleTopY = ledgeDetectorHistory.middleY;

@@ -138,7 +138,7 @@ export class AttackConfigBuilder {
 
   public WithImpulses(
     impulses: Map<frameNumber, ConfigVec>,
-    impulseClamp: number | undefined = undefined
+    impulseClamp: number | undefined = undefined,
   ): AttackConfigBuilder {
     this.impulses = impulses;
     this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
@@ -177,7 +177,7 @@ export class AttackConfigBuilder {
 
   public WithOnUpdateEvent(
     frameNumber: number,
-    command: Command
+    command: Command,
   ): AttackConfigBuilder {
     if (!this.onUpdateCommands.has(frameNumber)) {
       this.onUpdateCommands.set(frameNumber, [command]);
@@ -197,10 +197,13 @@ export class AttackConfigBuilder {
     radius: number,
     priority: number,
     launchAngle: number,
-    frameOffsets: Map<frameNumber, ConfigVec>
+    frameOffsets: Map<frameNumber, ConfigVec>,
   ): AttackConfigBuilder {
     const hitBubId = this.hitBubbles.length;
 
+    if (hitBubId >= 25) {
+      throw new Error('CANNOT HAVE MORE THAN 25 HIT BUBBLES PER ATTACK!');
+    }
     const hitBub: HitBubblesConifg = {
       BubbleId: hitBubId,
       Damage: damage,
@@ -280,7 +283,7 @@ export class GrabConfigBuilder {
 
   public WithImpulses(
     impulses: Map<frameNumber, ConfigVec>,
-    impulseClamp: number | undefined = undefined
+    impulseClamp: number | undefined = undefined,
   ): GrabConfigBuilder {
     this.impulses = impulses;
     this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
@@ -289,10 +292,12 @@ export class GrabConfigBuilder {
 
   public WithGrabBubble(
     radius: number,
-    frameOffsets: Map<frameNumber, ConfigVec>
+    frameOffsets: Map<frameNumber, ConfigVec>,
   ): GrabConfigBuilder {
     const grabBubId = this.grabBubbles.length;
-
+    if (grabBubId >= 25) {
+      throw new Error('CANNOT HAVE MORE THAN 25 GRAB BUBBLES PER GRAB!');
+    }
     const grabBub: GrabBubbleConfig = {
       BubbleId: grabBubId,
       Radius: radius,

@@ -10,11 +10,11 @@ import { IHistoryEnabled } from '../componentHistory';
 const POINT_FIVE = NumberToRaw(0.5);
 
 export type EcbHistoryDTO = {
-  readonly shape: Array<FlatVec>;
-  readonly Bottom: FlatVec;
-  readonly Left: FlatVec;
-  readonly Top: FlatVec;
-  readonly Right: FlatVec;
+  shape: Array<FlatVec>;
+  Bottom: FlatVec;
+  Left: FlatVec;
+  Top: FlatVec;
+  Right: FlatVec;
 };
 
 export function CreateDiamondFromHistory(

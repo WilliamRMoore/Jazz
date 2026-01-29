@@ -66,7 +66,7 @@ export function PlayerAttacks(world: World): void {
         historyData.PlayerComponentHistories,
         p1InputStore,
         p1,
-        p2
+        p2,
       );
       const p2HitsP1Result = PAvsPB(
         currentFrame,
@@ -78,7 +78,7 @@ export function PlayerAttacks(world: World): void {
         historyData.PlayerComponentHistories,
         p2InputStore,
         p2,
-        p1
+        p1,
       );
 
       if (p1HitsP2Result.Hit && p2HitsP1Result.Hit) {
@@ -112,7 +112,7 @@ function resolveHitResult(
   pB: Player,
   playerData: PlayerData,
   pAHitsPbResult: AttackResult,
-  vecPool: Pool<PooledVector>
+  vecPool: Pool<PooledVector>,
 ): void {
   const atkDamage = pAHitsPbResult.Damage;
   pB.Damage.AddDamage(atkDamage);
@@ -127,7 +127,7 @@ function resolveHitResult(
     atkDamage,
     weight,
     scailing,
-    baseKnockBack
+    baseKnockBack,
   );
 
   const hitStopRaw = CalculateHitStop(atkDamage);
@@ -136,11 +136,11 @@ function resolveHitResult(
     vecPool,
     pAHitsPbResult.LaunchAngle,
     pA.Flags.IsFacingRight,
-    kbRaw
+    kbRaw,
   );
 
   pA.Flags.SetHitPauseFrames(
-    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE))),
   );
 
   if (pA.Position.X > pB.Position.X) {
@@ -160,17 +160,17 @@ function resolveHitResult(
 function resolveShieldHitResult(
   pA: Player,
   pB: Player,
-  pAHitsPbResult: AttackResult
+  pAHitsPbResult: AttackResult,
 ): void {
   const atkDamage = pAHitsPbResult.Damage;
 
   const hitStopRaw = CalculateHitStop(atkDamage);
 
   pA.Flags.SetHitPauseFrames(
-    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE))),
   );
   pB.Flags.SetHitPauseFrames(
-    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
+    Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE))),
   );
 
   pB.Shield.Damage(atkDamage);
@@ -186,7 +186,7 @@ function PAvsPB(
   componentHistories: Array<ComponentHistory>,
   pAInputStore: InputStoreLocal<InputAction>,
   pA: Player,
-  pB: Player
+  pB: Player,
 ): AttackResult {
   const pAstateFrame = pA.FSMInfo.CurrentStateFrame;
   const pAAttack = pA.Attacks.GetAttack();
@@ -201,7 +201,7 @@ function PAvsPB(
 
   const pAHitBubbles = pAAttack.GetActiveBubblesForFrame(
     pAstateFrame,
-    activeHbPool.Rent()
+    activeHbPool.Rent(),
   );
 
   if (pAHitBubbles.Length === 0) {
@@ -258,7 +258,7 @@ function PAvsPB(
         pACurPositionDto.X,
         pACurPositionDto.Y,
         pAFacingRight,
-        currentStateFrame
+        currentStateFrame,
       );
 
       if (pAhitBubbleCurrentPos === undefined) {
@@ -271,7 +271,7 @@ function PAvsPB(
           pAPrevPositionDto.X,
           pAPrevPositionDto.Y,
           pAFacingRight,
-          previousStateFrame
+          previousStateFrame,
         ) ??
         vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
@@ -281,7 +281,7 @@ function PAvsPB(
         pAHitBubblePreviousPos,
         pAhitBubbleCurrentPos,
         vecPool,
-        clstsPntsResPool
+        clstsPntsResPool,
       );
 
       const collision = IntersectsCirclesRaw(
@@ -291,7 +291,7 @@ function PAvsPB(
         closestPoints.C2X.Raw,
         closestPoints.C2Y.Raw,
         radiusRaw,
-        pAHitBubble.Radius.Raw
+        pAHitBubble.Radius.Raw,
       );
 
       if (collision.Collision) {
@@ -306,7 +306,7 @@ function PAvsPB(
           collision.Depth,
           pAAttack.BaseKnockBack,
           pAAttack.KnockBackScaling,
-          pAHitBubble.launchAngle
+          pAHitBubble.launchAngle,
         );
         return attackResult;
       }
@@ -316,46 +316,47 @@ function PAvsPB(
   const pBHurtBubbles = pB.HurtCircles.HurtCapsules;
   const pBPosition = pB.Position;
   const hurtLength = pBHurtBubbles.length;
+  const hitBubbles = pAHitBubbles;
 
-  for (let hurtIndex = 0; hurtIndex < hurtLength; hurtIndex++) {
-    const pBHurtBubble = pBHurtBubbles[hurtIndex];
+  for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
+    const pAHitBubble = hitBubbles.AtIndex(hitIndex)!;
 
-    const pBStartHurtDto = pBHurtBubble.GetStartPosition(
-      pBPosition.X,
-      pBPosition.Y,
-      vecPool
+    const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
+      vecPool,
+      pACurPositionDto.X,
+      pACurPositionDto.Y,
+      pAFacingRight,
+      currentStateFrame,
     );
 
-    const pBEndHurtDto = pBHurtBubble.GetEndPosition(
-      pBPosition.X,
-      pBPosition.Y,
-      vecPool
-    );
+    if (pAhitBubbleCurrentPos === undefined) {
+      continue;
+    }
 
-    for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
-      const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
-
-      const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
+    const pAHitBubblePreviousPos =
+      pAHitBubble?.GetGlobalPosition(
         vecPool,
-        pACurPositionDto.X,
-        pACurPositionDto.Y,
+        pAPrevPositionDto.X,
+        pAPrevPositionDto.Y,
         pAFacingRight,
-        currentStateFrame
+        previousStateFrame,
+      ) ??
+      vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+
+    for (let hurtIndex = 0; hurtIndex < hurtLength; hurtIndex++) {
+      const pBHurtBubble = pBHurtBubbles[hurtIndex];
+
+      const pBStartHurtDto = pBHurtBubble.GetStartPosition(
+        pBPosition.X,
+        pBPosition.Y,
+        vecPool,
       );
 
-      if (pAhitBubbleCurrentPos === undefined) {
-        continue;
-      }
-
-      const pAHitBubblePreviousPos =
-        pAHitBubble?.GetGlobalPosition(
-          vecPool,
-          pAPrevPositionDto.X,
-          pAPrevPositionDto.Y,
-          pAFacingRight,
-          previousStateFrame
-        ) ??
-        vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+      const pBEndHurtDto = pBHurtBubble.GetEndPosition(
+        pBPosition.X,
+        pBPosition.Y,
+        vecPool,
+      );
 
       const pointsToTest = ClosestPointsBetweenSegments(
         pAHitBubblePreviousPos,
@@ -363,7 +364,7 @@ function PAvsPB(
         pBStartHurtDto,
         pBEndHurtDto,
         vecPool,
-        clstsPntsResPool
+        clstsPntsResPool,
       );
 
       const pARadius = pAHitBubble.Radius;
@@ -380,12 +381,12 @@ function PAvsPB(
         testPoint1,
         testPoint2,
         pARadius,
-        pBRadius
+        pBRadius,
       );
 
       if (collision.Collision) {
         pA.Attacks.HitPlayer(pB.ID);
-        let attackResult = atkResPool.Rent();
+        const attackResult = atkResPool.Rent();
         attackResult.SetHitTrue(
           pB.ID,
           pAHitBubble.Damage,
@@ -395,7 +396,7 @@ function PAvsPB(
           collision.Depth,
           pAAttack.BaseKnockBack,
           pAAttack.KnockBackScaling,
-          pAHitBubble.launchAngle
+          pAHitBubble.launchAngle,
         );
         return attackResult;
       }
@@ -416,7 +417,7 @@ export function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
   launchAngle: FixedPoint,
   isFacingRight: boolean,
-  knockBackRaw: number
+  knockBackRaw: number,
 ): PooledVector {
   let angleRaw = launchAngle.Raw;
 
@@ -449,7 +450,7 @@ export function CalculateKnockback(
   d: FixedPoint,
   w: FixedPoint,
   s: FixedPoint,
-  b: FixedPoint
+  b: FixedPoint,
 ): number {
   return CalculateKnockbackRaw(p.Raw, d.Raw, w.Raw, s.Raw, b.Raw);
 }
@@ -459,7 +460,7 @@ function CalculateKnockbackRaw(
   dRaw: number,
   wRaw: number,
   sRaw: number,
-  brAW: number
+  brAW: number,
 ): number {
   //((p / 10 + (p * d) / 20) * (200 / (w + 100)) * 1.4 + b) * s * 0.013;
   // Convert floating-point and integer constants to raw fixed-point values

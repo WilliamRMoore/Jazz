@@ -70,7 +70,7 @@ describe('Player Orechstraotr Initialization', () => {
     expect(downSpecial.KnockBackScaling.AsNumber).toBe(66);
     expect(downSpecial.GravityActive).toBe(false);
     expect(downSpecial.ImpulseClamp?.AsNumber).toBe(12);
-    expect(downSpecial.HitBubbles.length).toBe(4);
+    expect(downSpecial.HitBubbles.length).toBe(3);
 
     const impulse = downSpecial?.Impulses?.get(23);
     expect(impulse).toBeDefined();
@@ -84,11 +84,11 @@ describe('Player Orechstraotr Initialization', () => {
     expect(hb1.Priority).toBe(0);
     expect(hb1.launchAngle.AsNumber).toBe(45);
 
-    const hb4 = downSpecial.HitBubbles.find((hb) => hb.Priority === 4);
-    expect(hb4).toBeDefined();
-    if (!hb4) return;
-    expect(hb4.Damage.AsNumber).toBe(16);
-    expect(hb4.Radius.AsNumber).toBe(25);
+    const hb3 = downSpecial.HitBubbles.find((hb) => hb.Priority === 2);
+    expect(hb3).toBeDefined();
+    if (!hb3) return;
+    expect(hb3.Damage.AsNumber).toBe(12);
+    expect(hb3.Radius.AsNumber).toBe(18);
 
     const hb1Offset = hb1.frameOffsets.get(23);
     expect(hb1Offset).toBeDefined();
@@ -96,10 +96,10 @@ describe('Player Orechstraotr Initialization', () => {
     expect(hb1Offset.X.AsNumber).toBe(100);
     expect(hb1Offset.Y.AsNumber).toBe(-25);
 
-    const hb4Offset = hb4.frameOffsets.get(51);
-    expect(hb4Offset).toBeDefined();
-    if (!hb4Offset) return;
-    expect(hb4Offset.X.AsNumber).toBe(120);
-    expect(hb4Offset.Y.AsNumber).toBe(-25);
+    const hb3Offset = hb3.frameOffsets.get(51);
+    expect(hb3Offset).toBeDefined();
+    if (!hb3Offset) return;
+    expect(hb3Offset.X.AsNumber).toBe(40);
+    expect(hb3Offset.Y.AsNumber).toBe(-25);
   });
 });

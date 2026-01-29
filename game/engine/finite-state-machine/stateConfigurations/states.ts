@@ -42,23 +42,17 @@ export const Walk: FSMState = {
   OnUpdate: (p: Player, w: World) => {
     const speeds = p.Speeds;
     const vel = p.Velocity;
-
     const absWalkMaxSpeed = Math.abs(speeds.MaxWalkSpeedRaw);
     const absXVel = Math.abs(vel.X.Raw);
-
     if (absXVel >= absWalkMaxSpeed) {
       return;
     }
-
     const isFacingRight = p.Flags.IsFacingRight;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-    //2
     const impulse = MultiplyRaw(ia.LXAxisRaw, speeds.WalkSpeedMulitplierRaw);
-
     if (isFacingRight) {
-      //1   //10              //9
       const diff = absWalkMaxSpeed - vel.X.Raw;
       if (diff >= impulse) {
         vel.X.SetFromRaw(vel.X.Raw + impulse);
@@ -66,9 +60,7 @@ export const Walk: FSMState = {
         vel.X.SetFromRaw(vel.X.Raw + diff);
       }
     } else {
-      //1       //10            //-9
       const diff = absWalkMaxSpeed + vel.X.Raw;
-      //-2
       if (diff >= -impulse) {
         vel.X.SetFromRaw(vel.X.Raw + impulse);
       } else if (diff > 0) {
@@ -130,15 +122,32 @@ export const Run: FSMState = {
   StateId: STATE_IDS.RUN_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {
+    const speeds = p.Speeds;
+    const vel = p.Velocity;
+    const absRunMaxSpeed = Math.abs(speeds.MaxRunSpeedRaw);
+    const absXVel = Math.abs(vel.X.Raw);
+    if (absXVel >= absRunMaxSpeed) {
+      return;
+    }
+    const isFacingRight = p.Flags.IsFacingRight;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
-    if (ia !== undefined) {
-      const speeds = p.Speeds;
-      p.Velocity.AddClampedXImpulseRaw(
-        speeds.MaxRunSpeedRaw,
-        MultiplyRaw(ia.LXAxis.Raw, speeds.RunSpeedMultiplierRaw),
-      );
+    const impulse = MultiplyRaw(ia.LXAxis.Raw, speeds.RunSpeedMultiplierRaw);
+    if (isFacingRight) {
+      const diff = absRunMaxSpeed - vel.X.Raw;
+      if (diff >= impulse) {
+        vel.X.SetFromRaw(vel.X.Raw + impulse);
+      } else if (diff > 0) {
+        vel.X.SetFromRaw(vel.X.Raw + diff);
+      }
+    } else {
+      const diff = absRunMaxSpeed + vel.X.Raw;
+      if (diff >= -impulse) {
+        vel.X.SetFromRaw(vel.X.Raw + impulse);
+      } else if (diff > 0) {
+        vel.X.SetFromRaw(vel.X.Raw - diff);
+      }
     }
   },
   OnExit: (p: Player, w: World) => {},

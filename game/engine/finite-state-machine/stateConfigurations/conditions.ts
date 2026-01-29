@@ -24,7 +24,7 @@ export type condition = {
 export function RunCondition(
   c: condition,
   w: World,
-  playerIndex: number
+  playerIndex: number,
 ): StateId | undefined {
   if (c.ConditionFunc(w, playerIndex) === true) {
     return c.StateId;
@@ -423,7 +423,7 @@ export const TurnToDash: condition = {
       return inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.MOVE_FAST_GE,
         ia,
-        prevIa
+        prevIa,
       );
     }
     return false;
@@ -443,7 +443,7 @@ export const ToNair: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.N_AIR_S,
@@ -538,7 +538,7 @@ export const ToUAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.U_AIR_S,
@@ -556,7 +556,7 @@ export const ToDAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.D_AIR_S,
@@ -700,7 +700,7 @@ export const IdleToAttack: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.ATTACK_S,
@@ -719,7 +719,7 @@ export const ToSideCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -747,7 +747,7 @@ export const IdleToUpTilt: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -775,7 +775,7 @@ export const ToUpCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -803,7 +803,7 @@ export const ToDownCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -884,7 +884,7 @@ export const ToNSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SPCL_S,
@@ -901,7 +901,7 @@ export const ToSideSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SIDE_SPCL_S,
@@ -918,7 +918,7 @@ export const ToSideSpecialAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SIDE_SPCL_AIR_S,
@@ -935,7 +935,7 @@ export const ToDownSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_S,
@@ -952,7 +952,7 @@ export const ToDownSpecialAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_AIR_S,
@@ -969,7 +969,7 @@ export const ToUpSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.UP_SPCL_S,
@@ -986,7 +986,7 @@ export const ToDownTilt: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_TILT_S,
@@ -1173,6 +1173,27 @@ export const defaultWalk: condition = {
   StateId: STATE_IDS.WALK_S,
 };
 
+export const defaultTrunRunToIdle: condition = {
+  Name: 'DefaultTrunRunToIdle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const ia = w.PlayerData.InputStore(playerIndex).GetInputForFrame(
+      w.LocalFrame,
+    );
+    const p = w.PlayerData.Player(playerIndex);
+    const facingRight = p.Flags.IsFacingRight;
+
+    if (ia.LXAxisRaw > 0 && facingRight) {
+      return true;
+    }
+    if (ia.LXAxisRaw < 0 && !facingRight) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.IDLE_S,
+};
+
 export const defaultRun: condition = {
   Name: 'Run',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1256,7 +1277,7 @@ export const defaultDownChargeEx: condition = {
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,
-  prevIa: InputAction | undefined
+  prevIa: InputAction | undefined,
 ) {
   if (ia.Action !== targetGeId) {
     return false;
@@ -1277,7 +1298,7 @@ function isBufferedInput(
   inputStore: InputStoreLocal<InputAction>,
   currentFrame: number,
   bufferFrames: number,
-  targetGameEvent: GameEventId
+  targetGameEvent: GameEventId,
 ): boolean {
   for (let i = 0; i < bufferFrames; i++) {
     const ia = inputStore.GetInputForFrame(currentFrame - i);
