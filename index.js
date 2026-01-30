@@ -25505,6 +25505,7 @@
 
   // game/engine/systems/ledgeGrabDetection.ts
   var TWO5 = NumberToRaw(2);
+  var combinedVerts = new Array();
   function LedgeGrabDetection(world) {
     const playerData = world.PlayerData;
     const stageData = world.StageData;
@@ -25514,7 +25515,9 @@
     const leftLedge = ledges.GetLeftLedge();
     const rightLedge = ledges.GetRightLedge();
     const playerCount = playerData.PlayerCount;
+    const playerHist = world.HistoryData.PlayerComponentHistories;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+      combinedVerts.length = 0;
       const p = playerData.Player(playerIndex);
       if (p.Flags.IsInHitPause) {
         continue;
@@ -25533,11 +25536,60 @@
         continue;
       }
       const isFacingRight = flags.IsFacingRight;
-      const front = isFacingRight === true ? ledgeDetector.RightSide : ledgeDetector.LeftSide;
+      const curFront = isFacingRight === true ? ledgeDetector.RightSide : ledgeDetector.LeftSide;
+      const lastLd = playerHist[playerIndex].LedgeDetectorHistory[world.PreviousFrame];
+      let lastFront;
+      const lastMiddleXRaw = NumberToRaw(lastLd.middleX);
+      const lastMiddleYRaw = NumberToRaw(lastLd.middleY);
+      const widthRaw = ledgeDetector.Width.Raw;
+      const heightRaw = ledgeDetector.Height.Raw;
+      const lastWidthRightRaw = lastMiddleXRaw + widthRaw;
+      const lastWidthLeftRaw = lastMiddleXRaw - widthRaw;
+      const lastBottomHeightRaw = lastMiddleYRaw + heightRaw;
+      for (let i = 0; i < curFront.length; i++) {
+        combinedVerts.push(curFront[i]);
+      }
+      if (isFacingRight) {
+        const bottomLeftX = lastMiddleXRaw;
+        const bottomLeftY = lastBottomHeightRaw;
+        const topLeftX = bottomLeftX;
+        const topLeftY = lastMiddleYRaw;
+        const topRightX = lastWidthRightRaw;
+        const topRightY = lastMiddleYRaw;
+        const bottomRightX = lastWidthLeftRaw;
+        const bottomRightY = lastBottomHeightRaw;
+        combinedVerts.push(
+          pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY)
+        );
+        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
+        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
+        combinedVerts.push(
+          pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY)
+        );
+        lastFront = CreateConvexHull(combinedVerts);
+      } else {
+        const bottomLeftX = lastMiddleXRaw - widthRaw;
+        const bottomLeftY = lastBottomHeightRaw;
+        const topLeftX = bottomLeftX;
+        const topLeftY = lastMiddleYRaw;
+        const topRightX = lastMiddleXRaw;
+        const topRightY = lastMiddleYRaw;
+        const bottomRightX = topRightX;
+        const bottomRightY = bottomLeftY;
+        combinedVerts.push(
+          pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY)
+        );
+        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
+        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
+        combinedVerts.push(
+          pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY)
+        );
+      }
+      const hull = CreateConvexHull(combinedVerts);
       if (isFacingRight) {
         const intersectsLeftLedge = IntersectsPolygons(
           leftLedge,
-          front,
+          hull,
           pools.VecPool,
           pools.ColResPool,
           pools.ProjResPool
@@ -25554,7 +25606,7 @@
       }
       const intersectsRightLedge = IntersectsPolygons(
         rightLedge,
-        front,
+        hull,
         pools.VecPool,
         pools.ColResPool,
         pools.ProjResPool
@@ -25868,11 +25920,8 @@
   // game/engine/systems/sensors.ts
   function PlayerSensors(world) {
     const playerData = world.PlayerData;
-    const pools = world.Pools;
     const playerCount = playerData.PlayerCount;
-    if (playerCount < 2) {
-      return;
-    }
+    const pools = world.Pools;
     for (let outerIdx = 0; outerIdx < playerCount - 1; outerIdx++) {
       const pA = playerData.Player(outerIdx);
       for (let innerIdx = outerIdx + 1; innerIdx < playerCount; innerIdx++) {
@@ -26002,7 +26051,7 @@
         continue;
       }
       const sm = playerData.StateMachine(playerIndex);
-      const playerVerts = getHull(preEcb, ecb);
+      const playerVerts = getECBHull(preEcb, ecb);
       const fsmInfo = p.FSMInfo;
       const preResolutionStateId = fsmInfo.CurrentStatetId;
       const preResolutionYOffsetRaw = ecb.YOffset.Raw;
@@ -26096,7 +26145,7 @@
     }
   }
   var combinedEcbVerts = new Array();
-  function getHull(prevEcb, curEcb) {
+  function getECBHull(prevEcb, curEcb) {
     combinedEcbVerts.length = 0;
     for (let i = 0; i < 4; i++) {
       combinedEcbVerts.push(prevEcb.shape[i]);
@@ -26921,7 +26970,7 @@
       this.Pools = new PoolContainer(mc);
     }
     get PreviousFrame() {
-      return this.localFrame === 0 ? 0 : this.localFrame - 1;
+      return this.localFrame < 1 ? 0 : this.localFrame - 1;
     }
     get LocalFrame() {
       return this.localFrame;
