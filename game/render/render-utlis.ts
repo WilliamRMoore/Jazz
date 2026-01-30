@@ -24,12 +24,16 @@ class PlayerLerper {
 
   public Lerp(
     w: World,
-    frame: number,
     pIndex: number,
     alpha: number,
+    now: frameNumber,
+    then: frameNumber | undefined = undefined,
   ): LerpedPlayer {
     const dto = this.rent();
-    LerpPlayer(w.LocalFrame, alpha, pIndex, w, dto);
+    if (then === undefined) {
+      then = now < 1 ? 0 : now - 1;
+    }
+    LerpPlayer(then, now, alpha, pIndex, w, dto);
     return dto;
   }
 
@@ -165,6 +169,7 @@ class LerpedPlayer {
 }
 
 function LerpPlayer(
+  then: frameNumber,
   now: frameNumber,
   alpha: number,
   pIndex: number,
@@ -172,7 +177,7 @@ function LerpPlayer(
   dto: LerpedPlayer,
 ) {
   dto.Zero();
-  const then = now < 1 ? 0 : now - 1;
+
   const playerHist = w.HistoryData.PlayerComponentHistories[pIndex];
   const inputHist = w.PlayerData.InputStore(pIndex);
   const input = inputHist.GetInputForFrame(now);

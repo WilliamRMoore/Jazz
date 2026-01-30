@@ -130,7 +130,7 @@ export function GetInput(index: number, w: World): InputAction {
 function handleSpecial(
   inputAction: InputAction,
   LXAxis: number,
-  LYAxis: number
+  LYAxis: number,
 ): InputAction {
   //are we more vertical than horizontal?
   if (Math.abs(LYAxis) > Math.abs(LXAxis)) {
@@ -154,7 +154,7 @@ function handleSpecial(
 function handleAction(
   inputAction: InputAction,
   LXAxis: number,
-  LYAxis: number
+  LYAxis: number,
 ): InputAction {
   if (Math.abs(LYAxis) > Math.abs(LXAxis)) {
     // up

@@ -177,7 +177,7 @@ export class World {
   }
 
   public get PreviousFrame(): number {
-    return this.localFrame === 0 ? 0 : this.localFrame - 1;
+    return this.localFrame < 1 ? 0 : this.localFrame - 1;
   }
 
   public get LocalFrame(): number {
