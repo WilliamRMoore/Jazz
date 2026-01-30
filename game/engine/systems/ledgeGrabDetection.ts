@@ -16,7 +16,6 @@ const TWO = NumberToRaw(2);
 
 const combinedVerts = new Array<FlatVec>();
 export function LedgeGrabDetection(world: World): void {
-  combinedVerts.length = 0;
   const playerData: PlayerData = world.PlayerData;
   const stageData: StageData = world.StageData;
   const pools: Pools = world.Pools;
@@ -28,6 +27,7 @@ export function LedgeGrabDetection(world: World): void {
   const playerHist = world.HistoryData.PlayerComponentHistories;
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    combinedVerts.length = 0;
     const p = playerData.Player(playerIndex);
 
     if (p.Flags.IsInHitPause) {
