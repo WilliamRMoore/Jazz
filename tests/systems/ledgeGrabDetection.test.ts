@@ -9,6 +9,7 @@ import { LedgeGrabDetection } from '../../game/engine/systems/ledgeGrabDetection
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NumberToRaw, FixedPoint } from '../../game/engine/math/fixedPoint';
+import { RecordHistory } from '../../game/engine/systems/history';
 
 describe('Ledge Grab Detection system tests', () => {
   let p: Player;
@@ -22,6 +23,24 @@ describe('Ledge Grab Detection system tests', () => {
     const player = new Player(0, pc);
     w.SetPlayer(player);
     p = w.PlayerData.Player(0)!;
+  });
+
+  test('Player grabs a ledge when falling very fast confimrs continious collision detection is working', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    fsm.ForceState(STATE_IDS.N_FALL_S); // Set state to falling
+    p.Flags.FaceLeft(); // Face the ledge
+
+    SetPlayerPositionRaw(p, NumberToRaw(1650), NumberToRaw(500));
+
+    RecordHistory(w);
+
+    w.LocalFrame++;
+
+    SetPlayerPositionRaw(p, NumberToRaw(1650), NumberToRaw(1050));
+
+    LedgeGrabDetection(w);
+
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
   });
 
   test('Player grabs a ledge when falling near it', () => {

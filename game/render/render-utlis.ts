@@ -50,15 +50,20 @@ class PlayerLerper {
       return newLp;
     }
     const lp = this.pool[this.poolIndex];
+    lp.Zero();
     this.poolIndex++;
     return lp;
   }
+
+  public Zero() {
+    this.poolIndex = 0;
+  }
 }
 
-type lerpLine = { x1: number; y1: number; x2: number; y2: number };
+type lerpLine = { a: boolean; x1: number; y1: number; x2: number; y2: number };
 
 function makeLerpLine(): lerpLine {
-  return { x1: 0, y1: 0, x2: 0, y2: 0 };
+  return { a: false, x1: 0, y1: 0, x2: 0, y2: 0 };
 }
 
 class LerpedPlayer {
@@ -147,19 +152,34 @@ class LerpedPlayer {
     ld.topLeftY = 0;
     ld.topRightX = 0;
     ld.topRightY = 0;
-    for (const sensor of this.Sensors) {
+    const sensorLength = this.Sensors.length;
+    for (let i = 0; i < sensorLength; i++) {
+      const sensor = this.Sensors[i];
       sensor.a = false;
       sensor.r = 0;
       sensor.x = 0;
       sensor.y = 0;
     }
-    for (const atk of this.AttackBubbles) {
+    const hurtLength = this.HurtBubbles.length;
+    for (let i = 0; i < hurtLength; i++) {
+      const hurt = this.HurtBubbles[i];
+      hurt.a = false;
+      hurt.x1 = 0;
+      hurt.y1 = 0;
+      hurt.x2 = 0;
+      hurt.y2 = 0;
+    }
+    const atkLength = this.AttackBubbles.length;
+    for (let i = 0; i < atkLength; i++) {
+      const atk = this.AttackBubbles[i];
       atk.a = false;
       atk.x = 0;
       atk.y = 0;
       atk.r = 0;
     }
-    for (const grab of this.GrabBubbles) {
+    const grabLength = this.GrabBubbles.length;
+    for (let i = 0; i < grabLength; i++) {
+      const grab = this.GrabBubbles[i];
       grab.a = false;
       grab.x = 0;
       grab.y = 0;
@@ -176,8 +196,6 @@ function LerpPlayer(
   w: World,
   dto: LerpedPlayer,
 ) {
-  dto.Zero();
-
   const playerHist = w.HistoryData.PlayerComponentHistories[pIndex];
   const inputHist = w.PlayerData.InputStore(pIndex);
   const input = inputHist.GetInputForFrame(now);
@@ -357,14 +375,15 @@ function LerpPlayer(
   const numSensors = sensors.sensors?.length ?? 0;
   for (let i = 0; i < numSensors; i++) {
     const sensor = sensors.sensors![i];
-    dto.Sensors[i].a = true;
-    dto.Sensors[i].r = sensor.radius;
-    dto.Sensors[i].x = Lerp(
+    const dtoSensor = dto.Sensors[i];
+    dtoSensor.a = true;
+    dtoSensor.r = sensor.radius;
+    dtoSensor.x = Lerp(
       lastPos.X + sensor.xOffset,
       currentPos.X + sensor.xOffset,
       alpha,
     );
-    dto.Sensors[i].y = Lerp(
+    dtoSensor.y = Lerp(
       lastPos.Y + sensor.yOffset,
       currentPos.Y + sensor.yOffset,
       alpha,
@@ -389,16 +408,27 @@ function LerpPlayer(
     dto.AttackBubbles[i].x = dto.Position.X + lp.X.AsNumber;
     dto.AttackBubbles[i].y = dto.Position.Y + lp.Y.AsNumber;
   }
-  // for (let i = 0; i < numBubbles; i++) {
-  //   const bubble = hitBubbles!.AtIndex(i);
-  //   if (bubble === undefined) {
-  //     continue;
-  //   }
-  //   const gp = bubble.GetGlobalPosition();
-  //   dto.AttackBubbles[i].a = true;
-  //   dto.AttackBubbles[i].r = bubble.Radius.AsNumber;
-  //   dto.AttackBubbles[i].x = dto.Position.X + bubble.
-  // }
+
+  const grabHist = playerHist.GrabHistory[now];
+  const grab = grabHist?.GrabBubbles;
+
+  if (grab !== undefined) {
+    const numBubbles = grab.length;
+    for (let i = 0; i < numBubbles; i++) {
+      const bubble = grab![i];
+      if (!bubble.IsActive(now)) {
+        continue;
+      }
+      const lp = bubble.GetLocalPositionOffsetForFrame(now);
+      if (lp === undefined) {
+        continue;
+      }
+      dto.GrabBubbles[i].a = true;
+      dto.GrabBubbles[i].r = bubble.Radius.AsNumber;
+      dto.GrabBubbles[i].x = dto.Position.X + lp.X.AsNumber;
+      dto.GrabBubbles[i].y = dto.Position.Y + lp.Y.AsNumber;
+    }
+  }
 }
 
 function LerpRadiusFromTrigger(triggerValue: number, raddius: number): number {

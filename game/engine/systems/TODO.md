@@ -2,7 +2,7 @@
 
 ## Systems
 
-1. Update ledge grab system (cont. collision, consisten placement, prevent others from grabbing)
+1. Update ledge grab system (consisten placement, prevent others from grabbing)
 2. Projectiles
 3. Throws?
 4. Add an iteration mechanic to the attack system (combos)
@@ -30,7 +30,7 @@
 
 ## State-Relations
 
-1. Clean up buggy graph (not all states are transitioning properly [forward tilt to walk, dash to turn, run to turn])
+1. Clean up buggy graph (not all states are transitioning properly [forward tilt to walk, dash to turn])
 2. Add stick jumping
 
 ## Character
