@@ -51,7 +51,7 @@ describe('Shield system tests', () => {
     ShieldRegen(w);
 
     expect(p.Shield.PreModeCurrentRadius.Raw).toBeGreaterThan(
-      initialShieldValue
+      initialShieldValue,
     );
   });
 

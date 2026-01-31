@@ -1,4 +1,4 @@
-import { PlayerData, World } from '../world/world';
+import { World } from '../world/world';
 
 export function TimedFlags(world: World): void {
   const playerData = world.PlayerData;

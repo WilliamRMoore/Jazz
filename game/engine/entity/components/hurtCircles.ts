@@ -22,7 +22,7 @@ export class HurtCapsule {
     startOffsetY: number,
     endOffsetX: number,
     endOffsetY: number,
-    radius: number
+    radius: number,
   ) {
     this.StartOffsetX.SetFromNumber(startOffsetX);
     this.StartOffsetY.SetFromNumber(startOffsetY);
@@ -34,7 +34,7 @@ export class HurtCapsule {
   public GetStartPosition(
     x: FixedPoint,
     y: FixedPoint,
-    vecPool: Pool<PooledVector>
+    vecPool: Pool<PooledVector>,
   ): PooledVector {
     const xsRaw = this.StartOffsetX.Raw + x.Raw;
     const ysRaw = this.StartOffsetY.Raw + y.Raw;
@@ -44,7 +44,7 @@ export class HurtCapsule {
   public GetEndPosition(
     x: FixedPoint,
     y: FixedPoint,
-    vecPool: Pool<PooledVector>
+    vecPool: Pool<PooledVector>,
   ): PooledVector {
     const xeRaw = this.EndOffsetX.Raw + x.Raw;
     const yeRaw = this.EndOffsetY.Raw + y.Raw;
@@ -59,7 +59,7 @@ export class HurtCapsulesComponent {
     this.HurtCapsules = [];
     hurtCapsules.forEach((hc) => {
       this.HurtCapsules.push(
-        new HurtCapsule(hc.x1, hc.y1, hc.x2, hc.y2, hc.radius)
+        new HurtCapsule(hc.x1, hc.y1, hc.x2, hc.y2, hc.radius),
       );
     });
   }

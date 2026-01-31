@@ -33,7 +33,7 @@ describe('Player states tests', () => {
   test('test Air Dodge', () => {
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     const lx = 0.707;
@@ -48,10 +48,10 @@ describe('Player states tests', () => {
     const angleIndex = GetAtan2IndexRaw(input.LYAxis.Raw, input.LXAxis.Raw);
     const expectedSpeedRaw = p.Speeds.AirDogeSpeedRaw;
     const expectedVelXRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw)
+      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw),
     );
     const expectedVelYRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw)
+      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw),
     );
 
     expect(p.Velocity.X.Raw).toBeCloseTo(expectedVelXRaw, -1);
@@ -127,7 +127,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(0.5); // Simulate walking right
@@ -148,7 +148,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(-0.5); // Simulate walking left
@@ -187,7 +187,7 @@ describe('Player states tests', () => {
 
     const inputStore = w.PlayerData.InputStore(p.ID);
     const frame = 10;
-    w.localFrame = frame;
+    w.LocalFrame = frame;
 
     const input = NewInputAction();
     input.LXAxis.SetFromNumber(0.7); // Simulate strong right input
@@ -208,7 +208,7 @@ describe('Player states tests', () => {
 
     // Expect velocity to decrease further (become more negative), clamped by MaxDashSpeed
     expect(p.Velocity.X.AsNumber).toBeGreaterThanOrEqual(
-      -p.Speeds.MaxDashSpeedRaw
+      -p.Speeds.MaxDashSpeedRaw,
     );
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelocityXLeft);
   });

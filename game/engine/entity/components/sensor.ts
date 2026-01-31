@@ -14,7 +14,7 @@ class Sensor {
     vecPool: Pool<PooledVector>,
     globalX: FixedPoint,
     globalY: FixedPoint,
-    facingRight: boolean
+    facingRight: boolean,
   ): PooledVector {
     const xOffsetRaw = this.XOffset.Raw;
     const yOffsetRaw = this.YOffset.Raw;
@@ -69,7 +69,7 @@ export type SensorSnapShot = {
 
 export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   private currentSensorIdx: number = 0;
-  private readonly sensors: Array<Sensor> = new Array<Sensor>(10);
+  private readonly sensors: Array<Sensor> = new Array<Sensor>(25);
   public ReactCommand: Command | undefined;
 
   constructor() {
@@ -81,7 +81,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   public ActivateSensor(
     xOffset: FixedPoint,
     yOffset: FixedPoint,
-    radius: FixedPoint
+    radius: FixedPoint,
   ): SensorComponent {
     if (this.currentSensorIdx >= this.sensors.length) {
       throw new Error('No more sensors available to activate.');
@@ -93,7 +93,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   public ActivateSensorRaw(
     xOffsetRaw: number,
     yOffsetRaw: number,
-    radiusRaw: number
+    radiusRaw: number,
   ): void {
     const sensor = this.sensors[this.currentSensorIdx];
     sensor.XOffset.SetFromRaw(xOffsetRaw);
@@ -158,7 +158,7 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
       this.ActivateSensorRaw(
         NumberToRaw(snapShotSensor.yOffset),
         NumberToRaw(snapShotSensor.xOffset),
-        NumberToRaw(snapShotSensor.radius)
+        NumberToRaw(snapShotSensor.radius),
       );
     }
     if (snapShot.reactor !== undefined) {

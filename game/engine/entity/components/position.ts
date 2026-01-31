@@ -1,38 +1,53 @@
 import { FixedPoint } from '../../math/fixedPoint';
+import { FlatVec } from '../../physics/vector';
+import { ToFV } from '../../utils';
 import { IHistoryEnabled } from '../componentHistory';
 
-export type PositionSnapShot = { readonly X: number; readonly Y: number };
+export type PositionSnapShot = { X: number; Y: number };
+
+export type readonlyFp = { get AsNumber(): number; get Raw(): number };
+
+export interface GlobalRootRef {
+  readonly X: readonlyFp;
+  readonly Y: readonlyFp;
+  readonly PX: readonlyFp;
+  readonly PY: readonlyFp;
+}
 
 // Player Components
 export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
-  private readonly x: FixedPoint = new FixedPoint();
-  private readonly y: FixedPoint = new FixedPoint();
+  private readonly p: FlatVec = ToFV(0, 0);
 
   public get X(): FixedPoint {
-    return this.x;
+    return this.p.X;
   }
 
   public get Y(): FixedPoint {
-    return this.y;
+    return this.p.Y;
   }
 
   public set X(val: FixedPoint) {
-    this.x.SetFromFp(val);
+    this.p.X.SetFromFp(val);
   }
 
   public set Y(val: FixedPoint) {
-    this.y.SetFromFp(val);
+    this.p.Y.SetFromFp(val);
+  }
+
+  public SetFromFv(fv: FlatVec) {
+    this.p.X.SetFromFp(fv.X);
+    this.p.Y.SetFromFp(fv.Y);
   }
 
   public SnapShot(): PositionSnapShot {
     return {
-      X: this.x.AsNumber,
-      Y: this.y.AsNumber,
+      X: this.p.X.AsNumber,
+      Y: this.p.Y.AsNumber,
     };
   }
 
   public SetFromSnapShot(snapShot: PositionSnapShot): void {
-    this.x.SetFromNumber(snapShot.X);
-    this.y.SetFromNumber(snapShot.Y);
+    this.p.X.SetFromNumber(snapShot.X);
+    this.p.Y.SetFromNumber(snapShot.Y);
   }
 }

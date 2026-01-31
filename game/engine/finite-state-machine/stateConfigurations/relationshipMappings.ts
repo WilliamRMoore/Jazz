@@ -12,6 +12,7 @@ import {
   defaultRun,
   defaultShield,
   defaultSideChargeEx,
+  defaultTrunRunToIdle,
   defaultUpChargeEx,
   DownChargeToEx,
   HitStopToLaunch,
@@ -32,6 +33,7 @@ import {
   shieldBreakLandDefaultToDizzy,
   shieldToShieldDrop,
   SideChargeToEx,
+  SideTiltToWalk,
   ToAirDodge,
   ToBAir,
   ToDAir,
@@ -357,7 +359,7 @@ export function InitDashTurnRelations(): StateRelation {
 
   const dashTurnRelations = new StateRelation(
     STATE_IDS.DASH_TURN_S,
-    dashTrunTranslations
+    dashTrunTranslations,
   );
 
   return dashTurnRelations;
@@ -401,11 +403,11 @@ export function InitRunTurnRelations(): StateRelation {
 
   runTurnMapping.SetConditions([ToSideSpecial, ToUpSpecial]);
 
-  runTurnMapping.SetDefaults([defaultRun]);
+  runTurnMapping.SetDefaults([defaultTrunRunToIdle, defaultRun]);
 
   const runTurnRelations = new StateRelation(
     STATE_IDS.RUN_TURN_S,
-    runTurnMapping
+    runTurnMapping,
   );
 
   return runTurnRelations;
@@ -432,7 +434,7 @@ export function InitStopRunRelations(): StateRelation {
 
   const stopRunRelations = new StateRelation(
     STATE_IDS.STOP_RUN_S,
-    stopRunTranslations
+    stopRunTranslations,
   );
 
   return stopRunRelations;
@@ -451,7 +453,7 @@ export function InitJumpSquatRelations(): StateRelation {
 
   const jumpSquatRelations = new StateRelation(
     STATE_IDS.JUMP_SQUAT_S,
-    jumpSquatTranslations
+    jumpSquatTranslations,
   );
 
   return jumpSquatRelations;
@@ -500,7 +502,7 @@ export function InitNeutralFallRelations(): StateRelation {
 
   const nFallRelations = new StateRelation(
     STATE_IDS.N_FALL_S,
-    nFallTranslations
+    nFallTranslations,
   );
 
   return nFallRelations;
@@ -535,7 +537,7 @@ export function InitSoftLandRelations(): StateRelation {
 
   const softLandRelations = new StateRelation(
     STATE_IDS.SOFT_LAND_S,
-    softLandTranslations
+    softLandTranslations,
   );
 
   return softLandRelations;
@@ -550,7 +552,7 @@ export function InitLedgeGrabRelations(): StateRelation {
 
   const LedgeGrabRelations = new StateRelation(
     STATE_IDS.LEDGE_GRAB_S,
-    LedgeGrabTranslations
+    LedgeGrabTranslations,
   );
 
   return LedgeGrabRelations;
@@ -569,7 +571,7 @@ export function InitAirDodgeRelations(): StateRelation {
 
   const AirDodgeRelations = new StateRelation(
     STATE_IDS.AIR_DODGE_S,
-    airDodgeTranslations
+    airDodgeTranslations,
   );
 
   return AirDodgeRelations;
@@ -587,7 +589,7 @@ export function InitHelpessRelations(): StateRelation {
 
   const HelplessRelations = new StateRelation(
     STATE_IDS.HELPLESS_S,
-    helpessTranslations
+    helpessTranslations,
   );
 
   return HelplessRelations;
@@ -605,7 +607,7 @@ export function InitAttackRelations(): StateRelation {
 
   const attackRelations = new StateRelation(
     STATE_IDS.ATTACK_S,
-    attackTranslations
+    attackTranslations,
   );
 
   return attackRelations;
@@ -623,7 +625,7 @@ export function InitDashAttackRelations(): StateRelation {
 
   const dashAtkRelations = new StateRelation(
     STATE_IDS.DASH_ATTACK_S,
-    dashAtkTranslations
+    dashAtkTranslations,
   );
 
   return dashAtkRelations;
@@ -643,7 +645,7 @@ export function InitSideChargeRelations(): StateRelation {
 
   const sideChargeRelations = new StateRelation(
     STATE_IDS.SIDE_CHARGE_S,
-    sideChargeTranslations
+    sideChargeTranslations,
   );
 
   return sideChargeRelations;
@@ -661,7 +663,7 @@ export function InitSideChargeExRelations(): StateRelation {
 
   const relation = new StateRelation(
     STATE_IDS.SIDE_CHARGE_EX_S,
-    sideChargeExTranslations
+    sideChargeExTranslations,
   );
 
   return relation;
@@ -713,7 +715,7 @@ export function InitDownChargeRelations(): StateRelation {
 
   const relation = new StateRelation(
     STATE_IDS.DOWN_CHARGE_S,
-    downChargeRelations
+    downChargeRelations,
   );
 
   return relation;
@@ -748,7 +750,7 @@ export function InitAirAttackRelations(): StateRelation {
 
   const airAttackRelations = new StateRelation(
     STATE_IDS.N_AIR_S,
-    airAttackTranslations
+    airAttackTranslations,
   );
 
   return airAttackRelations;
@@ -768,7 +770,7 @@ export function InitFAirAttackRelations(): StateRelation {
 
   const fAirTranslations = new StateRelation(
     STATE_IDS.F_AIR_S,
-    fAirAttackTranslations
+    fAirAttackTranslations,
   );
 
   return fAirTranslations;
@@ -837,7 +839,7 @@ export function InitNSpecialRelations(): StateRelation {
 
   const nSpecialRelations = new StateRelation(
     STATE_IDS.SPCL_S,
-    nSpecialTranslations
+    nSpecialTranslations,
   );
 
   return nSpecialRelations;
@@ -860,7 +862,7 @@ export function InitSideSpecialRelations(): StateRelation {
 
   const sideSpecialRelations = new StateRelation(
     STATE_IDS.SIDE_SPCL_S,
-    sideSpclTranslations
+    sideSpclTranslations,
   );
 
   return sideSpecialRelations;
@@ -878,7 +880,7 @@ export function InitSideSpecialExtensionRelations(): StateRelation {
 
   const sideSpclExRelations = new StateRelation(
     STATE_IDS.SIDE_SPCL_EX_S,
-    sideSpclExTranslations
+    sideSpclExTranslations,
   );
 
   return sideSpclExRelations;
@@ -915,7 +917,7 @@ export function InitSideSpecialExAirRelations(): StateRelation {
 
   const relations = new StateRelation(
     STATE_IDS.SIDE_SPCL_EX_AIR_S,
-    translations
+    translations,
   );
 
   return relations;
@@ -948,7 +950,7 @@ export function InitDownSpecialRelations(): StateRelation {
 
   const downSpecRelations = new StateRelation(
     STATE_IDS.DOWN_SPCL_S,
-    downSpecialTranslations
+    downSpecialTranslations,
   );
 
   return downSpecRelations;
@@ -979,7 +981,7 @@ export function InitHitStopRelations(): StateRelation {
 
   const hitStunRelations = new StateRelation(
     STATE_IDS.HIT_STOP_S,
-    hitStopTranslations
+    hitStopTranslations,
   );
 
   return hitStunRelations;
@@ -999,7 +1001,7 @@ export function InitTumbleRelations(): StateRelation {
 
   const TumbleRelations = new StateRelation(
     STATE_IDS.TUMBLE_S,
-    TumbleTranslations
+    TumbleTranslations,
   );
 
   return TumbleRelations;
@@ -1016,7 +1018,7 @@ export function InitLaunchRelations(): StateRelation {
 
   const launchRelations = new StateRelation(
     STATE_IDS.LAUNCH_S,
-    launchTranslations
+    launchTranslations,
   );
 
   return launchRelations;
@@ -1039,7 +1041,7 @@ export function InitCrouchRelations(): StateRelation {
 
   const crouchRelations = new StateRelation(
     STATE_IDS.CROUCH_S,
-    crouchTranslations
+    crouchTranslations,
   );
 
   return crouchRelations;
@@ -1056,7 +1058,7 @@ export function InitDownTiltRelations(): StateRelation {
 
   const dTiltRelations = new StateRelation(
     STATE_IDS.DOWN_TILT_S,
-    dTiltTranslations
+    dTiltTranslations,
   );
 
   return dTiltRelations;
@@ -1064,6 +1066,8 @@ export function InitDownTiltRelations(): StateRelation {
 
 export function InitSideTiltRelations(): StateRelation {
   const sideTiltTrnalsations = new ActionStateMappings();
+
+  sideTiltTrnalsations.SetConditions([SideTiltToWalk]);
 
   sideTiltTrnalsations.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
@@ -1073,7 +1077,7 @@ export function InitSideTiltRelations(): StateRelation {
 
   const sideTiltRelations = new StateRelation(
     STATE_IDS.SIDE_TILT_S,
-    sideTiltTrnalsations
+    sideTiltTrnalsations,
   );
 
   return sideTiltRelations;
@@ -1093,7 +1097,7 @@ export function InitUpTiltRelations(): StateRelation {
 
   const upTiltRelations = new StateRelation(
     STATE_IDS.UP_TILT_S,
-    upTiltTranslations
+    upTiltTranslations,
   );
 
   return upTiltRelations;
@@ -1145,7 +1149,7 @@ export function InitGrabReleaseRelations(): StateRelation {
 
   const grabReleaseRelations = new StateRelation(
     STATE_IDS.GRAB_RELEASE_S,
-    grabReleaseMaps
+    grabReleaseMaps,
   );
 
   return grabReleaseRelations;
@@ -1157,7 +1161,7 @@ export function InitGrabEscapeRelations(): StateRelation {
 
   const grabEscapeRelations = new StateRelation(
     STATE_IDS.GRAB_ESCAPE_S,
-    grabEscapeMaps
+    grabEscapeMaps,
   );
 
   return grabEscapeRelations;

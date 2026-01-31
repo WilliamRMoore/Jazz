@@ -37,11 +37,11 @@ export function StageCollisionDetection(world: World): void {
   const rightMostPiece = stageGround[stageGround.length - 1];
   const leftStagePoint = pools.VecPool.Rent().SetXY(
     leftMostPiece.X1,
-    leftMostPiece.Y1
+    leftMostPiece.Y1,
   );
   const rightStagePoint = pools.VecPool.Rent().SetXY(
     rightMostPiece.X2,
-    rightMostPiece.Y2
+    rightMostPiece.Y2,
   );
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
@@ -57,7 +57,7 @@ export function StageCollisionDetection(world: World): void {
     }
 
     const sm = playerData.StateMachine(playerIndex);
-    const playerVerts = getHull(preEcb, ecb);
+    const playerVerts = getECBHull(preEcb, ecb);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStatetId;
     const preResolutionYOffsetRaw = ecb.YOffset.Raw;
@@ -69,7 +69,7 @@ export function StageCollisionDetection(world: World): void {
       stageVerts,
       pools.VecPool,
       pools.ColResPool,
-      pools.ProjResPool
+      pools.ProjResPool,
     );
 
     if (collisionResult.Collision) {
@@ -117,13 +117,13 @@ export function StageCollisionDetection(world: World): void {
       SetPlayerInitialPositionRaw(
         p,
         leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
-        p.Position.Y.Raw
+        p.Position.Y.Raw,
       );
     } else if (standingOnRightLedge && onStage) {
       SetPlayerInitialPositionRaw(
         p,
         rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
-        p.Position.Y.Raw
+        p.Position.Y.Raw,
       );
     }
 
@@ -163,13 +163,13 @@ export function StageCollisionDetection(world: World): void {
           SetPlayerPositionRaw(
             p,
             leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
-            leftStagePoint.Y.Raw
+            leftStagePoint.Y.Raw,
           );
         } else {
           SetPlayerPositionRaw(
             p,
             rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
-            rightStagePoint.Y.Raw
+            rightStagePoint.Y.Raw,
           );
         }
         sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -189,7 +189,7 @@ export function StageCollisionDetection(world: World): void {
       sm.UpdateFromWorld(
         ShouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
-          : GAME_EVENT_IDS.LAND_GE
+          : GAME_EVENT_IDS.LAND_GE,
       );
     }
 
@@ -205,7 +205,7 @@ export function StageCollisionDetection(world: World): void {
 }
 
 const combinedEcbVerts = new Array<FlatVec>();
-function getHull(prevEcb: EcbHistoryDTO, curEcb: ECBComponent) {
+function getECBHull(prevEcb: EcbHistoryDTO, curEcb: ECBComponent) {
   combinedEcbVerts.length = 0;
   for (let i = 0; i < 4; i++) {
     combinedEcbVerts.push(prevEcb.shape[i]);

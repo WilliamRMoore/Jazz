@@ -44,12 +44,12 @@ describe('PlayerComponents ECB tests', () => {
   test('SetInitialPosition and SetInitialPositionRaw work correctly', () => {
     const x = new FixedPoint(10);
     const y = new FixedPoint(20);
-    ecb.SetInitialPosition(x, y);
+    ecb.MoveToPosition(x, y);
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
 
-    ecb.SetInitialPositionRaw(NumberToRaw(30), NumberToRaw(40));
+    ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
   });
@@ -73,7 +73,7 @@ describe('PlayerComponents ECB tests', () => {
     const originalYOffset = ecb.YOffset.AsNumber;
 
     ecb.SetECBShape(STATE_IDS.CROUCH_S);
-    const crouchShape = ecb._ecbShapes.get(STATE_IDS.CROUCH_S);
+    const crouchShape = ecb._db_ecbShapes.get(STATE_IDS.CROUCH_S);
 
     expect(ecb.Height.AsNumber).toBe(crouchShape!.height.AsNumber);
     expect(ecb.Width.AsNumber).toBe(crouchShape!.width.AsNumber);
@@ -101,7 +101,7 @@ describe('PlayerComponents ECB tests', () => {
     expect(newEcb.YOffset.AsNumber).toBe(snapshot.ecbShape.yOffset.AsNumber);
     expect(newEcb.Bottom.X.AsNumber).toBe(snapshot.posX);
     expect(newEcb.Bottom.Y.AsNumber).toBe(
-      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber
+      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber,
     );
   });
 

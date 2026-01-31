@@ -24,7 +24,7 @@ export function IntersectsPolygons(
   verticiesB: Array<FlatVec>,
   vecPool: Pool<PooledVector>,
   colResPool: Pool<CollisionResult>,
-  projResPool: Pool<ProjectionResult>
+  projResPool: Pool<ProjectionResult>,
 ): ICollisionResult {
   let normal = vecPool.Rent();
   let depthRaw = MAX_RAW_VALUE;
@@ -119,7 +119,7 @@ export function IntersectsPolygons(
     direction.X.Raw,
     direction.Y.Raw,
     normal.X.Raw,
-    normal.Y.Raw
+    normal.Y.Raw,
   );
 
   if (dp < 0) {
@@ -136,7 +136,7 @@ export function IntersectsCircles(
   v1: PooledVector,
   v2: PooledVector,
   r1: FixedPoint,
-  r2: FixedPoint
+  r2: FixedPoint,
 ): CollisionResult {
   const distRaw = v1.DistanceRaw(v2);
   const raddiRaw = r1.Raw + r2.Raw;
@@ -162,7 +162,7 @@ export function IntersectsCirclesRaw(
   x2Raw: number,
   y2Raw: number,
   r1Raw: number,
-  r2Raw: number
+  r2Raw: number,
 ): CollisionResult {
   const distRaw = DistanceRaw(x1Raw, y1Raw, x2Raw, y2Raw);
   const raddiRaw = r1Raw + r2Raw;
@@ -185,7 +185,7 @@ export function IntersectsCirclesRawBool(
   x2Raw: number,
   y2Raw: number,
   r1Raw: number,
-  r2Raw: number
+  r2Raw: number,
 ): boolean {
   const distRaw = DistanceRaw(x1Raw, y1Raw, x2Raw, y2Raw);
   const raddiRaw = r1Raw + r2Raw;
@@ -201,7 +201,7 @@ export function ClosestPointsBetweenSegments(
   p2: PooledVector,
   q2: PooledVector,
   vecPool: Pool<PooledVector>,
-  ClosestPointsPool: Pool<ClosestPointsResult>
+  ClosestPointsPool: Pool<ClosestPointsResult>,
 ): ClosestPointsResult {
   const isSegment1Point = p1.X.Equals(q1.X) && p1.Y.Equals(q1.Y);
   const isSegment2Point = p2.X.Equals(q2.X) && p2.Y.Equals(q2.Y);
@@ -271,7 +271,6 @@ export function ClosestPointsBetweenSegments(
   if (tRaw < 0) {
     tRaw = 0;
     sRaw = DivideRaw(-cRaw, aRaw);
-
     sRaw = ClampWithMin(sRaw, 0, ONE);
   } else if (tRaw > ONE) {
     tRaw = ONE; //1;
@@ -298,7 +297,7 @@ export function ClosestPointsBetweenSegments(
 
 export function FindArithemticMean(
   verticies: Array<FlatVec>,
-  pooledVec: PooledVector
+  pooledVec: PooledVector,
 ): PooledVector {
   let sumXRaw = 0;
   let sumYRaw = 0;
@@ -320,7 +319,7 @@ export function closestPointOnSegmentToPoint(
   segStart: FlatVec,
   segEnd: FlatVec,
   point: FlatVec,
-  ClosestPointsPool: Pool<ClosestPointsResult>
+  ClosestPointsPool: Pool<ClosestPointsResult>,
 ): ClosestPointsResult {
   const segStartXRaw = segStart.X.Raw;
   const segStartYRaw = segStart.Y.Raw;
@@ -366,7 +365,7 @@ export function closestPointOnSegmentToPoint(
 export function projectVerticies(
   verticies: Array<FlatVec>,
   axis: PooledVector,
-  projResPool: Pool<ProjectionResult>
+  projResPool: Pool<ProjectionResult>,
 ): IProjectionResult {
   let min = MAX_RAW_VALUE;
   let max = MIN_RAW_VALUE;
@@ -400,7 +399,7 @@ export function LineSegmentIntersectionRaw(
   bx3: number,
   by3: number,
   bx4: number,
-  by4: number
+  by4: number,
 ): boolean {
   const denom =
     MultiplyRaw(by4 - by3, ax2 - ax1) - MultiplyRaw(bx4 - bx3, ay2 - ay1);
@@ -434,7 +433,7 @@ export function LineSegmentIntersectionFp(
   bx3: FixedPoint,
   by3: FixedPoint,
   bx4: FixedPoint,
-  by4: FixedPoint
+  by4: FixedPoint,
 ): boolean {
   return LineSegmentIntersectionRaw(
     ax1.Raw,
@@ -444,7 +443,7 @@ export function LineSegmentIntersectionFp(
     bx3.Raw,
     by3.Raw,
     bx4.Raw,
-    by4.Raw
+    by4.Raw,
   );
 }
 
@@ -457,7 +456,7 @@ export function LineSegmentIntersectionLine(line1: Line, line2: Line): boolean {
     line2.X1.Raw,
     line2.Y1.Raw,
     line2.X2.Raw,
-    line2.Y2.Raw
+    line2.Y2.Raw,
   );
 }
 

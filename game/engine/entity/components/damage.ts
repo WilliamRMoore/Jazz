@@ -1,13 +1,11 @@
 import { FixedPoint } from '../../math/fixedPoint';
 import { IHistoryEnabled } from '../componentHistory';
 
-export type PlayerPointsSnapShot = {
+export type DamageSnapShot = {
   damagePoints: number;
 };
 
-export class PlayerDamageComponent
-  implements IHistoryEnabled<PlayerPointsSnapShot>
-{
+export class PlayerDamageComponent implements IHistoryEnabled<DamageSnapShot> {
   private readonly damagePoints: FixedPoint = new FixedPoint(0);
 
   public constructor() {}
@@ -28,13 +26,17 @@ export class PlayerDamageComponent
     return this.damagePoints;
   }
 
-  public SnapShot(): PlayerPointsSnapShot {
+  public SnapShot(): DamageSnapShot {
     return {
       damagePoints: this.damagePoints.AsNumber,
-    } as PlayerPointsSnapShot;
+    } as DamageSnapShot;
   }
 
-  public SetFromSnapShot(snapShot: PlayerPointsSnapShot): void {
+  public SetFromSnapShot(snapShot: DamageSnapShot): void {
     this.damagePoints.SetFromNumber(snapShot.damagePoints);
+  }
+
+  public _db_set_damage(number: number): void {
+    this.damagePoints.SetFromNumber(number);
   }
 }

@@ -4,7 +4,7 @@ import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
 import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
-import { AttackComponment } from './components/attack';
+import { AttackComponment, frameNumber } from './components/attack';
 import { ECBComponent } from './components/ecb';
 import { PlayerFlagsComponent } from './components/flags';
 import { FSMInfoComponent } from './components/fsmInfo';
@@ -25,6 +25,7 @@ import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
+import { DebugComponent } from './components/debug';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -57,7 +58,7 @@ export class Player {
     sB.SetAerialSpeeds(
       cc.AerialVelocityDecay,
       cc.AerialSpeedInpulseLimit,
-      cc.AerialSpeedMultiplier
+      cc.AerialSpeedMultiplier,
     );
     sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
     sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
@@ -76,7 +77,7 @@ export class Player {
       cc.ECBShapes,
       cc.ECBHeight,
       cc.ECBWidth,
-      cc.ECBOffset
+      cc.ECBOffset,
     );
     this.HurtCircles = new HurtCapsulesComponent(cc.HurtCapsules);
     this.Jump = new JumpComponent(cc.JumpVelocity, cc.NumberOfJumps);
@@ -86,7 +87,7 @@ export class Player {
       this.Position.Y.AsNumber,
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
-      cc.LedgeBoxYOffset
+      cc.LedgeBoxYOffset,
     );
     this.Sensors = new SensorComponent();
     this.Attacks = new AttackComponment(cc.Attacks);
@@ -109,11 +110,11 @@ export function CanOnlyFallOffLedgeWhenFacingAwayFromIt(p: Player): boolean {
 export function SetPlayerInitialPositionRaw(
   p: Player,
   xRaw: number,
-  yRaw: number
+  yRaw: number,
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.SetInitialPositionRaw(xRaw, yRaw);
+  p.ECB.MoveToPositionRaw(xRaw, yRaw);
   p.LedgeDetector.MoveToRaw(xRaw, yRaw);
 }
 
@@ -124,13 +125,11 @@ export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
   p.LedgeDetector.MoveTo(position.X, position.Y);
 }
 
-export function AddWalkImpulseToPlayer(p: Player, impulse: FixedPoint): void {
-  const velocity = p.Velocity;
-  const speeds = p.Speeds;
-  velocity.AddClampedXImpulseRaw(
-    speeds.MaxWalkSpeedRaw,
-    MultiplyRaw(impulse.Raw, speeds.WalkSpeedMulitplierRaw)
-  );
+export function AddToPlayerXPostionRaw(p: Player, xRaw: number): void {
+  const position = p.Position;
+  position.X.AddRaw(xRaw);
+  p.ECB.MoveToPosition(position.X, position.Y);
+  p.LedgeDetector.MoveTo(position.X, position.Y);
 }
 
 export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
@@ -152,7 +151,7 @@ export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
 export function AddToPlayerPositionFp(
   p: Player,
   x: FixedPoint,
-  y: FixedPoint
+  y: FixedPoint,
 ): void {
   AddToPlayerPositionRaw(p, x.Raw, y.Raw);
 }
@@ -164,7 +163,7 @@ export function AddToPlayerPositionVec(p: Player, v: PooledVector): void {
 export function AddToPlayerPositionRaw(
   p: Player,
   xRaw: number,
-  yRaw: number
+  yRaw: number,
 ): void {
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
@@ -176,7 +175,7 @@ export function AddToPlayerPositionRaw(
 export function PlayerOnStage(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint
+  ecbSensorDepth: FixedPoint,
 ) {
   const grnd = s.StageVerticies.GetGround();
   const grndLoopLength = grnd.length;
@@ -192,7 +191,7 @@ export function PlayerOnStage(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw
+        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
       )
     ) {
       return true;
@@ -205,7 +204,7 @@ export function PlayerOnStage(
 export function PlayerOnPlats(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint
+  ecbSensorDepth: FixedPoint,
 ): boolean {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -224,7 +223,7 @@ export function PlayerOnPlats(
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw
+        plat.Y2.Raw,
       )
     ) {
       return true;
@@ -236,7 +235,7 @@ export function PlayerOnPlats(
 export function PlayerOnPlatsReturnsYCoord(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint
+  ecbSensorDepth: FixedPoint,
 ): FixedPoint | undefined {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -255,7 +254,7 @@ export function PlayerOnPlatsReturnsYCoord(
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw
+        plat.Y2.Raw,
       )
     ) {
       return plat.Y1;
@@ -267,7 +266,7 @@ export function PlayerOnPlatsReturnsYCoord(
 export function PlayerOnPlatsReturnsPlatform(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint
+  ecbSensorDepth: FixedPoint,
 ): Line | undefined {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -286,7 +285,7 @@ export function PlayerOnPlatsReturnsPlatform(
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw
+        plat.Y2.Raw,
       )
     ) {
       return plat;
@@ -311,7 +310,7 @@ export function PlayerOnStageOrPlats(s: Stage, p: Player) {
 export function PlayerTouchingStageLeftWall(
   s: Stage,
   ecbRight: FlatVec,
-  sensorDepth: FixedPoint
+  sensorDepth: FixedPoint,
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -327,7 +326,7 @@ export function PlayerTouchingStageLeftWall(
         ecbRight.X.Raw,
         ecbRight.Y.Raw,
         ecbRight.X.Raw - sensorDepth.Raw,
-        ecbRight.Y.Raw
+        ecbRight.Y.Raw,
       )
     ) {
       return true;
@@ -340,7 +339,7 @@ export function PlayerTouchingStageLeftWall(
 export function PlayerTouchingStageRightWall(
   s: Stage,
   ecbLeft: FlatVec,
-  sensorDepth: FixedPoint
+  sensorDepth: FixedPoint,
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -356,7 +355,7 @@ export function PlayerTouchingStageRightWall(
         ecbLeft.X.Raw,
         ecbLeft.Y.Raw,
         ecbLeft.X.Raw + sensorDepth.Raw,
-        ecbLeft.Y.Raw
+        ecbLeft.Y.Raw,
       )
     ) {
       return true;
@@ -369,7 +368,7 @@ export function PlayerTouchingStageRightWall(
 export function PlayerTouchingStageCeiling(
   s: Stage,
   ecbTop: FlatVec,
-  sensorDepth: FixedPoint
+  sensorDepth: FixedPoint,
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -385,7 +384,7 @@ export function PlayerTouchingStageCeiling(
         ecbTop.X.Raw,
         ecbTop.Y.Raw,
         ecbTop.X.Raw,
-        ecbTop.Y.Raw + sensorDepth.Raw
+        ecbTop.Y.Raw + sensorDepth.Raw,
       )
     ) {
       return true;

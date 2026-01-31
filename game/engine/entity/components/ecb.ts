@@ -10,16 +10,16 @@ import { IHistoryEnabled } from '../componentHistory';
 const POINT_FIVE = NumberToRaw(0.5);
 
 export type EcbHistoryDTO = {
-  readonly shape: Array<FlatVec>;
-  readonly Bottom: FlatVec;
-  readonly Left: FlatVec;
-  readonly Top: FlatVec;
-  readonly Right: FlatVec;
+  shape: Array<FlatVec>;
+  Bottom: FlatVec;
+  Left: FlatVec;
+  Top: FlatVec;
+  Right: FlatVec;
 };
 
 export function CreateDiamondFromHistory(
   ecbSnapshot: ECBSnapShot,
-  pool: Pool<DiamondDTO>
+  pool: Pool<DiamondDTO>,
 ): DiamondDTO {
   const diamondDTO = pool.Rent();
 
@@ -89,16 +89,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
 
   public GetActiveVerts(): FlatVec[] {
     return this.curVerts;
-  }
-
-  public SetInitialPosition(x: FixedPoint, y: FixedPoint): void {
-    this.MoveToPosition(x, y);
-  }
-
-  public SetInitialPositionRaw(xRaw: number, yRaw: number): void {
-    this.x.SetFromRaw(xRaw);
-    this.y.SetFromRaw(yRaw);
-    this.update();
   }
 
   public MoveToPosition(x: FixedPoint, y: FixedPoint): void {
@@ -183,7 +173,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.currentShape.yOffset;
   }
 
-  public get _ecbShapes(): ECBShapes {
+  public get _db_ecbShapes(): ECBShapes {
     return this.ecbStateShapes;
   }
 
@@ -204,7 +194,6 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.x.SetFromNumber(snapShot.posX);
     this.y.SetFromNumber(snapShot.posY);
     this.currentShape = snapShot.ecbShape;
-
     this.update();
   }
 }

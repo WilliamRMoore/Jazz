@@ -42,7 +42,7 @@ export class HitBubble {
   }
 
   public GetLocalPosiitionOffsetForFrame(
-    frameNumber: frameNumber
+    frameNumber: frameNumber,
   ): FlatVec | undefined {
     return this.frameOffsets.get(frameNumber);
   }
@@ -52,7 +52,7 @@ export class HitBubble {
     playerX: FixedPoint,
     playerY: FixedPoint,
     facinRight: boolean,
-    attackFrameNumber: frameNumber
+    attackFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(attackFrameNumber);
 
@@ -71,6 +71,7 @@ export class HitBubble {
 }
 
 export class Attack {
+  public readonly AttackId: AttackId;
   public readonly Name: string;
   public readonly TotalFrameLength: number;
   public readonly InteruptableFrame: number;
@@ -86,6 +87,7 @@ export class Attack {
   public readonly onExitCommands: Array<Command> = [];
 
   constructor(conf: AttackConfig) {
+    this.AttackId = conf.AttackId;
     this.Name = conf.Name;
     this.TotalFrameLength = conf.TotalFrameLength;
     this.InteruptableFrame = conf.InteruptableFrame;
@@ -129,7 +131,7 @@ export class Attack {
 
   public GetActiveBubblesForFrame(
     frameNumber: frameNumber,
-    activeHBs: ActiveHitBubblesDTO
+    activeHBs: ActiveHitBubblesDTO,
   ): ActiveHitBubblesDTO {
     const hitBubbleslength = this.HitBubbles.length;
 

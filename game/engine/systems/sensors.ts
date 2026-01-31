@@ -12,12 +12,8 @@ import { World } from '../world/world';
 
 export function PlayerSensors(world: World): void {
   const playerData = world.PlayerData;
-  const pools = world.Pools;
   const playerCount = playerData.PlayerCount;
-  if (playerCount < 2) {
-    return;
-  }
-
+  const pools = world.Pools;
   for (let outerIdx = 0; outerIdx < playerCount - 1; outerIdx++) {
     const pA = playerData.Player(outerIdx);
 
@@ -28,14 +24,14 @@ export function PlayerSensors(world: World): void {
         pB,
         pools.VecPool,
         pools.ColResPool,
-        pools.ClstsPntsResPool
+        pools.ClstsPntsResPool,
       );
       const pBVspA = sesnsorDetect(
         pB,
         pA,
         pools.VecPool,
         pools.ColResPool,
-        pools.ClstsPntsResPool
+        pools.ClstsPntsResPool,
       );
       if (pAVspB) {
         const rc = pA.Sensors.ReactCommand;
@@ -58,7 +54,7 @@ function sesnsorDetect(
   pB: Player,
   vecPool: Pool<PooledVector>,
   colResPool: Pool<CollisionResult>,
-  closestPointsPool: Pool<ClosestPointsResult>
+  closestPointsPool: Pool<ClosestPointsResult>,
 ): boolean {
   const pASensors = pA.Sensors;
   const pAPos = pA.Position;
@@ -83,7 +79,7 @@ function sesnsorDetect(
         vecPool,
         pAPos.X,
         pAPos.Y,
-        pAFacingRight
+        pAFacingRight,
       );
 
       const closestPoints = ClosestPointsBetweenSegments(
@@ -92,7 +88,7 @@ function sesnsorDetect(
         hurtCapStart,
         hurtCapEnd,
         vecPool,
-        closestPointsPool
+        closestPointsPool,
       );
 
       const testPoint1 = vecPool
@@ -108,7 +104,7 @@ function sesnsorDetect(
         testPoint1,
         testPoint2,
         sensor.Radius,
-        pBHurtCap.Radius
+        pBHurtCap.Radius,
       );
 
       if (collisionResult.Collision) {

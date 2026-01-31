@@ -23,12 +23,15 @@ export function Gravity(world: World): void {
     const gravMutliplier = NumberToRaw(isFF ? 2 : 1);
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
-      MultiplyRaw(grav, gravMutliplier)
+      MultiplyRaw(grav, gravMutliplier),
     );
   }
 }
 
 function playerHasGravity(p: Player, stage: Stage): boolean {
+  // if (p._db !== undefined && p._db._db_grav_active === false) {
+  //   return false;
+  // }
   switch (p.FSMInfo.CurrentStatetId) {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:

@@ -10,7 +10,7 @@ import {
   CalculateRadiusFromTriggerRaw,
   ShieldSnapShot,
 } from '../engine/entity/components/shield';
-import { StaticHistory } from '../engine/entity/componentHistory';
+import { BaseConfigValues } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
@@ -20,13 +20,18 @@ import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
 import { InputAction } from '../input/Input';
 import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
+import {
+  deBugInfoTree,
+  StructurePlayerSnapShotForPrinting,
+} from '../engine/debug/debugUtils';
+import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 
 function getAlpha(
   timeStampNow: number,
   lastFrame: number,
   localFrame: number,
   previousFrameTimeStamp: number,
-  currentFrameTimeStamp: number
+  currentFrameTimeStamp: number,
 ): number {
   const preClampAlpha =
     (timeStampNow - previousFrameTimeStamp) /
@@ -41,31 +46,49 @@ function getAlpha(
 
   return alpha;
 }
+export type resolution = {
+  x: number;
+  y: number;
+};
+
+export type renderTarget = {
+  canvas: HTMLCanvasElement;
+  resX: number;
+  resY: number;
+};
 
 export class DebugRenderer {
   private canvas: HTMLCanvasElement;
+  private debugInfoCanvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private dbICtx: CanvasRenderingContext2D;
   private xRes: number;
   private yRes: number;
+  private dbxRes: number;
+  private dbyRes: number;
   private lastFrame: number = 0;
+  public PlayerDeBugInfo: boolean = false;
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    res: resolution,
-    numberOfPlayers: number = 1
-  ) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
-    this.xRes = res.x;
-    this.yRes = res.y;
+  constructor(mainWindow: renderTarget, debugInfoWindow: renderTarget) {
+    this.canvas = mainWindow.canvas;
+    this.xRes = mainWindow.resX;
+    this.yRes = mainWindow.resY;
+    this.debugInfoCanvas = debugInfoWindow.canvas;
+    this.ctx = mainWindow.canvas.getContext('2d')!;
+    this.dbICtx = debugInfoWindow.canvas.getContext('2d')!;
+    this.dbxRes = debugInfoWindow.resX;
+    this.dbyRes = debugInfoWindow.resY;
     this.canvas.width = this.xRes;
     this.canvas.height = this.yRes;
+    this.debugInfoCanvas.width = this.dbxRes;
+    this.debugInfoCanvas.height = this.dbyRes;
   }
 
-  render(world: World, timeStampNow: number) {
-    const localFrame = world.localFrame - 1 < 0 ? 0 : world.localFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
+  render(jazz: JazzDebugger, timeStampNow: number) {
+    const world = jazz.World;
+    const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
-      localFrame === 0 ? 0 : localFrame - 1
+      localFrame === 0 ? 0 : localFrame - 1,
     );
     const currentFrameTimeStamp = world.GetFrameTimeStampForFrame(localFrame);
 
@@ -74,18 +97,8 @@ export class DebugRenderer {
       this.lastFrame,
       localFrame,
       previousFrameTimeStamp,
-      currentFrameTimeStamp
+      currentFrameTimeStamp,
     );
-
-    const playerStateHistory = world.GetComponentHistory(0); // hard coded to player 1 right now
-    const playerFacingRight =
-      playerStateHistory?.FlagsHistory[localFrame]?.FacingRight ?? true;
-    const playerFsmState =
-      playerStateHistory?.FsmInfoHistory[localFrame]?.State?.StateName ?? 'N/A';
-    const currentAttack = playerStateHistory?.AttackHistory[localFrame];
-    const currentAttackString = currentAttack?.attack?.Name;
-
-    const input = world.PlayerData.InputStore(0).GetInputForFrame(localFrame);
 
     if (localFrame === 0) {
       return;
@@ -105,55 +118,69 @@ export class DebugRenderer {
 
     ctx.fillText(`Frame: ${localFrame}`, 10, 30);
     ctx.fillText(`FrameTime: ${frameTime}`, 10, 60);
-    ctx.fillText(`PlayerState: ${playerFsmState}`, 10, 90);
-    ctx.fillText(
-      `input:[ Action:${input.Action} | LX: ${input.LXAxis.AsNumber} | LY: ${input.LYAxis.AsNumber} | RX: ${input.RXAxis.AsNumber} | RY: ${input.RYAxis.AsNumber} | RT: ${input.RTVal.AsNumber} | LT: ${input.LTVal.AsNumber} ]`,
-      10,
-      120
-    );
-    ctx.fillText(`Facing Right: ${playerFacingRight}`, 10, 150);
     ctx.fillText(
       `VectorsRented: ${world.GetRentedVecsForFrame(localFrame)}`,
       10,
-      180
+      90,
     );
     ctx.fillText(
       `CollisionResultsRented: ${world.GetRentedColResForFrame(localFrame)}`,
       10,
-      210
+      120,
     );
     ctx.fillText(
       `ProjectionReultsRented: ${world.GetRentedProjResForFrame(localFrame)}`,
       10,
-      240
+      150,
     );
-
     ctx.fillText(
       `ATKReultsRented: ${world.GetRentedAtkResForFrame(localFrame)}`,
       10,
-      270
+      180,
+    );
+    ctx.fillText(
+      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
+        localFrame,
+      )}`,
+      10,
+      210,
+    );
+    ctx.fillText(
+      `ClosestPointsRented: ${world.GetRentedClosestPointsForFrame(
+        localFrame,
+      )}`,
+      10,
+      240,
     );
 
     ctx.fillText(
-      `ActiveHitBubblesRented: ${world.GetRentedActiveHitBubblesForFrame(
-        localFrame
-      )}`,
+      `ECBDiamondDTOsRented: ${world.GetRentedECBDtosForFrame(localFrame)}`,
       10,
-      300
+      270,
     );
 
-    if (currentAttackString !== undefined) {
-      ctx.fillText(`Attack Name: ${currentAttackString}`, 10, 330);
+    if (this.PlayerDeBugInfo) {
+      this.renderLiveDebugInfo(jazz);
     }
 
     this.lastFrame = localFrame;
   }
-}
 
-export type resolution = {
-  x: number;
-  y: number;
-};
+  renderLiveDebugInfo(jazz: JazzDebugger) {
+    this.dbICtx.fillStyle = 'black';
+    this.dbICtx.fillRect(0, 0, this.dbxRes, this.dbyRes); // Fill the entire canvas with grey
+    const pdbs = jazz.playerDebuggers;
+    const dbL = pdbs.length;
+    let x = 10;
+    const y = 30;
+    for (let i = 0; i < dbL; i++) {
+      const pdb = pdbs[i];
+      const root = StructurePlayerSnapShotForPrinting(pdb.LiveStateData);
+      PrintDataTreeRoot(x, y, root, this.dbICtx);
+      x += 200;
+    }
+  }
+}
 
 function drawStage(ctx: CanvasRenderingContext2D, world: World) {
   const stage = world.StageData.Stage;
@@ -193,7 +220,7 @@ function drawStage(ctx: CanvasRenderingContext2D, world: World) {
 
 function drawPlatforms(
   ctx: CanvasRenderingContext2D,
-  plats?: Array<Line>
+  plats?: Array<Line>,
 ): void {
   if (plats === undefined || plats.length === 0) {
     return;
@@ -216,10 +243,10 @@ function drawPlatforms(
 function drawPlayer(
   ctx: CanvasRenderingContext2D,
   world: World,
-  alpha: number
+  alpha: number,
 ) {
   const playerCount = world.PlayerData.PlayerCount;
-  const currentFrame = world.localFrame - 1;
+  const currentFrame = world.LocalFrame - 1;
   const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
   const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
 
@@ -227,11 +254,11 @@ function drawPlayer(
     const playerHistory = world.GetComponentHistory(i);
     const shield = playerHistory!.ShieldHistory[currentFrame];
     const lastShield = playerHistory!.ShieldHistory[lastFrame];
-    const shieldYOffset = playerHistory!.StaticPlayerHistory.ShieldOffset;
+    const shieldYOffset = playerHistory!.BaseConfigValues.ShieldOffset;
     const pos = playerHistory!.PositionHistory[currentFrame];
     const lastPos = playerHistory!.PositionHistory[lastFrame];
     const lastLastPosition = playerHistory!.PositionHistory[theFrameBeforeLast];
-    const circlesHistory = playerHistory!.StaticPlayerHistory.HurtCapsules;
+    const circlesHistory = playerHistory!.BaseConfigValues.HurtCapsules;
     const flags = playerHistory!.FlagsHistory[currentFrame];
     const lastFlags = playerHistory!.FlagsHistory[lastFrame];
     const ecb = playerHistory!.EcbHistory[currentFrame];
@@ -256,7 +283,7 @@ function drawPlayer(
       lastPos,
       circlesHistory,
       intangible,
-      alpha
+      alpha,
     );
     drawPositionMarker(ctx, pos, lastPos, alpha);
     const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
@@ -271,10 +298,10 @@ function drawPlayer(
     drawLedgeDetectors(
       ctx,
       facingRight,
-      playerHistory!.StaticPlayerHistory,
+      playerHistory!.BaseConfigValues,
       lD,
       lastLd,
-      alpha
+      alpha,
     );
   }
 
@@ -318,7 +345,7 @@ function drawSensors(
   curPos: PositionSnapShot,
   lastPos: PositionSnapShot,
   flags: FlagsSnapShot,
-  sensorsWrapper: SensorSnapShot
+  sensorsWrapper: SensorSnapShot,
 ) {
   ctx.strokeStyle = 'white';
   ctx.fillStyle = 'white';
@@ -351,7 +378,7 @@ function drawShield(
   lastPosition: PositionSnapShot,
   shield: ShieldSnapShot,
   shieldYOffset: number,
-  alpha: number
+  alpha: number,
 ) {
   const x = Lerp(lastPosition.X, curPosition.X, alpha) + shield.ShieldTiltX;
   const y =
@@ -362,8 +389,8 @@ function drawShield(
   const radius = RawToNumber(
     CalculateRadiusFromTriggerRaw(
       triggerValue,
-      NumberToRaw(shield.CurrentRadius)
-    )
+      NumberToRaw(shield.CurrentRadius),
+    ),
   );
   ctx.strokeStyle = 'blue';
   ctx.fillStyle = 'blue';
@@ -380,12 +407,12 @@ function drawShield(
 function drawLedgeDetectors(
   ctx: CanvasRenderingContext2D,
   facingRight: boolean,
-  staticHistory: StaticHistory,
+  staticHistory: BaseConfigValues,
   ledgeDetectorHistory: LedgeDetectorSnapShot,
   lastLedgeDetectorHistory: LedgeDetectorSnapShot,
-  alpha: number
+  alpha: number,
 ) {
-  const ldHeight = staticHistory.ledgDetecorHeight;
+  const ldHeight = staticHistory.LedgeDetectorHeight;
   const ldWidth = staticHistory.LedgeDetectorWidth;
   const curMiddleTopX = ledgeDetectorHistory.middleX;
   const curMiddleTopY = ledgeDetectorHistory.middleY;
@@ -463,7 +490,7 @@ function drawDirectionMarker(
   ecb: ECBSnapShot,
   pos: PositionSnapShot,
   lastPos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   ctx.strokeStyle = 'white';
   const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
@@ -498,7 +525,7 @@ function drawPrevEcb(
   lastEcb: ECBSnapShot,
   lastLastPosition: PositionSnapShot,
   lastPos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
@@ -535,7 +562,7 @@ function drawCurrentECB(
   ecb: ECBSnapShot,
   lasPos: PositionSnapShot,
   pos: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
   const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
@@ -572,7 +599,7 @@ function drawHitCircles(
   flags: FlagsSnapShot,
   currentPosition: PositionSnapShot,
   lastPosition: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   if (attack.attack === undefined) {
     return;
@@ -581,7 +608,7 @@ function drawHitCircles(
   const currentSateFrame = fsmInfo.StateFrame;
   const circles = attack.attack.GetActiveBubblesForFrame(
     currentSateFrame,
-    adto
+    adto,
   );
 
   if (circles === undefined) {
@@ -616,6 +643,10 @@ function drawHitCircles(
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
+
+    ctx.fillStyle = 'darkblue';
+    ctx.fillText(circle.Priority.toString(), offsetX, offsetY);
+    ctx.fillStyle = 'red';
   }
   ctx.globalAlpha = 1.0;
 }
@@ -627,7 +658,7 @@ function drawHurtCircles(
   lasPosition: PositionSnapShot,
   hurtCapsules: Array<HurtCapsule>,
   instangible: boolean,
-  alpha: number
+  alpha: number,
 ) {
   ctx.strokeStyle = 'yellow'; // Set the stroke color for the circles
   ctx.fillStyle = 'yellow'; // Set the fill color for the circles
@@ -659,7 +690,7 @@ function drawHurtCircles(
       globalStartY,
       globalEndX,
       globalEndY,
-      hurtCapsule.Radius.AsNumber
+      hurtCapsule.Radius.AsNumber,
     );
   }
 
@@ -674,7 +705,7 @@ function drawGrabCircles(
   flags: FlagsSnapShot,
   currentPosition: PositionSnapShot,
   lastPosition: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   if (grab === undefined) {
     return;
@@ -721,7 +752,7 @@ function drawPositionMarker(
   ctx: CanvasRenderingContext2D,
   posHistory: PositionSnapShot,
   lastPosHistory: PositionSnapShot,
-  alpha: number
+  alpha: number,
 ) {
   const playerPosX = Lerp(lastPosHistory.X, posHistory.X, alpha);
   const playerPosY = Lerp(lastPosHistory.Y, posHistory.Y, alpha);
@@ -751,7 +782,7 @@ function drawCapsule(
   y1: number,
   x2: number,
   y2: number,
-  radius: number
+  radius: number,
 ) {
   // Calculate the angle of the capsule
   const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -776,4 +807,64 @@ function drawCapsule(
   // Fill and stroke the capsule
   ctx.fill();
   ctx.stroke();
+}
+
+function PrintDataTreeRoot(
+  x: number,
+  y: number,
+  tree: deBugInfoTree,
+  ctx: CanvasRenderingContext2D,
+) {
+  ctx.fillStyle = 'white';
+  printDataTreeNode(tree, x, y, ctx);
+}
+
+const indent = 13;
+
+const colorLevelMap = new Map<number, string>([
+  [0, 'white'],
+  [1, 'blue'],
+  [2, 'green'],
+  [3, 'purple'],
+  [4, 'yellow'],
+  [5, 'magenta'],
+]);
+
+function getColor(level: number) {
+  const mpLength = colorLevelMap.size;
+  const i = level % mpLength;
+  return colorLevelMap.get(i)!;
+}
+
+function printDataTreeNode(
+  d: deBugInfoTree,
+  x: number,
+  y: number,
+  ctx: CanvasRenderingContext2D,
+  level = 0,
+): number {
+  //ctx.fillStyle = getColor(level);
+  if (d.kind === 1) {
+    const originalStyle = ctx.fillStyle;
+
+    ctx.fillStyle = '#4bff14'; // Sage green
+    ctx.fillText(d.label, x, y);
+    const labelWidth = ctx.measureText(d.label).width;
+    ctx.fillStyle = 'white';
+    ctx.fillText(String(d.data), x + labelWidth + 5, y); // 5px padding
+
+    ctx.fillStyle = originalStyle;
+    return y + indent;
+  } else if (d.kind === 2) {
+    ctx.fillStyle = 'cyan';
+    ctx.fillText(d.label, x, y);
+    const dLength = d.data.length;
+    let currentY = y + indent;
+    for (let i = 0; i < dLength; i++) {
+      const child = d.data[i];
+      currentY = printDataTreeNode(child, x + indent, currentY, ctx, level + 1);
+    }
+    return currentY;
+  }
+  return y + indent;
 }

@@ -47,14 +47,14 @@ describe('DefaultCharacterConfig', () => {
   test('Side special should have thses settings', () => {
     const sideSpecial = config.Attacks.get(ATTACK_IDS.S_SPCL_ATK);
     const setVelCommand = sideSpecial?.onEnterCommands.find(
-      (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET
+      (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET,
     )! as SetVelocityCommand;
     const payLoad = setVelCommand.payload;
     expect(payLoad.x).toBe(0);
     expect(payLoad.y).toBe(0);
 
     const c = sideSpecial?.onEnterCommands.find(
-      (c) => c.commandName == COMMAND_NAMES.SET_SENSOR_REACT_COMMAND
+      (c) => c.commandName == COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
     )! as SetPlayerSensorDetectCommand;
     const cPayload = c.payload as SwitchPlayerStateCommand;
     const ge = cPayload.payload;

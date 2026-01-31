@@ -71,8 +71,8 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
-    w.localFrame = 2;
-    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
+    w.LocalFrame = 2;
+    p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
     PlayerAttacks(w);
 
@@ -100,8 +100,8 @@ describe('Attack systesm tests', () => {
     h2.PositionHistory[0] = p2.Position.SnapShot();
     h2.PositionHistory[1] = p2.Position.SnapShot();
     h2.PositionHistory[2] = p2.Position.SnapShot();
-    w.localFrame = 2;
-    p1.FSMInfo._currentStateFrame = 3; // Startup frames over, active frames
+    w.LocalFrame = 2;
+    p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
     PlayerAttacks(w);
 
@@ -164,7 +164,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
 
       // Angle = 45. cos(45) = 0.707, sin(45) = 0.707
@@ -187,7 +187,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
 
       // Angle is 180 - 45 = 135. cos(135) = -0.707, sin(135) = 0.707
@@ -205,7 +205,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
       // cos(0) = 1, sin(0) = 0
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(100, 0);
@@ -220,7 +220,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle,
         isFacingRight,
-        knockBackRaw
+        knockBackRaw,
       );
       // cos(90) = 0, sin(90) = 1
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(0, 0);

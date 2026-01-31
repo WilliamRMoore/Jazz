@@ -39,7 +39,7 @@ export function PlayerGrabs(w: World) {
         componenetHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
-        w.localFrame
+        w.LocalFrame
       );
 
       const p2VsP1 = PAvsPB(
@@ -48,7 +48,7 @@ export function PlayerGrabs(w: World) {
         componenetHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
-        w.localFrame
+        w.LocalFrame
       );
 
       if (p1VsP2 && !p2VsP1) {
@@ -151,11 +151,16 @@ function PAvsPB(
   const pAPosition = pA.Position;
   const pBPosition = pB.Position;
   const pAFacingRight = pA.Flags.IsFacingRight;
-  const pAPosHistory = componentHistories[pA.ID].PositionHistory;
-  const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
-  const prevPostion = pAPosHistory[previousWorldFrame];
-  const prevXRaw = NumberToRaw(prevPostion.X);
-  const prevYRaw = NumberToRaw(prevPostion.Y);
+  const pAHistory = componentHistories[pA.ID];
+  const previousWorldFrame = currentFrame === 0 ? 0 : currentFrame - 1;
+  const prevPostion = pAHistory.PositionHistory[previousWorldFrame]; //pAPosHistory[previousWorldFrame];
+  const prevUndefined = prevPostion === undefined;
+  const prevXRaw = prevUndefined
+    ? pA.Position.X.Raw
+    : NumberToRaw(prevPostion.X);
+  const prevYRaw = prevUndefined
+    ? pA.Position.Y.Raw
+    : NumberToRaw(prevPostion.Y);
 
   for (let hurtIndex = 0; hurtIndex < hurtBubblesLength; hurtIndex++) {
     const hurtBubble = hurtBubbles[hurtIndex];

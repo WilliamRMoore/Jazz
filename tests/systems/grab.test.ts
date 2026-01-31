@@ -46,7 +46,7 @@ describe('Grab SystemTests', () => {
     p1Sm.ForceState(STATE_IDS.IDLE_S);
     const p1IA = NewInputAction();
     p1IA.Action = GAME_EVENT_IDS.GRAB_GE;
-    p1InputStore.StoreInputForFrame(w.localFrame, p1IA);
+    p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p1Sm.UpdateFromInput(p1IA, w);
     expect(p1.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_S);
   });
@@ -66,10 +66,10 @@ describe('Grab SystemTests', () => {
       p1Sm.UpdateFromInput(ia, w);
       p2Sm.UpdateFromInput(ia, w);
       h1.PositionHistory[frame] =
-        (w.localFrame + frame, p1.Position.SnapShot());
+        (w.LocalFrame + frame, p1.Position.SnapShot());
       h2.PositionHistory[frame] =
-        (w.localFrame + frame, p2.Position.SnapShot());
-      w.localFrame++;
+        (w.LocalFrame + frame, p2.Position.SnapShot());
+      w.LocalFrame++;
     }
 
     PlayerGrabs(w);

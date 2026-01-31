@@ -1,5 +1,5 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { InputAction } from '../../input/Input';
+import { InputAction, NewInputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
@@ -12,6 +12,9 @@ import { AttackResult } from '../pools/AttackResult';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
+import { InitPlayerHistory } from '../systems/history';
+import { frameNumber } from '../entity/components/attack';
+import { envConfig, MainConfig } from '../config/main-config';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -20,7 +23,10 @@ export type PlayerData = {
   Player: (playerId: number) => Player;
   AddPlayer: (p: Player) => void;
   AddStateMachine: (sm: StateMachine) => void;
-  AddInputStore: (is: InputStoreLocal<InputAction>) => void;
+  AddInputStore: (
+    is: InputStoreLocal<InputAction>,
+    currentFrame: frameNumber,
+  ) => void;
 };
 
 export type StageData = {
@@ -45,6 +51,8 @@ export type HistoryData = {
   RentedProjResHistory: Array<number>;
   RentedAtkResHistory: Array<number>;
   RentedAtiveHitBubHistory: Array<number>;
+  RentedClosestPoints: Array<number>;
+  RedntedECBDtos: Array<number>;
 };
 
 class PlayerState implements PlayerData {
@@ -72,7 +80,13 @@ class PlayerState implements PlayerData {
     this.stateMachines.push(sm);
   }
 
-  public AddInputStore(is: InputStoreLocal<InputAction>): void {
+  public AddInputStore(
+    is: InputStoreLocal<InputAction>,
+    currentFrame: frameNumber,
+  ): void {
+    for (let i = 0; i <= currentFrame; i++) {
+      is.StoreInputForFrame(i, NewInputAction());
+    }
     this.inputStore.push(is);
   }
 
@@ -94,26 +108,35 @@ class PoolContainer implements Pools {
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
   public readonly DiamondPool: Pool<DiamondDTO>;
 
-  constructor() {
+  constructor(mc: MainConfig) {
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
-      20,
-      () => new ActiveHitBubblesDTO()
+      mc.get('PoolSizes.ActiveHitBubblesDTOCount') as number,
+      () => new ActiveHitBubblesDTO(),
     );
-    this.VecPool = new Pool<PooledVector>(500, () => new PooledVector());
+    this.VecPool = new Pool<PooledVector>(
+      mc.get('PoolSizes.PooledVectorCount') as number,
+      () => new PooledVector(),
+    );
     this.ColResPool = new Pool<CollisionResult>(
-      100,
-      () => new CollisionResult()
+      mc.get('PoolSizes.CollisionResultCount') as number,
+      () => new CollisionResult(),
     );
     this.ProjResPool = new Pool<ProjectionResult>(
-      200,
-      () => new ProjectionResult()
+      mc.get('PoolSizes.ProjectionResultCount') as number,
+      () => new ProjectionResult(),
     );
-    this.AtkResPool = new Pool<AttackResult>(100, () => new AttackResult());
+    this.AtkResPool = new Pool<AttackResult>(
+      mc.get('PoolSizes.AttackResultCount') as number,
+      () => new AttackResult(),
+    );
     this.ClstsPntsResPool = new Pool<ClosestPointsResult>(
-      400,
-      () => new ClosestPointsResult()
+      mc.get('PoolSizes.ClosestPointsResultCount') as number,
+      () => new ClosestPointsResult(),
     );
-    this.DiamondPool = new Pool<DiamondDTO>(50, () => new DiamondDTO());
+    this.DiamondPool = new Pool<DiamondDTO>(
+      mc.get('PoolSizes.DiamondDTOCount') as number,
+      () => new DiamondDTO(),
+    );
   }
   public Zero(): void {
     this.ActiveHitBubbleDtoPool.Zero();
@@ -133,36 +156,61 @@ class History implements HistoryData {
   public readonly RentedProjResHistory: Array<number> = [];
   public readonly RentedAtkResHistory: Array<number> = [];
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
+  public readonly RentedClosestPoints: Array<number> = [];
+  public readonly RedntedECBDtos: Array<number> = [];
 }
 
 export class World {
+  private localFrame = 0;
   public readonly StageData: StageWorldState = new StageWorldState();
   public readonly PlayerData: PlayerState = new PlayerState();
   public readonly HistoryData: History = new History();
-  public localFrame = 0;
   private readonly FrameTimes: Array<number> = [];
   private readonly FrameTimeStamps: Array<number> = [];
-  public readonly Pools: PoolContainer = new PoolContainer();
+  public readonly Pools: PoolContainer;
+
+  constructor(mc: MainConfig | undefined = undefined) {
+    if (mc === undefined) {
+      mc = envConfig as MainConfig;
+    }
+    this.Pools = new PoolContainer(mc);
+  }
 
   public get PreviousFrame(): number {
-    return this.localFrame === 0 ? 0 : this.localFrame - 1;
+    return this.localFrame < 1 ? 0 : this.localFrame - 1;
+  }
+
+  public get LocalFrame(): number {
+    return this.localFrame;
+  }
+
+  public set LocalFrame(f: number) {
+    this.localFrame = f;
+    if (Number.isInteger(f) === false) {
+      console.error(
+        'World local frame was set to a number value other than an integer.',
+      );
+    }
   }
 
   public SetPlayer(p: Player): void {
     this.PlayerData.AddPlayer(p);
     this.PlayerData.AddStateMachine(new StateMachine(p, this));
-    this.PlayerData.AddInputStore(new InputStoreLocal<InputAction>());
+    this.PlayerData.AddInputStore(
+      new InputStoreLocal<InputAction>(),
+      this.localFrame,
+    );
     const compHist = new ComponentHistory();
-    compHist.StaticPlayerHistory.LedgeDetectorWidth =
+    compHist.BaseConfigValues.LedgeDetectorWidth =
       p.LedgeDetector.Width.AsNumber;
-    compHist.StaticPlayerHistory.ledgDetecorHeight =
+    compHist.BaseConfigValues.LedgeDetectorHeight =
       p.LedgeDetector.Height.AsNumber;
-    compHist.StaticPlayerHistory.ShieldOffset =
-      p.Shield.YOffsetConstant.AsNumber;
+    compHist.BaseConfigValues.ShieldOffset = p.Shield.YOffsetConstant.AsNumber;
     p.HurtCircles.HurtCapsules.forEach((hc) =>
-      compHist.StaticPlayerHistory.HurtCapsules.push(hc)
+      compHist.BaseConfigValues.HurtCapsules.push(hc),
     );
     this.HistoryData.PlayerComponentHistories.push(compHist);
+    InitPlayerHistory(p, this);
   }
 
   public SetStage(s: Stage) {
@@ -209,8 +257,16 @@ export class World {
     return this.HistoryData.RentedAtiveHitBubHistory[frame];
   }
 
+  public GetRentedClosestPointsForFrame(frame: number): number {
+    return this.HistoryData.RentedClosestPoints[frame];
+  }
+
+  public GetRentedECBDtosForFrame(frame: number): number {
+    return this.HistoryData.RedntedECBDtos[frame];
+  }
+
   public SetPoolHistory(): void {
-    const frame = this.localFrame;
+    const frame = this.LocalFrame;
     const histDat = this.HistoryData;
     const pools = this.Pools;
     histDat.RentedVecHistory[frame] = pools.VecPool.ActiveCount;
@@ -219,5 +275,7 @@ export class World {
     histDat.RentedAtkResHistory[frame] = pools.AtkResPool.ActiveCount;
     histDat.RentedAtiveHitBubHistory[frame] =
       pools.ActiveHitBubbleDtoPool.ActiveCount;
+    histDat.RentedClosestPoints[frame] = pools.ClstsPntsResPool.ActiveCount;
+    histDat.RedntedECBDtos[frame] = pools.DiamondPool.ActiveCount;
   }
 }

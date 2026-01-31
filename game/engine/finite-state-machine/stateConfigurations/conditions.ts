@@ -24,7 +24,7 @@ export type condition = {
 export function RunCondition(
   c: condition,
   w: World,
-  playerIndex: number
+  playerIndex: number,
 ): StateId | undefined {
   if (c.ConditionFunc(w, playerIndex) === true) {
     return c.StateId;
@@ -37,7 +37,7 @@ export const IdleToTurn: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const flags = p.Flags;
     const ia = inputStore.GetInputForFrame(curFrame);
 
@@ -59,7 +59,7 @@ export const IdleToDash: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
@@ -93,7 +93,7 @@ export const IdleToDashTurn: condition = {
   Name: 'IdleToTurnDash',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
@@ -128,7 +128,7 @@ export const shieldToShieldDrop: condition = {
   Name: 'ToShieldDrop',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LTValRaw === 0 && ia.RTValRaw === 0) {
@@ -146,7 +146,7 @@ export const WalkToDash: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const fsmInfo = p.FSMInfo;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
 
@@ -186,7 +186,7 @@ export const WalkToTurn: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const player = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -222,7 +222,7 @@ export const RunToRunStopByGuard: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const pd = w.PlayerData;
     const inputStore = pd.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
@@ -238,7 +238,7 @@ export const RunToTurn: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const player = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -275,7 +275,7 @@ export const DashToTurn: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const player = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -315,7 +315,7 @@ export const ToJump: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const player = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -337,7 +337,7 @@ export const ToAirDodge: condition = {
   Name: 'ToAirDodge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
   StateId: STATE_IDS.AIR_DODGE_S,
@@ -349,7 +349,7 @@ export const DashDefaultRun: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
@@ -369,7 +369,7 @@ export const DashDefaultIdle: condition = {
   Name: 'DashDefaultIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw === 0) {
@@ -385,7 +385,7 @@ export const TurnDefaultWalk: condition = {
   Name: 'TurnDefaultWalk',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const p = w.PlayerData.Player(playerIndex);
     const facingRight = p?.Flags.IsFacingRight;
@@ -412,7 +412,7 @@ export const TurnToDash: condition = {
     }
 
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (
       (ia.LXAxisRaw < -TURN_TO_DASH_LXAXIS_THRESHOLD &&
@@ -423,7 +423,7 @@ export const TurnToDash: condition = {
       return inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.MOVE_FAST_GE,
         ia,
-        prevIa
+        prevIa,
       );
     }
     return false;
@@ -435,7 +435,7 @@ export const ToNair: condition = {
   Name: 'ToNAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -443,7 +443,7 @@ export const ToNair: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.N_AIR_S,
@@ -454,7 +454,7 @@ export const ToFAir: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex);
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -502,7 +502,7 @@ export const ToBAir: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex);
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -530,7 +530,7 @@ export const ToUAir: condition = {
   Name: 'ToUAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -538,7 +538,7 @@ export const ToUAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.U_AIR_S,
@@ -548,7 +548,7 @@ export const ToDAir: condition = {
   Name: 'ToDAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -556,7 +556,7 @@ export const ToDAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.D_AIR_S,
@@ -566,7 +566,7 @@ export const SideTiltToWalk: condition = {
   Name: 'SideTiltToWalk',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (
@@ -596,7 +596,7 @@ export const LandToIdle: condition = {
   Name: 'LandToIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw === 0) {
@@ -614,7 +614,7 @@ export const LandToWalk: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
@@ -636,7 +636,7 @@ export const LandToTurn: condition = {
     const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
@@ -656,7 +656,7 @@ export const DefaultDownTiltToCrouch: condition = {
   Name: 'DefaultDownTiltToCrouch',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.DOWN_GE) {
       return true;
@@ -673,7 +673,7 @@ export const RunStopToTurn: condition = {
     const flags = p.Flags;
 
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
@@ -693,14 +693,14 @@ export const IdleToAttack: condition = {
   Name: 'IdleToAttack',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.ATTACK_S,
@@ -710,7 +710,7 @@ export const ToSideCharge: condition = {
   Name: 'ToSideCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -719,7 +719,7 @@ export const ToSideCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -739,7 +739,7 @@ export const IdleToUpTilt: condition = {
   Name: 'IdleToUpTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -747,7 +747,7 @@ export const IdleToUpTilt: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -766,7 +766,7 @@ export const ToUpCharge: condition = {
   Name: 'ToUpCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -775,7 +775,7 @@ export const ToUpCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -794,7 +794,7 @@ export const ToDownCharge: condition = {
   Name: 'ToDownCharge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
@@ -803,7 +803,7 @@ export const ToDownCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
-        prevIa
+        prevIa,
       ) === false
     ) {
       return false;
@@ -827,7 +827,7 @@ export const RunToDashAttack: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       if (Math.abs(ia.RXAxisRaw) > 0) {
@@ -851,7 +851,7 @@ export const ToSideTilt: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex);
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     if (ia.Action !== GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       return false;
@@ -877,14 +877,14 @@ export const ToNSpecial: condition = {
   Name: 'ToNSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SPCL_S,
@@ -894,14 +894,14 @@ export const ToSideSpecial: condition = {
   Name: 'ToSideSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SIDE_SPCL_S,
@@ -911,14 +911,14 @@ export const ToSideSpecialAir: condition = {
   Name: 'ToSideSpecialAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.SIDE_SPCL_AIR_S,
@@ -928,14 +928,14 @@ export const ToDownSpecial: condition = {
   Name: 'ToDownSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_S,
@@ -945,14 +945,14 @@ export const ToDownSpecialAir: condition = {
   Name: 'ToDownSpecialAir',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_SPCL_AIR_S,
@@ -962,14 +962,14 @@ export const ToUpSpecial: condition = {
   Name: 'ToUpSpecial',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_SPCL_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.UP_SPCL_S,
@@ -979,14 +979,14 @@ export const ToDownTilt: condition = {
   Name: 'ToDownTilt',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa
+      prevIa,
     );
   },
   StateId: STATE_IDS.DOWN_TILT_S,
@@ -1024,7 +1024,7 @@ export const SideChargeToEx: condition = {
   Name: 'SideChargeToEx',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
@@ -1051,7 +1051,7 @@ export const UpChargeToEx: condition = {
   Name: 'UpChargeToEx',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
@@ -1072,7 +1072,7 @@ export const DownChargeToEx: condition = {
   Name: 'DownChargeToEx',
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
 
     // Release C-stick
@@ -1094,7 +1094,7 @@ export const ToSpotDodge: condition = {
   Name: 'ToSpotDodge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const ips = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = ips.GetInputForFrame(curFrame);
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
 
@@ -1118,7 +1118,7 @@ export const ToRollDodge: condition = {
   Name: 'ToRollDodge',
   ConditionFunc: (w: World, playerIndex: number) => {
     const ips = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.localFrame;
+    const curFrame = w.LocalFrame;
     const ia = ips.GetInputForFrame(curFrame);
 
     if (ia.Action !== GAME_EVENT_IDS.GUARD_GE) {
@@ -1171,6 +1171,27 @@ export const defaultWalk: condition = {
     return true;
   },
   StateId: STATE_IDS.WALK_S,
+};
+
+export const defaultTrunRunToIdle: condition = {
+  Name: 'DefaultTrunRunToIdle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const ia = w.PlayerData.InputStore(playerIndex).GetInputForFrame(
+      w.LocalFrame,
+    );
+    const p = w.PlayerData.Player(playerIndex);
+    const facingRight = p.Flags.IsFacingRight;
+
+    if (ia.LXAxisRaw > 0 && facingRight) {
+      return true;
+    }
+    if (ia.LXAxisRaw < 0 && !facingRight) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.IDLE_S,
 };
 
 export const defaultRun: condition = {
@@ -1256,7 +1277,7 @@ export const defaultDownChargeEx: condition = {
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,
-  prevIa: InputAction | undefined
+  prevIa: InputAction | undefined,
 ) {
   if (ia.Action !== targetGeId) {
     return false;
@@ -1277,7 +1298,7 @@ function isBufferedInput(
   inputStore: InputStoreLocal<InputAction>,
   currentFrame: number,
   bufferFrames: number,
-  targetGameEvent: GameEventId
+  targetGameEvent: GameEventId,
 ): boolean {
   for (let i = 0; i < bufferFrames; i++) {
     const ia = inputStore.GetInputForFrame(currentFrame - i);

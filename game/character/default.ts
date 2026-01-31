@@ -201,7 +201,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.MaxDashSpeed = 7.8;
     this.AirDodgeSpeed = 13.5;
     this.DodgeRollSpeed = 14.5;
-    this.GroundedVelocityDecay = 0.42;
+    this.GroundedVelocityDecay = 0.32;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -267,7 +267,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   }
 }
 
-const toCv = (x: number, y: number) => ({ x: x, y: y } as ConfigVec);
+const toCv = (x: number, y: number) => ({ x: x, y: y }) as ConfigVec;
 
 function GetNAtk() {
   const hb1OffSets = new Map<frameNumber, ConfigVec>();
@@ -429,7 +429,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     160,
-    20
+    20,
   );
 
   const bubble2Offsets = generateArcBubbleOffsets(
@@ -437,7 +437,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     140,
-    20
+    20,
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -445,7 +445,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     110,
-    20
+    20,
   );
 
   const uAirAttack = new AttackConfigBuilder('UAir')
@@ -462,7 +462,7 @@ function GetUAir() {
       uairRadius,
       0,
       toeOfNoLaunchAngle,
-      bubble3Offsets
+      bubble3Offsets,
     )
     .Build();
 
@@ -488,7 +488,7 @@ function GetFAir() {
     155, // distance from player center
     130, // retract inwards by 10px at end
     12,
-    false
+    false,
   );
 
   // Bubble 2: further from player, stacked above, same rotation
@@ -499,7 +499,7 @@ function GetFAir() {
     130,
     110,
     12,
-    false
+    false,
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -509,7 +509,7 @@ function GetFAir() {
     100,
     100,
     12,
-    false
+    false,
   );
 
   // Build the FAir attack using AttackBuilder
@@ -854,7 +854,7 @@ function GetUpTilt() {
     120,
     0,
     50,
-    true
+    true,
   );
 
   const hitBubbleOffsets2 = new Map<frameNumber, ConfigVec>();
@@ -875,7 +875,7 @@ function GetUpTilt() {
       explosiveRadius,
       1,
       launchAngle,
-      hitBubbleOffsets2
+      hitBubbleOffsets2,
     );
 
   return bldr.Build();
@@ -909,7 +909,7 @@ function GetUpchargeExt() {
     6,
     105,
     0,
-    21
+    21,
   );
 
   h1offset.forEach((v, k) => {
@@ -1304,16 +1304,16 @@ function GetDownSpecial() {
   const hb1OffSets = new Map<frameNumber, ConfigVec>();
   const hb2OffSets = new Map<frameNumber, ConfigVec>();
   const hb3offSets = new Map<frameNumber, ConfigVec>();
-  const hb4OffSets = new Map<frameNumber, ConfigVec>();
+  //const hb4OffSets = new Map<frameNumber, ConfigVec>();
 
-  for (let i = 23; i < activeFrames; i++) {
+  for (let i = 23; i < activeFrames - 10; i++) {
     impulses.set(i, toCv(2, 0));
     hb1OffSets.set(i, toCv(100, -25));
     hb2OffSets.set(i, toCv(70, -25));
     hb3offSets.set(i, toCv(40, -25));
-    if (i > 50) {
-      hb4OffSets.set(i, toCv(120, -25));
-    }
+    //   if (i > 50) {
+    //     hb4OffSets.set(i, toCv(120, -25));
+    //   }
   }
 
   const blrd = new AttackConfigBuilder('DSpecial');
@@ -1326,8 +1326,8 @@ function GetDownSpecial() {
     .WithTotalFrames(activeFrames)
     .WithHitBubble(15, 20, 0, 45, hb1OffSets)
     .WithHitBubble(13, 19, 1, 45, hb2OffSets)
-    .WithHitBubble(12, 18, 3, 45, hb3offSets)
-    .WithHitBubble(16, 25, 4, 45, hb4OffSets)
+    .WithHitBubble(12, 18, 2, 45, hb3offSets)
+    //.WithHitBubble(16, 25, 3, 45, hb4OffSets)
     .WithImpulses(impulses, 12);
 
   return blrd.Build();
@@ -1432,7 +1432,7 @@ function generateArcBubbleOffsets(
   distance: number,
   inwardRetract: number,
   frameStart: number = 12,
-  invertY: boolean = true
+  invertY: boolean = true,
 ): Map<number, ConfigVec> {
   const offsets = new Map<number, ConfigVec>();
 

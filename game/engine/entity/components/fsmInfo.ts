@@ -6,7 +6,14 @@ import { IHistoryEnabled } from '../componentHistory';
 export type FSMInfoSnapShot = {
   State: FSMState;
   StateFrame: number;
-  frameLengths: Map<StateId, number>;
+};
+
+type StateFrame = {
+  Frame: number;
+};
+
+export type StateFrameRef = {
+  readonly Frame: number;
 };
 
 export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
@@ -30,7 +37,7 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
     return this.currentState.StateId;
   }
 
-  public set _currentStateFrame(frame: number) {
+  public set _db_currentStateFrame(frame: number) {
     this.currentStateFrame = frame;
   }
 
@@ -54,23 +61,15 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
     return this.frameLengths.get(this.CurrentState.StateId);
   }
 
-  public SetFrameLength(stateId: StateId, frameLength: number): void {
-    this.frameLengths.set(stateId, frameLength);
-  }
-
   public SnapShot(): FSMInfoSnapShot {
     return {
       State: this.currentState,
       StateFrame: this.currentStateFrame,
-      frameLengths: new Map(this.frameLengths),
     } as FSMInfoSnapShot;
   }
 
   public SetFromSnapShot(snapShot: FSMInfoSnapShot): void {
     this.currentState = snapShot.State;
     this.currentStateFrame = snapShot.StateFrame;
-    for (const [key, value] of snapShot.frameLengths.entries()) {
-      this.frameLengths.set(key, value);
-    }
   }
 }

@@ -4,14 +4,12 @@ import { FillArrayWithFlatVec } from '../../utils';
 import { IHistoryEnabled } from '../componentHistory';
 
 export type LedgeDetectorSnapShot = {
-  readonly middleX: number;
-  readonly middleY: number;
-  readonly numberOfLedgeGrabs: number;
+  middleX: number;
+  middleY: number;
+  numberOfLedgeGrabs: number;
 };
 
-export class LedgeDetectorComponent
-  implements IHistoryEnabled<LedgeDetectorSnapShot>
-{
+export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnapShot> {
   private maxGrabs: number = 15;
   private numberOfLedgeGrabs: number = 0;
   private readonly yOffset: FixedPoint = new FixedPoint(0);
@@ -27,7 +25,7 @@ export class LedgeDetectorComponent
     y: number,
     width: number,
     height: number,
-    yOffset = -130
+    yOffset = -130,
   ) {
     this.height.SetFromNumber(height);
     this.width.SetFromNumber(width);

@@ -137,6 +137,8 @@ class STATES {
   public readonly GRAB_HELD_S = seq.Next as StateId;
   public readonly GRAB_RELEASE_S = seq.Next as StateId;
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
+  public readonly LEDGE_RECOVER_S = seq.Next as StateId;
+  public readonly LEDGE_GUA_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -173,6 +175,8 @@ class ATTACKS {
   public readonly U_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
+  public readonly LEDGE_GU_ATK = seq.Next as AttackId;
+  public readonly LEDGE_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();
@@ -186,6 +190,21 @@ class GRABS {
 }
 
 export const GRAB_IDS = new GRABS();
+
+export const StateIdToNameMap = new Map<StateId, string>();
+Object.entries(STATE_IDS).forEach(([key, value]) => {
+  StateIdToNameMap.set(value, key);
+});
+
+export const AttackIdToNameMap = new Map<AttackId, string>();
+Object.entries(ATTACK_IDS).forEach(([key, value]) => {
+  AttackIdToNameMap.set(value, key);
+});
+
+export const GrabIdToNameMap = new Map<GrabId, string>();
+Object.entries(GRAB_IDS).forEach(([key, value]) => {
+  GrabIdToNameMap.set(value, key);
+});
 
 export function CanStateWalkOffLedge(stateId: StateId): boolean {
   switch (stateId) {
