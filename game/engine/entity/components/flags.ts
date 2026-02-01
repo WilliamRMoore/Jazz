@@ -7,6 +7,7 @@ export type FlagsSnapShot = {
   IntangabilityFrames: number;
   DisablePlatDetection: number;
   VeloctyDecay: boolean;
+  ShieldJump: boolean;
 };
 
 export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
@@ -16,6 +17,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
   private intangabilityFrames: number = 0;
   private disablePlatformDetection: number = 0;
   private velocityDecayActive: boolean = true;
+  private shieldJump: boolean = false;
 
   public FaceRight(): void {
     this.facingRight = true;
@@ -81,6 +83,18 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.disablePlatformDetection = 0;
   }
 
+  public JumpFromShield(): void {
+    this.shieldJump = true;
+  }
+
+  public get JumpedFromShield(): boolean {
+    return this.shieldJump;
+  }
+
+  public ResetJumpFromShield(): void {
+    this.shieldJump = false;
+  }
+
   public get IsFastFalling(): boolean {
     return this.fastFalling;
   }
@@ -125,6 +139,7 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
       IntangabilityFrames: this.intangabilityFrames,
       DisablePlatDetection: this.disablePlatformDetection,
       VeloctyDecay: this.velocityDecayActive,
+      ShieldJump: this.shieldJump,
     } as FlagsSnapShot;
   }
 
@@ -135,5 +150,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.intangabilityFrames = snapShot.IntangabilityFrames;
     this.disablePlatformDetection = snapShot.DisablePlatDetection;
     this.velocityDecayActive = snapShot.VeloctyDecay;
+    this.shieldJump = snapShot.ShieldJump;
   }
 }

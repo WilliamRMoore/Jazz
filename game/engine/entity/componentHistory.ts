@@ -15,6 +15,7 @@ import { GrabSnapShot } from './components/grab';
 import { GrabMeterSnapShot } from './components/grabMeter';
 import { DebugSnapShot } from './components/debug';
 import { HurtCapsule } from './components/hurtCircles';
+import { JumpSnapShot } from './components/jump';
 
 export class BaseConfigValues {
   public LedgeDetectorHeight: number = 0;
@@ -35,7 +36,7 @@ export type PlayerSnapShot = {
   LedgeDetector: LedgeDetectorSnapShot;
   Sensors: SensorSnapShot;
   Ecb: ECBSnapShot;
-  Jump: number;
+  Jump: JumpSnapShot;
   Attack: AttackSnapShot;
   Grab: GrabSnapShot;
   GrabMeter: GrabMeterSnapShot;
@@ -53,7 +54,7 @@ export class ComponentHistory {
   readonly VelocityHistory: Array<VelocitySnapShot> = [];
   readonly FlagsHistory: Array<FlagsSnapShot> = [];
   readonly EcbHistory: Array<ECBSnapShot> = [];
-  readonly JumpHistroy: Array<number> = [];
+  readonly JumpHistroy: Array<JumpSnapShot> = [];
   readonly LedgeDetectorHistory: Array<LedgeDetectorSnapShot> = [];
   readonly SensorsHistory: Array<SensorSnapShot> = [];
   readonly AttackHistory: Array<AttackSnapShot> = [];

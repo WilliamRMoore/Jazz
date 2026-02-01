@@ -228,8 +228,6 @@ function PAvsPB(
 
   const xRaw = prevXRaw;
   const yRaw = prevYRaw;
-  //const xRaw = NumberToRaw(prevPos.X);
-  //const yRaw = NumberToRaw(prevPos.Y);
 
   const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
   const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);

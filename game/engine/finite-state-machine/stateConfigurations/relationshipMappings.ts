@@ -34,6 +34,7 @@ import {
   shieldToShieldDrop,
   SideChargeToEx,
   SideTiltToWalk,
+  ToStickJumpSquat,
   ToAirDodge,
   ToBAir,
   ToDAir,
@@ -59,6 +60,7 @@ import {
   UpChargeToEx,
   WalkToDash,
   WalkToTurn,
+  ToStickJump,
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -131,6 +133,7 @@ export function InitIdleRelations(): StateRelation {
     ToSideSpecial,
     ToDownSpecial,
     ToUpSpecial,
+    ToStickJumpSquat,
   ];
 
   idleTranslations.SetConditions(condtions);
@@ -164,9 +167,15 @@ export function InitShieldRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
     { geId: GAME_EVENT_IDS.SHIELD_BREAK_GE, sId: STATE_IDS.SHIELD_BREAK_S },
+    { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S },
   ]);
 
-  translations.SetConditions([shieldToShieldDrop, ToSpotDodge, ToRollDodge]);
+  translations.SetConditions([
+    shieldToShieldDrop,
+    ToSpotDodge,
+    ToRollDodge,
+    ToStickJumpSquat,
+  ]);
 
   return new StateRelation(STATE_IDS.SHIELD_S, translations);
 }
@@ -307,6 +316,7 @@ export function InitWalkRelations(): StateRelation {
     ToDownCharge,
     ToUpCharge,
     ToSideTilt,
+    ToStickJumpSquat,
   ];
 
   walkTranslations.SetConditions(conditions);
@@ -331,6 +341,7 @@ export function InitDashRelations(): StateRelation {
     ToSideSpecial,
     ToUpSpecial,
     RunToDashAttack,
+    ToStickJumpSquat,
   ];
 
   dashTranslations.SetConditions(conditions);
@@ -353,7 +364,7 @@ export function InitDashTurnRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
-  dashTrunTranslations.SetConditions([ToSideSpecial]);
+  dashTrunTranslations.SetConditions([ToSideSpecial, ToStickJumpSquat]);
 
   dashTrunTranslations.SetDefaults([defaultDash]);
 
@@ -383,6 +394,7 @@ export function InitRunRelations(): StateRelation {
     ToUpSpecial,
     RunToDashAttack,
     RunToRunStopByGuard,
+    ToStickJumpSquat,
   ];
 
   runTranslations.SetConditions(conditions);
@@ -449,6 +461,8 @@ export function InitJumpSquatRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
+  jumpSquatTranslations.SetConditions([ToUpSpecial]);
+
   jumpSquatTranslations.SetDefaults([defaultJump]);
 
   const jumpSquatRelations = new StateRelation(
@@ -467,7 +481,7 @@ export function InitJumpRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
   ]);
 
-  jumpTranslations.SetConditions([ToJump, ToAirDodge]);
+  jumpTranslations.SetConditions([ToJump, ToAirDodge, ToStickJump]);
 
   jumpTranslations.SetDefaults([defaultNFall]);
 
@@ -498,6 +512,7 @@ export function InitNeutralFallRelations(): StateRelation {
     ToSideSpecialAir,
     ToUpSpecial,
     ToDownSpecialAir,
+    ToStickJump,
   ]);
 
   const nFallRelations = new StateRelation(

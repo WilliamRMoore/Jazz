@@ -54,6 +54,49 @@ export const IdleToTurn: condition = {
   StateId: STATE_IDS.TURN_S,
 };
 
+const STICK_JUMP_THRESHOLD = NumberToRaw(0.4);
+export const ToStickJumpSquat: condition = {
+  Name: 'StickJump',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const is = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.LocalFrame;
+    const lastFrame = w.PreviousFrame;
+    const lastIa = is.GetInputForFrame(lastFrame);
+    const ia = is.GetInputForFrame(curFrame);
+    if (ia.LYAxis.Raw <= 0) {
+      return false;
+    }
+    const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.JUMP_SQUAT_S,
+};
+
+export const ToStickJump: condition = {
+  Name: 'StickJump',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const is = w.PlayerData.InputStore(playerIndex);
+    const curFrame = w.LocalFrame;
+    const lastFrame = w.PreviousFrame;
+    const lastIa = is.GetInputForFrame(lastFrame);
+    const ia = is.GetInputForFrame(curFrame);
+    if (ia.LYAxis.Raw <= 0) {
+      return false;
+    }
+    const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.JUMP_S,
+};
+
 export const IdleToDash: condition = {
   Name: 'IdleToDash',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -338,6 +381,10 @@ export const ToAirDodge: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const inputStore = w.PlayerData.InputStore(playerIndex);
     const curFrame = w.LocalFrame;
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.Flags.JumpedFromShield) {
+      return false;
+    }
     return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
   StateId: STATE_IDS.AIR_DODGE_S,
