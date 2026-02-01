@@ -4,7 +4,6 @@ import {
   DivideRaw,
   MultiplyRaw,
   SqrtRaw,
-  DistanceRaw,
 } from '../../math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../../math/LUTS';
 import { FlatVec } from '../../physics/vector';
@@ -176,6 +175,11 @@ export const JumpSquat: FSMState = {
   StateId: STATE_IDS.JUMP_SQUAT_S,
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
+    const pHist = w.GetComponentHistory(p.ID);
+    const lastState = pHist?.FsmInfoHistory[w.PreviousFrame]!;
+    if (lastState.State.StateId === STATE_IDS.SHIELD_S) {
+      p.Flags.JumpFromShield();
+    }
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {

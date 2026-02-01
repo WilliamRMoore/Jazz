@@ -17,7 +17,7 @@ import { PlayerInput } from './systems/playerInput';
 import { PlayerSensors } from './systems/sensors';
 import { ShieldRegen } from './systems/shieldRegen';
 import { StageCollisionDetection } from './systems/stageCollision';
-import { TimedFlags } from './systems/timedFlags';
+import { Flags } from './systems/flags';
 import { ApplyVelocity } from './systems/velocity';
 import { ApplyVelocityDecay } from './systems/velocityDecay';
 import { World } from './world/world';
@@ -90,6 +90,7 @@ export class Jazz implements IJazz {
 }
 
 export const DefaultGameLoop: GameLoop = (w: World) => {
+  Flags(w);
   PlayerInput(w);
   Gravity(w);
   ApplyVelocity(w);
@@ -104,6 +105,5 @@ export const DefaultGameLoop: GameLoop = (w: World) => {
   GrabMeter(w);
   PlayerGrabs(w);
   OutOfBoundsCheck(w);
-  TimedFlags(w);
   RecordHistory(w);
 };
