@@ -23,19 +23,21 @@ import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, World } from '../world/world';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { InputAction } from '../../input/Input';
+import {
+  THREE,
+  POINT_SEVEN_FIVE,
+  POINT_FOUR,
+  HALF_CIRCLE,
+  FULL_CIRCLE,
+  TWO,
+  TEN,
+  TWENTY,
+  ONE_HUNDRED,
+  TWO_HUNDRED,
+  ONE_POINT_FOUR,
+  POINT_ZERO_ONE_THREE,
+} from '../math/numberConstants';
 
-const POINT_ZERO_ONE_THREE = NumberToRaw(0.013);
-const POINT_FOUR = NumberToRaw(0.4);
-const POINT_SEVEN_FIVE = NumberToRaw(0.75);
-const ONE_POINT_FOUR = NumberToRaw(1.4);
-const TWO = NumberToRaw(2);
-const THREE = NumberToRaw(3);
-const TEN = NumberToRaw(10);
-const TWENTY = NumberToRaw(20);
-const ONE_HUNDRED = NumberToRaw(100);
-const HALF_CIRCLE = NumberToRaw(180);
-const TWO_HUNDRED = NumberToRaw(200);
-const FULL_CIRCLE = NumberToRaw(360);
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
 export function PlayerAttacks(world: World): void {

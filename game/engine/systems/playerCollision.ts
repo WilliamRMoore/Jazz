@@ -1,11 +1,11 @@
 import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw, DivideRaw } from '../math/fixedPoint';
+import { DivideRaw } from '../math/fixedPoint';
 import { IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
+import { ONE_POINT_FIVE, TWO } from '../math/numberConstants';
 
-const MOVE_X = NumberToRaw(1.5);
-const TWO = NumberToRaw(2);
+const MOVE_X = ONE_POINT_FIVE;
 
 export function PlayerCollisionDetection(world: World): void {
   const playerData = world.PlayerData;
@@ -43,7 +43,7 @@ export function PlayerCollisionDetection(world: World): void {
         otherPlayerEcb,
         pools.VecPool,
         pools.ColResPool,
-        pools.ProjResPool
+        pools.ProjResPool,
       );
 
       if (collision.Collision) {
@@ -58,13 +58,13 @@ export function PlayerCollisionDetection(world: World): void {
           SetPlayerPositionRaw(
             checkPlayer,
             checkPlayerXRaw + DivideRaw(MOVE_X, TWO),
-            checkPlayerYRaw
+            checkPlayerYRaw,
           );
 
           SetPlayerPositionRaw(
             otherPlayer,
             otherPlayerXRaw - DivideRaw(MOVE_X, TWO),
-            otherPlayerYRaw
+            otherPlayerYRaw,
           );
           continue;
         }
@@ -72,13 +72,13 @@ export function PlayerCollisionDetection(world: World): void {
         SetPlayerPositionRaw(
           checkPlayer,
           checkPlayerXRaw - DivideRaw(MOVE_X, TWO),
-          checkPlayerYRaw
+          checkPlayerYRaw,
         );
 
         SetPlayerPositionRaw(
           otherPlayer,
           otherPlayerXRaw + DivideRaw(MOVE_X, TWO),
-          otherPlayerYRaw
+          otherPlayerYRaw,
         );
       }
     }

@@ -247,15 +247,15 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
   .set(
     SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
-    SHIELD_BREAK_TUMBLE_RELATIONS.mappings
+    SHIELD_BREAK_TUMBLE_RELATIONS.mappings,
   )
   .set(
     SHIELD_BREAK_LAND_RELATIONS.stateId,
-    SHIELD_BREAK_LAND_RELATIONS.mappings
+    SHIELD_BREAK_LAND_RELATIONS.mappings,
   )
   .set(
     SHIELD_BREAK_DIZZY_RELATIONS.stateId,
-    SHIELD_BREAK_DIZZY_RELATIONS.mappings
+    SHIELD_BREAK_DIZZY_RELATIONS.mappings,
   );
 
 export const FSMStates = new Map<StateId, FSMState>()

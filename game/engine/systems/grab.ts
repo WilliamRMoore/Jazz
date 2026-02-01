@@ -3,6 +3,7 @@ import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import { NumberToRaw } from '../math/fixedPoint';
+import { FIFTY } from '../math/numberConstants';
 import {
   ClosestPointsBetweenSegments,
   IntersectsCirclesRawBool,
@@ -39,7 +40,7 @@ export function PlayerGrabs(w: World) {
         componenetHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
-        w.LocalFrame
+        w.LocalFrame,
       );
 
       const p2VsP1 = PAvsPB(
@@ -48,7 +49,7 @@ export function PlayerGrabs(w: World) {
         componenetHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
-        w.LocalFrame
+        w.LocalFrame,
       );
 
       if (p1VsP2 && !p2VsP1) {
@@ -69,14 +70,14 @@ export function PlayerGrabs(w: World) {
   }
 }
 
-const HOLD_DISTANCE = NumberToRaw(50);
+const HOLD_DISTANCE = FIFTY;
 
 // we will add some very subtle rubber banding for losing players, they get priority
 function resolveDoubleGrab(
   grabberA: Player,
   grabberB: Player,
   grabberASm: StateMachine,
-  grabberBSm: StateMachine
+  grabberBSm: StateMachine,
 ) {
   if (grabberA.Damage.Damage > grabberB.Damage.Damage) {
     resolveGrab(grabberA, grabberB, grabberASm, grabberBSm);
@@ -97,7 +98,7 @@ function resolveGrab(
   grabber: Player,
   grabee: Player,
   grabberSm: StateMachine,
-  grabeeSm: StateMachine
+  grabeeSm: StateMachine,
 ) {
   grabberSm.UpdateFromWorld(GAME_EVENT_IDS.GRAB_HOLD_GE);
   grabeeSm.UpdateFromWorld(GAME_EVENT_IDS.GRAB_HELD_GE);
@@ -126,7 +127,7 @@ function PAvsPB(
   componentHistories: Array<ComponentHistory>,
   vecPool: Pool<PooledVector>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
-  currentFrame: number
+  currentFrame: number,
 ): boolean {
   const pAStateFrame = pA.FSMInfo.CurrentStateFrame;
   const pAGrab = pA.Grabs.GetGrab();
@@ -167,12 +168,12 @@ function PAvsPB(
     const hurtBubStart = hurtBubble.GetStartPosition(
       pBPosition.X,
       pBPosition.Y,
-      vecPool
+      vecPool,
     );
     const hurtBubEnd = hurtBubble.GetEndPosition(
       pBPosition.X,
       pBPosition.Y,
-      vecPool
+      vecPool,
     );
 
     for (let grabIndex = 0; grabIndex < grabBubblesLength; grabIndex++) {
@@ -183,7 +184,7 @@ function PAvsPB(
         pAPosition.X,
         pAPosition.Y,
         pAFacingRight,
-        pAStateFrame
+        pAStateFrame,
       );
 
       if (grabBubCurPos === undefined) {
@@ -196,7 +197,7 @@ function PAvsPB(
           prevXRaw,
           prevYRaw,
           pAFacingRight,
-          pAStateFrame > 0 ? pAStateFrame - 1 : 0
+          pAStateFrame > 0 ? pAStateFrame - 1 : 0,
         ) ?? vecPool.Rent().SetXY(grabBubCurPos.X, grabBubCurPos.Y);
 
       const closestPoint = ClosestPointsBetweenSegments(
@@ -205,7 +206,7 @@ function PAvsPB(
         hurtBubStart,
         hurtBubEnd,
         vecPool,
-        clstsPntsResPool
+        clstsPntsResPool,
       );
 
       const grabRadius = grabBubble.Radius;
@@ -217,7 +218,7 @@ function PAvsPB(
         closestPoint.C2X.Raw,
         closestPoint.C2Y.Raw,
         grabRadius.Raw,
-        hurtRadius.Raw
+        hurtRadius.Raw,
       );
 
       if (collision) {

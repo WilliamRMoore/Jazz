@@ -3,7 +3,7 @@ import { InputAction, NewInputAction } from '../../input/Input';
 import { InputStoreLocal } from '../engine-state-management/Managers';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
-import { Stage } from '../stage/stageMain';
+import { DeathBoundry, Stage } from '../stage/stageMain';
 import { PooledVector } from '../pools/PooledVector';
 import { Pool } from '../pools/Pool';
 import { CollisionResult } from '../pools/CollisionResult';
@@ -30,7 +30,7 @@ export type PlayerData = {
 };
 
 export type StageData = {
-  Stage: Stage;
+  Stages: Stage[];
 };
 
 export type Pools = {
@@ -96,7 +96,8 @@ class PlayerState implements PlayerData {
 }
 
 class StageWorldState implements StageData {
-  public Stage!: Stage;
+  public DeathBoundry: DeathBoundry = new DeathBoundry(-100, 1180, -100, 2020);
+  public Stages: Stage[] = [];
 }
 
 class PoolContainer implements Pools {
@@ -214,7 +215,7 @@ export class World {
   }
 
   public SetStage(s: Stage) {
-    this.StageData.Stage = s;
+    this.StageData.Stages.push(s);
   }
 
   public GetComponentHistory(index: number): ComponentHistory | undefined {

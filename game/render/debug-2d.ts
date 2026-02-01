@@ -109,7 +109,11 @@ export class DebugRenderer {
     ctx.fillRect(0, 0, this.xRes, this.yRes); // Fill the entire canvas with grey
 
     drawStage(ctx, world);
-    drawPlatforms(ctx, world.StageData.Stage.Platforms);
+    const stagesLength = world.StageData.Stages.length;
+    for (let i = 0; i < stagesLength; i++) {
+      drawPlatforms(ctx, world.StageData.Stages[i].Platforms);
+    }
+
     drawPlayer(ctx, world, alpha);
 
     const frameTime = world.GetFrameTimeForFrame(localFrame);
@@ -183,39 +187,44 @@ export class DebugRenderer {
 }
 
 function drawStage(ctx: CanvasRenderingContext2D, world: World) {
-  const stage = world.StageData.Stage;
-  const stageVerts = stage!.StageVerticies.GetVerts()!;
-  const color = 'green';
-  const stageVertsLength = stageVerts.length;
+  const stages = world.StageData.Stages;
+  const stagesLength = stages.length;
 
-  ctx.beginPath();
-  ctx.moveTo(stageVerts[0].X.AsNumber, stageVerts[0].Y.AsNumber);
-  for (let i = 0; i < stageVertsLength; i++) {
-    ctx.lineTo(stageVerts[i].X.AsNumber, stageVerts[i].Y.AsNumber);
+  for (let i = 0; i < stagesLength; i++) {
+    const stage = stages[i];
+    const stageVerts = stage!.StageVerticies.GetVerts()!;
+    const color = 'green';
+    const stageVertsLength = stageVerts.length;
+
+    ctx.beginPath();
+    ctx.moveTo(stageVerts[0].X.AsNumber, stageVerts[0].Y.AsNumber);
+    for (let i = 0; i < stageVertsLength; i++) {
+      ctx.lineTo(stageVerts[i].X.AsNumber, stageVerts[i].Y.AsNumber);
+    }
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    const lLedge = stage!.Ledges.GetLeftLedge();
+    const rLedge = stage!.Ledges.GetRightLedge();
+
+    ctx.fillStyle = 'yellow';
+    ctx.beginPath();
+    ctx.moveTo(lLedge[0].X.AsNumber, lLedge[0].Y.AsNumber);
+    for (let i = 0; i < lLedge.length; i++) {
+      ctx.lineTo(lLedge[i].X.AsNumber, lLedge[i].Y.AsNumber);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(rLedge[0].X.AsNumber, rLedge[0].Y.AsNumber);
+    for (let i = 0; i < rLedge.length; i++) {
+      ctx.lineTo(rLedge[i].X.AsNumber, rLedge[i].Y.AsNumber);
+    }
+    ctx.closePath();
+    ctx.fill();
   }
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-
-  const lLedge = stage!.Ledges.GetLeftLedge();
-  const rLedge = stage!.Ledges.GetRightLedge();
-
-  ctx.fillStyle = 'yellow';
-  ctx.beginPath();
-  ctx.moveTo(lLedge[0].X.AsNumber, lLedge[0].Y.AsNumber);
-  for (let i = 0; i < lLedge.length; i++) {
-    ctx.lineTo(lLedge[i].X.AsNumber, lLedge[i].Y.AsNumber);
-  }
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(rLedge[0].X.AsNumber, rLedge[0].Y.AsNumber);
-  for (let i = 0; i < rLedge.length; i++) {
-    ctx.lineTo(rLedge[i].X.AsNumber, rLedge[i].Y.AsNumber);
-  }
-  ctx.closePath();
-  ctx.fill();
 }
 
 function drawPlatforms(

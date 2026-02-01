@@ -16,12 +16,17 @@ import {
   PlayerOnPlatsReturnsPlatform,
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
-import { CORRECTION_DEPTH_RAW, ShouldSoftlandRaw } from './shared';
+import { ShouldSoftlandRaw } from './shared';
 import { CreateDiamondFromHistory } from '../entity/components/ecb';
+import {
+  CORRECTION_DEPTH_RAW,
+  POINT_EIGHT,
+  POINT_FIVE,
+  POINT_FOUR,
+} from '../math/numberConstants';
 
-const NEG_ZERO_POINT_EIGHT = NumberToRaw(-0.8);
-const NEG_ZERO_POINT_FIVE = NumberToRaw(-0.5);
-const POINT_FOUR = NumberToRaw(0.4);
+const NEG_ZERO_POINT_EIGHT = -POINT_EIGHT;
+const NEG_ZERO_POINT_FIVE = -POINT_FIVE;
 
 export function PlatformDetection(world: World): void {
   const playerData = world.PlayerData;
@@ -29,196 +34,198 @@ export function PlatformDetection(world: World): void {
   const histories = world.HistoryData;
   const currentFrame = world.LocalFrame;
   const prevFrame = world.PreviousFrame;
-  const plats = stageData.Stage.Platforms;
+  const stages = stageData.Stages;
+  const stageLength = stages.length;
 
-  if (plats === undefined) {
-    return;
-  }
+  for (let stageIndex = 0; stageIndex < stageLength; stageIndex++) {
+    const stage = stages[stageIndex];
+    const plats = stage.Platforms;
 
-  const playerCount = playerData.PlayerCount;
-  const platCount = plats.length;
-
-  for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-    const p = playerData.Player(playerIndex);
-    const flags = p.Flags;
-
-    if (flags.IsPlatDetectDisabled) {
+    if (plats === undefined) {
       continue;
     }
 
-    const velocity = p.Velocity;
+    const playerCount = playerData.PlayerCount;
+    const platCount = plats.length;
 
-    if (velocity.Y.Raw < 0) {
-      continue;
-    }
+    for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+      const p = playerData.Player(playerIndex);
+      const flags = p.Flags;
 
-    // If a jump was just initiated, skip all platform landing logic for this frame
-    // to allow the jump to properly start.
-    if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
-      continue;
-    }
+      if (flags.IsPlatDetectDisabled) {
+        continue;
+      }
 
-    const dPool = world.Pools.DiamondPool;
-    const compHist = histories.PlayerComponentHistories[playerIndex];
-    const ecb = p.ECB;
-    const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
-    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
+      const velocity = p.Velocity;
 
-    const playerPlat = PlayerOnPlatsReturnsPlatform(
-      stageData.Stage,
-      preEcb.Bottom,
-      ecb.SensorDepth
-    );
+      if (velocity.Y.Raw < 0) {
+        continue;
+      }
 
-    const wasOnPlat = playerPlat !== undefined;
+      // If a jump was just initiated, skip all platform landing logic for this frame
+      // to allow the jump to properly start.
+      if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+        continue;
+      }
 
-    const isOnPlat = PlayerOnPlats(
-      stageData.Stage,
-      ecb.Bottom,
-      ecb.SensorDepth
-    );
+      const dPool = world.Pools.DiamondPool;
+      const compHist = histories.PlayerComponentHistories[playerIndex];
+      const ecb = p.ECB;
+      const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
+      const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
 
-    if (wasOnPlat && !isOnPlat) {
-      // Player has just walked off a platform. Check if they were allowed to.
-      if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
-        const isFacingRight = p.Flags.IsFacingRight;
-        const isMovingRight = p.Velocity.X.Raw > 0;
-        const canFall = isFacingRight === isMovingRight;
-        const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
+      const playerPlat = PlayerOnPlatsReturnsPlatform(
+        stage,
+        preEcb.Bottom,
+        ecb.SensorDepth,
+      );
 
-        if (!canFall) {
-          // Snap player back to the platform edge they fell from.
-          // This is a simplified snap-back. A more robust solution might find the *actual* platform.
-          if (rightOfTheRight) {
-            SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
-            p.Position.X.SubtractRaw(POINT_FOUR);
-            playerData
-              .StateMachine(playerIndex)
-              .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-            continue;
+      const wasOnPlat = playerPlat !== undefined;
+
+      const isOnPlat = PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth);
+
+      if (wasOnPlat && !isOnPlat) {
+        // Player has just walked off a platform. Check if they were allowed to.
+        let shouldSnapBack = false;
+        if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
+          const fellOffLeft = p.Position.X.Raw < playerPlat.X1.Raw;
+          const fellOffRight = p.Position.X.Raw > playerPlat.X2.Raw;
+          const isFacingRight = p.Flags.IsFacingRight;
+
+          // Snap back if facing TOWARDS the platform after falling off
+          if (
+            (fellOffLeft && isFacingRight) ||
+            (fellOffRight && !isFacingRight)
+          ) {
+            shouldSnapBack = true;
           }
-          SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
-          p.Position.X.AddRaw(POINT_FOUR);
+        } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+          shouldSnapBack = true;
+        }
+
+        if (shouldSnapBack) {
+          p.Velocity.X.Zero();
+          p.Velocity.Y.Zero();
+          const yPosRaw = p.ECB.YOffset.Raw - CORRECTION_DEPTH_RAW;
+
+          if (p.Position.X.Raw < playerPlat.X1.Raw) {
+            // Player fell off the left edge.
+            SetPlayerPositionRaw(
+              p,
+              playerPlat.X1.Raw + CORRECTION_DEPTH_RAW,
+              playerPlat.Y1.Raw - yPosRaw,
+            );
+          } else if (p.Position.X.Raw > playerPlat.X2.Raw) {
+            // Player fell off the right edge.
+            SetPlayerPositionRaw(
+              p,
+              playerPlat.X2.Raw - CORRECTION_DEPTH_RAW,
+              playerPlat.Y2.Raw - yPosRaw,
+            );
+          }
           playerData
             .StateMachine(playerIndex)
             .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
           continue;
         }
-      } else {
-        const canWalkOff = CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId);
-        if (canWalkOff) {
+      }
+
+      const landingYCoord = PlayerOnPlatsReturnsYCoord(
+        stage,
+        ecb.Bottom,
+        ecb.SensorDepth,
+      );
+
+      const inputStore = playerData.InputStore(playerIndex);
+      const ia = inputStore.GetInputForFrame(currentFrame);
+      const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
+
+      if (landingYCoord != undefined) {
+        const sm = playerData.StateMachine(playerIndex);
+        // Check for a fast downward flick on the left stick to fall through the platform.
+        const checkValueRaw = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
+
+        const inLanding =
+          p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
+          p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
+        const isSpotDodge =
+          p.FSMInfo.CurrentStatetId === STATE_IDS.SPOT_DODGE_S;
+
+        if (
+          checkValueRaw <= NEG_ZERO_POINT_FIVE &&
+          !inLanding &&
+          !isSpotDodge
+        ) {
+          sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+          flags.FastFallOff();
+          flags.SetDisablePlatFrames(11);
+          continue;
+        }
+        handlePlatformLanding(p, sm, landingYCoord, ecb.Bottom.X);
+        continue;
+      }
+
+      const fsmInfo = p.FSMInfo;
+
+      //if we are moving downward, and we are holding down, and we are NOT in the airdodge state,
+      if (
+        ia.LYAxis.Raw < NEG_ZERO_POINT_EIGHT &&
+        fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S
+      ) {
+        continue;
+      }
+
+      const previousBottom = preEcb.Bottom;
+      const currentBottom = ecb.Bottom;
+
+      for (let platIndex = 0; platIndex < platCount; platIndex++) {
+        const plat = plats[platIndex];
+
+        const intersected = LineSegmentIntersectionFp(
+          previousBottom.X,
+          previousBottom.Y,
+          currentBottom.X,
+          currentBottom.Y,
+          plat.X1,
+          plat.Y1,
+          plat.X2,
+          plat.Y2,
+        );
+
+        if (intersected === false) {
           continue;
         }
 
-        const rightOfTheRight = p.Position.X.Raw > playerPlat.X2.Raw;
+        const playerIsTooFarRight = currentBottom.X.Raw > plat.X2.Raw;
+        const playerIsTooFarLeft = currentBottom.X.Raw < plat.X1.Raw;
 
-        if (rightOfTheRight) {
-          SetPlayerPosition(p, playerPlat.X2, playerPlat.Y2);
-          p.Position.X.SubtractRaw(POINT_FOUR);
-          playerData
-            .StateMachine(playerIndex)
-            .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-          continue;
+        if (playerIsTooFarRight) {
+          handlePlatformLanding(
+            p,
+            playerData.StateMachine(playerIndex),
+            plat.Y1,
+            plat.X2,
+          );
+          break;
         }
-        SetPlayerPosition(p, playerPlat.X1, playerPlat.Y1);
-        p.Position.X.AddRaw(POINT_FOUR);
-        playerData
-          .StateMachine(playerIndex)
-          .UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-        continue;
-      }
-    }
 
-    const landingYCoord = PlayerOnPlatsReturnsYCoord(
-      stageData.Stage,
-      ecb.Bottom,
-      ecb.SensorDepth
-    );
+        if (playerIsTooFarLeft) {
+          handlePlatformLanding(
+            p,
+            playerData.StateMachine(playerIndex),
+            plat.Y1,
+            plat.X1,
+          );
+          break;
+        }
 
-    const inputStore = playerData.InputStore(playerIndex);
-    const ia = inputStore.GetInputForFrame(currentFrame);
-    const prevIa = inputStore.GetInputForFrame(currentFrame - 1);
-
-    if (landingYCoord != undefined) {
-      const sm = playerData.StateMachine(playerIndex);
-      // Check for a fast downward flick on the left stick to fall through the platform.
-      const checkValueRaw = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
-
-      const inLanding =
-        p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
-        p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
-      const isSpotDodge = p.FSMInfo.CurrentStatetId === STATE_IDS.SPOT_DODGE_S;
-
-      if (checkValueRaw <= NEG_ZERO_POINT_FIVE && !inLanding && !isSpotDodge) {
-        sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
-        flags.FastFallOff();
-        flags.SetDisablePlatFrames(11);
-        continue;
-      }
-      handlePlatformLanding(p, sm, landingYCoord, ecb.Bottom.X);
-      continue;
-    }
-
-    const fsmInfo = p.FSMInfo;
-
-    //if we are moving downward, and we are holding down, and we are NOT in the airdodge state,
-    if (
-      ia.LYAxis.Raw < NEG_ZERO_POINT_EIGHT &&
-      fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S
-    ) {
-      continue;
-    }
-
-    const previousBottom = preEcb.Bottom;
-    const currentBottom = ecb.Bottom;
-
-    for (let platIndex = 0; platIndex < platCount; platIndex++) {
-      const plat = plats[platIndex];
-
-      const intersected = LineSegmentIntersectionFp(
-        previousBottom.X,
-        previousBottom.Y,
-        currentBottom.X,
-        currentBottom.Y,
-        plat.X1,
-        plat.Y1,
-        plat.X2,
-        plat.Y2
-      );
-
-      if (intersected === false) {
-        continue;
-      }
-
-      const playerIsTooFarRight = currentBottom.X.Raw > plat.X2.Raw;
-      const playerIsTooFarLeft = currentBottom.X.Raw < plat.X1.Raw;
-
-      if (playerIsTooFarRight) {
         handlePlatformLanding(
           p,
           playerData.StateMachine(playerIndex),
-          plat.Y1,
-          plat.X2
+          plat.Y2,
+          currentBottom.X,
         );
-        break;
       }
-
-      if (playerIsTooFarLeft) {
-        handlePlatformLanding(
-          p,
-          playerData.StateMachine(playerIndex),
-          plat.Y1,
-          plat.X1
-        );
-        break;
-      }
-
-      handlePlatformLanding(
-        p,
-        playerData.StateMachine(playerIndex),
-        plat.Y2,
-        currentBottom.X
-      );
     }
   }
 }
@@ -227,7 +234,7 @@ function handlePlatformLanding(
   p: Player,
   sm: StateMachine,
   yCoord: FixedPoint,
-  xCoord: FixedPoint
+  xCoord: FixedPoint,
 ) {
   const landId = ShouldSoftlandRaw(p.Velocity.Y.Raw)
     ? GAME_EVENT_IDS.SOFT_LAND_GE
@@ -237,6 +244,6 @@ function handlePlatformLanding(
   SetPlayerPositionRaw(
     p,
     xCoord.Raw,
-    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw
+    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw,
   );
 }

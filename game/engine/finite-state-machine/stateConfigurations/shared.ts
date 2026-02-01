@@ -55,6 +55,7 @@ class GAME_EVENTS {
   public readonly GUARD_GE = seq.Next as GameEventId;
   public readonly UP_GE = seq.Next as GameEventId;
   public readonly DOWN_GE = seq.Next as GameEventId;
+  public readonly WALL_KICK_GE = seq.Next as GameEventId;
   // End of GameEvents that can be sourced from player input
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
@@ -68,6 +69,7 @@ class GAME_EVENTS {
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
+  public readonly WALL_SLIDE_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -139,6 +141,8 @@ class STATES {
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
   public readonly LEDGE_RECOVER_S = seq.Next as StateId;
   public readonly LEDGE_GUA_S = seq.Next as StateId;
+  public readonly WALL_SLIDE_S = seq.Next as StateId;
+  public readonly WALL_KICK_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -194,6 +198,11 @@ export const GRAB_IDS = new GRABS();
 export const StateIdToNameMap = new Map<StateId, string>();
 Object.entries(STATE_IDS).forEach(([key, value]) => {
   StateIdToNameMap.set(value, key);
+});
+
+export const GameEventNameMap = new Map<GrabId, string>();
+Object.entries(GAME_EVENT_IDS).forEach(([key, value]) => {
+  GrabIdToNameMap.set(value, key);
 });
 
 export const AttackIdToNameMap = new Map<AttackId, string>();

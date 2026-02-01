@@ -8,6 +8,7 @@ import { ActionStateMappings } from './stateConfigurations/relationshipMappings'
 import { StateId, GameEventId, STATE_IDS } from './stateConfigurations/shared';
 import { Idle } from './stateConfigurations/states';
 import { FSMInfoComponent } from '../entity/components/fsmInfo';
+import { GetGameEventName, GetStateName } from '../debug/debugUtils';
 
 export type FSMState = {
   StateName: string;
@@ -40,6 +41,11 @@ export class StateMachine {
     const state = this.getTranslation(gameEventId);
 
     if (state === undefined) {
+      const geName = GetGameEventName(gameEventId);
+      const curStateName = GetStateName(this.player.FSMInfo.CurrentStatetId);
+      console.warn(
+        ` No mapping esists for [State: ${curStateName} -> GameEvent: ${geName}]`,
+      );
       return;
     }
 
@@ -118,7 +124,7 @@ export class StateMachine {
 
   private runNext(
     inputAction: InputAction,
-    fsmInfo: FSMInfoComponent
+    fsmInfo: FSMInfoComponent,
   ): boolean {
     const state = this.getTranslation(inputAction.Action);
 
@@ -140,7 +146,7 @@ export class StateMachine {
 
     const defaultTransition = this.getDefaultState(
       this.player.FSMInfo.CurrentStatetId,
-      w
+      w,
     );
 
     // No default transition resolved, return false
@@ -157,7 +163,7 @@ export class StateMachine {
 
   private getTranslation(gameEventId: GameEventId): FSMState | undefined {
     const stateMappings = this.stateMappings.get(
-      this.player.FSMInfo.CurrentStatetId
+      this.player.FSMInfo.CurrentStatetId,
     );
 
     const nextStateId = stateMappings?.GetMapping(gameEventId);

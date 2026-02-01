@@ -11,7 +11,7 @@ export function OutOfBoundsCheck(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
-  const stage = stageData.Stage;
+  const stage = stageData.Stages;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const sm = playerData.StateMachine(playerIndex);
@@ -19,7 +19,7 @@ export function OutOfBoundsCheck(world: World): void {
     const pPos = p.Position;
     const pY = pPos.Y;
     const pX = pPos.X;
-    const deathBoundry = stage.DeathBoundry!;
+    const deathBoundry = stageData.DeathBoundry;
 
     if (pY.Raw < deathBoundry.topBoundry.Raw) {
       // kill player if in hit stun.

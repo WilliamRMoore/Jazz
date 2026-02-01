@@ -2,6 +2,8 @@ import { PlayerSnapShot } from '../entity/componentHistory';
 import {
   AttackId,
   AttackIdToNameMap,
+  GameEventId,
+  GameEventNameMap,
   GrabId,
   GrabIdToNameMap,
   StateId,
@@ -523,4 +525,7 @@ export function GetGrabName(gId: GrabId): string {
 }
 export function GetAttackName(atkId: AttackId): string {
   return AttackIdToNameMap.get(atkId)!;
+}
+export function GetGameEventName(geId: GameEventId): string {
+  return GameEventNameMap.get(geId)!;
 }

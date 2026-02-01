@@ -5,7 +5,7 @@ import {
   Player,
   SetPlayerInitialPositionRaw,
 } from './entity/playerOrchestrator';
-import { defaultStage } from './stage/stageMain';
+import { defaultStage, WallStage } from './stage/stageMain';
 import { PlayerAttacks } from './systems/attack';
 import { Gravity } from './systems/gravity';
 import { RecordHistory } from './systems/history';
@@ -24,6 +24,7 @@ import { World } from './world/world';
 import { PlayerGrabs } from './systems/grab';
 import { GrabMeter } from './systems/grabMeter';
 import { CharacterConfig } from '../character/shared';
+import { WallSlide } from './systems/wallSlide';
 
 export interface IJazz {
   get World(): World | undefined;
@@ -52,7 +53,9 @@ export class Jazz implements IJazz {
     positions: Array<FlatVec> | undefined = undefined,
   ): void {
     const s = defaultStage();
+    const s2 = WallStage();
     this.world.SetStage(s);
+    this.world.SetStage(s2);
     const numberOfPlayers = cc.length;
     for (let i = 0; i < numberOfPlayers; i++) {
       this.addPlayerEntity(cc[i], positions?.[i]);
@@ -98,6 +101,7 @@ export const DefaultGameLoop: GameLoop = (w: World) => {
   PlayerCollisionDetection(w);
   PlatformDetection(w);
   StageCollisionDetection(w);
+  WallSlide(w);
   LedgeGrabDetection(w);
   PlayerSensors(w);
   PlayerAttacks(w);
