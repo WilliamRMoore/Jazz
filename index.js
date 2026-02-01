@@ -20633,6 +20633,47 @@
     },
     StateId: STATE_IDS.TURN_S
   };
+  var STICK_JUMP_THRESHOLD = NumberToRaw(0.4);
+  var ToStickJumpSquat = {
+    Name: "StickJump",
+    ConditionFunc: (w, playerIndex) => {
+      const is = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.LocalFrame;
+      const lastFrame = w.PreviousFrame;
+      const lastIa = is.GetInputForFrame(lastFrame);
+      const ia = is.GetInputForFrame(curFrame);
+      if (ia.LYAxis.Raw <= 0) {
+        return false;
+      }
+      const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
+      const p = w.PlayerData.Player(playerIndex);
+      if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
+        return true;
+      }
+      return false;
+    },
+    StateId: STATE_IDS.JUMP_SQUAT_S
+  };
+  var ToStickJump = {
+    Name: "StickJump",
+    ConditionFunc: (w, playerIndex) => {
+      const is = w.PlayerData.InputStore(playerIndex);
+      const curFrame = w.LocalFrame;
+      const lastFrame = w.PreviousFrame;
+      const lastIa = is.GetInputForFrame(lastFrame);
+      const ia = is.GetInputForFrame(curFrame);
+      if (ia.LYAxis.Raw <= 0) {
+        return false;
+      }
+      const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
+      const p = w.PlayerData.Player(playerIndex);
+      if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
+        return true;
+      }
+      return false;
+    },
+    StateId: STATE_IDS.JUMP_S
+  };
   var IdleToDash = {
     Name: "IdleToDash",
     ConditionFunc: (w, playerIndex) => {
@@ -20841,6 +20882,10 @@
     ConditionFunc: (w, playerIndex) => {
       const inputStore = w.PlayerData.InputStore(playerIndex);
       const curFrame = w.LocalFrame;
+      const p = w.PlayerData.Player(playerIndex);
+      if (p.Flags.JumpedFromShield) {
+        return false;
+      }
       return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
     },
     StateId: STATE_IDS.AIR_DODGE_S
@@ -21690,7 +21735,8 @@
       ToNSpecial,
       ToSideSpecial,
       ToDownSpecial,
-      ToUpSpecial
+      ToUpSpecial,
+      ToStickJumpSquat
     ];
     idleTranslations.SetConditions(condtions);
     const idle = new StateRelation(STATE_IDS.IDLE_S, idleTranslations);
@@ -21714,9 +21760,15 @@
       { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
       { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
       { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
-      { geId: GAME_EVENT_IDS.SHIELD_BREAK_GE, sId: STATE_IDS.SHIELD_BREAK_S }
+      { geId: GAME_EVENT_IDS.SHIELD_BREAK_GE, sId: STATE_IDS.SHIELD_BREAK_S },
+      { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.JUMP_SQUAT_S }
     ]);
-    translations.SetConditions([shieldToShieldDrop, ToSpotDodge, ToRollDodge]);
+    translations.SetConditions([
+      shieldToShieldDrop,
+      ToSpotDodge,
+      ToRollDodge,
+      ToStickJumpSquat
+    ]);
     return new StateRelation(STATE_IDS.SHIELD_S, translations);
   }
   function InitShieldDropRelations() {
@@ -21819,7 +21871,8 @@
       ToSideCharge,
       ToDownCharge,
       ToUpCharge,
-      ToSideTilt
+      ToSideTilt,
+      ToStickJumpSquat
     ];
     walkTranslations.SetConditions(conditions);
     const walkRelations = new StateRelation(STATE_IDS.WALK_S, walkTranslations);
@@ -21837,7 +21890,8 @@
       DashToTurn,
       ToSideSpecial,
       ToUpSpecial,
-      RunToDashAttack
+      RunToDashAttack,
+      ToStickJumpSquat
     ];
     dashTranslations.SetConditions(conditions);
     const defaultConditions = [DashDefaultRun, defaultIdle];
@@ -21852,7 +21906,7 @@
       { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
       { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
     ]);
-    dashTrunTranslations.SetConditions([ToSideSpecial]);
+    dashTrunTranslations.SetConditions([ToSideSpecial, ToStickJumpSquat]);
     dashTrunTranslations.SetDefaults([defaultDash]);
     const dashTurnRelations = new StateRelation(
       STATE_IDS.DASH_TURN_S,
@@ -21875,7 +21929,8 @@
       ToSideSpecial,
       ToUpSpecial,
       RunToDashAttack,
-      RunToRunStopByGuard
+      RunToRunStopByGuard,
+      ToStickJumpSquat
     ];
     runTranslations.SetConditions(conditions);
     const runRelations = new StateRelation(STATE_IDS.RUN_S, runTranslations);
@@ -21923,6 +21978,7 @@
       { geId: GAME_EVENT_IDS.GRAB_GE, sId: STATE_IDS.GRAB_S },
       { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
     ]);
+    jumpSquatTranslations.SetConditions([ToUpSpecial]);
     jumpSquatTranslations.SetDefaults([defaultJump]);
     const jumpSquatRelations = new StateRelation(
       STATE_IDS.JUMP_SQUAT_S,
@@ -21936,7 +21992,7 @@
       { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
       { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
     ]);
-    jumpTranslations.SetConditions([ToJump, ToAirDodge]);
+    jumpTranslations.SetConditions([ToJump, ToAirDodge, ToStickJump]);
     jumpTranslations.SetDefaults([defaultNFall]);
     const jumpRelations = new StateRelation(STATE_IDS.JUMP_S, jumpTranslations);
     return jumpRelations;
@@ -21960,7 +22016,8 @@
       ToBAir,
       ToSideSpecialAir,
       ToUpSpecial,
-      ToDownSpecialAir
+      ToDownSpecialAir,
+      ToStickJump
     ]);
     const nFallRelations = new StateRelation(
       STATE_IDS.N_FALL_S,
@@ -22607,6 +22664,11 @@
     StateId: STATE_IDS.JUMP_SQUAT_S,
     OnEnter: (p, w) => {
       p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
+      const pHist = w.GetComponentHistory(p.ID);
+      const lastState = pHist?.FsmInfoHistory[w.PreviousFrame];
+      if (lastState.State.StateId === STATE_IDS.SHIELD_S) {
+        p.Flags.JumpFromShield();
+      }
     },
     OnUpdate: (p, w) => {
     },
@@ -23933,6 +23995,7 @@
       this.intangabilityFrames = 0;
       this.disablePlatformDetection = 0;
       this.velocityDecayActive = true;
+      this.shieldJump = false;
     }
     FaceRight() {
       this.facingRight = true;
@@ -23982,6 +24045,15 @@
     ZeroDisablePlatDetection() {
       this.disablePlatformDetection = 0;
     }
+    JumpFromShield() {
+      this.shieldJump = true;
+    }
+    get JumpedFromShield() {
+      return this.shieldJump;
+    }
+    ResetJumpFromShield() {
+      this.shieldJump = false;
+    }
     get IsFastFalling() {
       return this.fastFalling;
     }
@@ -24016,7 +24088,8 @@
         HitPauseFrames: this.hitPauseFrames,
         IntangabilityFrames: this.intangabilityFrames,
         DisablePlatDetection: this.disablePlatformDetection,
-        VeloctyDecay: this.velocityDecayActive
+        VeloctyDecay: this.velocityDecayActive,
+        ShieldJump: this.shieldJump
       };
     }
     SetFromSnapShot(snapShot) {
@@ -24026,6 +24099,7 @@
       this.intangabilityFrames = snapShot.IntangabilityFrames;
       this.disablePlatformDetection = snapShot.DisablePlatDetection;
       this.velocityDecayActive = snapShot.VeloctyDecay;
+      this.shieldJump = snapShot.ShieldJump;
     }
   };
 
@@ -26157,8 +26231,8 @@
     return hull;
   }
 
-  // game/engine/systems/timedFlags.ts
-  function TimedFlags(world) {
+  // game/engine/systems/flags.ts
+  function Flags2(world) {
     const playerData = world.PlayerData;
     const playerCount = playerData.PlayerCount;
     for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
@@ -26173,6 +26247,25 @@
       if (flags.IsPlatDetectDisabled) {
         flags.DecrementDisablePlatDetection();
       }
+      if (flags.JumpedFromShield) {
+        const curFrame = world.LocalFrame;
+        const is = playerData.InputStore(playerIndex);
+        const ia = is.GetInputForFrame(curFrame);
+        const stateId = p.FSMInfo.CurrentStatetId;
+        if (ia.LTValRaw === 0 && ia.RTValRaw === 0 || stateShouldResetJumpFromShield(stateId)) {
+          p.Flags.ResetJumpFromShield();
+        }
+      }
+    }
+  }
+  function stateShouldResetJumpFromShield(stateId) {
+    switch (stateId) {
+      case STATE_IDS.JUMP_SQUAT_S:
+      case STATE_IDS.JUMP_S:
+      case STATE_IDS.N_FALL_S:
+        return false;
+      default:
+        return true;
     }
   }
 
@@ -27300,6 +27393,7 @@
     }
   };
   var DefaultGameLoop = (w) => {
+    Flags2(w);
     PlayerInput(w);
     Gravity(w);
     ApplyVelocity(w);
@@ -27314,7 +27408,6 @@
     GrabMeter2(w);
     PlayerGrabs(w);
     OutOfBoundsCheck(w);
-    TimedFlags(w);
     RecordHistory(w);
   };
 
