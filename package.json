@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "build": "node esbuild.config.js",
+    "build:min": "esbuild game/index.ts --bundle --minify --platform=browser --outfile=public/index.min.js",
     "start": "esbuild game/index.ts --bundle --outfile=public/index.js --servedir=public --watch",
     "deploy": "npm run build && gh-pages -d public"
   },
