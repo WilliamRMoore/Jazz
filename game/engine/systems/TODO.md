@@ -22,7 +22,7 @@
 10. ground slam (Do we re-bound, or not?)
 11. Bonk
 12. pummel
-13. dirct nap
+13. dirt nap
 14. Get up attack
 15. GroundTech
 16. GrundTech Roll
@@ -31,7 +31,6 @@
 ## State-Relations
 
 1. Clean up buggy graph (not all states are transitioning properly [forward tilt to walk, dash to turn])
-2. Add stick jumping
 
 ## Character
 

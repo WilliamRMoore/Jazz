@@ -51,6 +51,7 @@ export function StageCollisionDetection(world: World): void {
   const pools: Pools = world.Pools;
   const playerCount = playerData.PlayerCount;
   const stages = stageData.Stages;
+  const stagesLength = stages.length;
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
@@ -76,9 +77,9 @@ export function StageCollisionDetection(world: World): void {
     const preResolutionYOffsetRaw = ecb.YOffset.Raw;
 
     let overallCollision = false;
-    for (const stage of stages) {
+    for (let i = 0; i < stagesLength; i++) {
       const playerVerts = getECBHull(preEcb, p.ECB);
-      const stageVerts = stage.StageVerticies.GetVerts();
+      const stageVerts = stages[i].StageVerticies.GetVerts();
       const collisionResult = IntersectsPolygons(
         playerVerts,
         stageVerts,
@@ -99,7 +100,8 @@ export function StageCollisionDetection(world: World): void {
 
     if (prvGrnd && !grnd) {
       let previousStage: Stage | undefined;
-      for (const stage of stages) {
+      for (let i = 0; i < stagesLength; i++) {
+        const stage = stages[i];
         if (PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth)) {
           previousStage = stage;
           break;
@@ -116,7 +118,8 @@ export function StageCollisionDetection(world: World): void {
 
     const finalGrounded = isPlayerOnAnyStage(p.ECB.Bottom, stages, sensorDepth);
     if (finalGrounded) {
-      for (const stage of stages) {
+      for (let i = 0; i < stagesLength; i++) {
+        const stage = stages[i];
         if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
           if (handleJitter(p, stage, pools)) {
             break;
