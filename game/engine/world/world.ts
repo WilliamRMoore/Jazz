@@ -1,174 +1,27 @@
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { InputAction, NewInputAction } from '../../input/Input';
-import { InputStoreLocal } from '../engine-state-management/Managers';
+import { MainConfig, envConfig } from '../config/main-config';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
-import { DeathBoundry, Stage } from '../stage/stageMain';
-import { PooledVector } from '../pools/PooledVector';
-import { Pool } from '../pools/Pool';
-import { CollisionResult } from '../pools/CollisionResult';
-import { ProjectionResult } from '../pools/ProjectResult';
-import { AttackResult } from '../pools/AttackResult';
-import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
-import { DiamondDTO } from '../pools/ECBDiamonDTO';
+import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { InputStore, RemoteInputManager } from '../managers/inputManager';
+import { RollBackManager } from '../managers/rollBack';
+import { Stage } from '../stage/stageMain';
 import { InitPlayerHistory } from '../systems/history';
-import { frameNumber } from '../entity/components/attack';
-import { envConfig, MainConfig } from '../config/main-config';
-
-export type PlayerData = {
-  PlayerCount: number;
-  StateMachine: (playerId: number) => StateMachine;
-  InputStore: (playerId: number) => InputStoreLocal<InputAction>;
-  Player: (playerId: number) => Player;
-  AddPlayer: (p: Player) => void;
-  AddStateMachine: (sm: StateMachine) => void;
-  AddInputStore: (
-    is: InputStoreLocal<InputAction>,
-    currentFrame: frameNumber,
-  ) => void;
-};
-
-export type StageData = {
-  Stages: Stage[];
-};
-
-export type Pools = {
-  ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
-  VecPool: Pool<PooledVector>;
-  ColResPool: Pool<CollisionResult>;
-  ProjResPool: Pool<ProjectionResult>;
-  AtkResPool: Pool<AttackResult>;
-  ClstsPntsResPool: Pool<ClosestPointsResult>;
-  DiamondPool: Pool<DiamondDTO>;
-  Zero: () => void;
-};
-
-export type HistoryData = {
-  PlayerComponentHistories: Array<ComponentHistory>;
-  RentedVecHistory: Array<number>;
-  RentedColResHsitory: Array<number>;
-  RentedProjResHistory: Array<number>;
-  RentedAtkResHistory: Array<number>;
-  RentedAtiveHitBubHistory: Array<number>;
-  RentedClosestPoints: Array<number>;
-  RedntedECBDtos: Array<number>;
-};
-
-class PlayerState implements PlayerData {
-  private players: Array<Player> = [];
-  private stateMachines: Array<StateMachine> = [];
-  private inputStore: Array<InputStoreLocal<InputAction>> = [];
-
-  public StateMachine(playerId: number): StateMachine {
-    return this.stateMachines[playerId];
-  }
-
-  public InputStore(playerId: number): InputStoreLocal<InputAction> {
-    return this.inputStore[playerId];
-  }
-
-  public Player(playerId: number): Player {
-    return this.players[playerId];
-  }
-
-  public AddPlayer(p: Player): void {
-    this.players.push(p);
-  }
-
-  public AddStateMachine(sm: StateMachine): void {
-    this.stateMachines.push(sm);
-  }
-
-  public AddInputStore(
-    is: InputStoreLocal<InputAction>,
-    currentFrame: frameNumber,
-  ): void {
-    for (let i = 0; i <= currentFrame; i++) {
-      is.StoreInputForFrame(i, NewInputAction());
-    }
-    this.inputStore.push(is);
-  }
-
-  public get PlayerCount(): number {
-    return this.players.length;
-  }
-}
-
-class StageWorldState implements StageData {
-  public DeathBoundry: DeathBoundry = new DeathBoundry(-100, 1180, -100, 2020);
-  public Stages: Stage[] = [];
-}
-
-class PoolContainer implements Pools {
-  public readonly ActiveHitBubbleDtoPool: Pool<ActiveHitBubblesDTO>;
-  public readonly VecPool: Pool<PooledVector>;
-  public readonly ColResPool: Pool<CollisionResult>;
-  public readonly ProjResPool: Pool<ProjectionResult>;
-  public readonly AtkResPool: Pool<AttackResult>;
-  public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
-  public readonly DiamondPool: Pool<DiamondDTO>;
-
-  constructor(mc: MainConfig) {
-    this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
-      mc.get('PoolSizes.ActiveHitBubblesDTOCount') as number,
-      () => new ActiveHitBubblesDTO(),
-    );
-    this.VecPool = new Pool<PooledVector>(
-      mc.get('PoolSizes.PooledVectorCount') as number,
-      () => new PooledVector(),
-    );
-    this.ColResPool = new Pool<CollisionResult>(
-      mc.get('PoolSizes.CollisionResultCount') as number,
-      () => new CollisionResult(),
-    );
-    this.ProjResPool = new Pool<ProjectionResult>(
-      mc.get('PoolSizes.ProjectionResultCount') as number,
-      () => new ProjectionResult(),
-    );
-    this.AtkResPool = new Pool<AttackResult>(
-      mc.get('PoolSizes.AttackResultCount') as number,
-      () => new AttackResult(),
-    );
-    this.ClstsPntsResPool = new Pool<ClosestPointsResult>(
-      mc.get('PoolSizes.ClosestPointsResultCount') as number,
-      () => new ClosestPointsResult(),
-    );
-    this.DiamondPool = new Pool<DiamondDTO>(
-      mc.get('PoolSizes.DiamondDTOCount') as number,
-      () => new DiamondDTO(),
-    );
-  }
-  public Zero(): void {
-    this.ActiveHitBubbleDtoPool.Zero();
-    this.VecPool.Zero();
-    this.ColResPool.Zero();
-    this.ProjResPool.Zero();
-    this.AtkResPool.Zero();
-    this.ClstsPntsResPool.Zero();
-    this.DiamondPool.Zero();
-  }
-}
-
-class History implements HistoryData {
-  public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
-  public readonly RentedVecHistory: Array<number> = [];
-  public readonly RentedColResHsitory: Array<number> = [];
-  public readonly RentedProjResHistory: Array<number> = [];
-  public readonly RentedAtkResHistory: Array<number> = [];
-  public readonly RentedAtiveHitBubHistory: Array<number> = [];
-  public readonly RentedClosestPoints: Array<number> = [];
-  public readonly RedntedECBDtos: Array<number> = [];
-}
+import {
+  HistoryData,
+  PlayerState,
+  PoolContainer,
+  StageWorldState,
+} from './stateModules';
 
 export class World {
   private localFrame = 0;
   public readonly StageData: StageWorldState = new StageWorldState();
   public readonly PlayerData: PlayerState = new PlayerState();
-  public readonly HistoryData: History = new History();
+  public readonly HistoryData: HistoryData = new HistoryData();
   private readonly FrameTimes: Array<number> = [];
   private readonly FrameTimeStamps: Array<number> = [];
   public readonly Pools: PoolContainer;
+  public LocalFrameGet = () => this.localFrame;
 
   constructor(mc: MainConfig | undefined = undefined) {
     if (mc === undefined) {
@@ -187,20 +40,12 @@ export class World {
 
   public set LocalFrame(f: number) {
     this.localFrame = f;
-    if (Number.isInteger(f) === false) {
-      console.error(
-        'World local frame was set to a number value other than an integer.',
-      );
-    }
   }
 
   public SetPlayer(p: Player): void {
     this.PlayerData.AddPlayer(p);
     this.PlayerData.AddStateMachine(new StateMachine(p, this));
-    this.PlayerData.AddInputStore(
-      new InputStoreLocal<InputAction>(),
-      this.localFrame,
-    );
+    this.PlayerData.AddInputStore(new InputStore(), this.localFrame);
     const compHist = new ComponentHistory();
     compHist.BaseConfigValues.LedgeDetectorWidth =
       p.LedgeDetector.Width.AsNumber;
@@ -263,7 +108,7 @@ export class World {
   }
 
   public GetRentedECBDtosForFrame(frame: number): number {
-    return this.HistoryData.RedntedECBDtos[frame];
+    return this.HistoryData.RentedECBDtos[frame];
   }
 
   public SetPoolHistory(): void {
@@ -277,6 +122,44 @@ export class World {
     histDat.RentedAtiveHitBubHistory[frame] =
       pools.ActiveHitBubbleDtoPool.ActiveCount;
     histDat.RentedClosestPoints[frame] = pools.ClstsPntsResPool.ActiveCount;
-    histDat.RedntedECBDtos[frame] = pools.DiamondPool.ActiveCount;
+    histDat.RentedECBDtos[frame] = pools.DiamondPool.ActiveCount;
   }
+}
+
+type NetworkPlayers = { pIndex: number; player: Player };
+export function AddNetowrkedPlayers(
+  w: World,
+  local: NetworkPlayers,
+  remote: NetworkPlayers,
+) {
+  if (local.pIndex < remote.pIndex) {
+    w.SetPlayer(local.player);
+    return setRemotePlayer(w, remote.player);
+  } else {
+    const rb = setRemotePlayer(w, remote.player);
+    w.SetPlayer(local.player);
+    return rb;
+  }
+}
+
+function setRemotePlayer(world: World, remotePlayer: Player) {
+  world.PlayerData.AddPlayer(remotePlayer);
+  world.PlayerData.AddStateMachine(new StateMachine(remotePlayer, world));
+  const remoteInputStore = new InputStore();
+  const remoteInputManager = new RemoteInputManager(remoteInputStore);
+  const rb = new RollBackManager(world.LocalFrameGet, remoteInputManager);
+  world.PlayerData.AddInputStore(remoteInputManager, 0);
+  const compHist = new ComponentHistory();
+  compHist.BaseConfigValues.LedgeDetectorWidth =
+    remotePlayer.LedgeDetector.Width.AsNumber;
+  compHist.BaseConfigValues.LedgeDetectorHeight =
+    remotePlayer.LedgeDetector.Height.AsNumber;
+  compHist.BaseConfigValues.ShieldOffset =
+    remotePlayer.Shield.YOffsetConstant.AsNumber;
+  remotePlayer.HurtCircles.HurtCapsules.forEach((hc) =>
+    compHist.BaseConfigValues.HurtCapsules.push(hc),
+  );
+  world.HistoryData.PlayerComponentHistories.push(compHist);
+
+  return rb;
 }

@@ -49,21 +49,10 @@ export function ApplyVelocityDecay(world: World): void {
       continue;
     }
 
-    if (p.FSMInfo.CurrentStatetId === STATE_IDS.WALL_SLIDE_S) {
-      const halfFallSpeed = DivideRaw(p.Speeds.FallSpeedRaw, TWO);
-      if (pvyRaw > halfFallSpeed) {
-        playerVelocity.Y.SetFromRaw(halfFallSpeed);
-      }
-      continue;
-    }
-
     const aerialVelocityDecayRaw = speeds.AerialVelocityDecayRaw;
-    const fallSpeedRaw =
-      p.FSMInfo.CurrentStatetId === STATE_IDS.WALL_SLIDE_S
-        ? DivideRaw(speeds.FallSpeedRaw, TWO)
-        : p.Flags.IsFastFalling
-          ? speeds.FastFallSpeedRaw
-          : speeds.FallSpeedRaw;
+    const fallSpeedRaw = p.Flags.IsFastFalling
+      ? speeds.FastFallSpeedRaw
+      : speeds.FallSpeedRaw;
 
     if (pvxRaw > 0) {
       playerVelocity.X.SubtractRaw(aerialVelocityDecayRaw);

@@ -18,10 +18,10 @@ export class HoldComponent implements IHistoryEnabled<HoldSnapShot> {
   }
 
   public SnapShot(): HoldSnapShot {
-    throw new Error('Method not implemented.');
+    return this.heldPlayerId;
   }
 
   public SetFromSnapShot(snapShot: HoldSnapShot): void {
-    throw new Error('Method not implemented.');
+    this.heldPlayerId = snapShot;
   }
 }

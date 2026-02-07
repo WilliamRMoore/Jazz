@@ -155,7 +155,7 @@ export type AttackSnapShot = {
 };
 
 export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
-  private attacks: Map<AttackId, Attack>;
+  private readonly attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
   public readonly PlayerIdsHit = new Set<number>();
 

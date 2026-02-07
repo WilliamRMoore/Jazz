@@ -122,23 +122,27 @@ class LerpedPlayer {
   }
 
   Zero() {
-    this.Position.X = 0;
-    this.Position.Y = 0;
-    this.Ecb.b.x = 0;
-    this.Ecb.b.y = 0;
-    this.Ecb.l.x = 0;
-    this.Ecb.l.y = 0;
-    this.Ecb.t.x = 0;
-    this.Ecb.t.y = 0;
-    this.Ecb.r.x = 0;
-    this.Ecb.r.y = 0;
-    this.Shield.radius = 0;
-    this.Shield.a = false;
-    this.Shield.X = 0;
-    this.Shield.Y = 0;
-    this.Flags.FacingRight = true;
-    this.Flags.intangible = false;
-    this.Flags.inHitPause = false;
+    const pos = this.Position;
+    pos.X = 0;
+    pos.Y = 0;
+    const ecb = this.Ecb;
+    ecb.b.x = 0;
+    ecb.b.y = 0;
+    ecb.l.x = 0;
+    ecb.l.y = 0;
+    ecb.t.x = 0;
+    ecb.t.y = 0;
+    ecb.r.x = 0;
+    ecb.r.y = 0;
+    const shield = this.Shield;
+    shield.radius = 0;
+    shield.a = false;
+    shield.X = 0;
+    shield.Y = 0;
+    const flags = this.Flags;
+    flags.FacingRight = true;
+    flags.intangible = false;
+    flags.inHitPause = false;
     const ld = this.LedgeDetector;
     ld.bottomLeftX = 0;
     ld.bottomLeftY = 0;
@@ -256,6 +260,13 @@ function LerpPlayer(
   const lastecbHeight = lastEcb.ecbShape.height.AsNumber;
   const currentecbHeight = currentEcb.ecbShape.height.AsNumber;
 
+  const lastlastecbWidthHalf = lastlastecbWidth / 2;
+  const lastecbWidthHalf = lastecbWidth / 2;
+  const currentecbWidthHalf = currentecbWidth / 2;
+  const lastlastecbHeightHalf = lastlastecbHeight / 2;
+  const lastecbHeightHalf = lastecbHeight / 2;
+  const currentecbHeightHalf = currentecbHeight / 2;
+
   dto.PreviousEcb.b.x = Lerp(lastLastEcb.posX, lastEcb.posX, alpha);
   dto.PreviousEcb.b.y = Lerp(
     lastLastEcb.posY + lastLastYOffset,
@@ -263,18 +274,18 @@ function LerpPlayer(
     alpha,
   );
   dto.PreviousEcb.l.x = Lerp(
-    lastLastEcb.posX - lastlastecbWidth / 2,
-    lastEcb.posX - lastecbWidth / 2,
+    lastLastEcb.posX - lastlastecbWidthHalf,
+    lastEcb.posX - lastecbWidthHalf,
     alpha,
   );
   dto.PreviousEcb.l.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset + lastlastecbHeight / 2,
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
+    lastLastEcb.posY + lastLastYOffset + lastlastecbHeightHalf,
+    lastEcb.posY + lastYOffset + lastecbHeightHalf,
     alpha,
   );
   dto.PreviousEcb.t.x = Lerp(
-    lastLastEcb.posX - lastlastecbWidth / 2,
-    lastEcb.posX - lastecbWidth / 2,
+    lastLastEcb.posX - lastlastecbWidthHalf,
+    lastEcb.posX - lastecbWidthHalf,
     alpha,
   );
   dto.PreviousEcb.t.y = Lerp(
@@ -283,13 +294,13 @@ function LerpPlayer(
     alpha,
   );
   dto.PreviousEcb.r.x = Lerp(
-    lastLastEcb.posX + lastlastecbWidth / 2,
-    lastEcb.posX + lastecbWidth / 2,
+    lastLastEcb.posX + lastlastecbWidthHalf,
+    lastEcb.posX + lastecbWidthHalf,
     alpha,
   );
   dto.PreviousEcb.r.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset + lastlastecbHeight / 2,
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
+    lastLastEcb.posY + lastLastYOffset + lastlastecbHeightHalf,
+    lastEcb.posY + lastYOffset + lastecbHeightHalf,
     alpha,
   );
 
@@ -300,18 +311,18 @@ function LerpPlayer(
     alpha,
   );
   dto.Ecb.l.x = Lerp(
-    lastEcb.posX - lastecbWidth / 2,
-    currentEcb.posX - currentecbWidth / 2,
+    lastEcb.posX - lastecbWidthHalf,
+    currentEcb.posX - currentecbWidthHalf,
     alpha,
   );
   dto.Ecb.l.y = Lerp(
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
-    currentEcb.posY + currentYOffset + currentecbHeight / 2,
+    lastEcb.posY + lastYOffset + lastecbHeightHalf,
+    currentEcb.posY + currentYOffset + currentecbHeightHalf,
     alpha,
   );
   dto.Ecb.t.x = Lerp(
-    lastEcb.posX - lastecbWidth / 2,
-    currentEcb.posX - currentecbWidth / 2,
+    lastEcb.posX - lastecbWidthHalf,
+    currentEcb.posX - currentecbWidthHalf,
     alpha,
   );
   dto.Ecb.t.y = Lerp(
@@ -320,13 +331,13 @@ function LerpPlayer(
     alpha,
   );
   dto.Ecb.r.x = Lerp(
-    lastEcb.posX + lastecbWidth / 2,
-    currentEcb.posX + currentecbWidth / 2,
+    lastEcb.posX + lastecbWidthHalf,
+    currentEcb.posX + currentecbWidthHalf,
     alpha,
   );
   dto.Ecb.r.y = Lerp(
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
-    currentEcb.posY + currentYOffset + currentecbHeight / 2,
+    lastEcb.posY + lastYOffset + lastecbHeightHalf,
+    currentEcb.posY + currentYOffset + currentecbHeightHalf,
     alpha,
   );
 

@@ -1,4 +1,4 @@
-import { InputAction } from '../../input/Input';
+import { InputAction } from '../input/Input';
 
 export class FrameStorageManager {
   private readonly INITIAL_FRAME = 0;
@@ -16,9 +16,9 @@ export class FrameStorageManager {
   }
 }
 
-export class InputStorageManagerNetworked<Type>
-  implements IInputStorageManagerNetworked<Type>
-{
+export class InputStorageManagerNetworked<
+  Type,
+> implements IInputStorageManagerNetworked<Type> {
   private readonly localInputStore: Array<Type>;
   private readonly remoteInputStore: Array<Type>;
   private readonly guessedInputStore: Array<Type>;
@@ -76,7 +76,7 @@ export class InputStorageManagerNetworked<Type>
 
   public ReturnFirstWrongGuess(
     lowerBound: number,
-    upperBound: number
+    upperBound: number,
   ): number | undefined {
     for (let i = lowerBound; i <= upperBound; i++) {
       const guessed = this.guessedInputStore[i];
@@ -105,42 +105,20 @@ export interface IInputStorageManagerNetworked<Type> {
   GetGuessedInputForFrame(frame: number): Type;
   ReturnFirstWrongGuess(
     lowerBound: number,
-    upperBound: number
+    upperBound: number,
   ): number | undefined;
 }
 
 export function InitISM<Type>(
-  invalidSpec: (guessed: Type, real: Type) => boolean
+  invalidSpec: (guessed: Type, real: Type) => boolean,
 ) {
   const ISM = new InputStorageManagerNetworked<Type>(invalidSpec);
   return ISM;
 }
 
-export class InputStoreLocal<Type> implements IInputStoreLocal<Type> {
-  private readonly P1localInputStore: Array<Type>;
-
-  constructor() {
-    this.P1localInputStore = new Array<Type>(1000);
-  }
-
-  StoreInputForFrame(frame: number, input: Type): void {
-    this.P1localInputStore[frame] = input;
-  }
-
-  GetInputForFrame(frame: number): Type {
-    frame = frame >= 0 ? frame : 0;
-    return this.P1localInputStore[frame];
-  }
-}
-
-export interface IInputStoreLocal<Type> {
-  StoreInputForFrame(frame: number, input: Type): void;
-  GetInputForFrame(frame: number): Type;
-}
-
-export class FrameComparisonManager<Type>
-  implements IFrameComparisonManager<Type>
-{
+export class FrameComparisonManager<
+  Type,
+> implements IFrameComparisonManager<Type> {
   private readonly maxRollBackFrames = 10000;
   private readonly frameAdvantageLimit = 4;
   private readonly inputStorageManager: InputStorageManagerNetworked<Type>;
@@ -148,7 +126,7 @@ export class FrameComparisonManager<Type>
 
   constructor(
     inputStorageManager: InputStorageManagerNetworked<Type>,
-    frameStorageManager: FrameStorageManager
+    frameStorageManager: FrameStorageManager,
   ) {
     this.inputStorageManager = inputStorageManager;
     this.frameStorageManager = frameStorageManager;
@@ -162,7 +140,7 @@ export class FrameComparisonManager<Type>
 
     let syncFrame = this.inputStorageManager.ReturnFirstWrongGuess(
       this.frameStorageManager.SyncFrame + 1,
-      finalFrame
+      finalFrame,
     );
 
     if (syncFrame === undefined) {
@@ -210,7 +188,7 @@ export class RollBackManager<Type> implements IRollBackManager<Type> {
 
   constructor(
     frameComparisonManager: FrameComparisonManager<Type>,
-    remoteLocalFrameManager: FrameStorageManager
+    remoteLocalFrameManager: FrameStorageManager,
   ) {
     this.FrameComparisonManager = frameComparisonManager;
     this.RemoteLocalFrameManager = remoteLocalFrameManager;
@@ -240,7 +218,7 @@ export class SyncroManager<Type> {
   private readonly guessToRealCopy: (i: Type, frame: number) => Type;
   private readonly DefaultInputFactory: (
     frameAdvantage: number,
-    frame: number
+    frame: number,
   ) => Type;
 
   constructor(
@@ -249,7 +227,7 @@ export class SyncroManager<Type> {
     fcm: IFrameComparisonManager<Type>,
     rbm: IRollBackManager<Type>,
     guessToRealCopy: (i: Type, frame: number) => Type,
-    defaultInputFactory: (frameAdvantage: number, frame: number) => Type
+    defaultInputFactory: (frameAdvantage: number, frame: number) => Type,
   ) {
     this.FSM = fsm;
     this.ISM = ism;
@@ -322,7 +300,7 @@ export class SyncroManager<Type> {
 
 export const InputActionInvalidSpec = (
   guessed: InputAction,
-  real: InputAction
+  real: InputAction,
 ) => {
   return (
     guessed.Action === real.Action &&
@@ -346,7 +324,7 @@ export function InitSynchroManager<Type>(
   fsm: FrameStorageManager,
   ism: InputStorageManagerNetworked<Type>,
   defaultInputFactory: (frameAdvantage: number, frame: number) => Type,
-  guessToRealCopy: (item: Type, frame: number) => Type
+  guessToRealCopy: (item: Type, frame: number) => Type,
 ) {
   const FCM = new FrameComparisonManager(ism, fsm);
   const RBM = new RollBackManager<Type>(FCM, fsm);
@@ -357,7 +335,7 @@ export function InitSynchroManager<Type>(
     FCM,
     RBM,
     guessToRealCopy,
-    defaultInputFactory
+    defaultInputFactory,
   );
   return syncMan;
 }

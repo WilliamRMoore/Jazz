@@ -11,7 +11,6 @@ export function OutOfBoundsCheck(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
-  const stage = stageData.Stages;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const sm = playerData.StateMachine(playerIndex);

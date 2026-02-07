@@ -6,7 +6,7 @@ import {
 } from '../../game/engine/entity/playerOrchestrator';
 import { StageCollisionDetection } from '../../game/engine/systems/stageCollision';
 import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';

@@ -18,7 +18,7 @@ import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
 import { GrabSnapShot } from '../engine/entity/components/grab';
 import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
-import { InputAction } from '../input/Input';
+import { InputAction } from '../engine/input/Input';
 import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
 import {
   deBugInfoTree,

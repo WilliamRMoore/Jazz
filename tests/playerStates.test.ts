@@ -9,7 +9,7 @@ import {
   Dash,
 } from '../game/engine/finite-state-machine/stateConfigurations/states';
 import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
-import { NewInputAction } from '../game/input/Input';
+import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,
   RawToNumber,

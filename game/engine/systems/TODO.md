@@ -62,3 +62,12 @@
 2. Art (models / sprites)
 3. Sound (effects, music)
 4. Menu (fighter select, stage select, etc)
+
+## character Ideas
+
+Ogua
+Mothman
+Chuppa Cabra
+Squatch
+Wendigo
+Wolfman

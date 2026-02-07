@@ -20,9 +20,7 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import { PlayerData, World } from '../world/world';
-import { InputStoreLocal } from '../engine-state-management/Managers';
-import { InputAction } from '../../input/Input';
+import { InputAction } from '../input/Input';
 import {
   THREE,
   POINT_SEVEN_FIVE,
@@ -37,6 +35,9 @@ import {
   ONE_POINT_FOUR,
   POINT_ZERO_ONE_THREE,
 } from '../math/numberConstants';
+import { IInputStore, InputStore } from '../managers/inputManager';
+import { PlayerData } from '../world/stateModules';
+import { World } from '../world/world';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
@@ -186,7 +187,7 @@ function PAvsPB(
   colResPool: Pool<CollisionResult>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
   componentHistories: Array<ComponentHistory>,
-  pAInputStore: InputStoreLocal<InputAction>,
+  pAInputStore: IInputStore,
   pA: Player,
   pB: Player,
 ): AttackResult {

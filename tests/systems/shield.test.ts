@@ -3,7 +3,7 @@ import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { ShieldRegen } from '../../game/engine/systems/shieldRegen';
 import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
 import {
   GAME_EVENT_IDS,
   STATE_IDS,

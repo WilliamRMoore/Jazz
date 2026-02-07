@@ -1,30 +1,30 @@
 import { CharacterConfig } from '../../character/shared';
-import { InputAction } from '../../input/Input';
+import { InputAction } from '../input/Input';
 import { PlayerSnapShot } from '../entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { IJazz, Jazz } from '../jazz';
+import { IJazzLocal, JazzLocal } from '../jazz';
 import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
 
-export interface IJazzDebugger extends IJazz {
+export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;
   AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined): void;
 }
 
 export class JazzDebugger implements IJazzDebugger {
   readonly playerDebuggers = new Array<PlayerDebugAdapter>();
-  private jazz: Jazz;
+  private jazz: JazzLocal;
   private world: World;
   private paused: boolean = false;
   private previousInput: InputAction | undefined = undefined;
   private advanceFrame: boolean = false;
 
   constructor() {
-    this.jazz = new Jazz();
+    this.jazz = new JazzLocal();
     this.world = this.jazz.World;
   }
 

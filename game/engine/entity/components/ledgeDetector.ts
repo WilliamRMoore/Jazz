@@ -110,14 +110,6 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
     leftBottomRight.Y.SetFromRaw(bottomHeightRaw);
   }
 
-  public SnapShot(): LedgeDetectorSnapShot {
-    return {
-      middleX: this.x.AsNumber,
-      middleY: this.y.AsNumber,
-      numberOfLedgeGrabs: this.numberOfLedgeGrabs,
-    } as LedgeDetectorSnapShot;
-  }
-
   public get CanGrabLedge(): boolean {
     return this.numberOfLedgeGrabs < this.maxGrabs;
   }
@@ -128,6 +120,14 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
 
   public ZeroLedgeGrabCount(): void {
     this.numberOfLedgeGrabs = 0;
+  }
+
+  public SnapShot(): LedgeDetectorSnapShot {
+    return {
+      middleX: this.x.AsNumber,
+      middleY: this.y.AsNumber,
+      numberOfLedgeGrabs: this.numberOfLedgeGrabs,
+    } as LedgeDetectorSnapShot;
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {

@@ -1,7 +1,6 @@
 import { objectToMap } from './configConverter';
 
 const config = {
-  MaxPlayers: 4,
   MaxAtkBubblesPerPlayer: 25,
   MaxHurtBubblesPerPlayer: 25,
   MaxGrabBubblesPerPlayer: 25,

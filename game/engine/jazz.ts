@@ -1,11 +1,10 @@
-import { DefaultCharacterConfig } from '../character/default';
-import { InputAction } from '../input/Input';
+import { InputAction } from './input/Input';
 import { FlatVec } from './physics/vector';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from './entity/playerOrchestrator';
-import { defaultStage, WallStage } from './stage/stageMain';
+import { defaultStage, Stage, WallStage } from './stage/stageMain';
 import { PlayerAttacks } from './systems/attack';
 import { Gravity } from './systems/gravity';
 import { RecordHistory } from './systems/history';
@@ -20,13 +19,15 @@ import { StageCollisionDetection } from './systems/stageCollision';
 import { Flags } from './systems/flags';
 import { ApplyVelocity } from './systems/velocity';
 import { ApplyVelocityDecay } from './systems/velocityDecay';
-import { World } from './world/world';
+import { AddNetowrkedPlayers, World } from './world/world';
 import { PlayerGrabs } from './systems/grab';
 import { GrabMeter } from './systems/grabMeter';
 import { CharacterConfig } from '../character/shared';
-import { WallSlide } from './systems/wallSlide';
+import { WallKick } from './systems/wallKick';
+import { RollBackManager } from './managers/rollBack';
+import { IInputStore } from './managers/inputManager';
 
-export interface IJazz {
+export interface IJazzLocal {
   get World(): World | undefined;
   Init(CharacterConfig: Array<CharacterConfig>): void;
   UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void;
@@ -35,7 +36,7 @@ export interface IJazz {
 
 export type GameLoop = (w: World) => void;
 
-export class Jazz implements IJazz {
+export class JazzLocal implements IJazzLocal {
   private readonly world: World;
   private loop: GameLoop;
 
@@ -92,6 +93,121 @@ export class Jazz implements IJazz {
   }
 }
 
+class JazzNetwork {
+  public readonly World: World;
+  private localInputStore!: IInputStore;
+  private rollBack!: RollBackManager;
+  private loop: GameLoop;
+  private localPlayer: { pIndex: number; player: Player } | undefined;
+  private remotePlayer: { pIndex: number; player: Player } | undefined;
+  private getLocalInput!: () => InputAction;
+  private sendLocalInput!: (ia: InputAction) => void;
+
+  constructor() {
+    this.World = new World();
+    this.loop = DefaultGameLoop;
+  }
+
+  SetStage(s: Stage) {
+    this.World.SetStage(s);
+  }
+
+  SetLocalPlayer(
+    cc: CharacterConfig,
+    pos: FlatVec,
+    pIndex: number,
+    getLocalInput: () => InputAction,
+    sendLocalInput: (ia: InputAction) => void,
+  ) {
+    const p = new Player(this.World.PlayerData.PlayerCount, cc);
+    SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
+    this.localPlayer = { pIndex: pIndex, player: p };
+    this.getLocalInput = getLocalInput;
+    this.sendLocalInput = sendLocalInput;
+  }
+
+  SetRemotePlayer(cc: CharacterConfig, pos: FlatVec, pIndex: number) {
+    const p = new Player(this.World.PlayerData.PlayerCount, cc);
+    SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
+    this.remotePlayer = { pIndex: pIndex, player: p };
+  }
+
+  init() {
+    if (this.localPlayer === undefined || this.remotePlayer === undefined) {
+      console.error('Did not set players before initiliazing');
+    }
+    const rb = AddNetowrkedPlayers(
+      this.World,
+      this.localPlayer!,
+      this.remotePlayer!,
+    );
+    this.rollBack = rb;
+    this.localInputStore = this.World.PlayerData.InputStore(
+      this.localPlayer!.pIndex,
+    );
+  }
+
+  public Tick() {
+    const rb = this.rollBack;
+    rb.UpdateSyncFrame();
+
+    if (!rb.IsWithInFrameAdvantage) {
+      //clock alignment?
+
+      return;
+    }
+    const localIa = this.getLocalInput();
+    this.localInputStore.StoreInputForFrame(this.World.LocalFrame, localIa);
+    this.sendLocalInput(localIa);
+    // send our input here
+    if (rb.ShouldRollBack) {
+      this.rollback();
+    }
+    this.tickLoop();
+  }
+
+  private rollback() {
+    let from = this.rollBack.SyncFrame;
+    const to = this.World.LocalFrame;
+    const pc = this.World.PlayerData.PlayerCount;
+    this.World.LocalFrame = from;
+    for (let i = 0; i < pc; i++) {
+      const hist = this.World.HistoryData.PlayerComponentHistories[i];
+      const p = this.World.PlayerData.Player(i);
+      hist.SetPlayerToFrame(p, from);
+    }
+    this.rollBack.RollBackMode(true);
+    from++;
+    while (from < to) {
+      this.tickLoop();
+      from++;
+    }
+    this.rollBack.RollBackMode(false);
+  }
+
+  private tickLoop() {
+    const world = this.World;
+    world.Pools.Zero();
+    let frameTimeStart = performance.now();
+
+    this.loop(this.World);
+
+    let frameTimeDelta = performance.now() - frameTimeStart;
+
+    world.SetFrameTimeForFrame(world.LocalFrame, frameTimeDelta);
+    world.SetFrameTimeStampForFrame(world.LocalFrame, frameTimeStart);
+    world.LocalFrame++;
+  }
+
+  AddRemoteInputForFrame(
+    frame: number,
+    frameAdvantage: number,
+    ia: InputAction,
+  ) {
+    this.rollBack.SetRemoteInputForFrame(frame, frameAdvantage, ia);
+  }
+}
+
 export const DefaultGameLoop: GameLoop = (w: World) => {
   Flags(w);
   PlayerInput(w);
@@ -101,7 +217,7 @@ export const DefaultGameLoop: GameLoop = (w: World) => {
   PlayerCollisionDetection(w);
   PlatformDetection(w);
   StageCollisionDetection(w);
-  WallSlide(w);
+  WallKick(w);
   LedgeGrabDetection(w);
   PlayerSensors(w);
   PlayerAttacks(w);

@@ -1,12 +1,12 @@
+import { Player } from '../entity/playerOrchestrator';
 import {
-  GAME_EVENT_IDS,
+  IsStateNecessarilyGrounded,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { POINT_FIVE } from '../math/numberConstants';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { World } from '../world/world';
 
-export function WallSlide(w: World) {
+export function WallKick(w: World) {
   const pd = w.PlayerData;
   const pLength = pd.PlayerCount;
   const pools = w.Pools;
@@ -58,27 +58,26 @@ export function WallSlide(w: World) {
         r.Y2.Raw,
       );
       const sm = pd.StateMachine(i);
-      if (
-        !rightCollision &&
-        !leftCollision &&
-        stateId === STATE_IDS.WALL_SLIDE_S
-      ) {
-        sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
-        continue;
-      }
-      const is = pd.InputStore(i);
-      const ia = is.GetInputForFrame(w.LocalFrame);
-      if (rightCollision) {
-        if (ia.LXAxis.Raw > POINT_FIVE) {
-          p.Flags.FaceLeft();
-          sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLIDE_GE);
-        }
-      } else {
-        if (ia.LXAxis.Raw < -POINT_FIVE) {
-          p.Flags.FaceRight();
-          sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLIDE_GE);
-        }
-      }
     }
+  }
+}
+
+function IsPossibleForPlayerToWallKick(p: Player) {
+  const stateId = p.FSMInfo.CurrentStatetId;
+  if (IsStateNecessarilyGrounded(stateId)) {
+    return false;
+  }
+  const attacks = p.Attacks;
+  const attack = attacks.GetAttack();
+  if (attack !== undefined) {
+    return false;
+  }
+  switch (stateId) {
+    case STATE_IDS.JUMP_S:
+    case STATE_IDS.TUMBLE_S:
+    case STATE_IDS.HELPLESS_S:
+      return false;
+    default:
+      return true;
   }
 }

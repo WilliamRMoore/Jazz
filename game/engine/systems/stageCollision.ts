@@ -14,7 +14,6 @@ import {
   AddToPlayerYPositionRaw,
   Player,
 } from '../entity/playerOrchestrator';
-import { PlayerData, Pools, StageData, World } from '../world/world';
 import { ShouldSoftlandRaw } from './shared';
 import {
   CreateDiamondFromHistory,
@@ -28,6 +27,8 @@ import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { ICollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
+import { PlayerData, StageData, Pools } from '../world/stateModules';
+import { World } from '../world/world';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;
 
@@ -36,7 +37,9 @@ function isPlayerOnAnyStage(
   stages: Stage[],
   sensorDepth: FixedPoint,
 ): boolean {
-  for (const stage of stages) {
+  const stageLength = stages.length;
+  for (let i = 0; i < stageLength; i++) {
+    const stage = stages[i];
     if (PlayerOnStage(stage, ecbBottom, sensorDepth)) {
       return true;
     }
@@ -56,12 +59,10 @@ export function StageCollisionDetection(world: World): void {
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const ecb = p.ECB;
-    const prevEcbSnapShot =
-      componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
-    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
 
     let isPlayerOnAnyPlatform = false;
-    for (const stage of stages) {
+    for (let i = 0; i < stagesLength; i++) {
+      const stage = stages[i];
       if (PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth)) {
         isPlayerOnAnyPlatform = true;
         break;
@@ -71,6 +72,9 @@ export function StageCollisionDetection(world: World): void {
       continue;
     }
 
+    const prevEcbSnapShot =
+      componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
+    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStatetId;
@@ -97,6 +101,7 @@ export function StageCollisionDetection(world: World): void {
     const sensorDepth = p.ECB.SensorDepth;
     const grnd = isPlayerOnAnyStage(p.ECB.Bottom, stages, sensorDepth);
     const prvGrnd = isPlayerOnAnyStage(preEcb.Bottom, stages, sensorDepth);
+    let stillGrounded = grnd;
 
     if (prvGrnd && !grnd) {
       let previousStage: Stage | undefined;
@@ -116,28 +121,26 @@ export function StageCollisionDetection(world: World): void {
       }
     }
 
-    const finalGrounded = isPlayerOnAnyStage(p.ECB.Bottom, stages, sensorDepth);
-    if (finalGrounded) {
-      for (let i = 0; i < stagesLength; i++) {
-        const stage = stages[i];
-        if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
-          if (handleJitter(p, stage, pools)) {
-            break;
-          }
+    for (let i = 0; i < stagesLength; i++) {
+      const stage = stages[i];
+      if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
+        stillGrounded = true;
+        if (handleJitter(p, stage, pools)) {
+          break;
         }
       }
     }
 
-    const isGroundedAfterJitter = isPlayerOnAnyStage(
-      p.ECB.Bottom,
-      stages,
-      sensorDepth,
-    );
+    const isGroundedAfterJitter = stillGrounded;
+    // const isGroundedAfterJitter = isPlayerOnAnyStage(
+    //   p.ECB.Bottom,
+    //   stages,
+    //   sensorDepth,
+    // );
 
     if (
       isGroundedAfterJitter === false &&
-      p.FSMInfo.CurrentStatetId !== STATE_IDS.LEDGE_GRAB_S &&
-      p.FSMInfo.CurrentStatetId !== STATE_IDS.WALL_SLIDE_S
+      p.FSMInfo.CurrentStatetId !== STATE_IDS.LEDGE_GRAB_S
     ) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
       continue;

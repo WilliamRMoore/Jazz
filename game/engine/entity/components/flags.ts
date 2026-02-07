@@ -87,10 +87,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.shieldJump = true;
   }
 
-  public get JumpedFromShield(): boolean {
-    return this.shieldJump;
-  }
-
   public ResetJumpFromShield(): void {
     this.shieldJump = false;
   }
@@ -121,6 +117,10 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
 
   public get IsPlatDetectDisabled(): boolean {
     return this.disablePlatformDetection > 0;
+  }
+
+  public get JumpedFromShield(): boolean {
+    return this.shieldJump;
   }
 
   public GetIntangabilityFrames(): number {

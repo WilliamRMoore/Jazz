@@ -9,9 +9,10 @@ import {
   PlayerOnStageOrPlats,
   SetPlayerPositionRaw,
 } from '../entity/playerOrchestrator';
-import { PlayerData, StageData, Pools, World } from '../world/world';
 import { FlatVec } from '../physics/vector';
 import { TWO } from '../math/numberConstants';
+import { PlayerData, StageData, Pools } from '../world/stateModules';
+import { World } from '../world/world';
 
 const combinedVerts = new Array<FlatVec>();
 export function LedgeGrabDetection(world: World): void {

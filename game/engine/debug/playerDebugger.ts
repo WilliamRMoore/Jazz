@@ -1,10 +1,10 @@
-import { InputAction } from '../../input/Input';
-import { InputStoreLocal } from '../engine-state-management/Managers';
+import { InputAction } from '../input/Input';
 import { ComponentHistory, PlayerSnapShot } from '../entity/componentHistory';
 import { frameNumber } from '../entity/components/attack';
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { StateId } from '../finite-state-machine/stateConfigurations/shared';
+import { IInputStore } from '../managers/inputManager';
 import { NumberToRaw } from '../math/fixedPoint';
 import { World } from '../world/world';
 
@@ -16,7 +16,7 @@ export class PlayerDebugAdapter {
   private player: Player;
   private pId: number;
   private stateMachine: StateMachine;
-  private inputStore: InputStoreLocal<InputAction>;
+  private inputStore: IInputStore;
 
   constructor(p: Player, w: World) {
     this.player = p;

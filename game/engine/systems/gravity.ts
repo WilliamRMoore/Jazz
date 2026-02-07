@@ -1,9 +1,9 @@
 import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw, MultiplyRaw, DivideRaw } from '../math/fixedPoint';
+import { MultiplyRaw } from '../math/fixedPoint';
 import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { World } from '../world/world';
-import { TWO } from '../math/numberConstants';
+import { ONE, TWO } from '../math/numberConstants';
 
 export function Gravity(world: World): void {
   const playerData = world.PlayerData;
@@ -20,13 +20,8 @@ export function Gravity(world: World): void {
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
-    const fallSpeed =
-      p.FSMInfo.CurrentStatetId === STATE_IDS.WALL_SLIDE_S
-        ? DivideRaw(speeds.FallSpeedRaw, TWO)
-        : isFF
-          ? speeds.FastFallSpeedRaw
-          : speeds.FallSpeedRaw;
-    const gravMutliplier = NumberToRaw(isFF ? 2 : 1);
+    const fallSpeed = isFF ? speeds.FastFallSpeedRaw : speeds.FallSpeedRaw;
+    const gravMutliplier = isFF ? TWO : ONE;
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
       MultiplyRaw(grav, gravMutliplier),
@@ -66,9 +61,9 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   }
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  const stagesLemgth = stage.length;
+  const stagesLength = stage.length;
   let playerOnPlatsOrStage = false;
-  for (let i = 0; i < stagesLemgth; i++) {
+  for (let i = 0; i < stagesLength; i++) {
     const stagePiece = stage[i];
     const pps = PlayerOnStageOrPlats(stagePiece, p);
     if (pps) {

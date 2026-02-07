@@ -1,5 +1,4 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { InputStoreLocal } from '../../game/engine/engine-state-management/Managers';
 import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
@@ -10,10 +9,14 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import {
+  IInputStore,
+  InputStore,
+} from '../../game/engine/managers/inputManager';
 import { NumberToRaw, RawToNumber } from '../../game/engine/math/fixedPoint';
 import { GrabMeter } from '../../game/engine/systems/grabMeter';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/input/Input';
+import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 
 describe('GrabMeter system tests', () => {
   let w: World;
@@ -21,8 +24,8 @@ describe('GrabMeter system tests', () => {
   let p2: Player;
   let p1Sm: StateMachine;
   let p2Sm: StateMachine;
-  let p1InputStore: InputStoreLocal<InputAction>;
-  let p2InputStore: InputStoreLocal<InputAction>;
+  let p1InputStore: IInputStore;
+  let p2InputStore: IInputStore;
   let h1: ComponentHistory;
   let h2: ComponentHistory;
 

@@ -1,10 +1,22 @@
 import {
   GAME_EVENT_IDS,
   GameEventId,
-} from '../engine/finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../engine/math/fixedPoint';
-import { ToFp } from '../engine/utils';
-import { World } from '../engine/world/world';
+} from '../finite-state-machine/stateConfigurations/shared';
+import { FixedPoint } from '../math/fixedPoint';
+import { ToFp } from '../utils';
+import { World } from '../world/world';
+
+export type NetworkInput = {
+  Action: GameEventId;
+  LXAxisRaw: number;
+  LYAxisRaw: number;
+  RXAxisRaw: number;
+  RYAxisRaw: number;
+  LTValRaw: number;
+  RTValRaw: number;
+  Frame: number;
+  FrameAdvantage: number;
+};
 
 export type InputAction = {
   Action: GameEventId;
@@ -238,11 +250,6 @@ function transcribeInput(input: GamePadInput): InputAction {
   // Jump was pressed
   if (input.jump) {
     inputAction.Action = GAME_EVENT_IDS.JUMP_GE;
-    return inputAction;
-  }
-
-  if (LYAxis > 0.7) {
-    inputAction.Action = GAME_EVENT_IDS.UP_GE;
     return inputAction;
   }
 

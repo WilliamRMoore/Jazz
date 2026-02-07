@@ -1,6 +1,6 @@
 import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
-import { InputAction } from '../../input/Input';
+import { InputAction } from '../input/Input';
 
 import { ActionMappings, FSMStates } from './PlayerStates';
 import { RunCondition } from './stateConfigurations/conditions';

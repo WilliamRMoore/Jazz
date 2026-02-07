@@ -10,7 +10,6 @@ import { FlatVec } from '../../physics/vector';
 import {
   Player,
   AddToPlayerYPositionRaw,
-  AddToPlayerXPostionRaw,
 } from '../../entity/playerOrchestrator';
 import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
@@ -1033,13 +1032,14 @@ export const dizzy: FSMState = {
 //   },
 // };
 
-export const WallSlide: FSMState = {
+export const WallKick: FSMState = {
   StateName: 'WallSlide',
-  StateId: STATE_IDS.WALL_SLIDE_S,
+  StateId: STATE_IDS.WALL_KICK_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.WALL_SLIDE_S);
+    p.ECB.SetECBShape(STATE_IDS.WALL_KICK_S);
     p.Flags.FastFallOff();
-    p.Velocity.Y.SetFromRaw(DivideRaw(p.Velocity.Y.Raw, TWO));
+    p.Velocity.Y.SetFromRaw(0);
+    p.Velocity.X.SetFromRaw(0);
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {

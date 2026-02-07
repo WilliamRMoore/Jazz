@@ -22,7 +22,6 @@ import {
   CORRECTION_DEPTH_RAW,
   POINT_EIGHT,
   POINT_FIVE,
-  POINT_FOUR,
 } from '../math/numberConstants';
 
 const NEG_ZERO_POINT_EIGHT = -POINT_EIGHT;
@@ -144,7 +143,6 @@ export function PlatformDetection(world: World): void {
         const sm = playerData.StateMachine(playerIndex);
         // Check for a fast downward flick on the left stick to fall through the platform.
         const checkValueRaw = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
-
         const inLanding =
           p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
           p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;

@@ -2,7 +2,7 @@ import { DefaultCharacterConfig } from '../../game/character/default';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { PlatformDetection } from '../../game/engine/systems/platformCollision';
 import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import {

@@ -1,7 +1,7 @@
-import { IJazz } from '../engine/jazz';
+import { IJazzLocal } from '../engine/jazz';
 import { DebugRenderer, resolution, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
-import { GetInput, NewInputAction } from '../input/Input';
+import { GetInput, NewInputAction } from '../engine/input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
@@ -68,7 +68,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   RENDER_LOOP(engine);
 }
 
-function LOGIC_LOOP(engine: IJazz, gpInfo: Array<playerControllerInfo>) {
+function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
   const logicLoopHandle = setInterval(() => {
     logicStep(engine, gpInfo);
   }, frameInterval);
@@ -95,7 +95,10 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   });
 }
 
-function logicStep(engine: IJazz, gamePadInfo: Array<playerControllerInfo>) {
+function logicStep(
+  engine: IJazzLocal,
+  gamePadInfo: Array<playerControllerInfo>,
+) {
   //const gamePadCount = gamePadInfo.length;
   const w = engine.World;
   const playerCount = w?.PlayerData.PlayerCount!;

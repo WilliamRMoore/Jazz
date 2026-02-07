@@ -1,5 +1,4 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { InputStoreLocal } from '../../game/engine/engine-state-management/Managers';
 import { StateMachine } from '../../game/engine/finite-state-machine/PlayerStateMachine';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import {
@@ -20,17 +19,21 @@ import {
   PlayerAttacks,
 } from '../../game/engine/systems/attack';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/input/Input';
+import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 import { Pool } from '../../game/engine/pools/Pool';
 import { PooledVector } from '../../game/engine/pools/PooledVector';
+import {
+  IInputStore,
+  InputStore,
+} from '../../game/engine/managers/inputManager';
 
 describe('Attack systesm tests', () => {
   let p1: Player;
   let p1Sm: StateMachine;
-  let p1InputStore: InputStoreLocal<InputAction>;
+  let p1InputStore: IInputStore;
   let p2: Player;
   let p2Sm: StateMachine;
-  let p2InputStore: InputStoreLocal<InputAction>;
+  let p2InputStore: IInputStore;
   let w: World;
   let h1: ComponentHistory;
   let h2: ComponentHistory;

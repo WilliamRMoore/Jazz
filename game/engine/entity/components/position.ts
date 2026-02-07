@@ -5,15 +5,6 @@ import { IHistoryEnabled } from '../componentHistory';
 
 export type PositionSnapShot = { X: number; Y: number };
 
-export type readonlyFp = { get AsNumber(): number; get Raw(): number };
-
-export interface GlobalRootRef {
-  readonly X: readonlyFp;
-  readonly Y: readonlyFp;
-  readonly PX: readonlyFp;
-  readonly PY: readonlyFp;
-}
-
 // Player Components
 export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
   private readonly p: FlatVec = ToFV(0, 0);

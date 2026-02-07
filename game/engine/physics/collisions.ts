@@ -416,9 +416,7 @@ export function LineSegmentIntersectionRaw(
   const uA = DivideRaw(numeA, denom);
   const uB = DivideRaw(numeB, denom);
 
-  const oneRaw = NumberToRaw(1);
-
-  if (uA >= 0 && uA <= oneRaw && uB >= 0 && uB <= oneRaw) {
+  if (uA >= 0 && uA <= ONE && uB >= 0 && uB <= ONE) {
     return true;
   }
 

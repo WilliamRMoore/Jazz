@@ -499,7 +499,6 @@ export function InitNeutralFallRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
-    { geId: GAME_EVENT_IDS.WALL_SLIDE_GE, sId: STATE_IDS.WALL_SLIDE_S },
   ]);
 
   nFallTranslations.SetConditions([
@@ -1183,17 +1182,17 @@ export function InitGrabEscapeRelations(): StateRelation {
   return grabEscapeRelations;
 }
 
-export function InitWallSlideRelations(): StateRelation {
-  const wallSlideMaps = new ActionStateMappings();
-  wallSlideMaps.SetMappings([
-    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
-    { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
-  ]);
+// export function InitWallSlideRelations(): StateRelation {
+//   const wallSlideMaps = new ActionStateMappings();
+//   wallSlideMaps.SetMappings([
+//     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+//     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
+//   ]);
 
-  const wallSlideRelations = new StateRelation(
-    STATE_IDS.WALL_SLIDE_S,
-    wallSlideMaps,
-  );
+//   const wallSlideRelations = new StateRelation(
+//     STATE_IDS.WALL_SLIDE_S,
+//     wallSlideMaps,
+//   );
 
-  return wallSlideRelations;
-}
+//   return wallSlideRelations;
+// }

@@ -1,5 +1,5 @@
-import { InputAction } from '../../../input/Input';
-import { InputStoreLocal } from '../../engine-state-management/Managers';
+import { InputAction } from '../../input/Input';
+import { IInputStore, InputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
@@ -1342,7 +1342,7 @@ function inputActionMacthesTargetNotRepeating(
 }
 
 function isBufferedInput(
-  inputStore: InputStoreLocal<InputAction>,
+  inputStore: IInputStore,
   currentFrame: number,
   bufferFrames: number,
   targetGameEvent: GameEventId,

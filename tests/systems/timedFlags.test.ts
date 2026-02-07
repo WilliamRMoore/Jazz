@@ -1,19 +1,21 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { InputStoreLocal } from '../../game/engine/engine-state-management/Managers';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { FSMStates } from '../../game/engine/finite-state-machine/PlayerStates';
 import {
   JumpSquat,
   NeutralFall,
 } from '../../game/engine/finite-state-machine/stateConfigurations/states';
+import {
+  IInputStore,
+  InputStore,
+} from '../../game/engine/managers/inputManager';
 import { Flags } from '../../game/engine/systems/flags';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/input/Input';
+import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 
 describe('TimedFlags system tests', () => {
   let p: Player;
   let w: World;
-  let inputStore: InputStoreLocal<InputAction>;
+  let inputStore: IInputStore;
 
   beforeEach(() => {
     w = new World();
