@@ -201,7 +201,7 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
       snapShot.attack = this.currentAttack;
     }
     if (this.PlayerIdsHit.size > 0) {
-      snapShot.playersHit = Array.from(this.PlayerIdsHit);
+      snapShot.playersHit = Array.from(this.PlayerIdsHit).sort();
     }
     return snapShot;
   }

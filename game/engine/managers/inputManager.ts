@@ -24,8 +24,8 @@ export interface IInputStore {
 }
 
 export class RemoteInputManager implements IInputStore {
-  private readonly store: InputStore;
-  private readonly guessedInputStore: Map<frameNumber, InputAction> = new Map();
+  public readonly store: InputStore;
+  public readonly guessedInputStore: Map<frameNumber, InputAction> = new Map();
   private lastRemoteFrame: number = -1;
 
   constructor(remoteInputStore: InputStore) {
@@ -48,12 +48,10 @@ export class RemoteInputManager implements IInputStore {
     if (realInput !== undefined) {
       return realInput;
     }
-
     const guessedInput = this.guessedInputStore.get(frame);
     if (guessedInput !== undefined) {
       return guessedInput;
     }
-
     const lastInput = this.store.GetInputForFrame(this.lastRemoteFrame);
     const copy = NewInputAction();
     copy.Action = lastInput.Action;
@@ -63,7 +61,6 @@ export class RemoteInputManager implements IInputStore {
     copy.LYAxis.SetFromFp(lastInput.LYAxis);
     copy.RXAxis.SetFromFp(lastInput.RXAxis);
     copy.RYAxis.SetFromFp(lastInput.RYAxis);
-
     this.guessedInputStore.set(frame, copy);
     return lastInput;
   }

@@ -93,7 +93,7 @@ export class JazzLocal implements IJazzLocal {
   }
 }
 
-class JazzNetwork {
+export class JazzNetwork {
   public readonly World: World;
   private localInputStore!: IInputStore;
   private rollBack!: RollBackManager;
@@ -119,7 +119,7 @@ class JazzNetwork {
     getLocalInput: () => InputAction,
     sendLocalInput: (ia: InputAction) => void,
   ) {
-    const p = new Player(this.World.PlayerData.PlayerCount, cc);
+    const p = new Player(pIndex, cc);
     SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
     this.localPlayer = { pIndex: pIndex, player: p };
     this.getLocalInput = getLocalInput;
@@ -127,7 +127,7 @@ class JazzNetwork {
   }
 
   SetRemotePlayer(cc: CharacterConfig, pos: FlatVec, pIndex: number) {
-    const p = new Player(this.World.PlayerData.PlayerCount, cc);
+    const p = new Player(pIndex, cc);
     SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
     this.remotePlayer = { pIndex: pIndex, player: p };
   }
@@ -199,12 +199,16 @@ class JazzNetwork {
     world.LocalFrame++;
   }
 
-  AddRemoteInputForFrame(
+  public AddRemoteInputForFrame(
     frame: number,
     frameAdvantage: number,
     ia: InputAction,
   ) {
     this.rollBack.SetRemoteInputForFrame(frame, frameAdvantage, ia);
+  }
+
+  public _rollBackManager(): RollBackManager {
+    return this.rollBack;
   }
 }
 

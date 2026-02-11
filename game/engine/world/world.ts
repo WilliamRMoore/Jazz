@@ -160,6 +160,6 @@ function setRemotePlayer(world: World, remotePlayer: Player) {
     compHist.BaseConfigValues.HurtCapsules.push(hc),
   );
   world.HistoryData.PlayerComponentHistories.push(compHist);
-
+  InitPlayerHistory(remotePlayer, world);
   return rb;
 }

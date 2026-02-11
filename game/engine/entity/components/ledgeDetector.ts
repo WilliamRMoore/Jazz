@@ -131,9 +131,9 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    const middleXRaw = NumberToRaw(snapShot.middleX);
-    const middleYRaw = NumberToRaw(snapShot.middleY);
-    this.MoveToRaw(middleXRaw, middleYRaw);
+    this.x.SetFromNumber(snapShot.middleX);
+    this.y.SetFromNumber(snapShot.middleY);
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
+    this.update();
   }
 }
