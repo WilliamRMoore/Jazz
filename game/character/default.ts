@@ -36,6 +36,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ECBShapes: ECBShapesConfig = new Map<StateId, ECBShape>();
   public HurtCapsules: Array<HurtCapsuleConfig> = [];
   public JumpVelocity = 0;
+  public WallKickVelocity = toCv(0, 0);
   public NumberOfJumps: number;
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
@@ -138,7 +139,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
-      .set(STATE_IDS.GRAB_S, grab.TotalFrameLength);
+      .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
+      .set(STATE_IDS.WALL_KICK_S, 10);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -213,6 +215,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.JumpVelocity = 20;
     this.NumberOfJumps = 2;
+
+    this.WallKickVelocity.x = 9;
+    this.WallKickVelocity.y = 15;
 
     this.LedgeBoxHeight = 35;
     this.LedgeBoxWidth = 80;

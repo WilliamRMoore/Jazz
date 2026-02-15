@@ -131,7 +131,7 @@ function readInput(gamePad: Gamepad): void {
   currentInput.select = gamePad.buttons[8].pressed;
 }
 
-export function GetInput(index: number, w: World): InputAction {
+export function GetInput(index: number): InputAction {
   const gp = navigator.getGamepads()[index];
   if (gp && gp.connected) {
     readInput(gp);

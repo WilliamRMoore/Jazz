@@ -1,5 +1,6 @@
 import { Player } from '../entity/playerOrchestrator';
 import {
+  GAME_EVENT_IDS,
   IsStateNecessarilyGrounded,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
@@ -13,7 +14,7 @@ export function WallKick(w: World) {
   for (let i = 0; i < pLength; i++) {
     const p = pd.Player(i);
     const stateId = p.FSMInfo.CurrentStatetId;
-    if (stateId !== STATE_IDS.N_FALL_S || p.Velocity.Y.Raw < 0) {
+    if (stateId !== STATE_IDS.N_FALL_S) {
       continue;
     }
     const stages = w.StageData.Stages;
@@ -57,7 +58,17 @@ export function WallKick(w: World) {
         r.X2.Raw,
         r.Y2.Raw,
       );
-      const sm = pd.StateMachine(i);
+
+      if (rightCollision) {
+        p.Flags.FaceRight();
+        const sm = pd.StateMachine(i);
+        sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
+      }
+      if (leftCollision) {
+        p.Flags.FaceLeft();
+        const sm = pd.StateMachine(i);
+        sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
+      }
     }
   }
 }

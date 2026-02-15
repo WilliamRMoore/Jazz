@@ -14,6 +14,7 @@ import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { frameNumber } from '../entity/components/attack';
 import { MainConfig } from '../config/main-config';
 import { IInputStore } from '../managers/inputManager';
+import { PlayerDebugAdapter } from '../debug/playerDebugger';
 
 export type PlayerData = {
   PlayerCount: number;

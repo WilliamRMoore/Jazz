@@ -1,6 +1,7 @@
 import { InputAction } from '../../input/Input';
 import { IInputStore, InputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
+import { LineSegmentIntersectionRaw } from '../../physics/collisions';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 
@@ -1195,6 +1196,16 @@ export const ToRollDodge: condition = {
   },
   StateId: STATE_IDS.ROLL_DODGE_S,
 };
+
+// export const ToTechInPlace: condition = {
+//   Name: 'ToTechInPlace',
+//   ConditionFunc: (w: World, playerIndex: number) => {
+//     const ips = w.PlayerData.InputStore(playerIndex);
+//     const curFrame = w.LocalFrame;
+//     const bufferFrames = 7;
+//   },
+//   StateId: STATE_IDS.TECH_IN_PLACE_S,
+// };
 
 export const shieldBreakDefaultShieldTumble: condition = {
   Name: 'ShieldBreakToShieldLaunch',

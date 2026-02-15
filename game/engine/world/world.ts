@@ -1,4 +1,5 @@
 import { MainConfig, envConfig } from '../config/main-config';
+import { PlayerDebugAdapter } from '../debug/playerDebugger';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
@@ -15,6 +16,7 @@ import {
 
 export class World {
   private localFrame = 0;
+  public readonly DebugAdapters: Array<PlayerDebugAdapter> = [];
   public readonly StageData: StageWorldState = new StageWorldState();
   public readonly PlayerData: PlayerState = new PlayerState();
   public readonly HistoryData: HistoryData = new HistoryData();
@@ -57,6 +59,7 @@ export class World {
     );
     this.HistoryData.PlayerComponentHistories.push(compHist);
     InitPlayerHistory(p, this);
+    this.DebugAdapters.push(new PlayerDebugAdapter(p, this));
   }
 
   public SetStage(s: Stage) {
@@ -161,5 +164,6 @@ function setRemotePlayer(world: World, remotePlayer: Player) {
   );
   world.HistoryData.PlayerComponentHistories.push(compHist);
   InitPlayerHistory(remotePlayer, world);
+  world.DebugAdapters.push(new PlayerDebugAdapter(remotePlayer, world));
   return rb;
 }

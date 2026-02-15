@@ -1041,6 +1041,53 @@ export const WallKick: FSMState = {
     p.Velocity.Y.SetFromRaw(0);
     p.Velocity.X.SetFromRaw(0);
   },
+  OnUpdate: (p: Player, w: World) => {
+    if (p.FSMInfo.CurrentStateFrame == 4) {
+      const xVel = p.Flags.IsFacingRight
+        ? p.Speeds.WallKickVelocityXRaw
+        : -p.Speeds.WallKickVelocityXRaw;
+      p.Velocity.X.SetFromRaw(xVel);
+      p.Velocity.Y.SetFromRaw(p.Speeds.WallKickVelocityYRaw);
+    }
+  },
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const GroundSlam: FSMState = {
+  StateName: 'GroundSlam',
+  StateId: STATE_IDS.GRND_SLAM_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.GRND_SLAM_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const WallSlam: FSMState = {
+  StateName: 'GroundSlam',
+  StateId: STATE_IDS.WALL_SLAM_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.WALL_SLAM_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const TechInPlace: FSMState = {
+  StateName: 'TechInPlace',
+  StateId: STATE_IDS.TECH_IN_PLACE_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.TECH_IN_PLACE_S);
+    p.Flags.SetIntangabilityFrames(20);
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+  },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
@@ -1061,7 +1108,6 @@ export const WallKick: FSMState = {
  * neutralSpecial EX
  * upSpecial EX
  * tech
- * wallSlide
  * wallKick
  * dirtNap
  * groundRecover

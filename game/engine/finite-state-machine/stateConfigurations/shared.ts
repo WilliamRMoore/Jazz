@@ -69,6 +69,7 @@ class GAME_EVENTS {
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
+  public readonly WALL_SLAM_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -141,6 +142,12 @@ class STATES {
   public readonly LEDGE_RECOVER_S = seq.Next as StateId;
   public readonly LEDGE_GUA_S = seq.Next as StateId;
   public readonly WALL_KICK_S = seq.Next as StateId;
+  public readonly GRND_SLAM_S = seq.Next as StateId;
+  public readonly WALL_SLAM_S = seq.Next as StateId;
+  public readonly DIRT_NAP_S = seq.Next as StateId;
+  public readonly TECH_IN_PLACE_S = seq.Next as StateId;
+  public readonly ROLL_TECH_S = seq.Next as StateId;
+  public readonly WALL_TECH_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();

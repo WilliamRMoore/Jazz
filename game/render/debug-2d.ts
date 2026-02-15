@@ -84,8 +84,7 @@ export class DebugRenderer {
     this.debugInfoCanvas.height = this.dbyRes;
   }
 
-  render(jazz: JazzDebugger, timeStampNow: number) {
-    const world = jazz.World;
+  render(world: World, timeStampNow: number) {
     const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
       localFrame === 0 ? 0 : localFrame - 1,
@@ -164,16 +163,16 @@ export class DebugRenderer {
     );
 
     if (this.PlayerDeBugInfo) {
-      this.renderLiveDebugInfo(jazz);
+      this.renderLiveDebugInfo(world);
     }
 
     this.lastFrame = localFrame;
   }
 
-  renderLiveDebugInfo(jazz: JazzDebugger) {
+  renderLiveDebugInfo(world: World) {
     this.dbICtx.fillStyle = 'black';
     this.dbICtx.fillRect(0, 0, this.dbxRes, this.dbyRes); // Fill the entire canvas with grey
-    const pdbs = jazz.playerDebuggers;
+    const pdbs = world.DebugAdapters;
     const dbL = pdbs.length;
     let x = 10;
     const y = 30;

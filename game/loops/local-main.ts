@@ -91,7 +91,7 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
   SHOW_DEBUG_INFO(dbRenderer);
   RENDERFPS60Loop((timeStamp: number) => {
-    dbRenderer.render(jazzDebugger, timeStamp);
+    dbRenderer.render(jazzDebugger.World, timeStamp);
   });
 }
 
@@ -112,7 +112,7 @@ function logicStep(
     }
     const gpI = info.inputIndex;
     const pi = info.playerIndex;
-    const input = GetInput(gpI, w!);
+    const input = GetInput(gpI);
     engine.UpdateInputForCurrentFrame(input, pi);
   }
   engine.Tick();

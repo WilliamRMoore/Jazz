@@ -499,6 +499,7 @@ export function InitNeutralFallRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.LEDGE_GRAB_GE, sId: STATE_IDS.LEDGE_GRAB_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+    { geId: GAME_EVENT_IDS.WALL_KICK_GE, sId: STATE_IDS.WALL_KICK_S },
   ]);
 
   nFallTranslations.SetConditions([
@@ -1027,6 +1028,7 @@ export function InitLaunchRelations(): StateRelation {
 
   launchTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
   ]);
 
   launchTranslations.SetConditions([LaunchToTumble]);
@@ -1180,6 +1182,22 @@ export function InitGrabEscapeRelations(): StateRelation {
   );
 
   return grabEscapeRelations;
+}
+
+export function InitWallKickRelations(): StateRelation {
+  const wallKickMaps = new ActionStateMappings();
+  wallKickMaps.SetMappings([
+    {
+      geId: GAME_EVENT_IDS.HIT_STOP_GE,
+      sId: STATE_IDS.HIT_STOP_S,
+    },
+  ]);
+  wallKickMaps.SetDefaults([defaultNFall]);
+  const wallKickRelations = new StateRelation(
+    STATE_IDS.WALL_KICK_S,
+    wallKickMaps,
+  );
+  return wallKickRelations;
 }
 
 // export function InitWallSlideRelations(): StateRelation {
