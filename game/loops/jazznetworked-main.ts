@@ -1,12 +1,9 @@
 import { JazzNetwork } from '../engine/jazz';
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
-import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
+import { GetInput, InputAction } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
-import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../engine/math/fixedPoint';
 import { DefaultCharacterConfig } from '../character/default';
-import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { World } from '../engine/world/world';
 

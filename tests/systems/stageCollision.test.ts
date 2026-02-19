@@ -1,5 +1,5 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage } from '../../game/engine/stage/stageMain';
+import { defaultStage, WallStage } from '../../game/engine/stage/stageMain';
 import {
   Player,
   SetPlayerPosition,
@@ -9,9 +9,13 @@ import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
 import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
-import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';
+import {
+  Launch,
+  NeutralFall,
+} from '../../game/engine/finite-state-machine/stateConfigurations/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import { RecordHistory } from '../../game/engine/systems/history';
+import { ToFp } from '../../game/engine/utils';
 
 describe('Stage Collision system tests', () => {
   let p: Player;
@@ -94,6 +98,12 @@ describe('Stage Collision system tests', () => {
 
     // Player should be pushed down
     expect(p.ECB.Top.Y.AsNumber).toBeCloseTo(700, 0);
+  });
+
+  test('Player should transition to wall slam', () => {
+    w.SetStage(WallStage());
+    SetPlayerPosition(p, ToFp(550), ToFp(600));
+    p.FSMInfo.SetCurrentState(Launch);
   });
 
   test.skip('Player should collide with a bottom-left corner', () => {

@@ -1308,6 +1308,14 @@ export const defaultHelpess: condition = {
   StateId: STATE_IDS.HELPLESS_S,
 };
 
+export const defaultTumble: condition = {
+  Name: 'DefaultTubmle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.TUMBLE_S,
+};
+
 export const defaultSideChargeEx: condition = {
   Name: 'DefaultSideChargeEx',
   ConditionFunc: (w: World, playerIndex: number) => {

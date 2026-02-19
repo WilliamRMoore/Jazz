@@ -7,6 +7,7 @@ export type LedgeDetectorSnapShot = {
   middleX: number;
   middleY: number;
   numberOfLedgeGrabs: number;
+  grabbedLedge?: FlatVec[];
 };
 
 export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnapShot> {
@@ -19,6 +20,7 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
   private readonly height: FixedPoint = new FixedPoint(0);
   private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
   private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
+  private grabbedLedge: FlatVec[] | undefined;
 
   constructor(
     x: number,
@@ -122,11 +124,24 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
     this.numberOfLedgeGrabs = 0;
   }
 
+  public GrabLedge(l: FlatVec[]) {
+    this.grabbedLedge = l;
+  }
+
+  public get GrabbedLedge(): FlatVec[] | undefined {
+    return this.grabbedLedge;
+  }
+
+  public ReleaseLedge(): void {
+    this.grabbedLedge = undefined;
+  }
+
   public SnapShot(): LedgeDetectorSnapShot {
     return {
       middleX: this.x.AsNumber,
       middleY: this.y.AsNumber,
       numberOfLedgeGrabs: this.numberOfLedgeGrabs,
+      grabbedLedge: this.grabbedLedge,
     } as LedgeDetectorSnapShot;
   }
 
@@ -134,6 +149,7 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
     this.x.SetFromNumber(snapShot.middleX);
     this.y.SetFromNumber(snapShot.middleY);
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
+    this.grabbedLedge = snapShot.grabbedLedge;
     this.update();
   }
 }

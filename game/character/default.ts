@@ -140,7 +140,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
       .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
-      .set(STATE_IDS.WALL_KICK_S, 10);
+      .set(STATE_IDS.WALL_KICK_S, 10)
+      .set(STATE_IDS.WALL_SLAM_S, 20);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -183,6 +184,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DIZZY_S, {
         height: 70,
         width: 70,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.WALL_SLAM_S, {
+        height: 100,
+        width: 40,
         yOffset: 0,
       });
 

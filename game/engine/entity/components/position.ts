@@ -1,7 +1,7 @@
 import { FixedPoint } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { ToFV } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
+import { IHistoryEnabled, PlayerSnapShot } from '../componentHistory';
 
 export type PositionSnapShot = { X: number; Y: number };
 
@@ -40,5 +40,15 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
   public SetFromSnapShot(snapShot: PositionSnapShot): void {
     this.p.X.SetFromNumber(snapShot.X);
     this.p.Y.SetFromNumber(snapShot.Y);
+  }
+
+  public SaveState(ps: PlayerSnapShot) {
+    ps.Position.X = this.p.X.AsNumber;
+    ps.Position.Y = this.p.Y.AsNumber;
+  }
+
+  public SetState(ps: PlayerSnapShot) {
+    this.p.X.SetFromNumber(ps.Position.X);
+    this.p.Y.SetFromNumber(ps.Position.Y);
   }
 }

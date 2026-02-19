@@ -5,6 +5,7 @@ export const POINT_TWO = NumberToRaw(0.2);
 export const POINT_TWO_FIVE = NumberToRaw(0.25);
 export const POINT_FOUR = NumberToRaw(0.4);
 export const POINT_FIVE = NumberToRaw(0.5);
+export const POINT_SEVEN = NumberToRaw(0.7);
 export const POINT_SEVEN_FIVE = NumberToRaw(0.75);
 export const POINT_EIGHT = NumberToRaw(0.8);
 export const ONE = NumberToRaw(1);

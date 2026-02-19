@@ -81,6 +81,7 @@ export function StageCollisionDetection(world: World): void {
     const preResolutionYOffsetRaw = ecb.YOffset.Raw;
 
     let overallCollision = false;
+    let firstCollisionResult: ICollisionResult | undefined;
     for (let i = 0; i < stagesLength; i++) {
       const playerVerts = getECBHull(preEcb, p.ECB);
       const stageVerts = stages[i].StageVerticies.GetVerts();
@@ -93,9 +94,23 @@ export function StageCollisionDetection(world: World): void {
       );
 
       if (collisionResult.Collision) {
+        if (!overallCollision) {
+          firstCollisionResult = collisionResult;
+        }
         overallCollision = true;
         resolveCollision(p, collisionResult, pools.VecPool);
       }
+    }
+
+    if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
+      const normY = firstCollisionResult!.NormY;
+      // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
+      if (normY.AsNumber > 0.7) {
+        sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
+      } else {
+        sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);
+      }
+      continue;
     }
 
     const sensorDepth = p.ECB.SensorDepth;

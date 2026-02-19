@@ -42,6 +42,11 @@ export type PlayerSnapShot = {
   GrabMeter: GrabMeterSnapShot;
 };
 
+export class PlayerHistory {
+  private head = 0;
+  private playerHistory: Array<PlayerSnapShot> = [];
+}
+
 export class ComponentHistory {
   // readonly _deb_hist: DebugSnapShot[] | undefined;
   readonly BaseConfigValues = new BaseConfigValues();

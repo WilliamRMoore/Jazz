@@ -96,7 +96,7 @@ export class StateMachine {
 
     const conditionalsLength = conditions.length;
 
-    // Loop through all conditionals, if one returns a stateId, run it and return true, otherwise return false
+    // Loop through all conditionals, if one returns a stateId, change it and return true, otherwise return false
     for (let i = 0; i < conditionalsLength; i++) {
       const stateId = RunCondition(conditions[i], world, this.player.ID);
 

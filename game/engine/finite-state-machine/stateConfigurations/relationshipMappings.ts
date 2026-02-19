@@ -61,6 +61,7 @@ import {
   WalkToDash,
   WalkToTurn,
   ToStickJump,
+  defaultTumble,
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -83,7 +84,7 @@ export class ActionStateMappings {
     return this.mappings.get(geId);
   }
 
-  public GetConditions() {
+  public GetConditions(): Array<condition> | undefined {
     return this.condtions;
   }
 
@@ -1029,6 +1030,8 @@ export function InitLaunchRelations(): StateRelation {
   launchTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.WALL_SLAM_GE, sId: STATE_IDS.WALL_SLAM_S },
+    { geId: GAME_EVENT_IDS.GRND_SLAM_GE, sId: STATE_IDS.GRND_SLAM_S },
   ]);
 
   launchTranslations.SetConditions([LaunchToTumble]);
@@ -1200,17 +1203,18 @@ export function InitWallKickRelations(): StateRelation {
   return wallKickRelations;
 }
 
-// export function InitWallSlideRelations(): StateRelation {
-//   const wallSlideMaps = new ActionStateMappings();
-//   wallSlideMaps.SetMappings([
-//     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
-//     { geId: GAME_EVENT_IDS.FALL_GE, sId: STATE_IDS.N_FALL_S },
-//   ]);
-
-//   const wallSlideRelations = new StateRelation(
-//     STATE_IDS.WALL_SLIDE_S,
-//     wallSlideMaps,
-//   );
-
-//   return wallSlideRelations;
-// }
+export function InitWallSlamRelations(): StateRelation {
+  const wallSlamMaps = new ActionStateMappings();
+  wallSlamMaps.SetMappings([
+    {
+      geId: GAME_EVENT_IDS.HIT_STOP_GE,
+      sId: STATE_IDS.HIT_STOP_S,
+    },
+  ]);
+  wallSlamMaps.SetDefaults([defaultTumble]);
+  const wallSlamRelations = new StateRelation(
+    STATE_IDS.WALL_SLAM_S,
+    wallSlamMaps,
+  );
+  return wallSlamRelations;
+}

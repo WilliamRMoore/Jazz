@@ -65,7 +65,7 @@ export class PlayerDebugAdapter {
     this.player.Velocity.Y.SetFromRaw(ntr(velY));
   }
 
-  public GetPlayerDataForFrame(frame: frameNumber) {
+  public GetPlayerDataForFrame(frame: frameNumber): PlayerSnapShot {
     const hist = this.hist;
 
     const pd = {

@@ -70,6 +70,7 @@ class GAME_EVENTS {
   public readonly TUBMLE_GE = seq.Next as GameEventId;
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
   public readonly WALL_SLAM_GE = seq.Next as GameEventId;
+  public readonly GRND_SLAM_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();

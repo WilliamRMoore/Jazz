@@ -33,7 +33,12 @@ export function LedgeGrabDetection(world: World): void {
       combinedVerts.length = 0;
       const p = playerData.Player(playerIndex);
 
-      if (p.Flags.IsInHitPause) {
+      if (
+        p.Flags.IsInHitPause ||
+        p.FSMInfo.CurrentStatetId === STATE_IDS.LEDGE_GRAB_S ||
+        p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S ||
+        p.Velocity.Y.Raw < 0
+      ) {
         continue;
       }
 
@@ -47,18 +52,18 @@ export function LedgeGrabDetection(world: World): void {
       const flags = p.Flags;
       const ecb = p.ECB;
 
-      if (
-        p.Velocity.Y.Raw < 0 ||
-        p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S
-      ) {
-        continue;
-      }
-
       if (PlayerOnStageOrPlats(stage, p)) {
         continue;
       }
 
       const isFacingRight = flags.IsFacingRight;
+
+      if (
+        (isFacingRight && LedgeOccupied(leftLedge, playerData)) ||
+        (!isFacingRight && LedgeOccupied(rightLedge, playerData))
+      ) {
+        continue;
+      }
 
       const curFront =
         isFacingRight === true
@@ -134,6 +139,7 @@ export function LedgeGrabDetection(world: World): void {
 
         if (intersectsLeftLedge.Collision) {
           sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
+          p.LedgeDetector.GrabLedge(leftLedge);
           SetPlayerPositionRaw(
             p,
             leftLedge[0].X.Raw - DivideRaw(ecb.Width.Raw, TWO),
@@ -153,6 +159,7 @@ export function LedgeGrabDetection(world: World): void {
 
       if (intersectsRightLedge.Collision) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
+        p.LedgeDetector.GrabLedge(rightLedge);
         SetPlayerPositionRaw(
           p,
           rightLedge[0].X.Raw + DivideRaw(ecb.Width.Raw, TWO),
@@ -161,4 +168,16 @@ export function LedgeGrabDetection(world: World): void {
       }
     }
   }
+}
+
+function LedgeOccupied(ledge: FlatVec[], pd: PlayerData): boolean {
+  const pc = pd.PlayerCount;
+  for (let i = 0; i < pc; i++) {
+    const p = pd.Player(i);
+    const ld = p.LedgeDetector;
+    if (ld.GrabbedLedge === ledge) {
+      return true;
+    }
+  }
+  return false;
 }

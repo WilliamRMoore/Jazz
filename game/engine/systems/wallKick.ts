@@ -1,9 +1,8 @@
-import { Player } from '../entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
-  IsStateNecessarilyGrounded,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
+import { POINT_SEVEN } from '../math/numberConstants';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { World } from '../world/world';
 
@@ -60,35 +59,24 @@ export function WallKick(w: World) {
       );
 
       if (rightCollision) {
-        p.Flags.FaceRight();
-        const sm = pd.StateMachine(i);
-        sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
-      }
-      if (leftCollision) {
-        p.Flags.FaceLeft();
-        const sm = pd.StateMachine(i);
-        sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
+        const is = pd.InputStore(i);
+        const lastIa = is.GetInputForFrame(w.PreviousFrame);
+        const curIa = is.GetInputForFrame(w.LocalFrame);
+        if (lastIa.LXAxis.Raw <= 0 && curIa.LXAxis.Raw > POINT_SEVEN) {
+          p.Flags.FaceRight();
+          const sm = pd.StateMachine(i);
+          sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
+        }
+      } else if (leftCollision) {
+        const is = pd.InputStore(i);
+        const lastIa = is.GetInputForFrame(w.PreviousFrame);
+        const curIa = is.GetInputForFrame(w.LocalFrame);
+        if (lastIa.LXAxis.Raw >= 0 && curIa.LXAxis.Raw < -POINT_SEVEN) {
+          p.Flags.FaceLeft();
+          const sm = pd.StateMachine(i);
+          sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
+        }
       }
     }
-  }
-}
-
-function IsPossibleForPlayerToWallKick(p: Player) {
-  const stateId = p.FSMInfo.CurrentStatetId;
-  if (IsStateNecessarilyGrounded(stateId)) {
-    return false;
-  }
-  const attacks = p.Attacks;
-  const attack = attacks.GetAttack();
-  if (attack !== undefined) {
-    return false;
-  }
-  switch (stateId) {
-    case STATE_IDS.JUMP_S:
-    case STATE_IDS.TUMBLE_S:
-    case STATE_IDS.HELPLESS_S:
-      return false;
-    default:
-      return true;
   }
 }

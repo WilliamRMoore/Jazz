@@ -111,6 +111,51 @@ describe('Attack systesm tests', () => {
     expect(p1.Attacks.HasHitPlayer(1)).toBe(false);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.IDLE_S);
   });
+
+  test('Player should register an attack hit via continuous collision detection (tunneling)', () => {
+    // Setup: p1 will move fast enough to "tunnel" through p2 if only checking endpoints.
+    p1Sm.ForceState(STATE_IDS.ATTACK_S);
+    p2Sm.ForceState(STATE_IDS.IDLE_S);
+    p1.Flags.FaceRight();
+
+    // Position players so their hit/hurtboxes do not overlap at the start or end of the frame,
+    // but the swept hitbubble will collide.
+    // Let's assume a hitbubble with offset ~40 and radius ~30, and a hurtbox with offset 0 and radius 40.
+
+    // Frame n-1 state
+    const frame_n_minus_1 = 0;
+    w.LocalFrame = frame_n_minus_1;
+    SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
+    SetPlayerInitialPositionRaw(p2, NumberToRaw(1150), NumberToRaw(650.01));
+
+    // At this point, p1's hitbubble (at ~1040) is far from p2's hurtbox (at 1150). No collision.
+
+    // Store history for frame n-1
+    h1.PositionHistory[frame_n_minus_1] = p1.Position.SnapShot();
+    h2.PositionHistory[frame_n_minus_1] = p2.Position.SnapShot();
+    p1InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
+    p2InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
+
+    // Frame n state
+    const frame_n = 1;
+    w.LocalFrame = frame_n;
+    p1InputStore.StoreInputForFrame(frame_n, NewInputAction());
+    p2InputStore.StoreInputForFrame(frame_n, NewInputAction());
+
+    // p1 moves very fast, tunneling through p2.
+    p1.Position.X.SetFromNumber(1250);
+    p1.ECB.MoveToPosition(p1.Position.X, p1.Position.Y);
+
+    // Set attack to be on an active frame where the *previous* frame was also active.
+    // This is because the continuous collision logic checks the hitbox position on the previous state frame.
+    // N-Attack is active on frames 3-7. By setting the current frame to 4, the previous frame (3) is also active.
+    p1.FSMInfo._db_currentStateFrame = 4;
+
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(p2.ID)).toBe(true);
+    expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.HIT_STOP_S);
+  });
 });
 
 describe('Attack Calculation Tests', () => {

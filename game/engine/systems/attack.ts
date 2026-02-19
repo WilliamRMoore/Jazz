@@ -20,7 +20,6 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import { InputAction } from '../input/Input';
 import {
   THREE,
   POINT_SEVEN_FIVE,
@@ -35,7 +34,7 @@ import {
   ONE_POINT_FOUR,
   POINT_ZERO_ONE_THREE,
 } from '../math/numberConstants';
-import { IInputStore, InputStore } from '../managers/inputManager';
+import { IInputStore } from '../managers/inputManager';
 import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
 

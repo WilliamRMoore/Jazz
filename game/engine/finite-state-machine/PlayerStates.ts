@@ -59,6 +59,7 @@ import {
   InitShieldBreakRelations,
   initShieldTubmleRelations,
   InitDizzyRelations,
+  InitWallKickRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -127,7 +128,8 @@ import {
   ShieldBreak,
   ShieldBreakTumble,
   ShieldBreakLand,
-  dizzy,
+  Dizzy,
+  WallKick,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -188,6 +190,7 @@ const SHIELD_BREAK_RELATIONS = InitShieldBreakRelations();
 const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
 const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
 const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
+const WALL_KICK_RELATIONS = InitWallKickRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -256,7 +259,8 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(
     SHIELD_BREAK_DIZZY_RELATIONS.stateId,
     SHIELD_BREAK_DIZZY_RELATIONS.mappings,
-  );
+  )
+  .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -316,7 +320,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(ShieldBreak.StateId, ShieldBreak)
   .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
   .set(ShieldBreakLand.StateId, ShieldBreakLand)
-  .set(dizzy.StateId, dizzy);
+  .set(Dizzy.StateId, Dizzy)
+  .set(WallKick.StateId, WallKick);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)

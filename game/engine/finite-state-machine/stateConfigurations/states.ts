@@ -265,10 +265,12 @@ export const LedgeGrab: FSMState = {
     jumpComp.IncrementJumps();
     ledgeDetectorComp.IncrementLedgeGrabs();
     p.ECB.SetECBShape(STATE_IDS.LEDGE_GRAB_S);
+    p.Flags.SetIntangabilityFrames(30);
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
+    p.LedgeDetector.ReleaseLedge();
   },
 };
 
@@ -977,7 +979,7 @@ export const ShieldBreakLand: FSMState = {
   },
 };
 
-export const dizzy: FSMState = {
+export const Dizzy: FSMState = {
   StateName: 'Dizzy',
   StateId: STATE_IDS.DIZZY_S,
   OnEnter: (p: Player, w: World) => {
@@ -1040,6 +1042,8 @@ export const WallKick: FSMState = {
     p.Flags.FastFallOff();
     p.Velocity.Y.SetFromRaw(0);
     p.Velocity.X.SetFromRaw(0);
+    const stateLength = p.FSMInfo.GetCurrentStateFrameLength() ?? 10;
+    p.Flags.SetIntangabilityFrames(stateLength - 3);
   },
   OnUpdate: (p: Player, w: World) => {
     if (p.FSMInfo.CurrentStateFrame == 4) {
@@ -1068,7 +1072,7 @@ export const GroundSlam: FSMState = {
 };
 
 export const WallSlam: FSMState = {
-  StateName: 'GroundSlam',
+  StateName: 'WallSlam',
   StateId: STATE_IDS.WALL_SLAM_S,
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.WALL_SLAM_S);
