@@ -12,7 +12,7 @@ export function WallKick(w: World) {
   const pools = w.Pools;
   for (let i = 0; i < pLength; i++) {
     const p = pd.Player(i);
-    const stateId = p.FSMInfo.CurrentStatetId;
+    const stateId = p.FSMInfo.CurrentStateId;
     if (stateId !== STATE_IDS.N_FALL_S) {
       continue;
     }

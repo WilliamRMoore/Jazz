@@ -24,6 +24,7 @@ export class HitBubble {
   public readonly launchAngle = new FixedPoint(0);
   public readonly activeFrames = new Set<number>();
   public readonly frameOffsets = new Map<frameNumber, FlatVec>();
+  public readonly ThresholdAngle: boolean;
 
   constructor(hbc: HitBubblesConifg) {
     this.BubbleId = hbc.BubbleId;
@@ -31,6 +32,7 @@ export class HitBubble {
     this.Priority = hbc.Priority;
     this.Radius.SetFromNumber(hbc.Radius);
     this.launchAngle.SetFromNumber(hbc.LaunchAngle);
+    this.ThresholdAngle = hbc.ThresholdAngle;
     for (const [k, v] of hbc.frameOffsets) {
       this.frameOffsets.set(k, ToFV(v.x, v.y));
       this.activeFrames.add(k);
@@ -70,6 +72,8 @@ export class HitBubble {
   }
 }
 
+//Need to know if an attack should reverse the x axis for the angle when hitting behinde
+//Need to know if an attack has a threshold angle
 export class Attack {
   public readonly AttackId: AttackId;
   public readonly Name: string;

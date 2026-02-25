@@ -1,3 +1,7 @@
+import {
+  STATE_IDS,
+  StateId,
+} from '../../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../../math/fixedPoint';
 import { IHistoryEnabled } from '../componentHistory';
 
@@ -5,12 +9,14 @@ export type hitStunSnapShot = {
   hitStunFrames: number;
   vx: number;
   vy: number;
+  nextSateId: StateId;
 };
 
 export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
   private framesOfHitStun: number = 0;
   private readonly xVelocity: FixedPoint = new FixedPoint(0);
   private readonly yVelocity: FixedPoint = new FixedPoint(0);
+  public NextStateId: StateId = STATE_IDS.LAUNCH_S;
 
   public set FramesOfHitStun(hitStunFrames: number) {
     this.framesOfHitStun = hitStunFrames;
@@ -53,6 +59,7 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
       hitStunFrames: this.framesOfHitStun,
       vx: this.xVelocity.AsNumber,
       vy: this.yVelocity.AsNumber,
+      nextSateId: this.NextStateId,
     } as hitStunSnapShot;
   }
 
@@ -60,5 +67,6 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
     this.framesOfHitStun = snapShot.hitStunFrames;
     this.xVelocity.SetFromNumber(snapShot.vx);
     this.yVelocity.SetFromNumber(snapShot.vy);
+    this.NextStateId = snapShot.nextSateId;
   }
 }

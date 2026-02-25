@@ -3,7 +3,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../math/fixedPoint';
+import { DivideRaw } from '../math/fixedPoint';
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -11,17 +11,22 @@ import {
   PlayerOnStage,
   CanOnlyFallOffLedgeWhenFacingAwayFromIt,
   SetPlayerPositionRaw,
+  AddToPlayerXPostionRaw,
   AddToPlayerYPositionRaw,
   Player,
 } from '../entity/playerOrchestrator';
-import { ShouldSoftlandRaw } from './shared';
+import { isPlayerOnAnyStage, ShouldSoftlandRaw } from './shared';
 import {
   CreateDiamondFromHistory,
   ECBComponent,
   EcbHistoryDTO,
 } from '../entity/components/ecb';
 import { FlatVec } from '../physics/vector';
-import { CORRECTION_DEPTH_RAW, TWO } from '../math/numberConstants';
+import {
+  CORRECTION_DEPTH_RAW,
+  POINT_SEVEN,
+  TWO,
+} from '../math/numberConstants';
 import { Stage } from '../stage/stageMain';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { ICollisionResult } from '../pools/CollisionResult';
@@ -31,21 +36,6 @@ import { PlayerData, StageData, Pools } from '../world/stateModules';
 import { World } from '../world/world';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;
-
-function isPlayerOnAnyStage(
-  ecbBottom: FlatVec,
-  stages: Stage[],
-  sensorDepth: FixedPoint,
-): boolean {
-  const stageLength = stages.length;
-  for (let i = 0; i < stageLength; i++) {
-    const stage = stages[i];
-    if (PlayerOnStage(stage, ecbBottom, sensorDepth)) {
-      return true;
-    }
-  }
-  return false;
-}
 
 export function StageCollisionDetection(world: World): void {
   const playerData: PlayerData = world.PlayerData;
@@ -77,14 +67,17 @@ export function StageCollisionDetection(world: World): void {
     const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
-    const preResolutionStateId = fsmInfo.CurrentStatetId;
-    const preResolutionYOffsetRaw = ecb.YOffset.Raw;
+    const preResolutionStateId = fsmInfo.CurrentStateId;
+    // Store properties of the ECB before any changes
+    const oldEcbHeightRaw = ecb.Height.Raw;
+    const oldEcbWidthRaw = ecb.Width.Raw;
+    const oldEcbYOffsetRaw = ecb.YOffset.Raw;
 
     let overallCollision = false;
     let firstCollisionResult: ICollisionResult | undefined;
     for (let i = 0; i < stagesLength; i++) {
-      const playerVerts = getECBHull(preEcb, p.ECB);
       const stageVerts = stages[i].StageVerticies.GetVerts();
+      const playerVerts = getECBHull(preEcb, p.ECB);
       const collisionResult = IntersectsPolygons(
         playerVerts,
         stageVerts,
@@ -105,7 +98,7 @@ export function StageCollisionDetection(world: World): void {
     if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
       const normY = firstCollisionResult!.NormY;
       // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
-      if (normY.AsNumber > 0.7) {
+      if (normY.Raw > POINT_SEVEN) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
       } else {
         sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);
@@ -130,7 +123,7 @@ export function StageCollisionDetection(world: World): void {
 
       if (previousStage) {
         handleWalkOff(p, previousStage, sm, pools);
-        if (p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S) {
+        if (p.FSMInfo.CurrentStateId === STATE_IDS.LAND_S) {
           continue;
         }
       }
@@ -147,15 +140,10 @@ export function StageCollisionDetection(world: World): void {
     }
 
     const isGroundedAfterJitter = stillGrounded;
-    // const isGroundedAfterJitter = isPlayerOnAnyStage(
-    //   p.ECB.Bottom,
-    //   stages,
-    //   sensorDepth,
-    // );
 
     if (
       isGroundedAfterJitter === false &&
-      p.FSMInfo.CurrentStatetId !== STATE_IDS.LEDGE_GRAB_S
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GRAB_S
     ) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
       continue;
@@ -169,13 +157,43 @@ export function StageCollisionDetection(world: World): void {
       );
     }
 
-    if (
-      preResolutionStateId !== STATE_IDS.LAND_S &&
-      preResolutionStateId !== STATE_IDS.SOFT_LAND_S &&
-      (fsmInfo.CurrentStatetId === STATE_IDS.LAND_S ||
-        fsmInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S)
-    ) {
-      AddToPlayerYPositionRaw(p, preResolutionYOffsetRaw);
+    const postResolutionStateId = fsmInfo.CurrentStateId;
+
+    if (overallCollision && preResolutionStateId !== postResolutionStateId) {
+      // ECB shape has been updated by the state change's OnEnter method.
+      const newEcbHeightRaw = ecb.Height.Raw;
+      const newEcbWidthRaw = ecb.Width.Raw;
+      const newEcbYOffsetRaw = ecb.YOffset.Raw;
+
+      const normXRaw = firstCollisionResult!.NormX.Raw;
+      const normYRaw = firstCollisionResult!.NormY.Raw;
+
+      // Y-axis correction for ground/ceiling collisions
+      if (Math.abs(normYRaw) > POINT_SEVEN) {
+        // Correct for change in vertical offset/size
+        let yCorrectionRaw = oldEcbYOffsetRaw - newEcbYOffsetRaw;
+        if (normYRaw < 0) {
+          // Ceiling collision, normal points down. Account for height change.
+          yCorrectionRaw -= oldEcbHeightRaw - newEcbHeightRaw;
+        }
+        AddToPlayerYPositionRaw(p, yCorrectionRaw);
+      }
+
+      // X-axis correction for wall collisions
+      if (Math.abs(normXRaw) > POINT_SEVEN) {
+        // Correct for change in horizontal size
+        const xCorrectionRaw = DivideRaw(oldEcbWidthRaw - newEcbWidthRaw, TWO);
+
+        if (normXRaw > 0) {
+          // Hit a wall on player's left (e.g. stage's right wall), normal points right.
+          // Player was pushed right. We need to adjust for width change.
+          AddToPlayerXPostionRaw(p, -xCorrectionRaw);
+        } else {
+          // Hit a wall on player's right (e.g. stage's left wall), normal points left.
+          // Player was pushed left.
+          AddToPlayerXPostionRaw(p, xCorrectionRaw);
+        }
+      }
     }
   }
 }
@@ -212,7 +230,7 @@ function handleWalkOff(
       ) {
         shouldSnapBack = true;
       }
-    } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+    } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStateId) === false) {
       shouldSnapBack = true;
     }
 

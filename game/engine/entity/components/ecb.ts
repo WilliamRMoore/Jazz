@@ -65,7 +65,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   private readonly y = new FixedPoint(0);
   private readonly OriginalShape: ECBShape;
   private readonly curVerts = new Array<FlatVec>(4);
-  private readonly ecbStateShapes: ECBShapes;
+  public readonly ecbStateShapes: ECBShapes;
   private currentShape: ECBShape;
 
   constructor(shapes: ECBShapesConfig, height = 100, width = 100, yOffset = 0) {
@@ -173,7 +173,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.currentShape.yOffset;
   }
 
-  public get _db_ecbShapes(): ECBShapes {
+  public get _db_ecbShapes() {
     return this.ecbStateShapes;
   }
 

@@ -120,7 +120,7 @@ describe('GrabMeter system tests', () => {
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_ESCAPE_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_ESCAPE_S);
   });
 
   test('damage should create higher max meter', () => {
@@ -131,6 +131,6 @@ describe('GrabMeter system tests', () => {
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HELD_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HELD_S);
   });
 });

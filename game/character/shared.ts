@@ -86,6 +86,7 @@ export type HitBubblesConifg = {
   Priority: number;
   Radius: number;
   LaunchAngle: number;
+  ThresholdAngle: boolean;
   frameOffsets: Map<frameNumber, ConfigVec>;
 };
 
@@ -198,6 +199,7 @@ export class AttackConfigBuilder {
     priority: number,
     launchAngle: number,
     frameOffsets: Map<frameNumber, ConfigVec>,
+    thresholdAngle: boolean = false,
   ): AttackConfigBuilder {
     const hitBubId = this.hitBubbles.length;
 
@@ -209,6 +211,7 @@ export class AttackConfigBuilder {
       Damage: damage,
       Priority: priority,
       Radius: radius,
+      ThresholdAngle: thresholdAngle,
       LaunchAngle: launchAngle,
       frameOffsets: frameOffsets,
     };

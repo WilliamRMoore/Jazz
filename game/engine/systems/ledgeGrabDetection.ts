@@ -21,114 +21,105 @@ export function LedgeGrabDetection(world: World): void {
   const pools: Pools = world.Pools;
   const stages = stageData.Stages;
   const stageLength = stages.length;
-  for (let stageIndex = 0; stageIndex < stageLength; stageIndex++) {
-    const stage = stages[stageIndex];
-    const ledges = stage.Ledges;
-    const leftLedge = ledges.GetLeftLedge();
-    const rightLedge = ledges.GetRightLedge();
-    const playerCount = playerData.PlayerCount;
-    const playerHist = world.HistoryData.PlayerComponentHistories;
+  const playerCount = playerData.PlayerCount;
+  const playerHist = world.HistoryData.PlayerComponentHistories;
 
-    for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-      combinedVerts.length = 0;
-      const p = playerData.Player(playerIndex);
+  for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    const p = playerData.Player(playerIndex);
+    const currentStateId = p.FSMInfo.CurrentStateId;
+    if (
+      p.Flags.IsInHitPause ||
+      currentStateId === STATE_IDS.LEDGE_GRAB_S ||
+      currentStateId === STATE_IDS.JUMP_S ||
+      p.Velocity.Y.Raw < 0
+    ) {
+      continue;
+    }
 
-      if (
-        p.Flags.IsInHitPause ||
-        p.FSMInfo.CurrentStatetId === STATE_IDS.LEDGE_GRAB_S ||
-        p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S ||
-        p.Velocity.Y.Raw < 0
-      ) {
-        continue;
-      }
+    const ledgeDetector = p.LedgeDetector;
 
-      const ledgeDetector = p.LedgeDetector;
+    if (ledgeDetector.CanGrabLedge === false) {
+      continue;
+    }
 
-      if (ledgeDetector.CanGrabLedge === false) {
-        continue;
-      }
+    combinedVerts.length = 0;
 
-      const sm = playerData.StateMachine(playerIndex);
-      const flags = p.Flags;
-      const ecb = p.ECB;
+    const flags = p.Flags;
+    const isFacingRight = flags.IsFacingRight;
+    const curFront = isFacingRight
+      ? ledgeDetector.RightSide
+      : ledgeDetector.LeftSide;
+    const lastLd =
+      playerHist[playerIndex].LedgeDetectorHistory[world.PreviousFrame];
+    const lastMiddleXRaw = NumberToRaw(lastLd.middleX);
+    const lastMiddleYRaw = NumberToRaw(lastLd.middleY);
+    const widthRaw = ledgeDetector.Width.Raw;
+    const heightRaw = ledgeDetector.Height.Raw;
+    const lastWidthRightRaw = lastMiddleXRaw + widthRaw;
+    const lastWidthLeftRaw = lastMiddleXRaw - widthRaw;
+    const lastBottomHeightRaw = lastMiddleYRaw + heightRaw;
+
+    for (let i = 0; i < curFront.length; i++) {
+      combinedVerts.push(curFront[i]);
+    }
+
+    if (isFacingRight) {
+      const bottomLeftX = lastMiddleXRaw;
+      const bottomLeftY = lastBottomHeightRaw;
+      const topLeftX = bottomLeftX;
+      const topLeftY = lastMiddleYRaw;
+      const topRightX = lastWidthRightRaw;
+      const topRightY = lastMiddleYRaw;
+      const bottomRightX = lastWidthLeftRaw;
+      const bottomRightY = lastBottomHeightRaw;
+
+      combinedVerts.push(
+        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
+      );
+      combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
+      combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
+      combinedVerts.push(
+        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
+      );
+    } else {
+      const bottomLeftX = lastMiddleXRaw - widthRaw;
+      const bottomLeftY = lastBottomHeightRaw;
+      const topLeftX = bottomLeftX;
+      const topLeftY = lastMiddleYRaw;
+      const topRightX = lastMiddleXRaw;
+      const topRightY = lastMiddleYRaw;
+      const bottomRightX = topRightX;
+      const bottomRightY = bottomLeftY;
+
+      combinedVerts.push(
+        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
+      );
+      combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
+      combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
+      combinedVerts.push(
+        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
+      );
+    }
+
+    const hull = CreateConvexHull(combinedVerts);
+    const sm = playerData.StateMachine(playerIndex);
+    const ecb = p.ECB;
+
+    for (let stageIndex = 0; stageIndex < stageLength; stageIndex++) {
+      const stage = stages[stageIndex];
+      const ledges = stage.Ledges;
+      const leftLedge = ledges.GetLeftLedge();
+      const rightLedge = ledges.GetRightLedge();
 
       if (PlayerOnStageOrPlats(stage, p)) {
         continue;
       }
 
-      const isFacingRight = flags.IsFacingRight;
-
-      if (
-        (isFacingRight && LedgeOccupied(leftLedge, playerData)) ||
-        (!isFacingRight && LedgeOccupied(rightLedge, playerData))
-      ) {
-        continue;
-      }
-
-      const curFront =
-        isFacingRight === true
-          ? ledgeDetector.RightSide
-          : ledgeDetector.LeftSide;
-
-      const lastLd =
-        playerHist[playerIndex].LedgeDetectorHistory[world.PreviousFrame];
-
-      let lastFront: Array<FlatVec>;
-      const lastMiddleXRaw = NumberToRaw(lastLd.middleX);
-      const lastMiddleYRaw = NumberToRaw(lastLd.middleY);
-      const widthRaw = ledgeDetector.Width.Raw;
-      const heightRaw = ledgeDetector.Height.Raw;
-      const lastWidthRightRaw = lastMiddleXRaw + widthRaw;
-      const lastWidthLeftRaw = lastMiddleXRaw - widthRaw;
-      const lastBottomHeightRaw = lastMiddleYRaw + heightRaw;
-
-      for (let i = 0; i < curFront.length; i++) {
-        combinedVerts.push(curFront[i]);
-      }
-
       if (isFacingRight) {
-        const bottomLeftX = lastMiddleXRaw;
-        const bottomLeftY = lastBottomHeightRaw;
-        const topLeftX = bottomLeftX;
-        const topLeftY = lastMiddleYRaw;
-        const topRightX = lastWidthRightRaw;
-        const topRightY = lastMiddleYRaw;
-        const bottomRightX = lastWidthLeftRaw;
-        const bottomRightY = lastBottomHeightRaw;
+        if (LedgeOccupied(leftLedge, playerData)) {
+          continue;
+        }
 
-        combinedVerts.push(
-          pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
-        );
-        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
-        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
-        combinedVerts.push(
-          pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
-        );
-
-        lastFront = CreateConvexHull(combinedVerts);
-      } else {
-        const bottomLeftX = lastMiddleXRaw - widthRaw;
-        const bottomLeftY = lastBottomHeightRaw;
-        const topLeftX = bottomLeftX;
-        const topLeftY = lastMiddleYRaw;
-        const topRightX = lastMiddleXRaw;
-        const topRightY = lastMiddleYRaw;
-        const bottomRightX = topRightX;
-        const bottomRightY = bottomLeftY;
-
-        combinedVerts.push(
-          pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
-        );
-        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
-        combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
-        combinedVerts.push(
-          pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
-        );
-      }
-
-      const hull = CreateConvexHull(combinedVerts);
-
-      if (isFacingRight) {
         const intersectsLeftLedge = IntersectsPolygons(
           leftLedge,
           hull,
@@ -145,26 +136,31 @@ export function LedgeGrabDetection(world: World): void {
             leftLedge[0].X.Raw - DivideRaw(ecb.Width.Raw, TWO),
             p.Position.Y.Raw,
           );
+          break;
         }
-        continue;
-      }
+      } else {
+        if (LedgeOccupied(rightLedge, playerData)) {
+          continue;
+        }
 
-      const intersectsRightLedge = IntersectsPolygons(
-        rightLedge,
-        hull,
-        pools.VecPool,
-        pools.ColResPool,
-        pools.ProjResPool,
-      );
-
-      if (intersectsRightLedge.Collision) {
-        sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
-        p.LedgeDetector.GrabLedge(rightLedge);
-        SetPlayerPositionRaw(
-          p,
-          rightLedge[0].X.Raw + DivideRaw(ecb.Width.Raw, TWO),
-          p.Position.Y.Raw,
+        const intersectsRightLedge = IntersectsPolygons(
+          rightLedge,
+          hull,
+          pools.VecPool,
+          pools.ColResPool,
+          pools.ProjResPool,
         );
+
+        if (intersectsRightLedge.Collision) {
+          sm.UpdateFromWorld(GAME_EVENT_IDS.LEDGE_GRAB_GE);
+          p.LedgeDetector.GrabLedge(rightLedge);
+          SetPlayerPositionRaw(
+            p,
+            rightLedge[0].X.Raw + DivideRaw(ecb.Width.Raw, TWO),
+            p.Position.Y.Raw,
+          );
+          break;
+        }
       }
     }
   }

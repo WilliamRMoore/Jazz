@@ -41,11 +41,11 @@ export class StateMachine {
     const state = this.getTranslation(gameEventId);
 
     if (state === undefined) {
-      const geName = GetGameEventName(gameEventId);
-      const curStateName = GetStateName(this.player.FSMInfo.CurrentStatetId);
-      console.warn(
-        ` No mapping esists for [State: ${curStateName} -> GameEvent: ${geName}]`,
-      );
+      // const geName = GetGameEventName(gameEventId);
+      // const curStateName = GetStateName(this.player.FSMInfo.CurrentStatetId);
+      // console.warn(
+      //   ` No mapping esists for [State: ${curStateName} -> GameEvent: ${geName}]`,
+      // );
       return;
     }
 
@@ -86,7 +86,7 @@ export class StateMachine {
 
   private runConditional(world: World, fsmInfo: FSMInfoComponent): boolean {
     const conditions = this.stateMappings
-      .get(fsmInfo.CurrentStatetId)!
+      .get(fsmInfo.CurrentStateId)!
       .GetConditions();
 
     // We have no conditionals, return
@@ -145,7 +145,7 @@ export class StateMachine {
     }
 
     const defaultTransition = this.getDefaultState(
-      this.player.FSMInfo.CurrentStatetId,
+      this.player.FSMInfo.CurrentStateId,
       w,
     );
 
@@ -163,7 +163,7 @@ export class StateMachine {
 
   private getTranslation(gameEventId: GameEventId): FSMState | undefined {
     const stateMappings = this.stateMappings.get(
-      this.player.FSMInfo.CurrentStatetId,
+      this.player.FSMInfo.CurrentStateId,
     );
 
     const nextStateId = stateMappings?.GetMapping(gameEventId);

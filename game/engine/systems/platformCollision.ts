@@ -4,12 +4,11 @@ import {
   STATE_IDS,
   CanStateWalkOffLedge,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw, FixedPoint } from '../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {
   PlayerOnPlats,
   CanOnlyFallOffLedgeWhenFacingAwayFromIt,
-  SetPlayerPosition,
   PlayerOnPlatsReturnsYCoord,
   SetPlayerPositionRaw,
   Player,
@@ -63,7 +62,7 @@ export function PlatformDetection(world: World): void {
 
       // If a jump was just initiated, skip all platform landing logic for this frame
       // to allow the jump to properly start.
-      if (p.FSMInfo.CurrentStatetId === STATE_IDS.JUMP_S) {
+      if (p.FSMInfo.CurrentStateId === STATE_IDS.JUMP_S) {
         continue;
       }
 
@@ -98,7 +97,7 @@ export function PlatformDetection(world: World): void {
           ) {
             shouldSnapBack = true;
           }
-        } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStatetId) === false) {
+        } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStateId) === false) {
           shouldSnapBack = true;
         }
 
@@ -144,10 +143,9 @@ export function PlatformDetection(world: World): void {
         // Check for a fast downward flick on the left stick to fall through the platform.
         const checkValueRaw = -(prevIa.LYAxis.Raw - ia.LYAxis.Raw);
         const inLanding =
-          p.FSMInfo.CurrentStatetId === STATE_IDS.LAND_S ||
-          p.FSMInfo.CurrentStatetId === STATE_IDS.SOFT_LAND_S;
-        const isSpotDodge =
-          p.FSMInfo.CurrentStatetId === STATE_IDS.SPOT_DODGE_S;
+          p.FSMInfo.CurrentStateId === STATE_IDS.LAND_S ||
+          p.FSMInfo.CurrentStateId === STATE_IDS.SOFT_LAND_S;
+        const isSpotDodge = p.FSMInfo.CurrentStateId === STATE_IDS.SPOT_DODGE_S;
 
         if (
           checkValueRaw <= NEG_ZERO_POINT_FIVE &&
@@ -168,7 +166,7 @@ export function PlatformDetection(world: World): void {
       //if we are moving downward, and we are holding down, and we are NOT in the airdodge state,
       if (
         ia.LYAxis.Raw < NEG_ZERO_POINT_EIGHT &&
-        fsmInfo.CurrentStatetId !== STATE_IDS.AIR_DODGE_S
+        fsmInfo.CurrentStateId !== STATE_IDS.AIR_DODGE_S
       ) {
         continue;
       }

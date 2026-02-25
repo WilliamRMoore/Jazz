@@ -12,11 +12,9 @@ export function Gravity(world: World): void {
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const stage = stageData.Stages;
-
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
-
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
@@ -30,7 +28,7 @@ export function Gravity(world: World): void {
 }
 
 function playerHasGravity(p: Player, stage: Stage[]): boolean {
-  switch (p.FSMInfo.CurrentStatetId) {
+  switch (p.FSMInfo.CurrentStateId) {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
     case STATE_IDS.HIT_STOP_S:

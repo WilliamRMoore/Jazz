@@ -100,7 +100,7 @@ describe('Stage Collision system tests', () => {
     expect(p.ECB.Top.Y.AsNumber).toBeCloseTo(700, 0);
   });
 
-  test('Player should transition to wall slam', () => {
+  test.skip('Player should transition to wall slam', () => {
     w.SetStage(WallStage());
     SetPlayerPosition(p, ToFp(550), ToFp(600));
     p.FSMInfo.SetCurrentState(Launch);

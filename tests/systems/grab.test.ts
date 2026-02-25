@@ -51,7 +51,7 @@ describe('Grab SystemTests', () => {
     p1IA.Action = GAME_EVENT_IDS.GRAB_GE;
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p1Sm.UpdateFromInput(p1IA, w);
-    expect(p1.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_S);
+    expect(p1.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_S);
   });
 
   test('Player should grab another player', () => {
@@ -77,8 +77,8 @@ describe('Grab SystemTests', () => {
 
     PlayerGrabs(w);
 
-    expect(p1.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HOLD_S);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HELD_S);
+    expect(p1.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HOLD_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HELD_S);
     expect(p2.GrabMeter.HoldingPlayerId).toBe(p1.ID);
     expect(p2.Flags.IsFacingLeft).toBe(true);
   });

@@ -1059,6 +1059,42 @@ export const WallKick: FSMState = {
   },
 };
 
+export const HitSlide: FSMState = {
+  StateName: 'HitSlide',
+  StateId: STATE_IDS.HIT_SLIDE_S,
+  OnEnter: (p: Player, w: World) => {
+    const pVel = p.Velocity;
+    const hitStun = p.HitStun;
+    pVel.X = hitStun.VX;
+    pVel.Y = hitStun.VY;
+    p.ECB.SetECBShape(STATE_IDS.HIT_SLIDE_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    p.HitStun.DecrementHitStun();
+  },
+  OnExit: (p: Player, w: World) => {
+    p.HitStun.Zero();
+  },
+};
+
+export const HitFlinch: FSMState = {
+  StateName: 'HitFlinch',
+  StateId: STATE_IDS.HIT_FLINCH_S,
+  OnEnter: (p: Player, w: World) => {
+    const pVel = p.Velocity;
+    const hitStun = p.HitStun;
+    pVel.X = hitStun.VX;
+    pVel.Y = hitStun.VY;
+    p.ECB.SetECBShape(STATE_IDS.HIT_FLINCH_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    p.HitStun.DecrementHitStun();
+  },
+  OnExit: (p: Player, w: World) => {
+    p.HitStun.Zero();
+  },
+};
+
 export const GroundSlam: FSMState = {
   StateName: 'GroundSlam',
   StateId: STATE_IDS.GRND_SLAM_S,

@@ -62,6 +62,10 @@ import {
   WalkToTurn,
   ToStickJump,
   defaultTumble,
+  HitStopToHitSlide,
+  HitSlideToIdle,
+  HitStopToFlinch,
+  FlinchToFall,
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -992,7 +996,11 @@ export function InitDownSpecialAirRelations(): StateRelation {
 export function InitHitStopRelations(): StateRelation {
   const hitStopTranslations = new ActionStateMappings();
 
-  const hitStopConditions = [HitStopToLaunch];
+  const hitStopConditions = [
+    HitStopToHitSlide,
+    HitStopToFlinch,
+    HitStopToLaunch,
+  ];
 
   hitStopTranslations.SetConditions(hitStopConditions);
 
@@ -1002,6 +1010,43 @@ export function InitHitStopRelations(): StateRelation {
   );
 
   return hitStunRelations;
+}
+
+export function InitHitFlinchRelations(): StateRelation {
+  const hitFlinchTranslations = new ActionStateMappings();
+
+  hitFlinchTranslations.SetMappings([
+    {
+      geId: GAME_EVENT_IDS.LAND_GE,
+      sId: STATE_IDS.SOFT_LAND_S,
+    },
+    { geId: GAME_EVENT_IDS.SOFT_LAND_GE, sId: STATE_IDS.SOFT_LAND_S },
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
+  hitFlinchTranslations.SetConditions([FlinchToFall]);
+  const hitFlinchRelations = new StateRelation(
+    STATE_IDS.HIT_FLINCH_S,
+    hitFlinchTranslations,
+  );
+
+  return hitFlinchRelations;
+}
+
+export function InitHitSlideRelations(): StateRelation {
+  const hitSlideTranslations = new ActionStateMappings();
+  hitSlideTranslations.SetMappings([
+    {
+      geId: GAME_EVENT_IDS.HIT_STOP_GE,
+      sId: STATE_IDS.HIT_STOP_S,
+    },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+  ]);
+
+  hitSlideTranslations.SetConditions([HitSlideToIdle]);
+
+  return new StateRelation(STATE_IDS.HIT_SLIDE_S, hitSlideTranslations);
 }
 
 export function InitTumbleRelations(): StateRelation {

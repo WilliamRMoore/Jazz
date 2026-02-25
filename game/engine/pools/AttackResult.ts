@@ -15,6 +15,7 @@ export class AttackResult implements IPooledObject {
   private readonly normY = new FixedPoint();
   private readonly depth = new FixedPoint();
   private playerIndexOfPlayerHit: playerIndex = -1;
+  private thresholdAngle: boolean = false;
 
   public Zero(): void {
     this.hit = false;
@@ -28,6 +29,7 @@ export class AttackResult implements IPooledObject {
     this.normY.Zero();
     this.depth.Zero();
     this.playerIndexOfPlayerHit = -1;
+    this.thresholdAngle = false;
   }
 
   public SetHitTrue(
@@ -39,7 +41,8 @@ export class AttackResult implements IPooledObject {
     depth: FixedPoint,
     baseKnockBack: FixedPoint,
     knockBackScaling: FixedPoint,
-    launchAngle: FixedPoint
+    launchAngle: FixedPoint,
+    thresholdAngle: boolean,
   ) {
     this.hit = true;
     this.playerIndexOfPlayerHit = playerIndex;
@@ -51,6 +54,7 @@ export class AttackResult implements IPooledObject {
     this.baseKnockBack.SetFromFp(baseKnockBack);
     this.knockBackScaling.SetFromFp(knockBackScaling);
     this.launchAngle.SetFromFp(launchAngle);
+    this.thresholdAngle = thresholdAngle;
   }
 
   public SetShieldHitTrue(
@@ -62,7 +66,8 @@ export class AttackResult implements IPooledObject {
     depth: FixedPoint,
     baseKnockBack: FixedPoint,
     knockBackScaling: FixedPoint,
-    launchAngle: FixedPoint
+    launchAngle: FixedPoint,
+    thresholdAngle: boolean,
   ) {
     this.shieldHit = true;
     this.playerIndexOfPlayerHit = playerIndex;
@@ -74,6 +79,7 @@ export class AttackResult implements IPooledObject {
     this.baseKnockBack.SetFromFp(baseKnockBack);
     this.knockBackScaling.SetFromFp(knockBackScaling);
     this.launchAngle.SetFromFp(launchAngle);
+    this.thresholdAngle = thresholdAngle;
   }
 
   public get Hit(): boolean {
@@ -118,5 +124,9 @@ export class AttackResult implements IPooledObject {
 
   public get PlayerIndex(): number {
     return this.playerIndexOfPlayerHit;
+  }
+
+  public get ThresholdAngle(): boolean {
+    return this.thresholdAngle;
   }
 }

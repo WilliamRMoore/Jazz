@@ -143,6 +143,8 @@ class STATES {
   public readonly LEDGE_RECOVER_S = seq.Next as StateId;
   public readonly LEDGE_GUA_S = seq.Next as StateId;
   public readonly WALL_KICK_S = seq.Next as StateId;
+  public readonly HIT_SLIDE_S = seq.Next as StateId;
+  public readonly HIT_FLINCH_S = seq.Next as StateId;
   public readonly GRND_SLAM_S = seq.Next as StateId;
   public readonly WALL_SLAM_S = seq.Next as StateId;
   public readonly DIRT_NAP_S = seq.Next as StateId;

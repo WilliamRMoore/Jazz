@@ -19,7 +19,7 @@ export function GrabMeter(w: World) {
   const playerCount = pd.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = pd.Player(playerIndex);
-    if (p.FSMInfo.CurrentStatetId !== STATE_IDS.GRAB_HELD_S) {
+    if (p.FSMInfo.CurrentStateId !== STATE_IDS.GRAB_HELD_S) {
       continue;
     }
     const grabMeterComp = p.GrabMeter;

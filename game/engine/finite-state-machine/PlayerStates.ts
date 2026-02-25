@@ -60,6 +60,8 @@ import {
   initShieldTubmleRelations,
   InitDizzyRelations,
   InitWallKickRelations,
+  InitHitSlideRelations,
+  InitHitFlinchRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -130,6 +132,8 @@ import {
   ShieldBreakLand,
   Dizzy,
   WallKick,
+  HitSlide,
+  HitFlinch,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -174,6 +178,8 @@ const DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
 const DOWN_SPECIAL_AIR_RELATIONS = InitDownSpecialAirRelations();
 const UP_SPECIAL_RELATIONS = InitUpSpecialRelations();
 const HIT_STOP_RELATIONS = InitHitStopRelations();
+const HIT_SLIDE_RELATIONS = InitHitSlideRelations();
+const HIT_FLINCH_RELATIONS = InitHitFlinchRelations();
 const TUMBLE_RELATIONS = InitTumbleRelations();
 const LAUNCH_RELATIONS = InitLaunchRelations();
 const CROUCH_RELATIONS = InitCrouchRelations();
@@ -239,6 +245,8 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SIDE_SPCL_AIR_EX_RELATIONS.stateId, SIDE_SPCL_AIR_EX_RELATIONS.mappings)
   .set(UP_SPECIAL_RELATIONS.stateId, UP_SPECIAL_RELATIONS.mappings)
   .set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings)
+  .set(HIT_SLIDE_RELATIONS.stateId, HIT_SLIDE_RELATIONS.mappings)
+  .set(HIT_FLINCH_RELATIONS.stateId, HIT_FLINCH_RELATIONS.mappings)
   .set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings)
   .set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings)
   .set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings)
@@ -307,6 +315,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(DownSpecialAerial.StateId, DownSpecialAerial)
   .set(UpSpecial.StateId, UpSpecial)
   .set(HitStop.StateId, HitStop)
+  .set(HitSlide.StateId, HitSlide)
+  .set(HitFlinch.StateId, HitFlinch)
   .set(Tumble.StateId, Tumble)
   .set(Launch.StateId, Launch)
   .set(Crouch.StateId, Crouch)

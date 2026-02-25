@@ -1,4 +1,8 @@
-import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import {
+  GAME_EVENT_IDS,
+  STATE_IDS,
+  StateId,
+} from '../finite-state-machine/stateConfigurations/shared';
 import {
   NumberToRaw,
   RawToNumber,
@@ -23,20 +27,20 @@ import { PooledVector } from '../pools/PooledVector';
 import {
   THREE,
   POINT_SEVEN_FIVE,
-  POINT_FOUR,
   HALF_CIRCLE,
   FULL_CIRCLE,
-  TWO,
   TEN,
   TWENTY,
   ONE_HUNDRED,
-  TWO_HUNDRED,
+  POINT_ZERO_THREE,
   ONE_POINT_FOUR,
   POINT_ZERO_ONE_THREE,
+  TWO_HUNDRED,
 } from '../math/numberConstants';
 import { IInputStore } from '../managers/inputManager';
 import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
+import { isPlayerGroundedAtAll } from './shared';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
@@ -66,10 +70,11 @@ export function PlayerAttacks(world: World): void {
         pools.ColResPool,
         pools.ClstsPntsResPool,
         historyData.PlayerComponentHistories,
-        p1InputStore,
         p1,
         p2,
+        p2InputStore,
       );
+
       const p2HitsP1Result = PAvsPB(
         currentFrame,
         pools.ActiveHitBubbleDtoPool,
@@ -78,9 +83,9 @@ export function PlayerAttacks(world: World): void {
         pools.ColResPool,
         pools.ClstsPntsResPool,
         historyData.PlayerComponentHistories,
-        p2InputStore,
         p2,
         p1,
+        p1InputStore,
       );
 
       if (p1HitsP2Result.Hit && p2HitsP1Result.Hit) {
@@ -91,7 +96,7 @@ export function PlayerAttacks(world: World): void {
       }
 
       if (p1HitsP2Result.Hit) {
-        resolveHitResult(p1, p2, playerData, p1HitsP2Result, pools.VecPool);
+        resolveHitResult(p1, p2, world, p1HitsP2Result, pools.VecPool);
       }
 
       if (p1HitsP2Result.ShieldHit) {
@@ -99,7 +104,7 @@ export function PlayerAttacks(world: World): void {
       }
 
       if (p2HitsP1Result.Hit) {
-        resolveHitResult(p2, p1, playerData, p2HitsP1Result, pools.VecPool);
+        resolveHitResult(p2, p1, world, p2HitsP1Result, pools.VecPool);
       }
 
       if (p2HitsP1Result.ShieldHit) {
@@ -109,13 +114,18 @@ export function PlayerAttacks(world: World): void {
   }
 }
 
+// thresholds
+const kbHitSlideTH = NumberToRaw(128);
+const KbFlinchTH = NumberToRaw(320);
+
 function resolveHitResult(
   pA: Player,
   pB: Player,
-  playerData: PlayerData,
+  w: World,
   pAHitsPbResult: AttackResult,
   vecPool: Pool<PooledVector>,
 ): void {
+  const playerData: PlayerData = w.PlayerData;
   const atkDamage = pAHitsPbResult.Damage;
   pB.Damage.AddDamage(atkDamage);
 
@@ -134,9 +144,28 @@ function resolveHitResult(
 
   const hitStopRaw = CalculateHitStop(atkDamage);
   const hitStunFrames = CalculateHitStun(kbRaw);
+
+  let angleRaw = 0;
+  let nextStateId: StateId = STATE_IDS.LAUNCH_S;
+
+  if (
+    pAHitsPbResult.ThresholdAngle &&
+    kbRaw <= kbHitSlideTH &&
+    isPlayerGroundedAtAll(pB, w.StageData.Stages)
+  ) {
+    angleRaw = 0;
+    nextStateId = STATE_IDS.HIT_SLIDE_S;
+  } else {
+    angleRaw = pAHitsPbResult.LaunchAngle.Raw;
+  }
+
+  if (kbRaw > kbHitSlideTH && kbRaw <= KbFlinchTH) {
+    nextStateId = STATE_IDS.HIT_FLINCH_S;
+  }
+
   const launchVec = CalculateLaunchVector(
     vecPool,
-    pAHitsPbResult.LaunchAngle,
+    angleRaw,
     pA.Flags.IsFacingRight,
     kbRaw,
   );
@@ -145,14 +174,33 @@ function resolveHitResult(
     Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE))),
   );
 
+  // const victimToTheLeft = pA.Position.X.Raw > pB.Position.X.Raw;
+  // const attackerFacingRight = pA.Flags.IsFacingRight;
+  // const victimToTheRight = !victimToTheLeft;
+  // const attackerFacingLeft = !attackerFacingRight;
+
+  // const isVictimBehindAttackCenter =
+  //   victimToTheLeft && attackerFacingRight
+  //     ? true
+  //     : victimToTheRight && attackerFacingLeft
+  //       ? true
+  //       : false;
+
+  // if (isVictimBehindAttackCenter) {
+  //   launchVec.X.Negate();
+  // }
+
   if (pA.Position.X > pB.Position.X) {
     pB.Flags.FaceRight();
   } else {
     pB.Flags.FaceLeft();
   }
 
+  launchVec.Y.Negate();
+
   pB.HitStop.SetHitStop(Math.floor(RawToNumber(hitStopRaw)));
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
+  pB.HitStun.NextStateId = nextStateId;
 
   const pBSm = playerData.StateMachine(pB.ID);
 
@@ -186,9 +234,9 @@ function PAvsPB(
   colResPool: Pool<CollisionResult>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
   componentHistories: Array<ComponentHistory>,
-  pAInputStore: IInputStore,
   pA: Player,
   pB: Player,
+  pBInputStore: IInputStore,
 ): AttackResult {
   const pAstateFrame = pA.FSMInfo.CurrentStateFrame;
   const pAAttack = pA.Attacks.GetAttack();
@@ -236,13 +284,13 @@ function PAvsPB(
   const currentStateFrame = pAstateFrame;
   const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
   const pAFacingRight = pA.Flags.IsFacingRight;
-  const pAIa = pAInputStore.GetInputForFrame(currentFrame);
-  const paTriggerValue =
-    pAIa.RTValRaw > pAIa.LTValRaw ? pAIa.RTValRaw : pAIa.LTValRaw;
+  const pBIa = pBInputStore.GetInputForFrame(currentFrame);
+  const pBTriggerValue =
+    pBIa.RTValRaw > pBIa.LTValRaw ? pBIa.RTValRaw : pBIa.LTValRaw;
 
   if (pB.Shield.Active) {
     const pBShield = pB.Shield;
-    const radiusRaw = pBShield.CalculateCurrentRadiusRaw(paTriggerValue);
+    const radiusRaw = pBShield.CalculateCurrentRadiusRaw(pBTriggerValue);
     const shieldYOffset = pBShield.YOffsetConstant;
     const tiltXRaw = pBShield.ShieldTiltX.Raw;
     const tiltYRaw = pBShield.ShieldTiltY.Raw + shieldYOffset.Raw;
@@ -307,6 +355,7 @@ function PAvsPB(
           pAAttack.BaseKnockBack,
           pAAttack.KnockBackScaling,
           pAHitBubble.launchAngle,
+          pAHitBubble.ThresholdAngle,
         );
         return attackResult;
       }
@@ -397,6 +446,7 @@ function PAvsPB(
           pAAttack.BaseKnockBack,
           pAAttack.KnockBackScaling,
           pAHitBubble.launchAngle,
+          pAHitBubble.ThresholdAngle,
         );
         return attackResult;
       }
@@ -409,17 +459,21 @@ export function CalculateHitStop(damage: FixedPoint): number {
   return DivideRaw(damage.Raw, THREE) + THREE;
 }
 
+const POINT_ONE = NumberToRaw(0.1);
+
 export function CalculateHitStun(knockBackRaw: number): number {
-  return Math.ceil(RawToNumber(MultiplyRaw(knockBackRaw, POINT_FOUR)));
+  return Math.ceil(RawToNumber(MultiplyRaw(knockBackRaw, POINT_ONE)));
 }
+
+const POINT_ZERO_NINE = NumberToRaw(0.9);
 
 export function CalculateLaunchVector(
   vecPool: Pool<PooledVector>,
-  launchAngle: FixedPoint,
+  launchAngleRaw: number,
   isFacingRight: boolean,
   knockBackRaw: number,
 ): PooledVector {
-  let angleRaw = launchAngle.Raw;
+  let angleRaw = launchAngleRaw;
 
   if (!isFacingRight) {
     angleRaw = HALF_CIRCLE - angleRaw;
@@ -433,14 +487,14 @@ export function CalculateLaunchVector(
 
   // Calculate LUT index using deterministic fixed-point math
   const lutIndexRaw = DivideRaw(MultiplyRaw(angleRaw, LUT_SIZE), FULL_CIRCLE);
-
   const lutIndex = Math.floor(RawToNumber(lutIndexRaw));
-
   const cosValue = COS_LUT[lutIndex];
   const sinValue = SIN_LUT[lutIndex];
 
-  const x = MultiplyRaw(cosValue, knockBackRaw);
-  const y = -DivideRaw(MultiplyRaw(sinValue, knockBackRaw), TWO);
+  const speedRaw = MultiplyRaw(knockBackRaw, POINT_ZERO_THREE);
+
+  const x = MultiplyRaw(cosValue, speedRaw);
+  const y = MultiplyRaw(sinValue, speedRaw);
 
   return vecPool.Rent().SetXYRaw(x, y);
 }

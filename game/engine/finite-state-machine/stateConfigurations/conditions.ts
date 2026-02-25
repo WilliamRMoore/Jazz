@@ -1040,8 +1040,23 @@ export const ToDownTilt: condition = {
   StateId: STATE_IDS.DOWN_TILT_S,
 };
 
-export const HitStopToLaunch: condition = {
-  Name: 'HitStopToLaunch',
+export const HitStopToFlinch: condition = {
+  Name: 'HitStopToFlinch',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStop.HitStopFrames > 0) {
+      return false;
+    }
+    if (p.HitStun.NextStateId === STATE_IDS.HIT_FLINCH_S) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.HIT_FLINCH_S,
+};
+
+export const HitStopToHitSlide: condition = {
+  Name: 'HitStopToHitSlide',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
 
@@ -1049,9 +1064,52 @@ export const HitStopToLaunch: condition = {
       return false;
     }
 
-    return true;
+    if (p.HitStun.NextStateId === STATE_IDS.HIT_SLIDE_S) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.HIT_SLIDE_S,
+};
+
+export const HitStopToLaunch: condition = {
+  Name: 'HitStopToLaunch',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStop.HitStopFrames > 0) {
+      return false;
+    }
+    if (p.HitStun.NextStateId === STATE_IDS.LAUNCH_S) {
+      return true;
+    }
+    return false;
   },
   StateId: STATE_IDS.LAUNCH_S,
+};
+
+export const HitSlideToIdle: condition = {
+  Name: 'HitSlideToIdle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStun.FramesOfHitStun > 0) {
+      return false;
+    }
+    return true;
+  },
+  StateId: STATE_IDS.IDLE_S,
+};
+
+export const FlinchToFall: condition = {
+  Name: 'FlinchToFall',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStun.FramesOfHitStun > 0) {
+      return false;
+    }
+    return true;
+  },
+  StateId: STATE_IDS.N_FALL_S,
 };
 
 export const LaunchToTumble: condition = {

@@ -14,12 +14,10 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
   public AddClampedXImpulseRaw(clampRaw: number, impulseRaw: number): void {
     const clampValueRaw = Math.abs(clampRaw);
     const currentVelocityRaw = this.x.Raw;
-
     // Don't add impulse if we are already at or beyond the clamp limit.
     if (Math.abs(currentVelocityRaw) >= clampValueRaw) {
       return;
     }
-
     this.x.SetFromRaw(currentVelocityRaw + impulseRaw);
   }
 

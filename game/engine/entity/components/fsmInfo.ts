@@ -33,7 +33,7 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
     return this.currentState;
   }
 
-  public get CurrentStatetId(): StateId {
+  public get CurrentStateId(): StateId {
     return this.currentState.StateId;
   }
 
