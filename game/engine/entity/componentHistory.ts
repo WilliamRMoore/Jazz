@@ -13,7 +13,6 @@ import { DamageSnapShot } from './components/damage';
 import { hitStopSnapShot } from './components/hitStop';
 import { GrabSnapShot } from './components/grab';
 import { GrabMeterSnapShot } from './components/grabMeter';
-import { DebugSnapShot } from './components/debug';
 import { HurtCapsule } from './components/hurtCircles';
 import { JumpSnapShot } from './components/jump';
 

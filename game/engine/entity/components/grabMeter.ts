@@ -1,4 +1,5 @@
-import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
+import { FixedPoint } from '../../math/fixedPoint';
+import { ONE } from '../../math/numberConstants';
 import { IHistoryEnabled } from '../componentHistory';
 
 export type GrabMeterSnapShot = {
@@ -8,7 +9,7 @@ export type GrabMeterSnapShot = {
 
 export class GrabMeterComponent implements IHistoryEnabled<GrabMeterSnapShot> {
   public readonly Meter = new FixedPoint(0);
-  public readonly BaseDecayRate = NumberToRaw(1); // 1 frame per frame
+  public readonly BaseDecayRate = ONE; // 1 frame per frame
   private playerId: number | undefined = undefined;
 
   public get HoldingPlayerId(): number | undefined {

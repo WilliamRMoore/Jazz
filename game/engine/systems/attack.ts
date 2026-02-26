@@ -276,21 +276,18 @@ function PAvsPB(
     prevYRaw = pA.Position.Y.Raw;
   }
 
-  const xRaw = prevXRaw;
-  const yRaw = prevYRaw;
-
-  const pAPrevPositionDto = vecPool.Rent().SetXYRaw(xRaw, yRaw);
+  const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
   const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);
   const currentStateFrame = pAstateFrame;
   const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
   const pAFacingRight = pA.Flags.IsFacingRight;
   const pBIa = pBInputStore.GetInputForFrame(currentFrame);
-  const pBTriggerValue =
-    pBIa.RTValRaw > pBIa.LTValRaw ? pBIa.RTValRaw : pBIa.LTValRaw;
 
   if (pB.Shield.Active) {
     const pBShield = pB.Shield;
-    const radiusRaw = pBShield.CalculateCurrentRadiusRaw(pBTriggerValue);
+    const radiusRaw = pBShield.CalculateCurrentRadiusRaw(
+      pBIa.RTValRaw > pBIa.LTValRaw ? pBIa.RTValRaw : pBIa.LTValRaw,
+    );
     const shieldYOffset = pBShield.YOffsetConstant;
     const tiltXRaw = pBShield.ShieldTiltX.Raw;
     const tiltYRaw = pBShield.ShieldTiltY.Raw + shieldYOffset.Raw;

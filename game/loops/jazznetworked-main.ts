@@ -1,4 +1,3 @@
-import { JazzNetwork } from '../engine/jazz';
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput, InputAction } from '../engine/input/Input';
@@ -6,6 +5,7 @@ import { FlatVec } from '../engine/physics/vector';
 import { DefaultCharacterConfig } from '../character/default';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { World } from '../engine/world/world';
+import { JazzNetwork } from '../engine/jazz/jazzNetwork';
 
 export type GamePadIndexes = Array<number>;
 

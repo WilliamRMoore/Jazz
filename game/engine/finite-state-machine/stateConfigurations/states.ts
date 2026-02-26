@@ -1051,7 +1051,7 @@ export const WallKick: FSMState = {
         ? p.Speeds.WallKickVelocityXRaw
         : -p.Speeds.WallKickVelocityXRaw;
       p.Velocity.X.SetFromRaw(xVel);
-      p.Velocity.Y.SetFromRaw(p.Speeds.WallKickVelocityYRaw);
+      p.Velocity.Y.SetFromRaw(-p.Speeds.WallKickVelocityYRaw);
     }
   },
   OnExit: (p: Player, w: World) => {

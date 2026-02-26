@@ -1,4 +1,3 @@
-import { IJazzLocal } from '../engine/jazz';
 import { DebugRenderer, resolution, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput, NewInputAction } from '../engine/input/Input';
@@ -10,6 +9,7 @@ import { DefaultCharacterConfig } from '../character/default';
 import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
+import { IJazzLocal } from '../engine/jazz/jazzLocal';
 
 const frameInterval = 1000 / 60;
 

@@ -84,8 +84,10 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   }
 
   public CalculateCurrentRadiusRaw(triggerValueRaw: number): number {
-    const curRadRaw = this.currentRadius.Raw;
-    return CalculateRadiusFromTriggerRaw(triggerValueRaw, curRadRaw);
+    return CalculateRadiusFromTriggerRaw(
+      triggerValueRaw,
+      this.currentRadius.Raw,
+    );
   }
 
   public get IsBroken(): boolean {

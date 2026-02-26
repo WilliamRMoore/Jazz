@@ -111,7 +111,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.STOP_RUN_S, 15)
       .set(STATE_IDS.JUMP_S, 1)
       .set(STATE_IDS.AIR_DODGE_S, 49)
-      .set(STATE_IDS.LAND_S, 11)
+      .set(STATE_IDS.LAND_S, 8)
       .set(STATE_IDS.SOFT_LAND_S, 2)
       .set(STATE_IDS.SPOT_DODGE_S, 32)
       .set(STATE_IDS.ROLL_DODGE_S, 31)
@@ -171,6 +171,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
       .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.SHIELD_BREAK_S, { height: 90, width: 60, yOffset: 0 })
+      .set(STATE_IDS.WALL_KICK_S, { height: 70, width: 70, yOffset: -25 })
       .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
         height: 60,
         width: 60,
@@ -413,10 +414,10 @@ function GetNeutralAir() {
     .WithTotalFrames(activeFrames)
     .WithHitBubble(10, 20, 0, 65, hb1OffSets)
     .WithHitBubble(10, 19, 1, 65, hb2OffSets)
-    .WithHitBubble(10, 23, 3, 60, hb3offSets)
-    .WithHitBubble(12, 20, 4, 55, hb4offsets)
-    .WithHitBubble(12, 20, 5, 55, hb5Offsets)
-    .WithHitBubble(12, 23, 6, 55, hb6Offsets);
+    .WithHitBubble(10, 23, 2, 60, hb3offSets)
+    .WithHitBubble(12, 20, 3, 55, hb4offsets)
+    .WithHitBubble(12, 20, 4, 55, hb5Offsets)
+    .WithHitBubble(12, 23, 5, 55, hb6Offsets);
 
   return bldr.Build();
 }
@@ -1146,11 +1147,11 @@ function GetSideSpecial() {
     .WithAttackId(ATTACK_IDS.S_SPCL_ATK)
     .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithOnEnterCommand(sensorReactorChangeStateOnDetection)
-    .WithOnUpdateEvent(frameActivate, sensor1)
-    .WithOnUpdateEvent(frameActivate, sensor2)
-    .WithOnUpdateEvent(frameActivate, sensor3)
-    .WithOnUpdateEvent(frameDeactivate, deactivateSensor)
-    .WithOnExitEvent(deactivateSensor)
+    .WithOnUpdateCommand(frameActivate, sensor1)
+    .WithOnUpdateCommand(frameActivate, sensor2)
+    .WithOnUpdateCommand(frameActivate, sensor3)
+    .WithOnUpdateCommand(frameDeactivate, deactivateSensor)
+    .WithOnExitCommand(deactivateSensor)
     .WithImpulses(impulses, 13)
     .WithTotalFrames(activeFrames)
     .CanOnlyFallOffLedgeIfFacingIt()
@@ -1260,11 +1261,11 @@ function GetSideSpecialAir() {
     .WithAttackId(ATTACK_IDS.S_SPCL_AIR_ATK)
     .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithOnEnterCommand(setSensorReactorToSwicthStateOnDetection)
-    .WithOnUpdateEvent(frameToActivate, activateSensor1)
-    .WithOnUpdateEvent(frameToActivate, activateSensor2)
-    .WithOnUpdateEvent(frameToActivate, activateSensor3)
-    .WithOnUpdateEvent(frameToDeactivate, deactivateSensor)
-    .WithOnExitEvent(deactivateSensor)
+    .WithOnUpdateCommand(frameToActivate, activateSensor1)
+    .WithOnUpdateCommand(frameToActivate, activateSensor2)
+    .WithOnUpdateCommand(frameToActivate, activateSensor3)
+    .WithOnUpdateCommand(frameToDeactivate, deactivateSensor)
+    .WithOnExitCommand(deactivateSensor)
     .WithImpulses(impulses, 12)
     .WithTotalFrames(activeFrames)
     .WithGravity(false);
@@ -1387,7 +1388,7 @@ function GetDownSpecialAerial() {
     .WithHitBubble(16, 25, 4, launchAngle, hb4OffSets)
     .WithImpulses(impulses, 8)
     .WithOnEnterCommand(setPlayerVelocityToZero)
-    .WithOnExitEvent(setJumpToOne);
+    .WithOnExitCommand(setJumpToOne);
 
   return blrd.Build();
 }

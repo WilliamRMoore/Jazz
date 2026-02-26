@@ -368,13 +368,11 @@ export function projectVerticies(
 ): IProjectionResult {
   let min = MAX_RAW_VALUE;
   let max = MIN_RAW_VALUE;
-  const axisXRaw = axis.X.Raw;
-  const axisYRaw = axis.Y.Raw;
   const vLength = verticies.length;
   for (let i = 0; i < vLength; i++) {
     const v = verticies[i];
     // get the projection for the given axis
-    const projection = DotProductRaw(v.X.Raw, v.Y.Raw, axisXRaw, axisYRaw);
+    const projection = DotProductRaw(v.X.Raw, v.Y.Raw, axis.X.Raw, axis.Y.Raw);
     // set the minimum projection
     if (projection < min) {
       min = projection;
@@ -470,14 +468,10 @@ function cross(o: FlatVec, a: FlatVec, b: FlatVec): number {
 }
 
 function comparePointsXY(a: FlatVec, b: FlatVec): number {
-  const axRaw = a.X.Raw;
-  const bxRaw = b.X.Raw;
-  if (axRaw === bxRaw) {
-    const diff = a.Y.Raw - b.Y.Raw;
-    return diff;
+  if (a.X.Raw === b.X.Raw) {
+    return a.Y.Raw - b.Y.Raw;
   }
-  const diff = axRaw - bxRaw;
-  return diff;
+  return a.X.Raw - b.X.Raw;
 }
 
 const LOWER: Array<FlatVec> = [];

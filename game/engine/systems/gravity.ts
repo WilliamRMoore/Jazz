@@ -32,6 +32,7 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
     case STATE_IDS.HIT_STOP_S:
+    case STATE_IDS.WALL_KICK_S:
       return false;
     default:
       break;
@@ -41,9 +42,9 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   }
   const attack = p.Attacks.GetAttack();
   if (attack === undefined) {
-    const stagesLemgth = stage.length;
+    const stagesLength = stage.length;
     let playerOnPlatsOrStage = false;
-    for (let i = 0; i < stagesLemgth; i++) {
+    for (let i = 0; i < stagesLength; i++) {
       const stagePiece = stage[i];
       const pps = PlayerOnStageOrPlats(stagePiece, p);
       if (pps) {

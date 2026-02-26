@@ -54,6 +54,7 @@ export type CharacterConfig = {
   ECBShapes: ECBShapesConfig;
   HurtCapsules: Array<HurtCapsuleConfig>;
   JumpVelocity: number;
+  WallKickVelocity: ConfigVec;
   NumberOfJumps: number;
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
@@ -176,7 +177,7 @@ export class AttackConfigBuilder {
     return this;
   }
 
-  public WithOnUpdateEvent(
+  public WithOnUpdateCommand(
     frameNumber: number,
     command: Command,
   ): AttackConfigBuilder {
@@ -188,7 +189,7 @@ export class AttackConfigBuilder {
     return this;
   }
 
-  public WithOnExitEvent(command: Command): AttackConfigBuilder {
+  public WithOnExitCommand(command: Command): AttackConfigBuilder {
     this.onExitCommands.push(command);
     return this;
   }

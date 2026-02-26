@@ -1,7 +1,6 @@
 import { InputAction } from '../../input/Input';
-import { IInputStore, InputStore } from '../../managers/inputManager';
+import { IInputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
-import { LineSegmentIntersectionRaw } from '../../physics/collisions';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 

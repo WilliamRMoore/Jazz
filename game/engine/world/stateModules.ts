@@ -1,5 +1,5 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { InputAction, NewInputAction } from '../input/Input';
+import { NewInputAction } from '../input/Input';
 import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { DeathBoundry, Stage } from '../stage/stageMain';
@@ -14,7 +14,6 @@ import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { frameNumber } from '../entity/components/attack';
 import { MainConfig } from '../config/main-config';
 import { IInputStore } from '../managers/inputManager';
-import { PlayerDebugAdapter } from '../debug/playerDebugger';
 
 export type PlayerData = {
   PlayerCount: number;

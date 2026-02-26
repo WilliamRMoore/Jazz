@@ -4,7 +4,7 @@ const config = {
   MaxAtkBubblesPerPlayer: 25,
   MaxHurtBubblesPerPlayer: 25,
   MaxGrabBubblesPerPlayer: 25,
-  MaxSensorsPerPlayer: 10,
+  MaxSensorsPerPlayer: 25,
   PoolSizes: {
     PooledVectorCount: 1000,
     CollisionResultCount: 500,

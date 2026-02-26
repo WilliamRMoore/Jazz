@@ -1,4 +1,5 @@
 import { Command } from '../../command/command';
+import { envConfig } from '../../config/main-config';
 import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
@@ -69,10 +70,12 @@ export type SensorSnapShot = {
 
 export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
   private currentSensorIdx: number = 0;
-  private readonly sensors: Array<Sensor> = new Array<Sensor>(25);
+  private readonly sensors: Array<Sensor>;
   public ReactCommand: Command | undefined;
 
   constructor() {
+    const sensorLength = envConfig.get('MaxSensorsPerPlayer') as number;
+    this.sensors = new Array<Sensor>(sensorLength);
     for (let i = 0; i < this.sensors.length; i++) {
       this.sensors[i] = new Sensor();
     }

@@ -5,10 +5,10 @@ import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { IJazzLocal, JazzLocal } from '../jazz';
 import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
+import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
 
 export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;

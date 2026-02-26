@@ -5,7 +5,7 @@ import {
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { InputAction, NewInputAction } from '../../game/engine/input/Input';
-import { JazzNetwork } from '../../game/engine/jazz';
+import { JazzNetwork } from '../../game/engine/jazz/jazzGameLoops';
 import { RollBackManager } from '../../game/engine/managers/rollBack';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { ToFV } from '../../game/engine/utils';

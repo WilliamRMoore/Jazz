@@ -2,7 +2,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { POINT_SEVEN } from '../math/numberConstants';
+import { POINT_FOUR, POINT_SEVEN } from '../math/numberConstants';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { World } from '../world/world';
 
@@ -16,6 +16,14 @@ export function WallKick(w: World) {
     if (stateId !== STATE_IDS.N_FALL_S) {
       continue;
     }
+    const ecb = p.ECB;
+    const leftECBPoint = ecb.Left;
+    const rightECBPoint = ecb.Right;
+    const sensor = ecb.SensorDepth;
+    const rightSensorPoint = pools.VecPool.Rent().SetXYRaw(
+      rightECBPoint.X.Raw - sensor.Raw,
+      rightECBPoint.Y.Raw,
+    );
     const stages = w.StageData.Stages;
     const stagesLength = stages.length;
 
@@ -23,14 +31,7 @@ export function WallKick(w: World) {
       const stage = stages[stageIndex];
       const l = stage.StageVerticies.GetLeftWall()[0];
       const r = stage.StageVerticies.GetRightWall()[0];
-      const ecb = p.ECB;
-      const leftECBPoint = ecb.Left;
-      const rightECBPoint = ecb.Right;
-      const sensor = ecb.SensorDepth;
-      const rightSensorPoint = pools.VecPool.Rent().SetXYRaw(
-        rightECBPoint.X.Raw - sensor.Raw,
-        rightECBPoint.Y.Raw,
-      );
+
       const leftSensorPoint = pools.VecPool.Rent().SetXYRaw(
         leftECBPoint.X.Raw + sensor.Raw,
         leftECBPoint.Y.Raw,
@@ -62,8 +63,8 @@ export function WallKick(w: World) {
         const is = pd.InputStore(i);
         const lastIa = is.GetInputForFrame(w.PreviousFrame);
         const curIa = is.GetInputForFrame(w.LocalFrame);
-        if (lastIa.LXAxis.Raw <= 0 && curIa.LXAxis.Raw > POINT_SEVEN) {
-          p.Flags.FaceRight();
+        if (lastIa.LXAxis.Raw >= 0 && curIa.LXAxis.Raw < -POINT_FOUR) {
+          p.Flags.FaceLeft();
           const sm = pd.StateMachine(i);
           sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
         }
@@ -71,8 +72,8 @@ export function WallKick(w: World) {
         const is = pd.InputStore(i);
         const lastIa = is.GetInputForFrame(w.PreviousFrame);
         const curIa = is.GetInputForFrame(w.LocalFrame);
-        if (lastIa.LXAxis.Raw >= 0 && curIa.LXAxis.Raw < -POINT_SEVEN) {
-          p.Flags.FaceLeft();
+        if (lastIa.LXAxis.Raw <= 0 && curIa.LXAxis.Raw > POINT_FOUR) {
+          p.Flags.FaceRight();
           const sm = pd.StateMachine(i);
           sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_KICK_GE);
         }
@@ -80,3 +81,4 @@ export function WallKick(w: World) {
     }
   }
 }
+//lastIa.LXAxis.Raw <= 0 && curIa.LXAxis.Raw > POINT_SEVEN

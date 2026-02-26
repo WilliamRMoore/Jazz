@@ -3,8 +3,8 @@ import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
-import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
-import { AttackComponment, frameNumber } from './components/attack';
+import { FixedPoint } from '../math/fixedPoint';
+import { AttackComponment } from './components/attack';
 import { ECBComponent } from './components/ecb';
 import { PlayerFlagsComponent } from './components/flags';
 import { FSMInfoComponent } from './components/fsmInfo';
@@ -62,6 +62,7 @@ export class Player {
     sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
     sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
     sB.SetGroundedVelocityDecay(cc.GroundedVelocityDecay);
+    sB.SetWallKickVelocity(cc.WallKickVelocity.x, cc.WallKickVelocity.y);
     this.ID = Id;
     this.Position = new PositionComponent();
     this.Velocity = new VelocityComponent();
