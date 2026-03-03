@@ -165,4 +165,16 @@ export class GrabComponent implements IHistoryEnabled<GrabSnapShot> {
   public SetFromSnapShot(snapShot: GrabSnapShot): void {
     this.currentGrab = snapShot;
   }
+
+  public set CompState(history: GrabHist) {
+    if (history.grabId === undefined) {
+      this.currentGrab = undefined;
+    } else {
+      this.currentGrab = this.grabs.get(history.grabId);
+    }
+  }
 }
+
+export type GrabHist = {
+  grabId: GrabId | undefined;
+};

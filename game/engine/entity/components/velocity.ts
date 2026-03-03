@@ -59,4 +59,14 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
     this.x.SetFromNumber(snapShot.X);
     this.y.SetFromNumber(snapShot.Y);
   }
+
+  public set CompState(state: VelocityHist) {
+    this.x.SetFromRaw(state.velXRaw);
+    this.y.SetFromRaw(state.velYRaw);
+  }
 }
+
+export type VelocityHist = {
+  velXRaw: number;
+  velYRaw: number;
+};

@@ -66,8 +66,10 @@ describe('Ledge Grab Detection system tests', () => {
     fsm.ForceState(STATE_IDS.N_FALL_S);
     p.Velocity.Y.SetFromNumber(-10); // Upward velocity
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.MoveToPosition();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -79,8 +81,10 @@ describe('Ledge Grab Detection system tests', () => {
     fsm.ForceState(STATE_IDS.JUMP_S);
     p.Velocity.Y.SetFromNumber(10); // Downward velocity
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.MoveToPosition();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -93,8 +97,10 @@ describe('Ledge Grab Detection system tests', () => {
     p.Velocity.Y.SetFromNumber(10);
     p.Flags.SetHitPauseFrames(10);
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.MoveToPosition();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -107,8 +113,10 @@ describe('Ledge Grab Detection system tests', () => {
     p.Velocity.Y.SetFromNumber(0);
     p.Flags.FaceLeft();
     // Position player on the ground
-    p.ECB.MoveToPosition(new FixedPoint(600), new FixedPoint(650));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(600);
+    p.Position.Y.SetFromNumber(650);
+    p.ECB.MoveToPosition();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);

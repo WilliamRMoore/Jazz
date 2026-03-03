@@ -49,10 +49,10 @@ export function LedgeGrabDetection(world: World): void {
     const curFront = isFacingRight
       ? ledgeDetector.RightSide
       : ledgeDetector.LeftSide;
-    const lastLd =
-      playerHist[playerIndex].LedgeDetectorHistory[world.PreviousFrame];
-    const lastMiddleXRaw = NumberToRaw(lastLd.middleX);
-    const lastMiddleYRaw = NumberToRaw(lastLd.middleY);
+    const lastPos =
+      playerHist[playerIndex].PositionHistory[world.PreviousFrame];
+    const lastMiddleXRaw = NumberToRaw(lastPos.X);
+    const lastMiddleYRaw = NumberToRaw(lastPos.Y) + ledgeDetector.YOffset.Raw;
     const widthRaw = ledgeDetector.Width.Raw;
     const heightRaw = ledgeDetector.Height.Raw;
     const lastWidthRightRaw = lastMiddleXRaw + widthRaw;

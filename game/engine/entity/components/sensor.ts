@@ -171,4 +171,32 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     }
     this.currentSensorIdx = snapShot.sensors?.length ?? 0;
   }
+
+  public set CompState(state: SensorHist) {
+    this.DeactivateSensors();
+    const length = state.sensors.length;
+    for (let i = 0; i < length; i++) {
+      const sensorHist = state.sensors[i];
+      const mySensor = this.sensors[i];
+      mySensor.XOffset.SetFromRaw(sensorHist.xOffsetRaw);
+      mySensor.YOffset.SetFromRaw(sensorHist.yOffsetRaw);
+      mySensor.Radius.SetFromRaw(sensorHist.radiusRaw);
+      if (sensorHist.active) {
+        mySensor.Activate();
+      } else {
+        mySensor.Deactivate();
+      }
+    }
+    this.ReactCommand = state.sensorReactor;
+  }
 }
+
+export type SensorHist = {
+  sensors: Array<{
+    xOffsetRaw: number;
+    yOffsetRaw: number;
+    radiusRaw: number;
+    active: boolean;
+  }>;
+  sensorReactor: Command | undefined;
+};

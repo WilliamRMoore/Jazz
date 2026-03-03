@@ -1,11 +1,27 @@
 import { Command } from '../command/command';
 import { envConfig } from '../config/main-config';
 import { ComponentHistory } from '../entity/componentHistory';
-import { frameNumber } from '../entity/components/attack';
+import { ATKHist, frameNumber } from '../entity/components/attack';
+import { DamageHist } from '../entity/components/damage';
+import { ECBHist } from '../entity/components/ecb';
+import { FlagsHist } from '../entity/components/flags';
+import { FSMInfoHist } from '../entity/components/fsmInfo';
+import { GrabHist } from '../entity/components/grab';
+import { GrabMetereHist } from '../entity/components/grabMeter';
+import { HitStopHist } from '../entity/components/hitStop';
+import { HitStunHist } from '../entity/components/hitStun';
+import { JumpHist } from '../entity/components/jump';
+import { LedgeDetectorHist } from '../entity/components/ledgeDetector';
+import { PositionHist } from '../entity/components/position';
+import { SensorHist } from '../entity/components/sensor';
+import {
+  CalculateRadiusFromTriggerRaw,
+  ShieldHist,
+} from '../entity/components/shield';
+import { VelocityHist } from '../entity/components/velocity';
 import { Player } from '../entity/playerOrchestrator';
 import {
   AttackId,
-  GRAB_IDS,
   GrabId,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
@@ -52,9 +68,225 @@ export function InitPlayerHistory(p: Player, w: World) {
   }
 }
 
-export function RecordHistory2() {}
+export function InitPlayerHistory2(p: Player, w: World) {
+  const curFrame = w.LocalFrame;
+  const frameHistLimit = envConfig.get('State.MaxFrameStorage') as number;
+  const startFrame = curFrame > frameHistLimit ? curFrame - frameHistLimit : 0;
+  for (let i = startFrame; i <= curFrame; i++) {
+    record2(p, w, i);
+  }
+}
 
-class PlayerStateHistory {
+export function RecordHistory2(w: World) {
+  const pd = w.PlayerData;
+  const playerCount = pd.PlayerCount;
+  const frameNumber = w.LocalFrame;
+  for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+    const p = pd.Player(playerIndex);
+    record2(p, w, frameNumber);
+  }
+  //const atkBubbles = atk.
+}
+
+function record2(p: Player, w: World, frameNumber: frameNumber) {
+  const pd = w.PlayerData;
+  const playerIndex = p.ID;
+  const ia = pd.InputStore(playerIndex).GetInputForFrame(frameNumber);
+  const pTable = w.HistoryData.PlayerHistoryDB[playerIndex];
+  const r = pTable.get(frameNumber);
+  const position = p.Position;
+  const velocity = p.Velocity;
+  const damage = p.Damage;
+  const flags = p.Flags;
+  const jump = p.Jump;
+  const fsmInfo = p.FSMInfo;
+  const hitStop = p.HitStop;
+  const hitStun = p.HitStun;
+  const grabs = p.Grabs;
+  const grabMeter = p.GrabMeter;
+  const shield = p.Shield;
+  const sensorsComp = p.Sensors;
+  const ecb = p.ECB;
+  const hurtCapsules = p.HurtCircles;
+  const ledgeDetector = p.LedgeDetector;
+  const attackComp = p.Attacks;
+
+  r.Zero();
+
+  r.posXRaw = position.X.Raw;
+  r.posYRaw = position.Y.Raw;
+  r.velXRaw = velocity.X.Raw;
+  r.velYRaw = velocity.Y.Raw;
+  r.damageRaw = damage.Damage.Raw;
+  r.facingRight = flags.IsFacingRight;
+  r.fasFalling = flags.IsFastFalling;
+  r.hitPauseFrames = flags.HitPauseFrames;
+  r.intangabilityFrames = flags.GetIntangabilityFrames();
+  r.disablePlatformDetectionFrames = flags.DisablePlatDetectionFrames;
+  r.velocityDecayActive = flags.IsVelocityDecayActive;
+  r.shieldJump = flags.JumpedFromShield;
+  r.jumpCount = jump.JumpCount;
+  r.stateId = fsmInfo.CurrentStateId;
+  r.stateFrame = fsmInfo.CurrentStateFrame;
+  r.hitStopFrames = hitStop.Frames;
+  r.hitStunFrames = hitStun.Frames;
+  r.hitStunVxRaw = hitStun.VX.Raw;
+  r.hitStunVyRaw = hitStun.VY.Raw;
+  r.hitStunNextStateId = hitStun.NextStateId;
+  r.grabId = grabs.GetGrab()?.GrabId ?? undefined;
+  r.grabMeterRaw = grabMeter.Meter.Raw;
+  r.holdingPlayerId = grabMeter.HoldingPlayerId;
+  r.shieldActive = shield.Active;
+  r.shieldRadiusRaw = shield.PreModCurrentRadius.Raw;
+  r.shieldTiltXRaw = shield.ShieldTiltX.Raw;
+  r.shieldTiltYRaw = shield.ShieldTiltY.Raw;
+  const sLength = sensorsComp.Sensors.length;
+  const sensors = sensorsComp.Sensors;
+  for (let i = 0; i < sLength; i++) {
+    const s = sensors[i];
+    const rS = r.sensors[i];
+    rS.xOffsetRaw = s.XOffset.Raw;
+    rS.yOffsetRaw = s.YOffset.Raw;
+    rS.radiusRaw = s.Radius.Raw;
+    rS.active = s.IsActive;
+  }
+  r.sensorReactor = sensorsComp.ReactCommand;
+  r.ldGrabCount = ledgeDetector.LedgeGrabCount;
+  r.ldgGrbdLdg = ledgeDetector.GrabbedLedge;
+  const aComp = attackComp;
+  const atk = aComp.GetAttack();
+  if (atk) {
+    r.atkId = atk.AttackId;
+    const playerIdsHit = aComp.PlayerIdsHit;
+    if (playerIdsHit.size > 0) {
+      for (const values of aComp.PlayerIdsHit) {
+        r.playersHit.add(values);
+      }
+    }
+  }
+  const posXRaw = position.X.Raw;
+  const posYRaw = position.Y.Raw;
+  // computed values for easier use later
+  if (shield.Active) {
+    const shGPosX = posXRaw + shield.ShieldTiltX.Raw;
+    const shGPosY =
+      posYRaw + shield.ShieldTiltY.Raw + shield.YOffsetConstant.Raw;
+    const triggerValue = ia.RTValRaw > ia.LTValRaw ? ia.RTValRaw : ia.LTValRaw;
+    r.comp_shield.calcRadiusRaw = CalculateRadiusFromTriggerRaw(
+      triggerValue,
+      shield.PreModCurrentRadius.Raw,
+    );
+    r.comp_shield.calcXRaw = shGPosX;
+    r.comp_shield.calcYRaw = shGPosY;
+  }
+  for (let i = 0; i < sLength; i++) {
+    const s = sensors[i];
+    const rS = r.comp_sensors[i];
+    if (!s.IsActive) {
+      rS.active = false;
+      continue;
+    }
+    rS.globalXRaw = s.XOffset.Raw;
+    rS.globalYRaw = posYRaw + s.YOffset.Raw;
+    rS.radiusRaw = s.Radius.Raw;
+    rS.active = s.IsActive;
+  }
+  const ecbPoints = ecb.GetActiveVerts();
+  for (let i = 0; i < ecbPoints.length; i++) {
+    const p = ecbPoints[i];
+    const rP = r.comp_ecbDiamond[i];
+    rP.xRaw = p.X.Raw;
+    rP.yRaw = p.Y.Raw;
+  }
+  const hsLength = hurtCapsules.HurtCapsules.length;
+  for (let i = 0; i < hsLength; i++) {
+    const h = hurtCapsules.HurtCapsules[i];
+    const rH = r.comp_hurtCapsules[i];
+    rH.x1Raw = posXRaw + h.StartOffsetX.Raw;
+    rH.y1Raw = posYRaw + h.StartOffsetY.Raw;
+    rH.x2Raw = posXRaw + h.EndOffsetX.Raw;
+    rH.y2Raw = posYRaw + h.EndOffsetY.Raw;
+    rH.radiusRaw = h.Radius.Raw;
+    rH.active = true;
+  }
+  const grabCircles = grabs.GetGrab();
+  const stateFrame = p.FSMInfo.CurrentStateFrame;
+  if (grabCircles) {
+    const gbs = grabCircles.GrabBubbles;
+    const gLength = gbs.length;
+    for (let i = 0; i < gLength; i++) {
+      const g = gbs[i];
+      const rG = r.comp_grabCircles[i];
+      const isActive = g.IsActive(stateFrame);
+      if (!isActive) {
+        rG.active = false;
+        continue;
+      }
+      const gos = g.GetLocalPositionOffsetForFrame(stateFrame);
+      rG.iD = g.BubbleId;
+      rG.xRaw = r.facingRight
+        ? posXRaw + (gos?.X?.Raw ?? 0)
+        : posXRaw - (gos?.X?.Raw ?? 0);
+      rG.yRaw = posYRaw + (gos?.Y?.Raw ?? 0);
+      rG.radiusRaw = g.Radius.Raw;
+      rG.active = true;
+    }
+  }
+  if (atk) {
+    const atkCircles = atk.HitBubbles;
+    const aLength = atkCircles.length;
+    for (let i = 0; i < aLength; i++) {
+      const a = atkCircles[i];
+      const aos = a.frameOffsets.get(stateFrame);
+      const rA = r.comp_attackCircles[i];
+      const isActive = a.IsActive(stateFrame);
+      if (!isActive) {
+        rA.active = false;
+        continue;
+      }
+      rA.xRaw = r.facingRight
+        ? posXRaw + (aos?.X?.Raw ?? 0)
+        : posXRaw - (aos?.X?.Raw ?? 0);
+      rA.yRaw = posYRaw + (aos?.Y?.Raw ?? 0);
+      rA.radiusRaw = a.Radius.Raw;
+      rA.active = true;
+    }
+  }
+  const leftLd = ledgeDetector.LeftSide;
+  const rightLd = ledgeDetector.RightSide;
+  const ldLength = 4;
+  for (let i = 0; i < ldLength; i++) {
+    const lp = leftLd[i];
+    const rp = rightLd[i];
+    const rlp = r.comp_ledgeDetectorLeft[i];
+    const rrp = r.comp_ledgeDetectorRight[i];
+    rlp.xRaw = lp.X.Raw;
+    rlp.yRaw = lp.Y.Raw;
+    rrp.xRaw = rp.X.Raw;
+    rrp.yRaw = rp.Y.Raw;
+  }
+}
+
+type ledgeRef = FlatVec[];
+
+export class PlayerStateHistory
+  implements
+    ATKHist,
+    DamageHist,
+    ECBHist,
+    FlagsHist,
+    FSMInfoHist,
+    GrabHist,
+    GrabMetereHist,
+    HitStopHist,
+    HitStunHist,
+    JumpHist,
+    LedgeDetectorHist,
+    PositionHist,
+    SensorHist,
+    ShieldHist,
+    VelocityHist
+{
   // pos
   posXRaw = 0;
   posYRaw = 0;
@@ -68,7 +300,7 @@ class PlayerStateHistory {
   fasFalling = false;
   hitPauseFrames = 0;
   intangabilityFrames = 0;
-  disablePlatformDetection = 0;
+  disablePlatformDetectionFrames = 0;
   velocityDecayActive = true;
   shieldJump = false;
   // jump
@@ -86,7 +318,7 @@ class PlayerStateHistory {
   // grab
   grabId: GrabId | undefined = undefined;
   // grabMeter
-  grabMeter = 0;
+  grabMeterRaw = 0;
   holdingPlayerId: number | undefined = undefined;
   // shield
   shieldActive = false;
@@ -95,26 +327,223 @@ class PlayerStateHistory {
   shieldTiltYRaw = 0;
   // sensors
   sensors: Array<{
-    xOffset: number;
-    yOffset: number;
-    radius: number;
+    xOffsetRaw: number;
+    yOffsetRaw: number;
+    radiusRaw: number;
     active: boolean;
   }> = new Array<{
-    xOffset: number;
-    yOffset: number;
-    radius: number;
+    xOffsetRaw: number;
+    yOffsetRaw: number;
+    radiusRaw: number;
     active: boolean;
   }>(envConfig.get('MaxSensorsPerPlayer') as number);
+
   sensorReactor: Command | undefined = undefined;
-  // hold
-  heldPlayerId: number | undefined = undefined;
+  // hold *** NOTE: not implemented yet
+  // heldPlayerId: number | undefined = undefined;
   // ledge detector
-  ldgMidXRaw = 0;
-  ldgMdyRaw = 0;
   ldGrabCount = 0;
-  ldgGrbdLdg: FlatVec[] | undefined = undefined;
-  //
+  ldgGrbdLdg: ledgeRef | undefined = undefined;
+  // attack
   atkId: AttackId | undefined = undefined;
   playersHit: Set<number> = new Set<number>();
-  //
+  // computed values
+  readonly comp_shield = {
+    calcRadiusRaw: 0,
+    calcXRaw: 0,
+    calcYRaw: 0,
+  };
+  readonly comp_sensors = new Array<{
+    globalXRaw: number;
+    globalYRaw: number;
+    radiusRaw: number;
+    active: boolean;
+  }>(envConfig.get('MaxSensorsPerPlayer') as number);
+  readonly comp_ecbDiamond = Array<{ xRaw: number; yRaw: number }>(4);
+  readonly comp_hurtCapsules = new Array<{
+    x1Raw: number;
+    y1Raw: number;
+    x2Raw: number;
+    y2Raw: number;
+    radiusRaw: number;
+    active: boolean;
+  }>(envConfig.get('MaxHurtBubblesPerPlayer') as number);
+  readonly comp_grabCircles = new Array<{
+    iD: number;
+    xRaw: number;
+    yRaw: number;
+    radiusRaw: number;
+    active: boolean;
+  }>(envConfig.get('MaxGrabBubblesPerPlayer') as number);
+  readonly comp_attackCircles = new Array<{
+    xRaw: number;
+    yRaw: number;
+    radiusRaw: number;
+    active: boolean;
+  }>(envConfig.get('MaxAtkBubblesPerPlayer') as number);
+  readonly comp_ledgeDetectorLeft = new Array<{ xRaw: number; yRaw: number }>(
+    4,
+  );
+  readonly comp_ledgeDetectorRight = new Array<{ xRaw: number; yRaw: number }>(
+    4,
+  );
+
+  constructor() {
+    const sLength = this.sensors.length;
+    for (let i = 0; i < sLength; i++) {
+      this.sensors[i] = {
+        xOffsetRaw: 0,
+        yOffsetRaw: 0,
+        radiusRaw: 0,
+        active: false,
+      };
+    }
+    const csLength = this.comp_sensors.length;
+    for (let i = 0; i < csLength; i++) {
+      this.comp_sensors[i] = {
+        globalXRaw: 0,
+        globalYRaw: 0,
+        radiusRaw: 0,
+        active: false,
+      };
+    }
+    const eLength = this.comp_ecbDiamond.length;
+    for (let i = 0; i < eLength; i++) {
+      this.comp_ecbDiamond[i] = { xRaw: 0, yRaw: 0 };
+    }
+    const hLength = this.comp_hurtCapsules.length;
+    for (let i = 0; i < hLength; i++) {
+      this.comp_hurtCapsules[i] = {
+        x1Raw: 0,
+        y1Raw: 0,
+        x2Raw: 0,
+        y2Raw: 0,
+        radiusRaw: 0,
+        active: false,
+      };
+    }
+    const gLength = this.comp_grabCircles.length;
+    for (let i = 0; i < gLength; i++) {
+      this.comp_grabCircles[i] = {
+        iD: 0,
+        xRaw: 0,
+        yRaw: 0,
+        radiusRaw: 0,
+        active: false,
+      };
+    }
+    const aLength = this.comp_attackCircles.length;
+    for (let i = 0; i < aLength; i++) {
+      this.comp_attackCircles[i] = {
+        xRaw: 0,
+        yRaw: 0,
+        radiusRaw: 0,
+        active: false,
+      };
+    }
+    const ldlLength = 4;
+    for (let i = 0; i < ldlLength; i++) {
+      this.comp_ledgeDetectorLeft[i] = { xRaw: 0, yRaw: 0 };
+      this.comp_ledgeDetectorRight[i] = { xRaw: 0, yRaw: 0 };
+    }
+  }
+
+  Zero() {
+    this.posXRaw = 0;
+    this.posYRaw = 0;
+    this.velXRaw = 0;
+    this.velYRaw = 0;
+    this.damageRaw = 0;
+    this.facingRight = false;
+    this.fasFalling = false;
+    this.hitPauseFrames = 0;
+    this.intangabilityFrames = 0;
+    this.disablePlatformDetectionFrames = 0;
+    this.velocityDecayActive = true;
+    this.shieldJump = false;
+    this.jumpCount = 0;
+    this.stateId = STATE_IDS.IDLE_S;
+    this.stateFrame = 0;
+    this.hitStopFrames = 0;
+    this.hitStunFrames = 0;
+    this.hitStunVxRaw = 0;
+    this.hitStunVyRaw = 0;
+    this.hitStunNextStateId = STATE_IDS.IDLE_S;
+    this.grabId = undefined;
+    this.grabMeterRaw = 0;
+    this.holdingPlayerId = undefined;
+    this.shieldActive = false;
+    this.shieldRadiusRaw = 0;
+    this.shieldTiltXRaw = 0;
+    this.shieldTiltYRaw = 0;
+    const sLength = this.sensors.length;
+    for (let i = 0; i < sLength; i++) {
+      const s = this.sensors[i];
+      s.xOffsetRaw = 0;
+      s.yOffsetRaw = 0;
+      s.radiusRaw = 0;
+      s.active = false;
+    }
+    this.sensorReactor = undefined;
+    //this.heldPlayerId = undefined;
+    this.ldGrabCount = 0;
+    this.ldgGrbdLdg = undefined;
+    this.atkId = undefined;
+    this.playersHit.clear();
+    this.comp_shield.calcRadiusRaw = 0;
+    this.comp_shield.calcXRaw = 0;
+    this.comp_shield.calcYRaw = 0;
+    const csLength = this.comp_sensors.length;
+    for (let i = 0; i < csLength; i++) {
+      const s = this.comp_sensors[i];
+      s.globalXRaw = 0;
+      s.globalYRaw = 0;
+      s.radiusRaw = 0;
+      s.active = false;
+    }
+    const eLength = this.comp_ecbDiamond.length;
+    for (let i = 0; i < eLength; i++) {
+      const p = this.comp_ecbDiamond[i];
+      p.xRaw = 0;
+      p.yRaw = 0;
+    }
+    const hLength = this.comp_hurtCapsules.length;
+    for (let i = 0; i < hLength; i++) {
+      const hc = this.comp_hurtCapsules[i];
+      hc.x1Raw = 0;
+      hc.y1Raw = 0;
+      hc.x2Raw = 0;
+      hc.y2Raw = 0;
+      hc.radiusRaw = 0;
+      hc.active = false;
+    }
+    const gLength = this.comp_grabCircles.length;
+    for (let i = 0; i < gLength; i++) {
+      const gc = this.comp_grabCircles[i];
+      gc.xRaw = 0;
+      gc.yRaw = 0;
+      gc.radiusRaw = 0;
+      gc.active = false;
+    }
+    const aLength = this.comp_attackCircles.length;
+    for (let i = 0; i < aLength; i++) {
+      const ac = this.comp_attackCircles[i];
+      ac.xRaw = 0;
+      ac.yRaw = 0;
+      ac.radiusRaw = 0;
+      ac.active = false;
+    }
+    const ldlLength = this.comp_ledgeDetectorLeft.length;
+    for (let i = 0; i < ldlLength; i++) {
+      const p = this.comp_ledgeDetectorLeft[i];
+      p.xRaw = 0;
+      p.yRaw = 0;
+    }
+    const ldrLength = this.comp_ledgeDetectorRight.length;
+    for (let i = 0; i < ldrLength; i++) {
+      const p = this.comp_ledgeDetectorRight[i];
+      p.xRaw = 0;
+      p.yRaw = 0;
+    }
+  }
 }

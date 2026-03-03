@@ -4,48 +4,31 @@ import { FillArrayWithFlatVec } from '../../utils';
 import { IHistoryEnabled } from '../componentHistory';
 
 export type LedgeDetectorSnapShot = {
-  middleX: number;
-  middleY: number;
   numberOfLedgeGrabs: number;
   grabbedLedge?: FlatVec[];
 };
 
 export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnapShot> {
+  private readonly posRef: FlatVec;
   private maxGrabs: number = 15;
   private numberOfLedgeGrabs: number = 0;
   private readonly yOffset: FixedPoint = new FixedPoint(0);
-  private readonly x: FixedPoint = new FixedPoint(0);
-  private readonly y: FixedPoint = new FixedPoint(0);
   private readonly width: FixedPoint = new FixedPoint(0);
   private readonly height: FixedPoint = new FixedPoint(0);
   private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
   private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
   private grabbedLedge: FlatVec[] | undefined;
 
-  constructor(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    yOffset = -130,
-  ) {
+  constructor(posRef: FlatVec, width: number, height: number, yOffset = -130) {
+    this.posRef = posRef;
     this.height.SetFromNumber(height);
     this.width.SetFromNumber(width);
     this.yOffset.SetFromNumber(yOffset);
     FillArrayWithFlatVec(this.rightSide);
     FillArrayWithFlatVec(this.leftSide);
-    this.MoveToRaw(NumberToRaw(x), NumberToRaw(y));
   }
 
-  public MoveTo(x: FixedPoint, y: FixedPoint): void {
-    this.x.SetFromFp(x);
-    this.y.SetAdd(y, this.yOffset);
-    this.update();
-  }
-
-  public MoveToRaw(xRaw: number, yRaw: number): void {
-    this.x.SetFromRaw(xRaw);
-    this.y.SetFromRaw(this.yOffset.Raw + yRaw);
+  public MoveToPos(): void {
     this.update();
   }
 
@@ -65,6 +48,10 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
     return this.height;
   }
 
+  public get YOffset(): FixedPoint {
+    return this.yOffset;
+  }
+
   private update(): void {
     const rightBottomLeft = this.rightSide[0];
     const rightTopLeft = this.rightSide[1];
@@ -78,8 +65,8 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
 
     const widthRaw = this.width.Raw;
     const heightRaw = this.height.Raw;
-    const xRaw = this.x.Raw;
-    const yRaw = this.y.Raw;
+    const xRaw = this.posRef.X.Raw; //this.x.Raw;
+    const yRaw = this.posRef.Y.Raw + this.yOffset.Raw; // yRaw + yOffsetRaw
 
     const widthRightRaw = xRaw + widthRaw;
     const widthLeftRaw = xRaw - widthRaw;
@@ -132,24 +119,35 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
     return this.grabbedLedge;
   }
 
+  public get LedgeGrabCount(): number {
+    return this.numberOfLedgeGrabs;
+  }
+
   public ReleaseLedge(): void {
     this.grabbedLedge = undefined;
   }
 
   public SnapShot(): LedgeDetectorSnapShot {
     return {
-      middleX: this.x.AsNumber,
-      middleY: this.y.AsNumber,
       numberOfLedgeGrabs: this.numberOfLedgeGrabs,
       grabbedLedge: this.grabbedLedge,
     } as LedgeDetectorSnapShot;
   }
 
   public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    this.x.SetFromNumber(snapShot.middleX);
-    this.y.SetFromNumber(snapShot.middleY);
     this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
     this.grabbedLedge = snapShot.grabbedLedge;
     this.update();
   }
+
+  public set CompState(state: LedgeDetectorHist) {
+    this.numberOfLedgeGrabs = state.ldGrabCount;
+    this.grabbedLedge = state.ldgGrbdLdg;
+    this.update();
+  }
 }
+
+export type LedgeDetectorHist = {
+  ldGrabCount: number;
+  ldgGrbdLdg: FlatVec[] | undefined;
+};

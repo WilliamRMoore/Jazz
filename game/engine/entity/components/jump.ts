@@ -48,4 +48,12 @@ export class JumpComponent implements IHistoryEnabled<JumpSnapShot> {
   public get JumpCount(): number {
     return this.jumpCount;
   }
+
+  public set CompState(state: JumpHist) {
+    this.jumpCount = state.jumpCount;
+  }
 }
+
+export type JumpHist = {
+  jumpCount: number;
+};

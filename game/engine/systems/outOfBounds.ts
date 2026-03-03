@@ -20,7 +20,7 @@ export function OutOfBoundsCheck(world: World): void {
     const pX = pPos.X;
     const deathBoundry = stageData.DeathBoundry;
 
-    if (pY.Raw < deathBoundry.topBoundry.Raw && p.HitStun.FramesOfHitStun > 0) {
+    if (pY.Raw < deathBoundry.topBoundry.Raw && p.HitStun.Frames > 0) {
       // kill player if in hit stun.
       KillPlayer(p, sm);
       return;

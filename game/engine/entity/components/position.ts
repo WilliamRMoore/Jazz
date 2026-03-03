@@ -25,6 +25,10 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
     this.p.Y.SetFromFp(val);
   }
 
+  public get Ref(): FlatVec {
+    return this.p;
+  }
+
   public SetFromFv(fv: FlatVec) {
     this.p.X.SetFromFp(fv.X);
     this.p.Y.SetFromFp(fv.Y);
@@ -51,4 +55,13 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
     this.p.X.SetFromNumber(ps.Position.X);
     this.p.Y.SetFromNumber(ps.Position.Y);
   }
+  public set CompState(state: PositionHist) {
+    this.p.X.SetFromRaw(state.posXRaw);
+    this.p.Y.SetFromRaw(state.posYRaw);
+  }
 }
+
+export type PositionHist = {
+  posXRaw: number;
+  posYRaw: number;
+};

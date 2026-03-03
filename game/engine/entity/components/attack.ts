@@ -237,4 +237,18 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   public get _attacks(): Map<AttackId, Attack> {
     return this.attacks;
   }
+
+  public set CompState(history: ATKHist) {
+    this.currentAttack =
+      history.atkId !== undefined ? this.attacks.get(history.atkId) : undefined;
+    this.PlayerIdsHit.clear();
+    for (const p of history.playersHit) {
+      this.PlayerIdsHit.add(p);
+    }
+  }
 }
+
+export type ATKHist = {
+  atkId: AttackId | undefined;
+  playersHit: Set<number>;
+};

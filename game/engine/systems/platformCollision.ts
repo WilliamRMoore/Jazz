@@ -4,7 +4,7 @@ import {
   STATE_IDS,
   CanStateWalkOffLedge,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../math/fixedPoint';
+import { FixedPoint, NumberToRaw } from '../math/fixedPoint';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -70,7 +70,13 @@ export function PlatformDetection(world: World): void {
       const compHist = histories.PlayerComponentHistories[playerIndex];
       const ecb = p.ECB;
       const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
-      const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, dPool);
+      const prevPosition = compHist.PositionHistory[prevFrame];
+      const preEcb = CreateDiamondFromHistory(
+        prevEcbSnapShot,
+        NumberToRaw(prevPosition.X),
+        NumberToRaw(prevPosition.Y),
+        dPool,
+      );
 
       const playerPlat = PlayerOnPlatsReturnsPlatform(
         stage,

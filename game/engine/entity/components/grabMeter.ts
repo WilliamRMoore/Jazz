@@ -35,4 +35,14 @@ export class GrabMeterComponent implements IHistoryEnabled<GrabMeterSnapShot> {
     this.Meter.SetFromNumber(snapShot.meter);
     this.playerId = snapShot.holdingPlayerId;
   }
+
+  public set CompState(history: GrabMetereHist) {
+    this.Meter.SetFromRaw(history.grabMeterRaw);
+    this.playerId = history.holdingPlayerId;
+  }
 }
+
+export type GrabMetereHist = {
+  grabMeterRaw: number;
+  holdingPlayerId: number | undefined;
+};

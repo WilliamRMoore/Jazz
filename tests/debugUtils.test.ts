@@ -115,7 +115,7 @@ describe('DebugUtils', () => {
     expect(ecbBottomYNode).toBeDefined();
 
     const expectedEcbBottomY =
-      snapshot.Ecb.posY + snapshot.Ecb.ecbShape.yOffset.AsNumber;
+      snapshot.Position.Y + snapshot.Ecb.ecbShape.yOffset.AsNumber;
     expect(ecbBottomYNode!.data).toBe(expectedEcbBottomY);
   });
 });

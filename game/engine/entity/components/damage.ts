@@ -39,4 +39,12 @@ export class PlayerDamageComponent implements IHistoryEnabled<DamageSnapShot> {
   public _db_set_damage(number: number): void {
     this.damagePoints.SetFromNumber(number);
   }
+
+  public set CompState(history: DamageHist) {
+    this.damagePoints.SetFromRaw(history.damageRaw);
+  }
 }
+
+export type DamageHist = {
+  damageRaw: number;
+};

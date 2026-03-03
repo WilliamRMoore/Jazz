@@ -186,13 +186,13 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX,
+            data: ps.Position.X,
           },
           {
             kind: 1,
             label: Y,
             data:
-              ps.Ecb.posY +
+              ps.Position.Y +
               ps.Ecb.ecbShape.yOffset.AsNumber +
               ps.Ecb.ecbShape.height.AsNumber,
           },
@@ -205,12 +205,12 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX,
+            data: ps.Position.X,
           },
           {
             kind: 1,
             label: Y,
-            data: ps.Ecb.posY + ps.Ecb.ecbShape.yOffset.AsNumber,
+            data: ps.Position.Y + ps.Ecb.ecbShape.yOffset.AsNumber,
           },
         ],
       },
@@ -221,13 +221,13 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX - ps.Ecb.ecbShape.width.AsNumber / 2,
+            data: ps.Position.X - ps.Ecb.ecbShape.width.AsNumber / 2,
           },
           {
             kind: 1,
             label: Y,
             data:
-              ps.Ecb.posY +
+              ps.Position.Y +
               (ps.Ecb.ecbShape.yOffset.AsNumber +
                 ps.Ecb.ecbShape.height.AsNumber) /
                 2,
@@ -241,13 +241,13 @@ function ecbNode(ps: PlayerSnapShot): node {
           {
             kind: 1,
             label: X,
-            data: ps.Ecb.posX + ps.Ecb.ecbShape.width.AsNumber / 2,
+            data: ps.Position.X + ps.Ecb.ecbShape.width.AsNumber / 2,
           },
           {
             kind: 1,
             label: Y,
             data:
-              ps.Ecb.posY +
+              ps.Position.Y +
               (ps.Ecb.ecbShape.yOffset.AsNumber +
                 ps.Ecb.ecbShape.height.AsNumber) /
                 2,

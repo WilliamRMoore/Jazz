@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { InputAction, NewInputAction } from '../../game/engine/input/Input';
-import { JazzLocal, JazzNetwork } from '../../game/engine/jazz/jazzGameLoops';
+import { JazzNetwork } from '../../game/engine/jazz/jazzNetwork';
 import { RollBackManager } from '../../game/engine/managers/rollBack';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { ToFV } from '../../game/engine/utils';

@@ -18,11 +18,11 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
   private readonly yVelocity: FixedPoint = new FixedPoint(0);
   public NextStateId: StateId = STATE_IDS.LAUNCH_S;
 
-  public set FramesOfHitStun(hitStunFrames: number) {
+  public set Frames(hitStunFrames: number) {
     this.framesOfHitStun = hitStunFrames;
   }
 
-  public get FramesOfHitStun(): number {
+  public get Frames(): number {
     return this.framesOfHitStun;
   }
 
@@ -69,4 +69,18 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
     this.yVelocity.SetFromNumber(snapShot.vy);
     this.NextStateId = snapShot.nextSateId;
   }
+
+  public set CompState(history: HitStunHist) {
+    this.framesOfHitStun = history.hitStunFrames;
+    this.xVelocity.SetFromRaw(history.hitStunVxRaw);
+    this.yVelocity.SetFromRaw(history.hitStunVyRaw);
+    this.NextStateId = history.hitStunNextStateId;
+  }
 }
+
+export type HitStunHist = {
+  hitStunFrames: number;
+  hitStunVxRaw: number;
+  hitStunVyRaw: number;
+  hitStunNextStateId: StateId;
+};

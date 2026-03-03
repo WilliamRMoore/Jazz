@@ -6,8 +6,9 @@ import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { InputStore, RemoteInputManager } from '../managers/inputManager';
 import { RollBackManager } from '../managers/rollBack';
 import { Stage } from '../stage/stageMain';
-import { InitPlayerHistory } from '../systems/history';
+import { InitPlayerHistory, InitPlayerHistory2 } from '../systems/history';
 import {
+  createEmptyHistoryData,
   HistoryData,
   PlayerState,
   PoolContainer,
@@ -60,6 +61,10 @@ export class World {
     this.HistoryData.PlayerComponentHistories.push(compHist);
     InitPlayerHistory(p, this);
     this.DebugAdapters.push(new PlayerDebugAdapter(p, this));
+
+    const pdb = createEmptyHistoryData();
+    this.HistoryData.PlayerHistoryDB.push(pdb);
+    InitPlayerHistory2(p, this);
   }
 
   public SetStage(s: Stage) {

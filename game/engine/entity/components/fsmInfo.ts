@@ -1,4 +1,5 @@
 import { FSMState } from '../../finite-state-machine/PlayerStateMachine';
+import { FSMStates } from '../../finite-state-machine/PlayerStates';
 import { StateId } from '../../finite-state-machine/stateConfigurations/shared';
 import { Idle } from '../../finite-state-machine/stateConfigurations/states';
 import { IHistoryEnabled } from '../componentHistory';
@@ -72,4 +73,15 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
     this.currentState = snapShot.State;
     this.currentStateFrame = snapShot.StateFrame;
   }
+
+  public set CompState(history: FSMInfoHist) {
+    const state = FSMStates.get(history.stateId)!;
+    this.currentState = state;
+    this.currentStateFrame = history.stateFrame;
+  }
 }
+
+export type FSMInfoHist = {
+  stateId: StateId;
+  stateFrame: number;
+};

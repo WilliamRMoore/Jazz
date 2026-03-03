@@ -75,6 +75,7 @@ export class Player {
 
     this.ECB = new ECBComponent(
       cc.ECBShapes,
+      this.Position.Ref,
       cc.ECBHeight,
       cc.ECBWidth,
       cc.ECBOffset,
@@ -83,8 +84,7 @@ export class Player {
     this.Jump = new JumpComponent(cc.JumpVelocity, cc.NumberOfJumps);
     this.FSMInfo = new FSMInfoComponent(cc.FrameLengths);
     this.LedgeDetector = new LedgeDetectorComponent(
-      this.Position.X.AsNumber,
-      this.Position.Y.AsNumber,
+      this.Position.Ref,
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
       cc.LedgeBoxYOffset,
@@ -136,38 +136,38 @@ export function SetPlayerInitialPositionRaw(
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPositionRaw(xRaw, yRaw);
-  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
   const position = p.Position;
   position.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition(position.X, position.Y);
-  p.LedgeDetector.MoveTo(position.X, position.Y);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerXPostionRaw(p: Player, xRaw: number): void {
   const position = p.Position;
   position.X.AddRaw(xRaw);
-  p.ECB.MoveToPosition(position.X, position.Y);
-  p.LedgeDetector.MoveTo(position.X, position.Y);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
   const position = p.Position;
   position.X.SetFromFp(x);
   position.Y.SetFromFp(y);
-  p.ECB.MoveToPosition(x, y);
-  p.LedgeDetector.MoveTo(x, y);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
   const position = p.Position;
   position.X.SetFromRaw(xRaw);
   position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPositionRaw(xRaw, yRaw);
-  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerPositionFp(
@@ -190,8 +190,8 @@ export function AddToPlayerPositionRaw(
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
   pos.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition(pos.X, pos.Y);
-  p.LedgeDetector.MoveTo(pos.X, pos.Y);
+  p.ECB.MoveToPosition();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function PlayerOnStage(

@@ -12,8 +12,10 @@ import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { DiamondDTO } from '../pools/ECBDiamonDTO';
 import { frameNumber } from '../entity/components/attack';
-import { MainConfig } from '../config/main-config';
+import { envConfig, MainConfig } from '../config/main-config';
 import { IInputStore } from '../managers/inputManager';
+import { RingBuffer } from '../utils';
+import { PlayerStateHistory } from '../systems/history';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -145,6 +147,7 @@ export class PoolContainer implements Pools {
 
 export class HistoryData implements IHistoryData {
   public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
+  public readonly PlayerHistoryDB: Array<PlayerHistoryTable> = [];
   public readonly RentedVecHistory: Array<number> = [];
   public readonly RentedColResHsitory: Array<number> = [];
   public readonly RentedProjResHistory: Array<number> = [];
@@ -152,4 +155,14 @@ export class HistoryData implements IHistoryData {
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
   public readonly RentedClosestPoints: Array<number> = [];
   public readonly RentedECBDtos: Array<number> = [];
+}
+
+type PlayerHistoryTable = RingBuffer<PlayerStateHistory>;
+
+export function createEmptyHistoryData(): PlayerHistoryTable {
+  const pHists = new RingBuffer<PlayerStateHistory>(
+    envConfig.get('State.MaxFrameStorage') as number,
+    () => new PlayerStateHistory(),
+  );
+  return pHists;
 }

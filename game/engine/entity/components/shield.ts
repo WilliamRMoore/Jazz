@@ -94,7 +94,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     return this.currentRadius.Raw <= 0;
   }
 
-  public get PreModeCurrentRadius(): FixedPoint {
+  public get PreModCurrentRadius(): FixedPoint {
     return this.currentRadius;
   }
 
@@ -104,7 +104,21 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     this.ShieldTiltY.Zero();
     this.Active = false;
   }
+
+  public set CompState(state: ShieldHist) {
+    this.Active = state.shieldActive;
+    this.currentRadius.SetFromRaw(state.shieldRadiusRaw);
+    this.ShieldTiltX.SetFromRaw(state.shieldTiltXRaw);
+    this.ShieldTiltY.SetFromRaw(state.shieldTiltYRaw);
+  }
 }
+
+export type ShieldHist = {
+  shieldActive: boolean;
+  shieldRadiusRaw: number;
+  shieldTiltXRaw: number;
+  shieldTiltYRaw: number;
+};
 
 export function CalculateRadiusFromTriggerRaw(
   triggerValueRaw: number,

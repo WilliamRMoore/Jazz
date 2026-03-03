@@ -3,7 +3,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { DivideRaw } from '../math/fixedPoint';
+import { DivideRaw, NumberToRaw } from '../math/fixedPoint';
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -64,7 +64,16 @@ export function StageCollisionDetection(world: World): void {
 
     const prevEcbSnapShot =
       componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
-    const preEcb = CreateDiamondFromHistory(prevEcbSnapShot, pools.DiamondPool);
+    const prePos =
+      componentHistories[playerIndex].PositionHistory[world.PreviousFrame];
+    const preXRaw = NumberToRaw(prePos.X);
+    const preYRaw = NumberToRaw(prePos.Y);
+    const preEcb = CreateDiamondFromHistory(
+      prevEcbSnapShot,
+      preXRaw,
+      preYRaw,
+      pools.DiamondPool,
+    );
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStateId;

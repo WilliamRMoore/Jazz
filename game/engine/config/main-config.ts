@@ -5,6 +5,7 @@ const config = {
   MaxHurtBubblesPerPlayer: 25,
   MaxGrabBubblesPerPlayer: 25,
   MaxSensorsPerPlayer: 25,
+  MaxHurtCapsulesPerPlayer: 25,
   PoolSizes: {
     PooledVectorCount: 1000,
     CollisionResultCount: 500,
@@ -19,6 +20,9 @@ const config = {
   },
   NetWork: {
     MaxRollBackFrames: 100,
+  },
+  State: {
+    MaxFrameStorage: 1000,
   },
 };
 

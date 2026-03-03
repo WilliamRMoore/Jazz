@@ -19,12 +19,12 @@ export type EcbHistoryDTO = {
 
 export function CreateDiamondFromHistory(
   ecbSnapshot: ECBSnapShot,
+  posXRaw: number,
+  posYRaw: number,
   pool: Pool<DiamondDTO>,
 ): DiamondDTO {
   const diamondDTO = pool.Rent();
 
-  const posX = NumberToRaw(ecbSnapshot.posX);
-  const posY = NumberToRaw(ecbSnapshot.posY);
   const ecbShape = ecbSnapshot.ecbShape;
   const height = ecbShape.height.Raw;
   const width = ecbShape.width.Raw;
@@ -33,21 +33,19 @@ export function CreateDiamondFromHistory(
   const halfWidth = MultiplyRaw(width, POINT_FIVE);
   const halfHeight = MultiplyRaw(height, POINT_FIVE);
 
-  diamondDTO.Bottom.X.SetFromRaw(posX);
-  diamondDTO.Bottom.Y.SetFromRaw(posY + yOffset);
-  diamondDTO.Left.X.SetFromRaw(posX - halfWidth);
-  diamondDTO.Left.Y.SetFromRaw(posY + yOffset - halfHeight);
-  diamondDTO.Top.X.SetFromRaw(posX);
-  diamondDTO.Top.Y.SetFromRaw(posY + yOffset - height);
-  diamondDTO.Right.X.SetFromRaw(posX + halfWidth);
-  diamondDTO.Right.Y.SetFromRaw(posY + yOffset - halfHeight);
+  diamondDTO.Bottom.X.SetFromRaw(posXRaw);
+  diamondDTO.Bottom.Y.SetFromRaw(posYRaw + yOffset);
+  diamondDTO.Left.X.SetFromRaw(posXRaw - halfWidth);
+  diamondDTO.Left.Y.SetFromRaw(posYRaw + yOffset - halfHeight);
+  diamondDTO.Top.X.SetFromRaw(posXRaw);
+  diamondDTO.Top.Y.SetFromRaw(posYRaw + yOffset - height);
+  diamondDTO.Right.X.SetFromRaw(posXRaw + halfWidth);
+  diamondDTO.Right.Y.SetFromRaw(posYRaw + yOffset - halfHeight);
 
   return diamondDTO;
 }
 
 export type ECBSnapShot = {
-  readonly posX: number;
-  readonly posY: number;
   readonly ecbShape: ECBShape;
 };
 
@@ -60,15 +58,21 @@ export type ECBShape = {
 export type ECBShapes = Map<StateId, ECBShape>;
 
 export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
+  // this is a reference
+  private playerPosRef: FlatVec;
   public readonly SensorDepth = new FixedPoint(1);
-  private readonly x = new FixedPoint(0);
-  private readonly y = new FixedPoint(0);
   private readonly OriginalShape: ECBShape;
   private readonly curVerts = new Array<FlatVec>(4);
   public readonly ecbStateShapes: ECBShapes;
   private currentShape: ECBShape;
 
-  constructor(shapes: ECBShapesConfig, height = 100, width = 100, yOffset = 0) {
+  constructor(
+    shapes: ECBShapesConfig,
+    positionRef: FlatVec,
+    height = 100,
+    width = 100,
+    yOffset = 0,
+  ) {
     this.OriginalShape = {
       height: new FixedPoint(height),
       width: new FixedPoint(width),
@@ -84,6 +88,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     }
     this.currentShape = this.OriginalShape;
     FillArrayWithFlatVec(this.curVerts);
+    this.playerPosRef = positionRef;
     this.update();
   }
 
@@ -91,15 +96,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     return this.curVerts;
   }
 
-  public MoveToPosition(x: FixedPoint, y: FixedPoint): void {
-    this.x.SetFromFp(x);
-    this.y.SetFromFp(y);
-    this.update();
-  }
-
-  public MoveToPositionRaw(xRaw: number, yRaw: number): void {
-    this.x.SetFromRaw(xRaw);
-    this.y.SetFromRaw(yRaw);
+  public MoveToPosition(): void {
     this.update();
   }
 
@@ -110,8 +107,8 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
 
   private update(): void {
     const half = POINT_FIVE;
-    const px = this.x.Raw;
-    const py = this.y.Raw;
+    const px = this.playerPosRef.X.Raw;
+    const py = this.playerPosRef.Y.Raw;
     const shape = this.currentShape;
     const height = shape.height.Raw;
     const width = shape.width.Raw;
@@ -184,16 +181,20 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
 
   public SnapShot(): ECBSnapShot {
     return {
-      posX: this.x.AsNumber,
-      posY: this.y.AsNumber,
       ecbShape: this.currentShape,
     } as ECBSnapShot;
   }
 
   public SetFromSnapShot(snapShot: ECBSnapShot): void {
-    this.x.SetFromNumber(snapShot.posX);
-    this.y.SetFromNumber(snapShot.posY);
     this.currentShape = snapShot.ecbShape;
     this.update();
   }
+
+  public set CompState(history: ECBHist) {
+    this.SetECBShape(history.stateId);
+  }
 }
+
+export type ECBHist = {
+  stateId: StateId;
+};

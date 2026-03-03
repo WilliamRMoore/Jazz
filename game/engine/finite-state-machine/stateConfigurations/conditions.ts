@@ -1043,7 +1043,7 @@ export const HitStopToFlinch: condition = {
   Name: 'HitStopToFlinch',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
-    if (p.HitStop.HitStopFrames > 0) {
+    if (p.HitStop.Frames > 0) {
       return false;
     }
     if (p.HitStun.NextStateId === STATE_IDS.HIT_FLINCH_S) {
@@ -1059,7 +1059,7 @@ export const HitStopToHitSlide: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
 
-    if (p.HitStop.HitStopFrames > 0) {
+    if (p.HitStop.Frames > 0) {
       return false;
     }
 
@@ -1076,7 +1076,7 @@ export const HitStopToLaunch: condition = {
   Name: 'HitStopToLaunch',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
-    if (p.HitStop.HitStopFrames > 0) {
+    if (p.HitStop.Frames > 0) {
       return false;
     }
     if (p.HitStun.NextStateId === STATE_IDS.LAUNCH_S) {
@@ -1091,7 +1091,7 @@ export const HitSlideToIdle: condition = {
   Name: 'HitSlideToIdle',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
-    if (p.HitStun.FramesOfHitStun > 0) {
+    if (p.HitStun.Frames > 0) {
       return false;
     }
     return true;
@@ -1103,7 +1103,7 @@ export const FlinchToFall: condition = {
   Name: 'FlinchToFall',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
-    if (p.HitStun.FramesOfHitStun > 0) {
+    if (p.HitStun.Frames > 0) {
       return false;
     }
     return true;
@@ -1116,7 +1116,7 @@ export const LaunchToTumble: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
 
-    if (p.HitStun.FramesOfHitStun > 0) {
+    if (p.HitStun.Frames > 0) {
       return false;
     }
 

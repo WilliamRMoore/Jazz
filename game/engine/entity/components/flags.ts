@@ -123,6 +123,14 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return this.shieldJump;
   }
 
+  public get HitPauseFrames(): number {
+    return this.hitPauseFrames;
+  }
+
+  public get DisablePlatDetectionFrames(): number {
+    return this.disablePlatformDetection;
+  }
+
   public GetIntangabilityFrames(): number {
     return this.intangabilityFrames;
   }
@@ -152,4 +160,24 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.velocityDecayActive = snapShot.VeloctyDecay;
     this.shieldJump = snapShot.ShieldJump;
   }
+
+  public set CompState(history: FlagsHist) {
+    this.facingRight = history.facingRight;
+    this.fastFalling = history.fasFalling;
+    this.hitPauseFrames = history.hitPauseFrames;
+    this.intangabilityFrames = history.intangabilityFrames;
+    this.disablePlatformDetection = history.disablePlatformDetectionFrames;
+    this.velocityDecayActive = history.velocityDecayActive;
+    this.shieldJump = history.shieldJump;
+  }
 }
+
+export type FlagsHist = {
+  facingRight: boolean;
+  fasFalling: boolean;
+  hitPauseFrames: number;
+  intangabilityFrames: number;
+  disablePlatformDetectionFrames: number;
+  velocityDecayActive: boolean;
+  shieldJump: boolean;
+};
