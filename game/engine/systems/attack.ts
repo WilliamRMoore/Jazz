@@ -38,7 +38,7 @@ import {
   TWO_HUNDRED,
 } from '../math/numberConstants';
 import { IInputStore } from '../managers/inputManager';
-import { PlayerData } from '../world/stateModules';
+import { PlayerData, PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
 import { isPlayerGroundedAtAll } from './shared';
 
@@ -69,7 +69,7 @@ export function PlayerAttacks(world: World): void {
         pools.VecPool,
         pools.ColResPool,
         pools.ClstsPntsResPool,
-        historyData.PlayerComponentHistories,
+        historyData.PlayerHistoryDB,
         p1,
         p2,
         p2InputStore,
@@ -82,7 +82,7 @@ export function PlayerAttacks(world: World): void {
         pools.VecPool,
         pools.ColResPool,
         pools.ClstsPntsResPool,
-        historyData.PlayerComponentHistories,
+        historyData.PlayerHistoryDB,
         p2,
         p1,
         p1InputStore,
@@ -233,7 +233,7 @@ function PAvsPB(
   vecPool: Pool<PooledVector>,
   colResPool: Pool<CollisionResult>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
-  componentHistories: Array<ComponentHistory>,
+  componentHistories: Array<PlayerHistoryTable>,
   pA: Player,
   pB: Player,
   pBInputStore: IInputStore,
@@ -261,20 +261,13 @@ function PAvsPB(
   const hitLength = pAHitBubbles.Length;
   // Check shield impact
 
-  const pAPCompHist = componentHistories[pA.ID];
+  const pAStateHist = componentHistories[pA.ID];
   const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
-  const prevPosRes = pAPCompHist.PositionHistory[previousWorldFrame];
+  const pAPrevState = pAStateHist.get(previousWorldFrame);
+  //const prevPosRes = pAPCompHist.PositionHistory[previousWorldFrame];
 
-  let prevXRaw = 0;
-  let prevYRaw = 0;
-
-  if (prevPosRes !== undefined) {
-    prevXRaw = NumberToRaw(prevPosRes.X);
-    prevYRaw = NumberToRaw(prevPosRes.Y);
-  } else {
-    prevXRaw = pA.Position.X.Raw;
-    prevYRaw = pA.Position.Y.Raw;
-  }
+  let prevXRaw = pAPrevState.posXRaw;
+  let prevYRaw = pAPrevState.posYRaw;
 
   const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
   const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);

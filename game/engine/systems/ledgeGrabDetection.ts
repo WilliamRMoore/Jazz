@@ -22,7 +22,7 @@ export function LedgeGrabDetection(world: World): void {
   const stages = stageData.Stages;
   const stageLength = stages.length;
   const playerCount = playerData.PlayerCount;
-  const playerHist = world.HistoryData.PlayerComponentHistories;
+  const playerHist = world.HistoryData.PlayerHistoryDB;
 
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
@@ -49,10 +49,11 @@ export function LedgeGrabDetection(world: World): void {
     const curFront = isFacingRight
       ? ledgeDetector.RightSide
       : ledgeDetector.LeftSide;
-    const lastPos =
-      playerHist[playerIndex].PositionHistory[world.PreviousFrame];
-    const lastMiddleXRaw = NumberToRaw(lastPos.X);
-    const lastMiddleYRaw = NumberToRaw(lastPos.Y) + ledgeDetector.YOffset.Raw;
+    const prevState = playerHist[playerIndex].get(world.PreviousFrame);
+    const lastPosXRaw = prevState.posXRaw;
+    const lastPosYRaw = prevState.posYRaw;
+    const lastMiddleXRaw = lastPosXRaw;
+    const lastMiddleYRaw = lastPosYRaw + ledgeDetector.YOffset.Raw;
     const widthRaw = ledgeDetector.Width.Raw;
     const heightRaw = ledgeDetector.Height.Raw;
     const lastWidthRightRaw = lastMiddleXRaw + widthRaw;

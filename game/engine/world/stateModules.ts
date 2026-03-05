@@ -1,6 +1,5 @@
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { NewInputAction } from '../input/Input';
-import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { DeathBoundry, Stage } from '../stage/stageMain';
 import { PooledVector } from '../pools/PooledVector';
@@ -43,7 +42,7 @@ export type Pools = {
 };
 
 export type IHistoryData = {
-  PlayerComponentHistories: Array<ComponentHistory>;
+  PlayerHistoryDB: Array<PlayerHistoryTable>;
   RentedVecHistory: Array<number>;
   RentedColResHsitory: Array<number>;
   RentedProjResHistory: Array<number>;
@@ -146,7 +145,7 @@ export class PoolContainer implements Pools {
 }
 
 export class HistoryData implements IHistoryData {
-  public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
+  //public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
   public readonly PlayerHistoryDB: Array<PlayerHistoryTable> = [];
   public readonly RentedVecHistory: Array<number> = [];
   public readonly RentedColResHsitory: Array<number> = [];
@@ -157,7 +156,7 @@ export class HistoryData implements IHistoryData {
   public readonly RentedECBDtos: Array<number> = [];
 }
 
-type PlayerHistoryTable = RingBuffer<PlayerStateHistory>;
+export type PlayerHistoryTable = RingBuffer<PlayerStateHistory>;
 
 export function createEmptyHistoryData(): PlayerHistoryTable {
   const pHists = new RingBuffer<PlayerStateHistory>(

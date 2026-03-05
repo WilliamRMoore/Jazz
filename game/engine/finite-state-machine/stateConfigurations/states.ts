@@ -174,9 +174,9 @@ export const JumpSquat: FSMState = {
   StateId: STATE_IDS.JUMP_SQUAT_S,
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
-    const pHist = w.GetComponentHistory(p.ID);
-    const lastState = pHist?.FsmInfoHistory[w.PreviousFrame]!;
-    if (lastState.State.StateId === STATE_IDS.SHIELD_S) {
+    const pHist = w.HistoryData.PlayerHistoryDB[p.ID].get(w.PreviousFrame); //w.GetComponentHistory(p.ID);
+    const lastState = pHist.stateId;
+    if (lastState === STATE_IDS.SHIELD_S) {
       p.Flags.JumpFromShield();
     }
   },

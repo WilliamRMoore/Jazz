@@ -12,12 +12,14 @@ import { ActiveGrabBubblesDTO } from '../pools/ActiveGrabBubbles';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
+import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
 
 export function PlayerGrabs(w: World) {
   const pd = w.PlayerData;
   const pools = w.Pools;
-  const componenetHistories = w.HistoryData.PlayerComponentHistories;
+  //const componenetHistories = w.HistoryData.PlayerComponentHistories;
+  const playerHistories = w.HistoryData.PlayerHistoryDB;
   const playerCount = pd.PlayerCount;
   for (
     let outerPlayerIndex = 0;
@@ -37,7 +39,7 @@ export function PlayerGrabs(w: World) {
       const p1VsP2 = PAvsPB(
         p1,
         p2,
-        componenetHistories,
+        playerHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
         w.LocalFrame,
@@ -46,7 +48,7 @@ export function PlayerGrabs(w: World) {
       const p2VsP1 = PAvsPB(
         p2,
         p1,
-        componenetHistories,
+        playerHistories,
         pools.VecPool,
         pools.ClstsPntsResPool,
         w.LocalFrame,
@@ -124,7 +126,7 @@ const agbDto = new ActiveGrabBubblesDTO();
 function PAvsPB(
   pA: Player,
   pB: Player,
-  componentHistories: Array<ComponentHistory>,
+  componentHistories: Array<PlayerHistoryTable>,
   vecPool: Pool<PooledVector>,
   clstsPntsResPool: Pool<ClosestPointsResult>,
   currentFrame: number,
@@ -154,14 +156,10 @@ function PAvsPB(
   const pAFacingRight = pA.Flags.IsFacingRight;
   const pAHistory = componentHistories[pA.ID];
   const previousWorldFrame = currentFrame === 0 ? 0 : currentFrame - 1;
-  const prevPostion = pAHistory.PositionHistory[previousWorldFrame]; //pAPosHistory[previousWorldFrame];
-  const prevUndefined = prevPostion === undefined;
-  const prevXRaw = prevUndefined
-    ? pA.Position.X.Raw
-    : NumberToRaw(prevPostion.X);
-  const prevYRaw = prevUndefined
-    ? pA.Position.Y.Raw
-    : NumberToRaw(prevPostion.Y);
+  //const prevPostion = pAHistory.PositionHistory[previousWorldFrame]; //pAPosHistory[previousWorldFrame];
+  const prevState = pAHistory.get(previousWorldFrame);
+  const prevXRaw = prevState.posXRaw;
+  const prevYRaw = prevState.posYRaw;
 
   for (let hurtIndex = 0; hurtIndex < hurtBubblesLength; hurtIndex++) {
     const hurtBubble = hurtBubbles[hurtIndex];
@@ -191,6 +189,10 @@ function PAvsPB(
         continue;
       }
 
+      // const prevGrab = prevState.comp_grabCircles[grabIndex];
+      // const grabPrevPos = prevGrab.active
+      //   ? vecPool.Rent().SetXYRaw(prevGrab.xRaw, prevGrab.yRaw)
+      //   : grabBubCurPos;
       const grabPrevPos =
         grabBubble.GetGlobalPositionRaw(
           vecPool,

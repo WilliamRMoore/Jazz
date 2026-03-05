@@ -91,9 +91,8 @@ export class JazzNetwork {
     const pc = this.World.PlayerData.PlayerCount;
     this.World.LocalFrame = from;
     for (let i = 0; i < pc; i++) {
-      const hist = this.World.HistoryData.PlayerComponentHistories[i];
       const p = this.World.PlayerData.Player(i);
-      hist.SetPlayerToFrame(p, from);
+      this.setPlayerToFrame(p, from);
     }
     this.rollBack.RollBackMode(true);
     from++;
@@ -102,6 +101,26 @@ export class JazzNetwork {
       from++;
     }
     this.rollBack.RollBackMode(false);
+  }
+
+  private setPlayerToFrame(p: Player, frameNumber: number) {
+    const pDb = this.World.HistoryData.PlayerHistoryDB[p.ID];
+    const r = pDb.get(frameNumber);
+    p.Position.CompState = r;
+    p.Velocity.CompState = r;
+    p.Damage.CompState = r;
+    p.Flags.CompState = r;
+    p.HitStop.CompState = r;
+    p.HitStun.CompState = r;
+    p.LedgeDetector.CompState = r;
+    p.Sensors.CompState = r;
+    p.ECB.CompState = r;
+    p.Jump.CompState = r;
+    p.Attacks.CompState = r;
+    p.Grabs.CompState = r;
+    p.GrabMeter.CompState = r;
+    p.Shield.CompState = r;
+    p.FSMInfo.CompState = r;
   }
 
   private tickLoop() {

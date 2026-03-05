@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { NumberToRaw } from '../../game/engine/math/fixedPoint';
-import { RecordHistory2 } from '../../game/engine/systems/history';
+import { RecordHistory } from '../../game/engine/systems/history';
 import { World } from '../../game/engine/world/world';
 
 describe('History System Tests', () => {
@@ -25,7 +25,7 @@ describe('History System Tests', () => {
     p.Flags.FaceLeft();
     p.Damage.Damage.SetFromNumber(50);
 
-    RecordHistory2(w);
+    RecordHistory(w);
 
     const historyDB = w.HistoryData.PlayerHistoryDB[0];
     const record = historyDB.get(frame);
@@ -64,7 +64,7 @@ describe('History System Tests', () => {
     jest.spyOn(p.Attacks, 'GetAttack').mockReturnValue(mockAttack as any);
     (p.FSMInfo as any)._db_currentStateFrame = 5;
 
-    RecordHistory2(w);
+    RecordHistory(w);
 
     const record = w.HistoryData.PlayerHistoryDB[0].get(frame);
     expect(record.atkId).toBe('MOCK_ATTACK');
@@ -105,7 +105,7 @@ describe('History System Tests', () => {
     jest.spyOn(p.Grabs, 'GetGrab').mockReturnValue(mockGrab as any);
     (p.FSMInfo as any)._db_currentStateFrame = 5;
 
-    RecordHistory2(w);
+    RecordHistory(w);
 
     const record = w.HistoryData.PlayerHistoryDB[0].get(frame);
     expect(record.grabId).toBe('MOCK_GRAB');
@@ -128,7 +128,7 @@ describe('History System Tests', () => {
     p.Position.Y.SetFromNumber(200);
     p.ECB.MoveToPosition();
 
-    RecordHistory2(w);
+    RecordHistory(w);
 
     const record = w.HistoryData.PlayerHistoryDB[0].get(frame);
     const ecb = record.comp_ecbDiamond;
@@ -147,7 +147,7 @@ describe('History System Tests', () => {
     p.Position.Y.SetFromNumber(200);
     p.LedgeDetector.MoveToPos();
 
-    RecordHistory2(w);
+    RecordHistory(w);
 
     const record = w.HistoryData.PlayerHistoryDB[0].get(frame);
     const ldLeft = p.LedgeDetector.LeftSide;

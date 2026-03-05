@@ -16,12 +16,12 @@ import { GrabMeterSnapShot } from './components/grabMeter';
 import { HurtCapsule } from './components/hurtCircles';
 import { JumpSnapShot } from './components/jump';
 
-export class BaseConfigValues {
-  public LedgeDetectorHeight: number = 0;
-  public LedgeDetectorWidth: number = 0;
-  public HurtCapsules: Array<HurtCapsule> = [];
-  public ShieldOffset: number = 0;
-}
+// export class BaseConfigValues {
+//   public LedgeDetectorHeight: number = 0;
+//   public LedgeDetectorWidth: number = 0;
+//   public HurtCapsules: Array<HurtCapsule> = [];
+//   public ShieldOffset: number = 0;
+// }
 
 export type PlayerSnapShot = {
   Shield: ShieldSnapShot;
@@ -41,48 +41,43 @@ export type PlayerSnapShot = {
   GrabMeter: GrabMeterSnapShot;
 };
 
-export class PlayerHistory {
-  private head = 0;
-  private playerHistory: Array<PlayerSnapShot> = [];
-}
+// export class ComponentHistory {
+//   // readonly _deb_hist: DebugSnapShot[] | undefined;
+//   readonly BaseConfigValues = new BaseConfigValues();
+//   //readonly ShieldHistory: Array<ShieldSnapShot> = [];
+//   //readonly PositionHistory: Array<PositionSnapShot> = [];
+//   //readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
+//   //readonly DamageHistory: Array<DamageSnapShot> = [];
+//   //readonly PlayerHitStunHistory: Array<hitStunSnapShot> = [];
+//   //readonly PlayerHitStopHistory: Array<hitStopSnapShot> = [];
+//   //readonly VelocityHistory: Array<VelocitySnapShot> = [];
+//   //readonly FlagsHistory: Array<FlagsSnapShot> = [];
+//   //readonly EcbHistory: Array<ECBSnapShot> = [];
+//   //readonly JumpHistroy: Array<JumpSnapShot> = [];
+//   //readonly LedgeDetectorHistory: Array<LedgeDetectorSnapShot> = [];
+//   //readonly SensorsHistory: Array<SensorSnapShot> = [];
+//   //readonly AttackHistory: Array<AttackSnapShot> = [];
+//   //readonly GrabHistory: Array<GrabSnapShot> = [];
+//   //readonly GrabMeterHistory: Array<GrabMeterSnapShot> = [];
 
-export class ComponentHistory {
-  // readonly _deb_hist: DebugSnapShot[] | undefined;
-  readonly BaseConfigValues = new BaseConfigValues();
-  readonly ShieldHistory: Array<ShieldSnapShot> = [];
-  readonly PositionHistory: Array<PositionSnapShot> = [];
-  readonly FsmInfoHistory: Array<FSMInfoSnapShot> = [];
-  readonly DamageHistory: Array<DamageSnapShot> = [];
-  readonly PlayerHitStunHistory: Array<hitStunSnapShot> = [];
-  readonly PlayerHitStopHistory: Array<hitStopSnapShot> = [];
-  readonly VelocityHistory: Array<VelocitySnapShot> = [];
-  readonly FlagsHistory: Array<FlagsSnapShot> = [];
-  readonly EcbHistory: Array<ECBSnapShot> = [];
-  readonly JumpHistroy: Array<JumpSnapShot> = [];
-  readonly LedgeDetectorHistory: Array<LedgeDetectorSnapShot> = [];
-  readonly SensorsHistory: Array<SensorSnapShot> = [];
-  readonly AttackHistory: Array<AttackSnapShot> = [];
-  readonly GrabHistory: Array<GrabSnapShot> = [];
-  readonly GrabMeterHistory: Array<GrabMeterSnapShot> = [];
-
-  public SetPlayerToFrame(p: Player, frameNumber: number) {
-    p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
-    p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
-    p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
-    p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
-    p.Damage.SetFromSnapShot(this.DamageHistory[frameNumber]);
-    p.HitStop.SetFromSnapShot(this.PlayerHitStopHistory[frameNumber]);
-    p.HitStun.SetFromSnapShot(this.PlayerHitStunHistory[frameNumber]);
-    p.Flags.SetFromSnapShot(this.FlagsHistory[frameNumber]);
-    p.ECB.SetFromSnapShot(this.EcbHistory[frameNumber]);
-    p.LedgeDetector.SetFromSnapShot(this.LedgeDetectorHistory[frameNumber]);
-    p.Sensors.SetFromSnapShot(this.SensorsHistory[frameNumber]);
-    p.Jump.SetFromSnapShot(this.JumpHistroy[frameNumber]);
-    p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
-    p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
-    p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
-  }
-}
+//   public SetPlayerToFrame(p: Player, frameNumber: number) {
+//     //p.Shield.SetFromSnapShot(this.ShieldHistory[frameNumber]);
+//     //p.Position.SetFromSnapShot(this.PositionHistory[frameNumber]);
+//     //p.FSMInfo.SetFromSnapShot(this.FsmInfoHistory[frameNumber]);
+//     //p.Velocity.SetFromSnapShot(this.VelocityHistory[frameNumber]);
+//     //p.Damage.SetFromSnapShot(this.DamageHistory[frameNumber]);
+//     //p.HitStop.SetFromSnapShot(this.PlayerHitStopHistory[frameNumber]);
+//     //p.HitStun.SetFromSnapShot(this.PlayerHitStunHistory[frameNumber]);
+//     //p.Flags.SetFromSnapShot(this.FlagsHistory[frameNumber]);
+//     //p.ECB.SetFromSnapShot(this.EcbHistory[frameNumber]);
+//     //p.LedgeDetector.SetFromSnapShot(this.LedgeDetectorHistory[frameNumber]);
+//     //p.Sensors.SetFromSnapShot(this.SensorsHistory[frameNumber]);
+//     //p.Jump.SetFromSnapShot(this.JumpHistroy[frameNumber]);
+//     //p.Attacks.SetFromSnapShot(this.AttackHistory[frameNumber]);
+//     //p.Grabs.SetFromSnapShot(this.GrabHistory[frameNumber]);
+//     //p.GrabMeter.SetFromSnapShot(this.GrabMeterHistory[frameNumber]);
+//   }
+// }
 
 export interface IHistoryEnabled<T> {
   SnapShot(): T;

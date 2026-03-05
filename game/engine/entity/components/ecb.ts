@@ -18,14 +18,12 @@ export type EcbHistoryDTO = {
 };
 
 export function CreateDiamondFromHistory(
-  ecbSnapshot: ECBSnapShot,
+  ecbShape: ECBShape,
   posXRaw: number,
   posYRaw: number,
   pool: Pool<DiamondDTO>,
 ): DiamondDTO {
   const diamondDTO = pool.Rent();
-
-  const ecbShape = ecbSnapshot.ecbShape;
   const height = ecbShape.height.Raw;
   const width = ecbShape.width.Raw;
   const yOffset = ecbShape.yOffset.Raw;
@@ -61,7 +59,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
   // this is a reference
   private playerPosRef: FlatVec;
   public readonly SensorDepth = new FixedPoint(1);
-  private readonly OriginalShape: ECBShape;
+  public readonly OriginalShape: ECBShape;
   private readonly curVerts = new Array<FlatVec>(4);
   public readonly ecbStateShapes: ECBShapes;
   private currentShape: ECBShape;

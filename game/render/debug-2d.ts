@@ -10,7 +10,6 @@ import {
   CalculateRadiusFromTriggerRaw,
   ShieldSnapShot,
 } from '../engine/entity/components/shield';
-import { BaseConfigValues } from '../engine/entity/componentHistory';
 import { Line } from '../engine/physics/vector';
 
 import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';

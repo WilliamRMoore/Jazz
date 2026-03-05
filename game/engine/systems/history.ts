@@ -1,6 +1,5 @@
 import { Command } from '../command/command';
 import { envConfig } from '../config/main-config';
-import { ComponentHistory } from '../entity/componentHistory';
 import { ATKHist, frameNumber } from '../entity/components/attack';
 import { DamageHist } from '../entity/components/damage';
 import { ECBHist } from '../entity/components/ecb';
@@ -28,67 +27,67 @@ import {
 import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 
-export function RecordHistory(w: World): void {
-  const playerData = w.PlayerData;
-  const historyData = w.HistoryData;
-  const frameNumber = w.LocalFrame;
-  const playerCount = playerData.PlayerCount;
-  for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-    const p = playerData.Player(playerIndex);
-    const history = historyData.PlayerComponentHistories[playerIndex];
-    record(p, history, frameNumber);
-  }
-  w.SetPoolHistory();
-}
+// export function RecordHistory(w: World): void {
+//   const playerData = w.PlayerData;
+//   const historyData = w.HistoryData;
+//   const frameNumber = w.LocalFrame;
+//   const playerCount = playerData.PlayerCount;
+//   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
+//     const p = playerData.Player(playerIndex);
+//     const history = historyData.PlayerComponentHistories[playerIndex];
+//     record(p, history, frameNumber);
+//   }
+//   w.SetPoolHistory();
+// }
 
-function record(p: Player, h: ComponentHistory, fn: frameNumber) {
-  h.ShieldHistory[fn] = p.Shield.SnapShot();
-  h.PositionHistory[fn] = p.Position.SnapShot();
-  h.FsmInfoHistory[fn] = p.FSMInfo.SnapShot();
-  h.DamageHistory[fn] = p.Damage.SnapShot();
-  h.VelocityHistory[fn] = p.Velocity.SnapShot();
-  h.FlagsHistory[fn] = p.Flags.SnapShot();
-  h.PlayerHitStopHistory[fn] = p.HitStop.SnapShot();
-  h.PlayerHitStunHistory[fn] = p.HitStun.SnapShot();
-  h.LedgeDetectorHistory[fn] = p.LedgeDetector.SnapShot();
-  h.SensorsHistory[fn] = p.Sensors.SnapShot();
-  h.EcbHistory[fn] = p.ECB.SnapShot();
-  h.JumpHistroy[fn] = p.Jump.SnapShot();
-  h.AttackHistory[fn] = p.Attacks.SnapShot();
-  h.GrabHistory[fn] = p.Grabs.SnapShot();
-  h.GrabMeterHistory[fn] = p.GrabMeter.SnapShot();
-}
+// function record(p: Player, h: ComponentHistory, fn: frameNumber) {
+//   //h.ShieldHistory[fn] = p.Shield.SnapShot();
+//   //h.PositionHistory[fn] = p.Position.SnapShot();
+//   //h.FsmInfoHistory[fn] = p.FSMInfo.SnapShot();
+//   //h.DamageHistory[fn] = p.Damage.SnapShot();
+//   //h.VelocityHistory[fn] = p.Velocity.SnapShot();
+//   //h.FlagsHistory[fn] = p.Flags.SnapShot();
+//   //h.PlayerHitStopHistory[fn] = p.HitStop.SnapShot();
+//   //h.PlayerHitStunHistory[fn] = p.HitStun.SnapShot();
+//   //h.LedgeDetectorHistory[fn] = p.LedgeDetector.SnapShot();
+//   //h.SensorsHistory[fn] = p.Sensors.SnapShot();
+//   //h.EcbHistory[fn] = p.ECB.SnapShot();
+//   //h.JumpHistroy[fn] = p.Jump.SnapShot();
+//   //h.AttackHistory[fn] = p.Attacks.SnapShot();
+//   //h.GrabHistory[fn] = p.Grabs.SnapShot();
+//   //h.GrabMeterHistory[fn] = p.GrabMeter.SnapShot();
+// }
+
+// export function InitPlayerHistory(p: Player, w: World) {
+//   const pId = p.ID;
+//   const curFrame = w.LocalFrame;
+//   const hist = w.HistoryData.PlayerComponentHistories[pId];
+//   for (let i = 0; i <= curFrame; i++) {
+//     record(p, hist, i);
+//   }
+// }
 
 export function InitPlayerHistory(p: Player, w: World) {
-  const pId = p.ID;
-  const curFrame = w.LocalFrame;
-  const hist = w.HistoryData.PlayerComponentHistories[pId];
-  for (let i = 0; i <= curFrame; i++) {
-    record(p, hist, i);
-  }
-}
-
-export function InitPlayerHistory2(p: Player, w: World) {
   const curFrame = w.LocalFrame;
   const frameHistLimit = envConfig.get('State.MaxFrameStorage') as number;
   const startFrame = curFrame > frameHistLimit ? curFrame - frameHistLimit : 0;
   for (let i = startFrame; i <= curFrame; i++) {
-    record2(p, w, i);
+    record(p, w, i);
   }
 }
 
-export function RecordHistory2(w: World) {
+export function RecordHistory(w: World) {
   const pd = w.PlayerData;
   const playerCount = pd.PlayerCount;
   const frameNumber = w.LocalFrame;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = pd.Player(playerIndex);
-    record2(p, w, frameNumber);
+    record(p, w, frameNumber);
   }
   //const atkBubbles = atk.
 }
 
-function record2(p: Player, w: World, frameNumber: frameNumber) {
+function record(p: Player, w: World, frameNumber: frameNumber) {
   const pd = w.PlayerData;
   const playerIndex = p.ID;
   const ia = pd.InputStore(playerIndex).GetInputForFrame(frameNumber);
@@ -164,9 +163,9 @@ function record2(p: Player, w: World, frameNumber: frameNumber) {
       }
     }
   }
-  const posXRaw = position.X.Raw;
-  const posYRaw = position.Y.Raw;
   // computed values for easier use later
+  const posXRaw = r.posXRaw;
+  const posYRaw = r.posYRaw;
   if (shield.Active) {
     const shGPosX = posXRaw + shield.ShieldTiltX.Raw;
     const shGPosY =

@@ -67,14 +67,18 @@ export function PlatformDetection(world: World): void {
       }
 
       const dPool = world.Pools.DiamondPool;
-      const compHist = histories.PlayerComponentHistories[playerIndex];
+      //const compHist = histories.PlayerComponentHistories[playerIndex];
+      const playerHist = histories.PlayerHistoryDB[playerIndex];
+      const prevState = playerHist.get(prevFrame);
       const ecb = p.ECB;
-      const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
-      const prevPosition = compHist.PositionHistory[prevFrame];
+      const previousECBShape =
+        ecb.ecbStateShapes.get(prevState.stateId) ?? ecb.OriginalShape;
+      // const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
+      // const prevPosition = compHist.PositionHistory[prevFrame];
       const preEcb = CreateDiamondFromHistory(
-        prevEcbSnapShot,
-        NumberToRaw(prevPosition.X),
-        NumberToRaw(prevPosition.Y),
+        previousECBShape,
+        prevState.posXRaw,
+        prevState.posYRaw,
         dPool,
       );
 
