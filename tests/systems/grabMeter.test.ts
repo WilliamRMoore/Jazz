@@ -1,5 +1,4 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,
@@ -9,14 +8,12 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
-import {
-  IInputStore,
-  InputStore,
-} from '../../game/engine/managers/inputManager';
+import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw, RawToNumber } from '../../game/engine/math/fixedPoint';
 import { GrabMeter } from '../../game/engine/systems/grabMeter';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/engine/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
 
 describe('GrabMeter system tests', () => {
   let w: World;
@@ -26,8 +23,8 @@ describe('GrabMeter system tests', () => {
   let p2Sm: StateMachine;
   let p1InputStore: IInputStore;
   let p2InputStore: IInputStore;
-  let h1: ComponentHistory;
-  let h2: ComponentHistory;
+  let h1: PlayerHistoryTable;
+  let h2: PlayerHistoryTable;
 
   beforeEach(() => {
     const defaultCharConfig = new DefaultCharacterConfig();
@@ -40,8 +37,8 @@ describe('GrabMeter system tests', () => {
     p2Sm = w.PlayerData.StateMachine(1);
     p1InputStore = w.PlayerData.InputStore(0);
     p2InputStore = w.PlayerData.InputStore(1);
-    h1 = w.HistoryData.PlayerComponentHistories[0];
-    h2 = w.HistoryData.PlayerComponentHistories[1];
+    h1 = w.HistoryData.PlayerHistoryDB[0];
+    h2 = w.HistoryData.PlayerHistoryDB[1];
     SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650));
     SetPlayerInitialPositionRaw(p2, NumberToRaw(1050), NumberToRaw(650));
     p2.Flags.FaceLeft();

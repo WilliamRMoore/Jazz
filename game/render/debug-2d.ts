@@ -1,29 +1,11 @@
-import { AttackSnapShot } from '../engine/entity/components/attack';
-import { ECBSnapShot } from '../engine/entity/components/ecb';
-import { FlagsSnapShot } from '../engine/entity/components/flags';
-import { FSMInfoSnapShot } from '../engine/entity/components/fsmInfo';
-import { HurtCapsule } from '../engine/entity/components/hurtCircles';
-import { LedgeDetectorSnapShot } from '../engine/entity/components/ledgeDetector';
-import { PositionSnapShot } from '../engine/entity/components/position';
-import { SensorSnapShot } from '../engine/entity/components/sensor';
-import {
-  CalculateRadiusFromTriggerRaw,
-  ShieldSnapShot,
-} from '../engine/entity/components/shield';
 import { Line } from '../engine/physics/vector';
-
-import { ActiveHitBubblesDTO } from '../engine/pools/ActiveAttackBubbles';
-import { Lerp } from '../engine/utils';
 import { World } from '../engine/world/world';
-import { GrabSnapShot } from '../engine/entity/components/grab';
-import { ActiveGrabBubblesDTO } from '../engine/pools/ActiveGrabBubbles';
-import { InputAction } from '../engine/input/Input';
-import { NumberToRaw, RawToNumber } from '../engine/math/fixedPoint';
 import {
   deBugInfoTree,
   StructurePlayerSnapShotForPrinting,
 } from '../engine/debug/debugUtils';
-import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
+import { envConfig } from '../engine/config/main-config';
+import { PlayerLerper, LerpedPlayer } from './render-utlis';
 
 function getAlpha(
   timeStampNow: number,
@@ -67,6 +49,7 @@ export class DebugRenderer {
   private dbyRes: number;
   private lastFrame: number = 0;
   public PlayerDeBugInfo: boolean = false;
+  private playerLerper: PlayerLerper;
 
   constructor(mainWindow: renderTarget, debugInfoWindow: renderTarget) {
     this.canvas = mainWindow.canvas;
@@ -81,6 +64,7 @@ export class DebugRenderer {
     this.canvas.height = this.yRes;
     this.debugInfoCanvas.width = this.dbxRes;
     this.debugInfoCanvas.height = this.dbyRes;
+    this.playerLerper = new PlayerLerper(envConfig);
   }
 
   render(world: World, timeStampNow: number) {
@@ -98,6 +82,8 @@ export class DebugRenderer {
       currentFrameTimeStamp,
     );
 
+    this.playerLerper.Zero();
+
     if (localFrame === 0) {
       return;
     }
@@ -112,7 +98,7 @@ export class DebugRenderer {
       drawPlatforms(ctx, world.StageData.Stages[i].Platforms);
     }
 
-    drawPlayer(ctx, world, alpha);
+    drawPlayer(ctx, world, alpha, this.playerLerper);
 
     const frameTime = world.GetFrameTimeForFrame(localFrame);
 
@@ -251,264 +237,111 @@ function drawPlayer(
   ctx: CanvasRenderingContext2D,
   world: World,
   alpha: number,
+  playerLerper: PlayerLerper,
 ) {
   const playerCount = world.PlayerData.PlayerCount;
-  const currentFrame = world.LocalFrame - 1;
-  const lastFrame = currentFrame < 1 ? 0 : currentFrame - 1;
-  const theFrameBeforeLast = lastFrame < 1 ? 0 : lastFrame - 1;
 
   for (let i = 0; i < playerCount; i++) {
-    const playerHistory = world.GetComponentHistory(i);
-    const shield = playerHistory!.ShieldHistory[currentFrame];
-    const lastShield = playerHistory!.ShieldHistory[lastFrame];
-    const shieldYOffset = playerHistory!.BaseConfigValues.ShieldOffset;
-    const pos = playerHistory!.PositionHistory[currentFrame];
-    const lastPos = playerHistory!.PositionHistory[lastFrame];
-    const lastLastPosition = playerHistory!.PositionHistory[theFrameBeforeLast];
-    const circlesHistory = playerHistory!.BaseConfigValues.HurtCapsules;
-    const flags = playerHistory!.FlagsHistory[currentFrame];
-    const lastFlags = playerHistory!.FlagsHistory[lastFrame];
-    const ecb = playerHistory!.EcbHistory[currentFrame];
-    const lastEcb = playerHistory!.EcbHistory[lastFrame];
-    const lD = playerHistory!.LedgeDetectorHistory[currentFrame];
-    const lastLd = playerHistory!.LedgeDetectorHistory[lastFrame];
-    const facingRight = flags.FacingRight;
-    const lastFacingRight = lastFlags?.FacingRight;
-    const isIntangible = flags.IntangabilityFrames > 0;
-    const wasIntangible = lastFlags.IntangabilityFrames > 0;
-    const intangible = alpha > 0.5 ? isIntangible : wasIntangible;
-    const inputStore = world.PlayerData.InputStore(i);
-    const input = inputStore.GetInputForFrame(currentFrame);
-
-    //drawHull(ctx, player);
-    drawPrevEcb(ctx, lastEcb, lastLastPosition, lastPos, alpha);
-    drawCurrentECB(ctx, ecb, lastPos, pos, alpha);
-    drawHurtCircles(
-      ctx,
-      currentFrame,
-      pos,
-      lastPos,
-      circlesHistory,
-      intangible,
-      alpha,
-    );
-    drawPositionMarker(ctx, pos, lastPos, alpha);
-    const lerpDirection = alpha > 0.5 ? facingRight : lastFacingRight;
-    drawDirectionMarker(ctx, lerpDirection, ecb, pos, lastPos, alpha);
-
-    const isShieldActive = alpha > 0.5 ? shield.Active : lastShield.Active;
-
-    if (isShieldActive) {
-      drawShield(ctx, input, pos, lastPos, shield, shieldYOffset, alpha);
+    const lp = playerLerper.Lerp(world, i, alpha, world.LocalFrame - 1);
+    drawPrevEcb(ctx, lp.PreviousEcb);
+    drawCurrentECB(ctx, lp.Ecb);
+    drawHurtCircles(ctx, lp, world.LocalFrame);
+    drawPositionMarker(ctx, lp.Position);
+    drawDirectionMarker(ctx, lp);
+    if (lp.Shield.a) {
+      drawShield(ctx, lp.Shield);
     }
-
-    drawLedgeDetectors(
-      ctx,
-      facingRight,
-      playerHistory!.BaseConfigValues,
-      lD,
-      lastLd,
-      alpha,
-    );
-  }
-
-  for (let i = 0; i < playerCount; i++) {
-    const playerHistory = world.GetComponentHistory(i);
-    const sensorsWrapper = playerHistory!.SensorsHistory[currentFrame];
-    const sensors = sensorsWrapper.sensors;
-    if (sensors === undefined || sensors.length === 0) {
-      continue;
-    }
-    const pos = playerHistory!.PositionHistory[currentFrame];
-    const lastPos = playerHistory!.PositionHistory[lastFrame];
-    const flags = playerHistory!.FlagsHistory[currentFrame];
-    drawSensors(ctx, alpha, pos, lastPos, flags, sensorsWrapper);
-  }
-
-  for (let i = 0; i < playerCount; i++) {
-    const playerHistory = world.GetComponentHistory(i);
-    const grab = playerHistory!.GrabHistory[currentFrame];
-    const fsm = playerHistory!.FsmInfoHistory[currentFrame];
-    const flags = playerHistory!.FlagsHistory[currentFrame];
-    const pos = playerHistory!.PositionHistory[currentFrame];
-    const lastPos = playerHistory!.PositionHistory[lastFrame];
-    drawGrabCircles(ctx, grab, fsm, flags, pos, lastPos, alpha);
-  }
-
-  for (let i = 0; i < playerCount; i++) {
-    const playerHistory = world.GetComponentHistory(i);
-    const pos = playerHistory!.PositionHistory[currentFrame];
-    const lastPos = playerHistory!.PositionHistory[lastFrame];
-    const flags = playerHistory!.FlagsHistory[currentFrame];
-    const attack = playerHistory!.AttackHistory[currentFrame];
-    const fsm = playerHistory!.FsmInfoHistory[currentFrame];
-    drawHitCircles(ctx, attack, fsm, flags, pos, lastPos, alpha);
+    drawLedgeDetectors(ctx, lp);
+    drawSensors(ctx, lp.Sensors);
+    drawGrabCircles(ctx, lp.GrabBubbles);
+    drawHitCircles(ctx, lp.AttackBubbles);
   }
 }
 
 function drawSensors(
   ctx: CanvasRenderingContext2D,
-  alpha: number,
-  curPos: PositionSnapShot,
-  lastPos: PositionSnapShot,
-  flags: FlagsSnapShot,
-  sensorsWrapper: SensorSnapShot,
+  sensors: LerpedPlayer['Sensors'],
 ) {
   ctx.strokeStyle = 'white';
   ctx.fillStyle = 'white';
   ctx.globalAlpha = 0.4;
 
-  const sensors = sensorsWrapper.sensors!;
-  const interpolatedX = Lerp(lastPos.X, curPos.X, alpha);
-  const interpolatedY = Lerp(lastPos.Y, curPos.Y, alpha);
-  const facingRight = flags.FacingRight;
   const sensorLength = sensors.length;
 
   for (let i = 0; i < sensorLength; i++) {
     const s = sensors[i];
-    const x = interpolatedX + (facingRight ? s.xOffset : -s.xOffset);
-    const y = interpolatedY + s.yOffset;
+    if (!s.a) {
+      continue;
+    }
     ctx.beginPath();
-    ctx.arc(x, y, s.radius, 0, Math.PI * 2);
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
   }
-
   ctx.globalAlpha = 1.0;
 }
 
 function drawShield(
   ctx: CanvasRenderingContext2D,
-  ia: InputAction,
-  curPosition: PositionSnapShot,
-  lastPosition: PositionSnapShot,
-  shield: ShieldSnapShot,
-  shieldYOffset: number,
-  alpha: number,
+  shield: LerpedPlayer['Shield'],
 ) {
-  const x = Lerp(lastPosition.X, curPosition.X, alpha) + shield.ShieldTiltX;
-  const y =
-    Lerp(lastPosition.Y, curPosition.Y, alpha) +
-    shieldYOffset +
-    shield.ShieldTiltY;
-  const triggerValue = ia.RTValRaw > ia.LTValRaw ? ia.RTValRaw : ia.LTValRaw;
-  const radius = RawToNumber(
-    CalculateRadiusFromTriggerRaw(
-      triggerValue,
-      NumberToRaw(shield.CurrentRadius),
-    ),
-  );
   ctx.strokeStyle = 'blue';
   ctx.fillStyle = 'blue';
   ctx.globalAlpha = 0.4;
 
   ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.arc(shield.X, shield.Y, shield.radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   ctx.closePath();
   ctx.globalAlpha = 1.0;
 }
 
-function drawLedgeDetectors(
-  ctx: CanvasRenderingContext2D,
-  facingRight: boolean,
-  staticHistory: BaseConfigValues,
-  ledgeDetectorHistory: LedgeDetectorSnapShot,
-  lastLedgeDetectorHistory: LedgeDetectorSnapShot,
-  alpha: number,
-) {
-  const ldHeight = staticHistory.LedgeDetectorHeight;
-  const ldWidth = staticHistory.LedgeDetectorWidth;
-  const curMiddleTopX = ledgeDetectorHistory.middleX;
-  const curMiddleTopY = ledgeDetectorHistory.middleY;
-  const curTopRightX = ledgeDetectorHistory.middleX + ldWidth;
-  const curTopRightY = ledgeDetectorHistory.middleY;
-  const curBottomRightX = ledgeDetectorHistory.middleX + ldWidth;
-  const curBottomRightY = ledgeDetectorHistory.middleY + ldHeight;
-  const curMiddleBottomx = ledgeDetectorHistory.middleX;
-  const curMiddleBottomY = ledgeDetectorHistory.middleY + ldHeight;
-  const curTopLeftX = ledgeDetectorHistory.middleX - ldWidth;
-  const curTopLeftY = ledgeDetectorHistory.middleY;
-  const curBottomLeftX = ledgeDetectorHistory.middleX - ldWidth;
-  const curBottomLeftY = ledgeDetectorHistory.middleY + ldHeight;
-
-  const lastMiddleTopX = lastLedgeDetectorHistory.middleX;
-  const lastMiddleTopY = lastLedgeDetectorHistory.middleY;
-  const lastTopRightX = lastLedgeDetectorHistory.middleX + ldWidth;
-  const lastTopRightY = lastLedgeDetectorHistory.middleY;
-  const lastBottomRightX = lastLedgeDetectorHistory.middleX + ldWidth;
-  const lastBottomRightY = lastLedgeDetectorHistory.middleY + ldHeight;
-  const lastMiddleBottomx = lastLedgeDetectorHistory.middleX;
-  const lastMiddleBottomY = lastLedgeDetectorHistory.middleY + ldHeight;
-  const lastTopLeftX = lastLedgeDetectorHistory.middleX - ldWidth;
-  const lastTopLeftY = lastLedgeDetectorHistory.middleY;
-  const lastBottomLeftX = lastLedgeDetectorHistory.middleX - ldWidth;
-  const lastBottomLeftY = lastLedgeDetectorHistory.middleY + ldHeight;
-
-  const middleTopX = Lerp(lastMiddleTopX, curMiddleTopX, alpha);
-  const middleTopY = Lerp(lastMiddleTopY, curMiddleTopY, alpha);
-  const TopRightX = Lerp(lastTopRightX, curTopRightX, alpha);
-  const TopRightY = Lerp(lastTopRightY, curTopRightY, alpha);
-  const BottomRightX = Lerp(lastBottomRightX, curBottomRightX, alpha);
-  const BottomRightY = Lerp(lastBottomRightY, curBottomRightY, alpha);
-  const middleBottomx = Lerp(lastMiddleBottomx, curMiddleBottomx, alpha);
-  const middleBottomY = Lerp(lastMiddleBottomY, curMiddleBottomY, alpha);
-  const topLeftX = Lerp(lastTopLeftX, curTopLeftX, alpha);
-  const topLeftY = Lerp(lastTopLeftY, curTopLeftY, alpha);
-  const bottomLeftX = Lerp(lastBottomLeftX, curBottomLeftX, alpha);
-  const bottomLeftY = Lerp(lastBottomLeftY, curBottomLeftY, alpha);
+function drawLedgeDetectors(ctx: CanvasRenderingContext2D, lp: LerpedPlayer) {
+  const facingRight = lp.Flags.FacingRight;
+  const ldr = lp.LedgeDetectorRight;
+  const ldl = lp.LedgeDetectorLeft;
 
   // Draw right detector
   ctx.strokeStyle = 'blue';
-
   if (!facingRight) {
     ctx.strokeStyle = 'red';
   }
 
   ctx.beginPath();
-  ctx.moveTo(middleTopX, middleTopY);
-  ctx.lineTo(TopRightX, TopRightY);
-  ctx.lineTo(BottomRightX, BottomRightY);
-  ctx.lineTo(middleBottomx, middleBottomY);
+  ctx.moveTo(ldr.topLeftX, ldr.topLeftY);
+  ctx.lineTo(ldr.topRightX, ldr.topRightY);
+  ctx.lineTo(ldr.bottomRightX, ldr.bottomRightY);
+  ctx.lineTo(ldr.bottomLeftX, ldr.bottomLeftY);
   ctx.closePath();
   ctx.stroke();
 
   // Draw left detector
   ctx.strokeStyle = 'red';
-
   if (!facingRight) {
     ctx.strokeStyle = 'blue';
   }
 
   ctx.beginPath();
-  ctx.moveTo(topLeftX, topLeftY);
-  ctx.lineTo(middleTopX, middleTopY);
-  ctx.lineTo(middleBottomx, middleBottomY);
-  ctx.lineTo(bottomLeftX, bottomLeftY);
+  ctx.moveTo(ldl.topLeftX, ldl.topLeftY);
+  ctx.lineTo(ldl.topRightX, ldl.topRightY);
+  ctx.lineTo(ldl.bottomRightX, ldl.bottomRightY);
+  ctx.lineTo(ldl.bottomLeftX, ldl.bottomLeftY);
   ctx.closePath();
   ctx.stroke();
 }
 
-function drawDirectionMarker(
-  ctx: CanvasRenderingContext2D,
-  facingRight: boolean,
-  ecb: ECBSnapShot,
-  pos: PositionSnapShot,
-  lastPos: PositionSnapShot,
-  alpha: number,
-) {
+function drawDirectionMarker(ctx: CanvasRenderingContext2D, lp: LerpedPlayer) {
   ctx.strokeStyle = 'white';
-  const interpolatedX = Lerp(lastPos.X, pos.X, alpha);
-  const interpolatedY = Lerp(lastPos.Y, pos.Y, alpha);
-  const height = ecb.ecbShape.height.AsNumber;
-  const width = ecb.ecbShape.width.AsNumber;
-  const yOffset = ecb.ecbShape.yOffset.AsNumber;
+  const facingRight = lp.Flags.FacingRight;
+  const ecb = lp.Ecb;
+  const centerX = lp.Position.X;
+  const centerY = ecb.r.y;
 
   if (facingRight) {
-    const rightX = interpolatedX + width / 2;
-    const rightY = interpolatedY + yOffset - height / 2;
+    const rightX = ecb.r.x;
+    const rightY = centerY;
 
     ctx.beginPath();
     ctx.moveTo(rightX, rightY);
@@ -516,8 +349,8 @@ function drawDirectionMarker(
     ctx.stroke();
     ctx.closePath();
   } else {
-    const leftX = interpolatedX - width / 2;
-    const leftY = interpolatedY + yOffset - height / 2;
+    const leftX = ecb.l.x;
+    const leftY = centerY;
 
     ctx.beginPath();
     ctx.moveTo(leftX, leftY);
@@ -529,36 +362,18 @@ function drawDirectionMarker(
 
 function drawPrevEcb(
   ctx: CanvasRenderingContext2D,
-  lastEcb: ECBSnapShot,
-  lastLastPosition: PositionSnapShot,
-  lastPos: PositionSnapShot,
-  alpha: number,
+  ecb: LerpedPlayer['PreviousEcb'],
 ) {
   ctx.fillStyle = 'red';
   ctx.lineWidth = 3;
 
-  const interpolatedX = Lerp(lastLastPosition.X, lastPos.X, alpha);
-  const interpolatedY = Lerp(lastLastPosition.Y, lastPos.Y, alpha);
-  const height = lastEcb.ecbShape.height.AsNumber;
-  const width = lastEcb.ecbShape.width.AsNumber;
-  const yOffset = lastEcb.ecbShape.yOffset.AsNumber;
-
-  const bottomX = interpolatedX;
-  const bottomY = interpolatedY + yOffset;
-  const topX = interpolatedX;
-  const topY = interpolatedY + yOffset - height;
-  const leftX = interpolatedX - width / 2;
-  const leftY = interpolatedY + yOffset - height / 2;
-  const rightX = interpolatedX + width / 2;
-  const rightY = interpolatedY + yOffset - height / 2;
-
   // draw previous ECB
   ctx.strokeStyle = 'black';
   ctx.beginPath();
-  ctx.moveTo(leftX, leftY);
-  ctx.lineTo(topX, topY);
-  ctx.lineTo(rightX, rightY);
-  ctx.lineTo(bottomX, bottomY);
+  ctx.moveTo(ecb.l.x, ecb.l.y);
+  ctx.lineTo(ecb.t.x, ecb.t.y);
+  ctx.lineTo(ecb.r.x, ecb.r.y);
+  ctx.lineTo(ecb.b.x, ecb.b.y);
   ctx.closePath();
   ctx.stroke();
   ctx.fill();
@@ -566,107 +381,53 @@ function drawPrevEcb(
 
 function drawCurrentECB(
   ctx: CanvasRenderingContext2D,
-  ecb: ECBSnapShot,
-  lasPos: PositionSnapShot,
-  pos: PositionSnapShot,
-  alpha: number,
+  ecb: LerpedPlayer['Ecb'],
 ) {
-  const interpolatedX = Lerp(lasPos.X, pos.X, alpha);
-  const interpolatedY = Lerp(lasPos.Y, pos.Y, alpha);
-  const height = ecb.ecbShape.height.AsNumber;
-  const width = ecb.ecbShape.width.AsNumber;
-  const yOffset = ecb.ecbShape.yOffset.AsNumber;
-
-  const bottomX = interpolatedX;
-  const bottomY = interpolatedY + yOffset;
-  const topX = interpolatedX;
-  const topY = interpolatedY + yOffset - height;
-  const leftX = interpolatedX - width / 2;
-  const leftY = interpolatedY + yOffset - height / 2;
-  const rightX = interpolatedX + width / 2;
-  const rightY = interpolatedY + yOffset - height / 2;
-
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
   ctx.beginPath();
-  ctx.moveTo(leftX, leftY);
-  ctx.lineTo(topX, topY);
-  ctx.lineTo(rightX, rightY);
-  ctx.lineTo(bottomX, bottomY);
+  ctx.moveTo(ecb.l.x, ecb.l.y);
+  ctx.lineTo(ecb.t.x, ecb.t.y);
+  ctx.lineTo(ecb.r.x, ecb.r.y);
+  ctx.lineTo(ecb.b.x, ecb.b.y);
   ctx.closePath();
   ctx.stroke();
   ctx.fill();
 }
-const adto = new ActiveHitBubblesDTO();
 
 function drawHitCircles(
   ctx: CanvasRenderingContext2D,
-  attack: AttackSnapShot,
-  fsmInfo: FSMInfoSnapShot,
-  flags: FlagsSnapShot,
-  currentPosition: PositionSnapShot,
-  lastPosition: PositionSnapShot,
-  alpha: number,
+  circles: LerpedPlayer['AttackBubbles'],
 ) {
-  if (attack.attack === undefined) {
-    return;
-  }
-  adto.Zero();
-  const currentSateFrame = fsmInfo.StateFrame;
-  const circles = attack.attack.GetActiveBubblesForFrame(
-    currentSateFrame,
-    adto,
-  );
-
-  if (circles === undefined) {
-    return;
-  }
-
   ctx.strokeStyle = 'red';
   ctx.fillStyle = 'red';
   ctx.lineWidth = 2;
   ctx.globalAlpha = 0.4;
-  const length = circles.Length;
-
-  const interpolatedX = Lerp(lastPosition.X, currentPosition.X, alpha);
-  const interpolatedY = Lerp(lastPosition.Y, currentPosition.Y, alpha);
+  const length = circles.length;
 
   for (let i = 0; i < length; i++) {
-    const circle = circles.AtIndex(i);
-    if (circle === undefined) {
+    const circle = circles[i];
+    if (!circle.a) {
       continue;
     }
-    const offSet = circle?.GetLocalPosiitionOffsetForFrame(currentSateFrame);
-    if (offSet === undefined) {
-      continue;
-    }
-    const offsetX = flags.FacingRight
-      ? interpolatedX + offSet.X.AsNumber
-      : interpolatedX - offSet.X.AsNumber;
-    const offsetY = interpolatedY + offSet.Y.AsNumber;
-
     ctx.beginPath();
-    ctx.arc(offsetX, offsetY, circle.Radius.AsNumber, 0, Math.PI * 2);
+    ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
-
-    ctx.fillStyle = 'darkblue';
-    ctx.fillText(circle.Priority.toString(), offsetX, offsetY);
-    ctx.fillStyle = 'red';
   }
   ctx.globalAlpha = 1.0;
 }
 
 function drawHurtCircles(
   ctx: CanvasRenderingContext2D,
+  lp: LerpedPlayer,
   frame: number,
-  curPositon: PositionSnapShot,
-  lasPosition: PositionSnapShot,
-  hurtCapsules: Array<HurtCapsule>,
-  instangible: boolean,
-  alpha: number,
 ) {
+  const hurtCapsules = lp.HurtBubbles;
+  const instangible = lp.Flags.intangible;
+  // but basic intangible check is present.
+
   ctx.strokeStyle = 'yellow'; // Set the stroke color for the circles
   ctx.fillStyle = 'yellow'; // Set the fill color for the circles
 
@@ -682,72 +443,42 @@ function drawHurtCircles(
   ctx.lineWidth = 2; // Set the line width
   ctx.globalAlpha = 0.5; // Set transparency (50%)
 
-  const lerpedPosX = Lerp(lasPosition.X, curPositon.X, alpha);
-  const lerpedPosY = Lerp(lasPosition.Y, curPositon.Y, alpha);
   const hcLength = hurtCapsules.length;
   for (let i = 0; i < hcLength; i++) {
     const hurtCapsule = hurtCapsules[i];
-    const globalStartX = hurtCapsule.StartOffsetX.AsNumber + lerpedPosX;
-    const globalStartY = hurtCapsule.StartOffsetY.AsNumber + lerpedPosY;
-    const globalEndX = hurtCapsule.EndOffsetX.AsNumber + lerpedPosX;
-    const globalEndY = hurtCapsule.EndOffsetY.AsNumber + lerpedPosY;
+    if (!hurtCapsule.a) {
+      continue;
+    }
     drawCapsule(
       ctx,
-      globalStartX,
-      globalStartY,
-      globalEndX,
-      globalEndY,
-      hurtCapsule.Radius.AsNumber,
+      hurtCapsule.x1,
+      hurtCapsule.y1,
+      hurtCapsule.x2,
+      hurtCapsule.y2,
+      hurtCapsule.r,
     );
   }
 
   ctx.globalAlpha = 1.0; // Reset transparency to fully opaque
 }
 
-const gbDto = new ActiveGrabBubblesDTO();
 function drawGrabCircles(
   ctx: CanvasRenderingContext2D,
-  grab: GrabSnapShot,
-  fsmInfo: FSMInfoSnapShot,
-  flags: FlagsSnapShot,
-  currentPosition: PositionSnapShot,
-  lastPosition: PositionSnapShot,
-  alpha: number,
+  circles: LerpedPlayer['GrabBubbles'],
 ) {
-  if (grab === undefined) {
-    return;
-  }
-
-  const currentSateFrame = fsmInfo.StateFrame;
-  const circles = grab.GetActiveBubblesForFrame(currentSateFrame, gbDto);
-
-  if (circles === undefined) {
-    return;
-  }
-
   ctx.strokeStyle = 'purple';
   ctx.fillStyle = 'purple';
   ctx.lineWidth = 2;
   ctx.globalAlpha = 0.4;
-  const length = circles.Length;
+  const length = circles.length;
 
-  const interpolatedX = Lerp(lastPosition.X, currentPosition.X, alpha);
-  const interpolatedY = Lerp(lastPosition.Y, currentPosition.Y, alpha);
   for (let i = 0; i < length; i++) {
-    const circle = circles.AtIndex(i); //circles[i];
-    if (circle === undefined) {
+    const circle = circles[i];
+    if (!circle.a) {
       continue;
     }
-    const offSet = circle?.GetLocalPositionOffsetForFrame(currentSateFrame);
-    if (offSet === undefined) {
-      continue;
-    }
-    const offsetX = flags.FacingRight
-      ? interpolatedX + offSet.X.AsNumber
-      : interpolatedX - offSet.X.AsNumber;
-    const offsetY = interpolatedY + offSet.Y.AsNumber;
     ctx.beginPath();
-    ctx.arc(offsetX, offsetY, circle.Radius.AsNumber, 0, Math.PI * 2);
+    ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -757,12 +488,10 @@ function drawGrabCircles(
 
 function drawPositionMarker(
   ctx: CanvasRenderingContext2D,
-  posHistory: PositionSnapShot,
-  lastPosHistory: PositionSnapShot,
-  alpha: number,
+  pos: LerpedPlayer['Position'],
 ) {
-  const playerPosX = Lerp(lastPosHistory.X, posHistory.X, alpha);
-  const playerPosY = Lerp(lastPosHistory.Y, posHistory.Y, alpha);
+  const playerPosX = pos.X;
+  const playerPosY = pos.Y;
 
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'blue';

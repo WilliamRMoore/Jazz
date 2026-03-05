@@ -4,7 +4,7 @@ import { frameNumber } from '../engine/entity/components/attack';
 import { MainConfig } from '../engine/config/main-config';
 import { RawToNumber } from '../engine/math/fixedPoint';
 
-class PlayerLerper {
+export class PlayerLerper {
   private pool: LerpedPlayer[] = [];
   private poolIndex = 0;
   private maxAtkB: number;
@@ -74,7 +74,7 @@ function makeLerpHurt(): lerpHurt {
   return { a: false, r: 0, x1: 0, y1: 0, x2: 0, y2: 0 };
 }
 
-class LerpedPlayer {
+export class LerpedPlayer {
   public Position = { X: 0, Y: 0 };
   public PreviousEcb = {
     b: { x: 0, y: 0 },

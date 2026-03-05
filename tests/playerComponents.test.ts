@@ -4,6 +4,8 @@ import { World } from '../game/engine/world/world';
 import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { FixedPoint, NumberToRaw } from '../game/engine/math/fixedPoint';
 import { ECBComponent } from '../game/engine/entity/components/ecb';
+import { FlatVec } from '../game/engine/physics/vector';
+import { ToFp } from '../game/engine/utils';
 
 describe('PlayerComponents ECB tests', () => {
   let p: Player;
@@ -42,27 +44,35 @@ describe('PlayerComponents ECB tests', () => {
   });
 
   test('SetInitialPosition and SetInitialPositionRaw work correctly', () => {
-    const x = new FixedPoint(10);
-    const y = new FixedPoint(20);
-    ecb.MoveToPosition(x, y);
+    const x = 10;
+    const y = 20;
+    p.Position.X.SetFromNumber(x);
+    p.Position.Y.SetFromNumber(y);
+    ecb.MoveToPosition();
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
 
-    ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
+    p.Position.X.SetFromRaw(NumberToRaw(30));
+    p.Position.Y.SetFromRaw(NumberToRaw(40));
+    ecb.MoveToPosition();
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
   });
 
   test('MoveToPosition and MoveToPositionRaw work correctly', () => {
-    const x = new FixedPoint(10);
-    const y = new FixedPoint(20);
-    ecb.MoveToPosition(x, y);
+    const x = 10;
+    const y = 20;
+    p.Position.X.SetFromNumber(x);
+    p.Position.Y.SetFromNumber(y);
+    ecb.MoveToPosition();
 
     expect(ecb.Bottom.X.AsNumber).toBe(10);
     expect(ecb.Bottom.Y.AsNumber).toBe(20);
 
-    ecb.MoveToPositionRaw(NumberToRaw(30), NumberToRaw(40));
+    p.Position.X.SetFromRaw(NumberToRaw(30));
+    p.Position.Y.SetFromRaw(NumberToRaw(40));
+    ecb.MoveToPosition();
     expect(ecb.Bottom.X.AsNumber).toBe(30);
     expect(ecb.Bottom.Y.AsNumber).toBe(40);
   });
@@ -88,20 +98,25 @@ describe('PlayerComponents ECB tests', () => {
   test('SnapShot and SetFromSnapShot work correctly', () => {
     const x = 10;
     const y = 20;
-    ecb.MoveToPositionRaw(NumberToRaw(x), NumberToRaw(y));
+    p.Position.X.SetFromNumber(x);
+    p.Position.Y.SetFromNumber(y);
+    ecb.MoveToPosition();
     ecb.SetECBShape(STATE_IDS.CROUCH_S);
 
     const snapshot = ecb.SnapShot();
 
-    const newEcb = new ECBComponent(new Map(), 200, 200, 10);
+    const pos = new FlatVec(ToFp(x), ToFp(y));
+    pos.X.SetFromNumber(x);
+    pos.Y.SetFromNumber(y);
+    const newEcb = new ECBComponent(new Map(), pos, 200, 200, 10);
     newEcb.SetFromSnapShot(snapshot);
 
     expect(newEcb.Height.AsNumber).toBe(snapshot.ecbShape.height.AsNumber);
     expect(newEcb.Width.AsNumber).toBe(snapshot.ecbShape.width.AsNumber);
     expect(newEcb.YOffset.AsNumber).toBe(snapshot.ecbShape.yOffset.AsNumber);
-    expect(newEcb.Bottom.X.AsNumber).toBe(snapshot.posX);
+    expect(newEcb.Bottom.X.AsNumber).toBe(x);
     expect(newEcb.Bottom.Y.AsNumber).toBe(
-      snapshot.posY + snapshot.ecbShape.yOffset.AsNumber,
+      y + snapshot.ecbShape.yOffset.AsNumber,
     );
   });
 
@@ -114,7 +129,9 @@ describe('PlayerComponents ECB tests', () => {
     const halfWidth = width / 2;
     const halfHeight = height / 2;
 
-    ecb.MoveToPositionRaw(NumberToRaw(x), NumberToRaw(y));
+    p.Position.X.SetFromNumber(x);
+    p.Position.Y.SetFromNumber(y);
+    ecb.MoveToPosition();
 
     expect(ecb.Bottom.X.AsNumber).toBe(x);
     expect(ecb.Bottom.Y.AsNumber).toBe(y + yOffset);

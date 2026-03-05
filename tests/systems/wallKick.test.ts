@@ -43,13 +43,13 @@ describe('wall kick tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(prevFrame, prevInput);
 
     const currentInput = NewInputAction();
-    currentInput.LXAxis.SetFromNumber(0.8); // Flick stick to the right
+    currentInput.LXAxis.SetFromNumber(-0.8); // Flick stick to the right
     w.PlayerData.InputStore(0).StoreInputForFrame(currentFrame, currentInput);
 
     WallKick(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.WALL_KICK_S);
-    expect(p.Flags.IsFacingRight).toBe(true);
+    expect(p.Flags.IsFacingLeft).toBe(true);
   });
 
   test('should perform a wall kick from the right wall', () => {
@@ -65,13 +65,13 @@ describe('wall kick tests', () => {
     w.PlayerData.InputStore(0).StoreInputForFrame(prevFrame, prevInput);
 
     const currentInput = NewInputAction();
-    currentInput.LXAxis.SetFromNumber(-0.8); // Flick stick to the left
+    currentInput.LXAxis.SetFromNumber(0.8); // Flick stick to the left
     w.PlayerData.InputStore(0).StoreInputForFrame(currentFrame, currentInput);
 
     WallKick(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.WALL_KICK_S);
-    expect(p.Flags.IsFacingLeft).toBe(true);
+    expect(p.Flags.IsFacingRight).toBe(true);
   });
 
   test('should not perform a wall kick if input conditions are not met', () => {

@@ -1,8 +1,6 @@
-import { ComponentHistory } from '../entity/componentHistory';
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw } from '../math/fixedPoint';
 import { FIFTY } from '../math/numberConstants';
 import {
   ClosestPointsBetweenSegments,

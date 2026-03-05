@@ -16,7 +16,6 @@ import {
   IntersectsCircles,
   IntersectsCirclesRaw,
 } from '../physics/collisions';
-import { ComponentHistory } from '../entity/componentHistory';
 import { Player } from '../entity/playerOrchestrator';
 import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { AttackResult } from '../pools/AttackResult';

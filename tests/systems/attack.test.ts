@@ -6,7 +6,6 @@ import {
   NumberToRaw,
   RawToNumber,
 } from '../../game/engine/math/fixedPoint';
-import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,
@@ -24,6 +23,7 @@ import { Pool } from '../../game/engine/pools/Pool';
 import { PooledVector } from '../../game/engine/pools/PooledVector';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import { defaultStage } from '../../game/engine/stage/stageMain';
+import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
 
 describe('Attack systesm tests', () => {
   let p1: Player;
@@ -33,8 +33,8 @@ describe('Attack systesm tests', () => {
   let p2Sm: StateMachine;
   let p2InputStore: IInputStore;
   let w: World;
-  let h1: ComponentHistory;
-  let h2: ComponentHistory;
+  let h1: PlayerHistoryTable;
+  let h2: PlayerHistoryTable;
 
   beforeEach(() => {
     w = new World();
@@ -49,8 +49,8 @@ describe('Attack systesm tests', () => {
     p1InputStore = w.PlayerData.InputStore(0);
     p2InputStore = w.PlayerData.InputStore(1);
     p1.Flags.FaceRight();
-    h1 = w.HistoryData.PlayerComponentHistories[0];
-    h2 = w.HistoryData.PlayerComponentHistories[1];
+    h1 = w.HistoryData.PlayerHistoryDB[0];
+    h2 = w.HistoryData.PlayerHistoryDB[1];
   });
 
   test('Player should register an attack hit', () => {
@@ -67,12 +67,14 @@ describe('Attack systesm tests', () => {
     p2InputStore.StoreInputForFrame(0, i1);
     p2InputStore.StoreInputForFrame(1, i2);
     p2InputStore.StoreInputForFrame(2, i3);
-    h1.PositionHistory[0] = p1.Position.SnapShot();
-    h1.PositionHistory[1] = p1.Position.SnapShot();
-    h1.PositionHistory[2] = p1.Position.SnapShot();
-    h2.PositionHistory[0] = p2.Position.SnapShot();
-    h2.PositionHistory[1] = p2.Position.SnapShot();
-    h2.PositionHistory[2] = p2.Position.SnapShot();
+    for (let i = 0; i < 3; i++) {
+      const h1State = h1.get(i);
+      h1State.posXRaw = p1.Position.X.Raw;
+      h1State.posYRaw = p1.Position.Y.Raw;
+      const h2State = h2.get(i);
+      h2State.posXRaw = p2.Position.X.Raw;
+      h2State.posYRaw = p2.Position.Y.Raw;
+    }
     w.LocalFrame = 2;
     p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
@@ -96,12 +98,14 @@ describe('Attack systesm tests', () => {
     p2InputStore.StoreInputForFrame(0, i1);
     p2InputStore.StoreInputForFrame(1, i2);
     p2InputStore.StoreInputForFrame(2, i3);
-    h1.PositionHistory[0] = p1.Position.SnapShot();
-    h1.PositionHistory[1] = p1.Position.SnapShot();
-    h1.PositionHistory[2] = p1.Position.SnapShot();
-    h2.PositionHistory[0] = p2.Position.SnapShot();
-    h2.PositionHistory[1] = p2.Position.SnapShot();
-    h2.PositionHistory[2] = p2.Position.SnapShot();
+    for (let i = 0; i < 3; i++) {
+      const h1State = h1.get(i);
+      h1State.posXRaw = p1.Position.X.Raw;
+      h1State.posYRaw = p1.Position.Y.Raw;
+      const h2State = h2.get(i);
+      h2State.posXRaw = p2.Position.X.Raw;
+      h2State.posYRaw = p2.Position.Y.Raw;
+    }
     w.LocalFrame = 2;
     p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
 
@@ -130,8 +134,12 @@ describe('Attack systesm tests', () => {
     // At this point, p1's hitbubble (at ~1040) is far from p2's hurtbox (at 1150). No collision.
 
     // Store history for frame n-1
-    h1.PositionHistory[frame_n_minus_1] = p1.Position.SnapShot();
-    h2.PositionHistory[frame_n_minus_1] = p2.Position.SnapShot();
+    const h1State = h1.get(frame_n_minus_1);
+    h1State.posXRaw = p1.Position.X.Raw;
+    h1State.posYRaw = p1.Position.Y.Raw;
+    const h2State = h2.get(frame_n_minus_1);
+    h2State.posXRaw = p2.Position.X.Raw;
+    h2State.posYRaw = p2.Position.Y.Raw;
     p1InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
     p2InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
 

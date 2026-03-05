@@ -452,22 +452,6 @@ function ledgeDetectorNode(ps: PlayerSnapShot): node {
     label: LedgeDetector,
     data: [
       {
-        kind: 2,
-        label: Middle,
-        data: [
-          {
-            kind: 1,
-            label: X,
-            data: ps.LedgeDetector.middleX,
-          },
-          {
-            kind: 1,
-            label: Y,
-            data: ps.LedgeDetector.middleY,
-          },
-        ],
-      },
-      {
         kind: 1,
         label: ledgeGrabCount,
         data: ps.LedgeDetector.numberOfLedgeGrabs,

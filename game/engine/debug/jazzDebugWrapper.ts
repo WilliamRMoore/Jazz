@@ -125,31 +125,3 @@ export class JazzDebugger implements IJazzDebugger {
     return selectPressed && !selectHeld;
   }
 }
-
-function GetPlayerDataForFrame(
-  pId: number,
-  frame: number,
-  w: World,
-): PlayerSnapShot {
-  const hist = w.HistoryData.PlayerComponentHistories[pId];
-
-  const r = {
-    Shield: hist.ShieldHistory[frame],
-    Position: hist.PositionHistory[frame],
-    FSMInfo: hist.FsmInfoHistory[frame],
-    Damage: hist.DamageHistory[frame],
-    Velocity: hist.VelocityHistory[frame],
-    Flags: hist.FlagsHistory[frame],
-    PlayerHitStop: hist.PlayerHitStopHistory[frame],
-    PlayerHitStun: hist.PlayerHitStunHistory[frame],
-    LedgeDetector: hist.LedgeDetectorHistory[frame],
-    Sensors: hist.SensorsHistory[frame],
-    Ecb: hist.EcbHistory[frame],
-    Jump: hist.JumpHistroy[frame],
-    Attack: hist.AttackHistory[frame],
-    Grab: hist.GrabHistory[frame],
-    GrabMeter: hist.GrabMeterHistory[frame],
-  } as PlayerSnapShot;
-
-  return r;
-}
