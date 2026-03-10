@@ -3,8 +3,8 @@ import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
 import { CharacterConfig } from '../../character/shared';
-import { FixedPoint, MultiplyRaw } from '../math/fixedPoint';
-import { AttackComponment, frameNumber } from './components/attack';
+import { FixedPoint } from '../math/fixedPoint';
+import { AttackComponment } from './components/attack';
 import { ECBComponent } from './components/ecb';
 import { PlayerFlagsComponent } from './components/flags';
 import { FSMInfoComponent } from './components/fsmInfo';
@@ -25,7 +25,6 @@ import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
-import { DebugComponent } from './components/debug';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -63,6 +62,7 @@ export class Player {
     sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
     sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
     sB.SetGroundedVelocityDecay(cc.GroundedVelocityDecay);
+    sB.SetWallKickVelocity(cc.WallKickVelocity.x, cc.WallKickVelocity.y);
     this.ID = Id;
     this.Position = new PositionComponent();
     this.Velocity = new VelocityComponent();
@@ -75,6 +75,7 @@ export class Player {
 
     this.ECB = new ECBComponent(
       cc.ECBShapes,
+      this.Position.Ref,
       cc.ECBHeight,
       cc.ECBWidth,
       cc.ECBOffset,
@@ -83,8 +84,7 @@ export class Player {
     this.Jump = new JumpComponent(cc.JumpVelocity, cc.NumberOfJumps);
     this.FSMInfo = new FSMInfoComponent(cc.FrameLengths);
     this.LedgeDetector = new LedgeDetectorComponent(
-      this.Position.X.AsNumber,
-      this.Position.Y.AsNumber,
+      this.Position.Ref,
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
       cc.LedgeBoxYOffset,
@@ -114,38 +114,38 @@ export function SetPlayerInitialPositionRaw(
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPositionRaw(xRaw, yRaw);
-  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
   const position = p.Position;
   position.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition(position.X, position.Y);
-  p.LedgeDetector.MoveTo(position.X, position.Y);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerXPostionRaw(p: Player, xRaw: number): void {
   const position = p.Position;
   position.X.AddRaw(xRaw);
-  p.ECB.MoveToPosition(position.X, position.Y);
-  p.LedgeDetector.MoveTo(position.X, position.Y);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
   const position = p.Position;
   position.X.SetFromFp(x);
   position.Y.SetFromFp(y);
-  p.ECB.MoveToPosition(x, y);
-  p.LedgeDetector.MoveTo(x, y);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
   const position = p.Position;
   position.X.SetFromRaw(xRaw);
   position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPositionRaw(xRaw, yRaw);
-  p.LedgeDetector.MoveToRaw(xRaw, yRaw);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerPositionFp(
@@ -168,8 +168,8 @@ export function AddToPlayerPositionRaw(
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
   pos.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition(pos.X, pos.Y);
-  p.LedgeDetector.MoveTo(pos.X, pos.Y);
+  p.ECB.Update();
+  p.LedgeDetector.MoveToPos();
 }
 
 export function PlayerOnStage(

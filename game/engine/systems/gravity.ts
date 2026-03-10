@@ -1,8 +1,9 @@
 import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw, MultiplyRaw } from '../math/fixedPoint';
+import { MultiplyRaw } from '../math/fixedPoint';
 import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';
 import { World } from '../world/world';
+import { ONE, TWO } from '../math/numberConstants';
 
 export function Gravity(world: World): void {
   const playerData = world.PlayerData;
@@ -10,17 +11,15 @@ export function Gravity(world: World): void {
   const playerCount = playerData.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
-    const stage = stageData.Stage;
-
+    const stage = stageData.Stages;
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
-
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
     const fallSpeed = isFF ? speeds.FastFallSpeedRaw : speeds.FallSpeedRaw;
-    const gravMutliplier = NumberToRaw(isFF ? 2 : 1);
+    const gravMutliplier = isFF ? TWO : ONE;
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
       MultiplyRaw(grav, gravMutliplier),
@@ -28,14 +27,12 @@ export function Gravity(world: World): void {
   }
 }
 
-function playerHasGravity(p: Player, stage: Stage): boolean {
-  // if (p._db !== undefined && p._db._db_grav_active === false) {
-  //   return false;
-  // }
-  switch (p.FSMInfo.CurrentStatetId) {
+function playerHasGravity(p: Player, stage: Stage[]): boolean {
+  switch (p.FSMInfo.CurrentStateId) {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
     case STATE_IDS.HIT_STOP_S:
+    case STATE_IDS.WALL_KICK_S:
       return false;
     default:
       break;
@@ -45,7 +42,17 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   }
   const attack = p.Attacks.GetAttack();
   if (attack === undefined) {
-    return !PlayerOnStageOrPlats(stage, p);
+    const stagesLength = stage.length;
+    let playerOnPlatsOrStage = false;
+    for (let i = 0; i < stagesLength; i++) {
+      const stagePiece = stage[i];
+      const pps = PlayerOnStageOrPlats(stagePiece, p);
+      if (pps) {
+        playerOnPlatsOrStage = true;
+        break;
+      }
+    }
+    return !playerOnPlatsOrStage;
   }
   // attack is defined, and has gravity set to inactive
   if (attack.GravityActive === false) {
@@ -53,5 +60,15 @@ function playerHasGravity(p: Player, stage: Stage): boolean {
   }
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  return !PlayerOnStageOrPlats(stage, p);
+  const stagesLength = stage.length;
+  let playerOnPlatsOrStage = false;
+  for (let i = 0; i < stagesLength; i++) {
+    const stagePiece = stage[i];
+    const pps = PlayerOnStageOrPlats(stagePiece, p);
+    if (pps) {
+      playerOnPlatsOrStage = true;
+      break;
+    }
+  }
+  return !playerOnPlatsOrStage;
 }

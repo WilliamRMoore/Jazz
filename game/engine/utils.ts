@@ -18,7 +18,20 @@ export function FillArrayWithFlatVec(fvArr: FlatVec[]): void {
 }
 
 export function HashCode(obj: any): number {
-  const j = JSON.stringify(obj);
+  const j = JSON.stringify(obj, (key, value) => {
+    if (value instanceof Map) {
+      return Array.from(value.entries()).sort((a, b) =>
+        String(a[0]).localeCompare(String(b[0])),
+      );
+    }
+    if (value instanceof Set) {
+      return Array.from(value.values()).sort();
+    }
+    if (value instanceof FixedPoint) {
+      return value.Raw;
+    }
+    return value;
+  });
 
   var hash = 0;
   for (var i = 0; i < j.length; i++) {
@@ -112,6 +125,44 @@ export class Sequencer {
     const next = this.step(this.seq);
     this.seq = next;
     return ret;
+  }
+}
+
+export class RingBuffer<T> {
+  private readonly buffer: Array<T>;
+  public readonly size: number;
+  private head: number = 0;
+
+  constructor(size: number, factory?: (index: number) => T) {
+    if (size <= 0) {
+      throw new Error('RingBuffer size must be positive.');
+    }
+    this.size = size;
+    this.buffer = new Array<T>(size);
+
+    if (factory) {
+      for (let i = 0; i < size; i++) {
+        this.buffer[i] = factory(i);
+      }
+    }
+  }
+
+  private getIndex(index: number): number {
+    // Handle negative indices correctly
+    return ((index % this.size) + this.size) % this.size;
+  }
+
+  public get(index: number): T {
+    return this.buffer[this.getIndex(index)];
+  }
+
+  public set(index: number, value: T): void {
+    this.buffer[this.getIndex(index)] = value;
+  }
+
+  public push(value: T): void {
+    this.set(this.head, value);
+    this.head++;
   }
 }
 

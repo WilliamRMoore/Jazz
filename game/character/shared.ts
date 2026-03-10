@@ -54,6 +54,7 @@ export type CharacterConfig = {
   ECBShapes: ECBShapesConfig;
   HurtCapsules: Array<HurtCapsuleConfig>;
   JumpVelocity: number;
+  WallKickVelocity: ConfigVec;
   NumberOfJumps: number;
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
@@ -86,6 +87,7 @@ export type HitBubblesConifg = {
   Priority: number;
   Radius: number;
   LaunchAngle: number;
+  ThresholdAngle: boolean;
   frameOffsets: Map<frameNumber, ConfigVec>;
 };
 
@@ -175,7 +177,7 @@ export class AttackConfigBuilder {
     return this;
   }
 
-  public WithOnUpdateEvent(
+  public WithOnUpdateCommand(
     frameNumber: number,
     command: Command,
   ): AttackConfigBuilder {
@@ -187,7 +189,7 @@ export class AttackConfigBuilder {
     return this;
   }
 
-  public WithOnExitEvent(command: Command): AttackConfigBuilder {
+  public WithOnExitCommand(command: Command): AttackConfigBuilder {
     this.onExitCommands.push(command);
     return this;
   }
@@ -198,6 +200,7 @@ export class AttackConfigBuilder {
     priority: number,
     launchAngle: number,
     frameOffsets: Map<frameNumber, ConfigVec>,
+    thresholdAngle: boolean = false,
   ): AttackConfigBuilder {
     const hitBubId = this.hitBubbles.length;
 
@@ -209,6 +212,7 @@ export class AttackConfigBuilder {
       Damage: damage,
       Priority: priority,
       Radius: radius,
+      ThresholdAngle: thresholdAngle,
       LaunchAngle: launchAngle,
       frameOffsets: frameOffsets,
     };

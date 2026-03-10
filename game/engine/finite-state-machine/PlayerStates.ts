@@ -59,6 +59,9 @@ import {
   InitShieldBreakRelations,
   initShieldTubmleRelations,
   InitDizzyRelations,
+  InitWallKickRelations,
+  InitHitSlideRelations,
+  InitHitFlinchRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -127,7 +130,10 @@ import {
   ShieldBreak,
   ShieldBreakTumble,
   ShieldBreakLand,
-  dizzy,
+  Dizzy,
+  WallKick,
+  HitSlide,
+  HitFlinch,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -172,6 +178,8 @@ const DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
 const DOWN_SPECIAL_AIR_RELATIONS = InitDownSpecialAirRelations();
 const UP_SPECIAL_RELATIONS = InitUpSpecialRelations();
 const HIT_STOP_RELATIONS = InitHitStopRelations();
+const HIT_SLIDE_RELATIONS = InitHitSlideRelations();
+const HIT_FLINCH_RELATIONS = InitHitFlinchRelations();
 const TUMBLE_RELATIONS = InitTumbleRelations();
 const LAUNCH_RELATIONS = InitLaunchRelations();
 const CROUCH_RELATIONS = InitCrouchRelations();
@@ -188,6 +196,7 @@ const SHIELD_BREAK_RELATIONS = InitShieldBreakRelations();
 const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
 const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
 const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
+const WALL_KICK_RELATIONS = InitWallKickRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -236,6 +245,8 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SIDE_SPCL_AIR_EX_RELATIONS.stateId, SIDE_SPCL_AIR_EX_RELATIONS.mappings)
   .set(UP_SPECIAL_RELATIONS.stateId, UP_SPECIAL_RELATIONS.mappings)
   .set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings)
+  .set(HIT_SLIDE_RELATIONS.stateId, HIT_SLIDE_RELATIONS.mappings)
+  .set(HIT_FLINCH_RELATIONS.stateId, HIT_FLINCH_RELATIONS.mappings)
   .set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings)
   .set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings)
   .set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings)
@@ -247,16 +258,17 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
   .set(
     SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
-    SHIELD_BREAK_TUMBLE_RELATIONS.mappings
+    SHIELD_BREAK_TUMBLE_RELATIONS.mappings,
   )
   .set(
     SHIELD_BREAK_LAND_RELATIONS.stateId,
-    SHIELD_BREAK_LAND_RELATIONS.mappings
+    SHIELD_BREAK_LAND_RELATIONS.mappings,
   )
   .set(
     SHIELD_BREAK_DIZZY_RELATIONS.stateId,
-    SHIELD_BREAK_DIZZY_RELATIONS.mappings
-  );
+    SHIELD_BREAK_DIZZY_RELATIONS.mappings,
+  )
+  .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -303,6 +315,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(DownSpecialAerial.StateId, DownSpecialAerial)
   .set(UpSpecial.StateId, UpSpecial)
   .set(HitStop.StateId, HitStop)
+  .set(HitSlide.StateId, HitSlide)
+  .set(HitFlinch.StateId, HitFlinch)
   .set(Tumble.StateId, Tumble)
   .set(Launch.StateId, Launch)
   .set(Crouch.StateId, Crouch)
@@ -316,7 +330,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(ShieldBreak.StateId, ShieldBreak)
   .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
   .set(ShieldBreakLand.StateId, ShieldBreakLand)
-  .set(dizzy.StateId, dizzy);
+  .set(Dizzy.StateId, Dizzy)
+  .set(WallKick.StateId, WallKick);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)

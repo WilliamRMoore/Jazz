@@ -5,6 +5,8 @@ import {
 } from '../game/engine/debug/debugUtils';
 import { JazzDebugger } from '../game/engine/debug/jazzDebugWrapper';
 import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { RawToNumber } from '../game/engine/math/fixedPoint';
+import { RecordIntoHistory } from '../game/engine/systems/history';
 
 // Helper to find a node in the tree by its label.
 // It performs a depth-first search starting from the given tree node.
@@ -58,6 +60,7 @@ describe('DebugUtils', () => {
 
     // 2. Get the snapshot
     const snapshot = playerDebugger.LiveStateData;
+    RecordIntoHistory(playerDebugger.Player!, snapshot);
 
     // 3. Structure the snapshot for printing
     const debugTree = StructurePlayerSnapShotForPrinting(snapshot);
@@ -114,8 +117,7 @@ describe('DebugUtils', () => {
     const ecbBottomYNode = findNode(ecbBottomNode!, 'Y:');
     expect(ecbBottomYNode).toBeDefined();
 
-    const expectedEcbBottomY =
-      snapshot.Ecb.posY + snapshot.Ecb.ecbShape.yOffset.AsNumber;
+    const expectedEcbBottomY = RawToNumber(snapshot.comp_ecbDiamond[0].yRaw);
     expect(ecbBottomYNode!.data).toBe(expectedEcbBottomY);
   });
 });

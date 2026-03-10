@@ -1,21 +1,8 @@
 import { FixedPoint } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { ToFV } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type PositionSnapShot = { X: number; Y: number };
-
-export type readonlyFp = { get AsNumber(): number; get Raw(): number };
-
-export interface GlobalRootRef {
-  readonly X: readonlyFp;
-  readonly Y: readonlyFp;
-  readonly PX: readonlyFp;
-  readonly PY: readonlyFp;
-}
-
-// Player Components
-export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
+export class PositionComponent {
   private readonly p: FlatVec = ToFV(0, 0);
 
   public get X(): FixedPoint {
@@ -34,20 +21,22 @@ export class PositionComponent implements IHistoryEnabled<PositionSnapShot> {
     this.p.Y.SetFromFp(val);
   }
 
+  public get Ref(): FlatVec {
+    return this.p;
+  }
+
   public SetFromFv(fv: FlatVec) {
     this.p.X.SetFromFp(fv.X);
     this.p.Y.SetFromFp(fv.Y);
   }
 
-  public SnapShot(): PositionSnapShot {
-    return {
-      X: this.p.X.AsNumber,
-      Y: this.p.Y.AsNumber,
-    };
-  }
-
-  public SetFromSnapShot(snapShot: PositionSnapShot): void {
-    this.p.X.SetFromNumber(snapShot.X);
-    this.p.Y.SetFromNumber(snapShot.Y);
+  public set CompState(state: PositionHist) {
+    this.p.X.SetFromRaw(state.posXRaw);
+    this.p.Y.SetFromRaw(state.posYRaw);
   }
 }
+
+export type PositionHist = {
+  posXRaw: number;
+  posYRaw: number;
+};

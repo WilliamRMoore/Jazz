@@ -89,7 +89,6 @@ export function IntersectsPolygons(
     // Project verticies for both polygons.
 
     const vaProj = projectVerticies(verticiesA, axis, projResPool);
-
     const vbProj = projectVerticies(verticiesB, axis, projResPool);
 
     if (
@@ -369,13 +368,11 @@ export function projectVerticies(
 ): IProjectionResult {
   let min = MAX_RAW_VALUE;
   let max = MIN_RAW_VALUE;
-
-  for (let i = 0; i < verticies.length; i++) {
+  const vLength = verticies.length;
+  for (let i = 0; i < vLength; i++) {
     const v = verticies[i];
-
     // get the projection for the given axis
     const projection = DotProductRaw(v.X.Raw, v.Y.Raw, axis.X.Raw, axis.Y.Raw);
-
     // set the minimum projection
     if (projection < min) {
       min = projection;
@@ -385,7 +382,6 @@ export function projectVerticies(
       max = projection;
     }
   }
-
   let result = projResPool.Rent();
   result.SetMinMaxRaw(min, max);
   return result;
@@ -416,9 +412,7 @@ export function LineSegmentIntersectionRaw(
   const uA = DivideRaw(numeA, denom);
   const uB = DivideRaw(numeB, denom);
 
-  const oneRaw = NumberToRaw(1);
-
-  if (uA >= 0 && uA <= oneRaw && uB >= 0 && uB <= oneRaw) {
+  if (uA >= 0 && uA <= ONE && uB >= 0 && uB <= ONE) {
     return true;
   }
 
@@ -474,22 +468,21 @@ function cross(o: FlatVec, a: FlatVec, b: FlatVec): number {
 }
 
 function comparePointsXY(a: FlatVec, b: FlatVec): number {
-  if (a.X.Equals(b.X)) {
-    const diff = a.Y.Raw - b.Y.Raw;
-    return diff;
+  if (a.X.Raw === b.X.Raw) {
+    return a.Y.Raw - b.Y.Raw;
   }
-  const diff = a.X.Raw - b.X.Raw;
-  return diff;
+  return a.X.Raw - b.X.Raw;
 }
 
 const LOWER: Array<FlatVec> = [];
 const UPPER: Array<FlatVec> = [];
-
 export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
-  if (points.length < 3) {
+  const pLength = points.length;
+
+  if (pLength < 3) {
     // A convex hull is not possible with fewer than 3 points
     LOWER.length = 0; // Clear the lower array
-    for (let i = 0; i < points.length; i++) {
+    for (let i = 0; i < pLength; i++) {
       LOWER.push(points[i]);
     }
     return LOWER;
@@ -503,7 +496,7 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
   UPPER.length = 0;
 
   // Build the lower hull
-  for (let i = 0; i < points.length; i++) {
+  for (let i = 0; i < pLength; i++) {
     const p = points[i];
     while (
       LOWER.length >= 2 &&
@@ -515,7 +508,7 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
   }
 
   // Build the upper hull
-  for (let i = points.length - 1; i >= 0; i--) {
+  for (let i = pLength - 1; i >= 0; i--) {
     const p = points[i];
     while (
       UPPER.length >= 2 &&
@@ -531,7 +524,8 @@ export function CreateConvexHull(points: Array<FlatVec>): Array<FlatVec> {
   UPPER.pop();
 
   // Concatenate upper hull into the lower array
-  for (let i = 0; i < UPPER.length; i++) {
+  const uLength = UPPER.length;
+  for (let i = 0; i < uLength; i++) {
     LOWER.push(UPPER[i]);
   }
 

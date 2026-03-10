@@ -1,15 +1,15 @@
 import { objectToMap } from './configConverter';
 
 const config = {
-  MaxPlayers: 4,
   MaxAtkBubblesPerPlayer: 25,
   MaxHurtBubblesPerPlayer: 25,
   MaxGrabBubblesPerPlayer: 25,
-  MaxSensorsPerPlayer: 10,
+  MaxSensorsPerPlayer: 25,
+  MaxHurtCapsulesPerPlayer: 25,
   PoolSizes: {
     PooledVectorCount: 1000,
     CollisionResultCount: 500,
-    ProjectionResultCount: 300,
+    ProjectionResultCount: 500,
     AttackResultCount: 100,
     ClosestPointsResultCount: 500,
     ActiveHitBubblesDTOCount: 200,
@@ -20,6 +20,9 @@ const config = {
   },
   NetWork: {
     MaxRollBackFrames: 100,
+  },
+  State: {
+    MaxFrameStorage: 1000,
   },
 };
 

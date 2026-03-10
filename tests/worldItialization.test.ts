@@ -18,9 +18,10 @@ describe('world initiliazation', () => {
   });
 
   test('stage ground initialization', () => {
-    const s = world.StageData.Stage;
+    const s = world.StageData.Stages;
     expect(s).toBeDefined();
-    const v = s.StageVerticies;
+    const v = s[0].StageVerticies;
+    expect(v).toBeDefined();
     const grnd = v.GetGround();
     expect(grnd.length).toBe(1);
     expect(grnd[0].X1.AsNumber).toBe(500);

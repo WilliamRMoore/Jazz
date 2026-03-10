@@ -1,7 +1,6 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
   Player,
-  SetPlayerPosition,
   SetPlayerPositionRaw,
 } from '../../game/engine/entity/playerOrchestrator';
 import { World } from '../../game/engine/world/world';
@@ -67,8 +66,10 @@ describe('Ledge Grab Detection system tests', () => {
     fsm.ForceState(STATE_IDS.N_FALL_S);
     p.Velocity.Y.SetFromNumber(-10); // Upward velocity
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.Update();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -80,8 +81,10 @@ describe('Ledge Grab Detection system tests', () => {
     fsm.ForceState(STATE_IDS.JUMP_S);
     p.Velocity.Y.SetFromNumber(10); // Downward velocity
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.Update();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -94,8 +97,10 @@ describe('Ledge Grab Detection system tests', () => {
     p.Velocity.Y.SetFromNumber(10);
     p.Flags.SetHitPauseFrames(10);
     p.Flags.FaceLeft();
-    p.ECB.MoveToPosition(new FixedPoint(1650), new FixedPoint(600));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(1650);
+    p.Position.Y.SetFromNumber(600);
+    p.ECB.Update();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
@@ -108,11 +113,73 @@ describe('Ledge Grab Detection system tests', () => {
     p.Velocity.Y.SetFromNumber(0);
     p.Flags.FaceLeft();
     // Position player on the ground
-    p.ECB.MoveToPosition(new FixedPoint(600), new FixedPoint(650));
-    p.LedgeDetector.MoveTo(p.Position.X, p.Position.Y);
+    p.Position.X.SetFromNumber(600);
+    p.Position.Y.SetFromNumber(650);
+    p.ECB.Update();
+    p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
     LedgeGrabDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(initialState);
+  });
+
+  test('Player does not grab an already occupied ledge', () => {
+    // Setup p2
+    const pc2 = new DefaultCharacterConfig();
+    const player2 = new Player(1, pc2);
+    w.SetPlayer(player2);
+    const p2 = w.PlayerData.Player(1)!;
+
+    // Have p1 grab the right ledge
+    const stage = w.StageData.Stages[0];
+    const rightLedge = stage.Ledges.GetRightLedge();
+    p.LedgeDetector.GrabLedge(rightLedge);
+    const fsm1 = w.PlayerData.StateMachine(p.ID);
+    fsm1.ForceState(STATE_IDS.LEDGE_GRAB_S);
+
+    // Position p2 to attempt to grab the same ledge
+    const fsm2 = w.PlayerData.StateMachine(p2.ID);
+    fsm2.ForceState(STATE_IDS.N_FALL_S); // Set state to falling
+    p2.Velocity.Y.SetFromNumber(10); // Set downward velocity
+    p2.Flags.FaceLeft(); // Face the ledge
+
+    SetPlayerPositionRaw(p2, NumberToRaw(1650), NumberToRaw(750));
+
+    LedgeGrabDetection(w);
+
+    expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.N_FALL_S);
+  });
+
+  test('Players can grab different ledges', () => {
+    // Setup p2
+    const pc2 = new DefaultCharacterConfig();
+    const player2 = new Player(1, pc2);
+    w.SetPlayer(player2);
+    const p2 = w.PlayerData.Player(1)!;
+    const fsm1 = w.PlayerData.StateMachine(p.ID);
+    const fsm2 = w.PlayerData.StateMachine(p2.ID);
+
+    // Position p1 to grab the left ledge (at x=500)
+    fsm1.ForceState(STATE_IDS.N_FALL_S);
+    p.Velocity.Y.SetFromNumber(10);
+    p.Flags.FaceRight(); // Face the ledge
+    SetPlayerPositionRaw(p, NumberToRaw(450), NumberToRaw(750));
+
+    // Position p2 to grab the right ledge (at x=1600)
+    fsm2.ForceState(STATE_IDS.N_FALL_S);
+    p2.Velocity.Y.SetFromNumber(10);
+    p2.Flags.FaceLeft(); // Face the ledge
+    SetPlayerPositionRaw(p2, NumberToRaw(1650), NumberToRaw(750));
+
+    LedgeGrabDetection(w);
+
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
+    expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
+    expect(p.LedgeDetector.GrabbedLedge).toBe(
+      w.StageData.Stages[0].Ledges.GetLeftLedge(),
+    );
+    expect(p2.LedgeDetector.GrabbedLedge).toBe(
+      w.StageData.Stages[0].Ledges.GetRightLedge(),
+    );
   });
 });

@@ -11,7 +11,6 @@ import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 
 type bubbleId = number;
 export type frameNumber = number;
@@ -24,6 +23,7 @@ export class HitBubble {
   public readonly launchAngle = new FixedPoint(0);
   public readonly activeFrames = new Set<number>();
   public readonly frameOffsets = new Map<frameNumber, FlatVec>();
+  public readonly ThresholdAngle: boolean;
 
   constructor(hbc: HitBubblesConifg) {
     this.BubbleId = hbc.BubbleId;
@@ -31,6 +31,7 @@ export class HitBubble {
     this.Priority = hbc.Priority;
     this.Radius.SetFromNumber(hbc.Radius);
     this.launchAngle.SetFromNumber(hbc.LaunchAngle);
+    this.ThresholdAngle = hbc.ThresholdAngle;
     for (const [k, v] of hbc.frameOffsets) {
       this.frameOffsets.set(k, ToFV(v.x, v.y));
       this.activeFrames.add(k);
@@ -70,6 +71,8 @@ export class HitBubble {
   }
 }
 
+//Need to know if an attack should reverse the x axis for the angle when hitting behinde
+//Need to know if an attack has a threshold angle
 export class Attack {
   public readonly AttackId: AttackId;
   public readonly Name: string;
@@ -149,13 +152,8 @@ export class Attack {
   }
 }
 
-export type AttackSnapShot = {
-  attack: Attack | undefined;
-  playersHit: Array<number> | undefined;
-};
-
-export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
-  private attacks: Map<AttackId, Attack>;
+export class AttackComponment {
+  private readonly attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
   public readonly PlayerIdsHit = new Set<number>();
 
@@ -192,32 +190,6 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
     this.currentAttack = undefined;
   }
 
-  public SnapShot(): AttackSnapShot {
-    const snapShot = {
-      attack: undefined,
-      playersHit: undefined,
-    } as AttackSnapShot;
-    if (this.currentAttack !== undefined) {
-      snapShot.attack = this.currentAttack;
-    }
-    if (this.PlayerIdsHit.size > 0) {
-      snapShot.playersHit = Array.from(this.PlayerIdsHit);
-    }
-    return snapShot;
-  }
-
-  public SetFromSnapShot(snapShot: AttackSnapShot): void {
-    this.currentAttack = snapShot.attack;
-    this.PlayerIdsHit.clear();
-    if (snapShot.playersHit !== undefined) {
-      for (let i = 0; i < snapShot.playersHit.length; i++) {
-        this.PlayerIdsHit.add(snapShot.playersHit[i]);
-      }
-    } else {
-      this.PlayerIdsHit.clear();
-    }
-  }
-
   public HitPlayer(playerID: number): void {
     this.PlayerIdsHit.add(playerID);
   }
@@ -233,4 +205,18 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
   public get _attacks(): Map<AttackId, Attack> {
     return this.attacks;
   }
+
+  public set CompState(history: ATKHist) {
+    this.currentAttack =
+      history.atkId !== undefined ? this.attacks.get(history.atkId) : undefined;
+    this.PlayerIdsHit.clear();
+    for (const p of history.playersHit) {
+      this.PlayerIdsHit.add(p);
+    }
+  }
 }
+
+export type ATKHist = {
+  atkId: AttackId | undefined;
+  playersHit: Set<number>;
+};

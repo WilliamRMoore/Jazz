@@ -4,19 +4,11 @@ import {
   NumberToRaw,
   FixedPoint,
 } from '../../math/fixedPoint';
-import { IHistoryEnabled } from '../componentHistory';
 
 const ONE = NumberToRaw(1);
 const TWO = NumberToRaw(2);
 
-export type ShieldSnapShot = {
-  CurrentRadius: number;
-  Active: boolean;
-  ShieldTiltX: number;
-  ShieldTiltY: number;
-};
-
-export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
+export class ShieldComponent {
   private readonly currentRadius = new FixedPoint(0);
   private readonly step = new FixedPoint(0);
   private readonly framesToFulll = new FixedPoint(300);
@@ -26,6 +18,7 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
   public readonly YOffsetConstant = new FixedPoint(0);
   public readonly ShieldTiltX = new FixedPoint(0);
   public readonly ShieldTiltY = new FixedPoint(0);
+  private calculatedRadius = new FixedPoint(0);
   public Active: boolean = false;
 
   constructor(radius: number, yOffset: number) {
@@ -34,22 +27,6 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     this.maxShieldOffSetRadius.SetFromNumber(DivideRaw(radius, TWO));
     this.YOffsetConstant.SetFromNumber(yOffset);
     this.step.SetDivide(this.currentRadius, this.framesToFulll);
-  }
-
-  public SnapShot(): ShieldSnapShot {
-    return {
-      CurrentRadius: this.currentRadius.AsNumber,
-      Active: this.Active,
-      ShieldTiltX: this.ShieldTiltX.AsNumber,
-      ShieldTiltY: this.ShieldTiltY.AsNumber,
-    } as ShieldSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: ShieldSnapShot): void {
-    this.Active = snapShot.Active;
-    this.currentRadius.SetFromNumber(snapShot.CurrentRadius);
-    this.ShieldTiltX.SetFromNumber(snapShot.ShieldTiltX);
-    this.ShieldTiltY.SetFromNumber(snapShot.ShieldTiltY);
   }
 
   public Grow(): void {
@@ -83,16 +60,25 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     }
   }
 
-  public CalculateCurrentRadiusRaw(triggerValueRaw: number): number {
-    const curRadRaw = this.currentRadius.Raw;
-    return CalculateRadiusFromTriggerRaw(triggerValueRaw, curRadRaw);
+  public SetCalculatedRadiusRaw(triggerRaw: number): void {
+    this.calculatedRadius.SetFromRaw(
+      CalculateRadiusFromTriggerRaw(triggerRaw, this.currentRadius.Raw),
+    );
+  }
+
+  public CalculateCurrentRadiusRaw(triggerRaw: number): number {
+    return CalculateRadiusFromTriggerRaw(triggerRaw, this.currentRadius.Raw);
+  }
+
+  public get CalculatedRadiusRaw(): number {
+    return this.calculatedRadius.Raw;
   }
 
   public get IsBroken(): boolean {
     return this.currentRadius.Raw <= 0;
   }
 
-  public get PreModeCurrentRadius(): FixedPoint {
+  public get PreModCurrentRadius(): FixedPoint {
     return this.currentRadius;
   }
 
@@ -102,7 +88,23 @@ export class ShieldComponent implements IHistoryEnabled<ShieldSnapShot> {
     this.ShieldTiltY.Zero();
     this.Active = false;
   }
+
+  public set CompState(state: ShieldHist) {
+    this.Active = state.shieldActive;
+    this.currentRadius.SetFromRaw(state.shieldRadiusRaw);
+    this.calculatedRadius.SetFromRaw(state.calcRadiusRaw);
+    this.ShieldTiltX.SetFromRaw(state.shieldTiltXRaw);
+    this.ShieldTiltY.SetFromRaw(state.shieldTiltYRaw);
+  }
 }
+
+export type ShieldHist = {
+  shieldActive: boolean;
+  shieldRadiusRaw: number;
+  calcRadiusRaw: number;
+  shieldTiltXRaw: number;
+  shieldTiltYRaw: number;
+};
 
 export function CalculateRadiusFromTriggerRaw(
   triggerValueRaw: number,

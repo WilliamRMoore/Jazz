@@ -5,7 +5,7 @@ import { DeactivatePlayerSensor } from './commands/deactivateSensor';
 import { SetJumpCount } from './commands/setJumpCount';
 import { SetPlayerSensorReactor } from './commands/setPlayerSensorReactor';
 import { SetPlayerVelocity } from './commands/setPlayerVelocity';
-import { SwicthPlayerState } from './commands/switchPlayerState';
+import { SwitchPlayerState } from './commands/switchPlayerState';
 
 export type Command = {
   commandName: string;
@@ -26,7 +26,7 @@ export const COMMAND_NAMES = new CommandNames();
 export function HandleCommand(w: World, p: Player, c: Command) {
   switch (c.commandName) {
     case COMMAND_NAMES.PLAYER_SWITCH_STATE:
-      SwicthPlayerState(w, p, c);
+      SwitchPlayerState(w, p, c);
       break;
     case COMMAND_NAMES.SENSOR_ACTIVATE:
       ActivatePlayerSensor(p, c);

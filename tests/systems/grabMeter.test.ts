@@ -1,6 +1,4 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { InputStoreLocal } from '../../game/engine/engine-state-management/Managers';
-import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,
@@ -10,10 +8,12 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw, RawToNumber } from '../../game/engine/math/fixedPoint';
 import { GrabMeter } from '../../game/engine/systems/grabMeter';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
 
 describe('GrabMeter system tests', () => {
   let w: World;
@@ -21,10 +21,10 @@ describe('GrabMeter system tests', () => {
   let p2: Player;
   let p1Sm: StateMachine;
   let p2Sm: StateMachine;
-  let p1InputStore: InputStoreLocal<InputAction>;
-  let p2InputStore: InputStoreLocal<InputAction>;
-  let h1: ComponentHistory;
-  let h2: ComponentHistory;
+  let p1InputStore: IInputStore;
+  let p2InputStore: IInputStore;
+  let h1: PlayerHistoryTable;
+  let h2: PlayerHistoryTable;
 
   beforeEach(() => {
     const defaultCharConfig = new DefaultCharacterConfig();
@@ -37,8 +37,8 @@ describe('GrabMeter system tests', () => {
     p2Sm = w.PlayerData.StateMachine(1);
     p1InputStore = w.PlayerData.InputStore(0);
     p2InputStore = w.PlayerData.InputStore(1);
-    h1 = w.HistoryData.PlayerComponentHistories[0];
-    h2 = w.HistoryData.PlayerComponentHistories[1];
+    h1 = w.HistoryData.PlayerHistoryDB[0];
+    h2 = w.HistoryData.PlayerHistoryDB[1];
     SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650));
     SetPlayerInitialPositionRaw(p2, NumberToRaw(1050), NumberToRaw(650));
     p2.Flags.FaceLeft();
@@ -117,7 +117,7 @@ describe('GrabMeter system tests', () => {
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_ESCAPE_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_ESCAPE_S);
   });
 
   test('damage should create higher max meter', () => {
@@ -128,6 +128,6 @@ describe('GrabMeter system tests', () => {
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p2InputStore.StoreInputForFrame(w.LocalFrame, p2IA);
     GrabMeter(w);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HELD_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HELD_S);
   });
 });

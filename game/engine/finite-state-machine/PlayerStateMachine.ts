@@ -1,6 +1,6 @@
 import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
-import { InputAction } from '../../input/Input';
+import { InputAction } from '../input/Input';
 
 import { ActionMappings, FSMStates } from './PlayerStates';
 import { RunCondition } from './stateConfigurations/conditions';
@@ -80,7 +80,7 @@ export class StateMachine {
 
   private runConditional(world: World, fsmInfo: FSMInfoComponent): boolean {
     const conditions = this.stateMappings
-      .get(fsmInfo.CurrentStatetId)!
+      .get(fsmInfo.CurrentStateId)!
       .GetConditions();
 
     // We have no conditionals, return
@@ -90,7 +90,7 @@ export class StateMachine {
 
     const conditionalsLength = conditions.length;
 
-    // Loop through all conditionals, if one returns a stateId, run it and return true, otherwise return false
+    // Loop through all conditionals, if one returns a stateId, change it and return true, otherwise return false
     for (let i = 0; i < conditionalsLength; i++) {
       const stateId = RunCondition(conditions[i], world, this.player.ID);
 
@@ -118,7 +118,7 @@ export class StateMachine {
 
   private runNext(
     inputAction: InputAction,
-    fsmInfo: FSMInfoComponent
+    fsmInfo: FSMInfoComponent,
   ): boolean {
     const state = this.getTranslation(inputAction.Action);
 
@@ -134,13 +134,13 @@ export class StateMachine {
   private runDefault(w: World, fsmInfo: FSMInfoComponent): boolean {
     // Check to see if we are on a default frame
     // If not, return false
-    if (this.isDefaultFrame(fsmInfo) === false) {
+    if (!this.isDefaultFrame(fsmInfo)) {
       return false;
     }
 
     const defaultTransition = this.getDefaultState(
-      this.player.FSMInfo.CurrentStatetId,
-      w
+      this.player.FSMInfo.CurrentStateId,
+      w,
     );
 
     // No default transition resolved, return false
@@ -157,7 +157,7 @@ export class StateMachine {
 
   private getTranslation(gameEventId: GameEventId): FSMState | undefined {
     const stateMappings = this.stateMappings.get(
-      this.player.FSMInfo.CurrentStatetId
+      this.player.FSMInfo.CurrentStateId,
     );
 
     const nextStateId = stateMappings?.GetMapping(gameEventId);
@@ -218,15 +218,9 @@ export class StateMachine {
 
   private isDefaultFrame(fsmInfo: FSMInfoComponent): boolean {
     const fl = fsmInfo.GetCurrentStateFrameLength();
-
-    if (fl === undefined) {
+    if (fl === undefined || fl !== fsmInfo.CurrentStateFrame) {
       return false;
     }
-
-    if (fl === fsmInfo.CurrentStateFrame) {
-      return true;
-    }
-
-    return false;
+    return true;
   }
 }

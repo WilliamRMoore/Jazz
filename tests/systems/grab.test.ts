@@ -1,6 +1,4 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { InputStoreLocal } from '../../game/engine/engine-state-management/Managers';
-import { ComponentHistory } from '../../game/engine/entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,
@@ -10,10 +8,12 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw } from '../../game/engine/math/fixedPoint';
 import { PlayerGrabs } from '../../game/engine/systems/grab';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/input/Input';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
 
 describe('Grab SystemTests', () => {
   let w: World;
@@ -21,10 +21,10 @@ describe('Grab SystemTests', () => {
   let p2: Player;
   let p1Sm: StateMachine;
   let p2Sm: StateMachine;
-  let p1InputStore: InputStoreLocal<InputAction>;
-  let p2InputStore: InputStoreLocal<InputAction>;
-  let h1: ComponentHistory;
-  let h2: ComponentHistory;
+  let p1InputStore: IInputStore;
+  let p2InputStore: IInputStore;
+  let h1: PlayerHistoryTable;
+  let h2: PlayerHistoryTable;
 
   beforeEach(() => {
     const defaultCharConfig = new DefaultCharacterConfig();
@@ -37,8 +37,8 @@ describe('Grab SystemTests', () => {
     p2Sm = w.PlayerData.StateMachine(1);
     p1InputStore = w.PlayerData.InputStore(0);
     p2InputStore = w.PlayerData.InputStore(1);
-    h1 = w.HistoryData.PlayerComponentHistories[0];
-    h2 = w.HistoryData.PlayerComponentHistories[1];
+    h1 = w.HistoryData.PlayerHistoryDB[0];
+    h2 = w.HistoryData.PlayerHistoryDB[1];
   });
 
   test('Player should transition to grab', () => {
@@ -48,7 +48,7 @@ describe('Grab SystemTests', () => {
     p1IA.Action = GAME_EVENT_IDS.GRAB_GE;
     p1InputStore.StoreInputForFrame(w.LocalFrame, p1IA);
     p1Sm.UpdateFromInput(p1IA, w);
-    expect(p1.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_S);
+    expect(p1.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_S);
   });
 
   test('Player should grab another player', () => {
@@ -65,17 +65,19 @@ describe('Grab SystemTests', () => {
       p2InputStore.StoreInputForFrame(frame, ia);
       p1Sm.UpdateFromInput(ia, w);
       p2Sm.UpdateFromInput(ia, w);
-      h1.PositionHistory[frame] =
-        (w.LocalFrame + frame, p1.Position.SnapShot());
-      h2.PositionHistory[frame] =
-        (w.LocalFrame + frame, p2.Position.SnapShot());
+      const h1State = h1.get(w.LocalFrame);
+      h1State.posXRaw = p1.Position.X.Raw;
+      h1State.posYRaw = p1.Position.Y.Raw;
+      const h2State = h2.get(w.LocalFrame);
+      h2State.posXRaw = p2.Position.X.Raw;
+      h2State.posYRaw = p2.Position.Y.Raw;
       w.LocalFrame++;
     }
 
     PlayerGrabs(w);
 
-    expect(p1.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HOLD_S);
-    expect(p2.FSMInfo.CurrentStatetId).toBe(STATE_IDS.GRAB_HELD_S);
+    expect(p1.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HOLD_S);
+    expect(p2.FSMInfo.CurrentStateId).toBe(STATE_IDS.GRAB_HELD_S);
     expect(p2.GrabMeter.HoldingPlayerId).toBe(p1.ID);
     expect(p2.Flags.IsFacingLeft).toBe(true);
   });

@@ -1,7 +1,6 @@
-import { IJazz } from '../engine/jazz';
 import { DebugRenderer, resolution, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
-import { GetInput, NewInputAction } from '../input/Input';
+import { GetInput, NewInputAction } from '../engine/input/Input';
 import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
@@ -10,6 +9,7 @@ import { DefaultCharacterConfig } from '../character/default';
 import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
+import { IJazzLocal } from '../engine/jazz/jazzLocal';
 
 const frameInterval = 1000 / 60;
 
@@ -68,7 +68,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   RENDER_LOOP(engine);
 }
 
-function LOGIC_LOOP(engine: IJazz, gpInfo: Array<playerControllerInfo>) {
+function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
   const logicLoopHandle = setInterval(() => {
     logicStep(engine, gpInfo);
   }, frameInterval);
@@ -91,11 +91,14 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
   SHOW_DEBUG_INFO(dbRenderer);
   RENDERFPS60Loop((timeStamp: number) => {
-    dbRenderer.render(jazzDebugger, timeStamp);
+    dbRenderer.render(jazzDebugger.World, timeStamp);
   });
 }
 
-function logicStep(engine: IJazz, gamePadInfo: Array<playerControllerInfo>) {
+function logicStep(
+  engine: IJazzLocal,
+  gamePadInfo: Array<playerControllerInfo>,
+) {
   //const gamePadCount = gamePadInfo.length;
   const w = engine.World;
   const playerCount = w?.PlayerData.PlayerCount!;
@@ -109,7 +112,7 @@ function logicStep(engine: IJazz, gamePadInfo: Array<playerControllerInfo>) {
     }
     const gpI = info.inputIndex;
     const pi = info.playerIndex;
-    const input = GetInput(gpI, w!);
+    const input = GetInput(gpI);
     engine.UpdateInputForCurrentFrame(input, pi);
   }
   engine.Tick();

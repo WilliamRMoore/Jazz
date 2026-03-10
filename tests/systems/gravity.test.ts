@@ -27,7 +27,10 @@ describe('Gravity system tests', () => {
 
   test('Gravity is applied when player is in the air', () => {
     // position player in the air
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
+    p.Position.Y.SetFromNumber(-100);
+    p.Position.X.SetFromNumber(0);
+    p.ECB.Update();
+    p.LedgeDetector.MoveToPos();
     const initialVelocityY = p.Velocity.Y.Raw;
 
     Gravity(w);
@@ -37,7 +40,9 @@ describe('Gravity system tests', () => {
 
   test('Gravity is not applied when player is on the ground', () => {
     // position player on the ground
-    p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650));
+    p.Position.Y.SetFromNumber(650);
+    p.Position.X.SetFromNumber(500);
+    p.ECB.Update();
     const initialVelocityY = p.Velocity.Y.Raw;
 
     Gravity(w);
@@ -51,7 +56,9 @@ describe('Gravity system tests', () => {
       STATE_IDS.LEDGE_GRAB_S,
       STATE_IDS.HIT_STOP_S,
     ];
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
+    p.Position.Y.SetFromNumber(-100);
+    p.Position.X.SetFromNumber(0);
+    p.ECB.Update();
 
     for (const state of states) {
       p.FSMInfo.SetCurrentState({ StateId: state } as any);
@@ -62,7 +69,9 @@ describe('Gravity system tests', () => {
   });
 
   test('Gravity is not applied when in hit pause', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
+    p.Position.Y.SetFromNumber(-100);
+    p.Position.X.SetFromNumber(0);
+    p.ECB.Update();
     p.Flags.SetHitPauseFrames(10);
     const initialVelocityY = p.Velocity.Y.Raw;
 
@@ -82,7 +91,9 @@ describe('Gravity system tests', () => {
       p.Attacks['_attacks'].set(ATTACK_IDS.N_GRND_ATK, newAttack);
       p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.ATTACK_GE);
 
-      p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
+      p.Position.Y.SetFromNumber(-100);
+      p.Position.X.SetFromNumber(0);
+      p.ECB.Update();
       const initialVelocityY = p.Velocity.Y.Raw;
 
       Gravity(w);
@@ -93,7 +104,9 @@ describe('Gravity system tests', () => {
   });
 
   test('Gravity is applied with fast falling', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100));
+    p.Position.Y.SetFromNumber(-100);
+    p.Position.X.SetFromNumber(0);
+    p.ECB.Update();
     p.Flags.FastFallOn();
     const initialVelocityY = p.Velocity.Y.Raw;
 

@@ -1,16 +1,4 @@
-import { IHistoryEnabled } from '../componentHistory';
-
-export type FlagsSnapShot = {
-  FacingRight: boolean;
-  FastFalling: boolean;
-  HitPauseFrames: number;
-  IntangabilityFrames: number;
-  DisablePlatDetection: number;
-  VeloctyDecay: boolean;
-  ShieldJump: boolean;
-};
-
-export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
+export class PlayerFlagsComponent {
   private facingRight: boolean = false;
   private fastFalling: boolean = false;
   private hitPauseFrames: number = 0;
@@ -87,10 +75,6 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     this.shieldJump = true;
   }
 
-  public get JumpedFromShield(): boolean {
-    return this.shieldJump;
-  }
-
   public ResetJumpFromShield(): void {
     this.shieldJump = false;
   }
@@ -123,6 +107,18 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return this.disablePlatformDetection > 0;
   }
 
+  public get JumpedFromShield(): boolean {
+    return this.shieldJump;
+  }
+
+  public get HitPauseFrames(): number {
+    return this.hitPauseFrames;
+  }
+
+  public get DisablePlatDetectionFrames(): number {
+    return this.disablePlatformDetection;
+  }
+
   public GetIntangabilityFrames(): number {
     return this.intangabilityFrames;
   }
@@ -131,25 +127,23 @@ export class PlayerFlagsComponent implements IHistoryEnabled<FlagsSnapShot> {
     return !this.velocityDecayActive;
   }
 
-  public SnapShot(): FlagsSnapShot {
-    return {
-      FacingRight: this.facingRight,
-      FastFalling: this.fastFalling,
-      HitPauseFrames: this.hitPauseFrames,
-      IntangabilityFrames: this.intangabilityFrames,
-      DisablePlatDetection: this.disablePlatformDetection,
-      VeloctyDecay: this.velocityDecayActive,
-      ShieldJump: this.shieldJump,
-    } as FlagsSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: FlagsSnapShot): void {
-    this.fastFalling = snapShot.FastFalling;
-    this.facingRight = snapShot.FacingRight;
-    this.hitPauseFrames = snapShot.HitPauseFrames;
-    this.intangabilityFrames = snapShot.IntangabilityFrames;
-    this.disablePlatformDetection = snapShot.DisablePlatDetection;
-    this.velocityDecayActive = snapShot.VeloctyDecay;
-    this.shieldJump = snapShot.ShieldJump;
+  public set CompState(history: FlagsHist) {
+    this.facingRight = history.facingRight;
+    this.fastFalling = history.fasFalling;
+    this.hitPauseFrames = history.hitPauseFrames;
+    this.intangabilityFrames = history.intangabilityFrames;
+    this.disablePlatformDetection = history.disablePlatformDetectionFrames;
+    this.velocityDecayActive = history.velocityDecayActive;
+    this.shieldJump = history.shieldJump;
   }
 }
+
+export type FlagsHist = {
+  facingRight: boolean;
+  fasFalling: boolean;
+  hitPauseFrames: number;
+  intangabilityFrames: number;
+  disablePlatformDetectionFrames: number;
+  velocityDecayActive: boolean;
+  shieldJump: boolean;
+};

@@ -10,7 +10,6 @@ import { FlatVec } from '../../physics/vector';
 import {
   Player,
   AddToPlayerYPositionRaw,
-  AddToPlayerXPostionRaw,
 } from '../../entity/playerOrchestrator';
 import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
@@ -175,9 +174,9 @@ export const JumpSquat: FSMState = {
   StateId: STATE_IDS.JUMP_SQUAT_S,
   OnEnter: (p: Player, w: World) => {
     p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
-    const pHist = w.GetComponentHistory(p.ID);
-    const lastState = pHist?.FsmInfoHistory[w.PreviousFrame]!;
-    if (lastState.State.StateId === STATE_IDS.SHIELD_S) {
+    const pHist = w.HistoryData.PlayerHistoryDB[p.ID].get(w.PreviousFrame); //w.GetComponentHistory(p.ID);
+    const lastState = pHist.stateId;
+    if (lastState === STATE_IDS.SHIELD_S) {
       p.Flags.JumpFromShield();
     }
   },
@@ -266,10 +265,12 @@ export const LedgeGrab: FSMState = {
     jumpComp.IncrementJumps();
     ledgeDetectorComp.IncrementLedgeGrabs();
     p.ECB.SetECBShape(STATE_IDS.LEDGE_GRAB_S);
+    p.Flags.SetIntangabilityFrames(30);
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
+    p.LedgeDetector.ReleaseLedge();
   },
 };
 
@@ -434,6 +435,7 @@ export const Shield: FSMState = {
     const triggerValue =
       input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
     s.ShrinkRaw(triggerValue);
+    s.SetCalculatedRadiusRaw(triggerValue);
     // tilt shield
     const lxAxis = input.LXAxis;
     const lyAxis = input.LYAxis;
@@ -469,6 +471,7 @@ export const Shield: FSMState = {
     p.Shield.Active = false;
     p.Shield.ShieldTiltX.Zero();
     p.Shield.ShieldTiltY.Zero();
+    p.Shield.SetCalculatedRadiusRaw(0);
   },
 };
 
@@ -978,7 +981,7 @@ export const ShieldBreakLand: FSMState = {
   },
 };
 
-export const dizzy: FSMState = {
+export const Dizzy: FSMState = {
   StateName: 'Dizzy',
   StateId: STATE_IDS.DIZZY_S,
   OnEnter: (p: Player, w: World) => {
@@ -990,44 +993,144 @@ export const dizzy: FSMState = {
   },
 };
 
-export const legdeGetUp: FSMState = {
-  StateName: 'LedgeGetUp',
-  StateId: STATE_IDS.LEDGE_GUA_S,
+// export const legdeGetUp: FSMState = {
+//   StateName: 'LedgeGetUp',
+//   StateId: STATE_IDS.LEDGE_GUA_S,
+//   OnEnter: (p: Player, w: World) => {
+//     p.ECB.SetECBShape(STATE_IDS.LEDGE_GUA_S);
+//     p.Velocity.X.Zero();
+//     p.Velocity.Y.Zero();
+//   },
+//   OnUpdate: (p: Player, w: World) => {
+//     const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
+//     const currentFrame = p.FSMInfo.CurrentStateFrame;
+//     const remainingFrames = framesToStage - currentFrame;
+
+//     const stage = w.StageData.Stages;
+//     const ground = stage.StageVerticies.GetGround();
+//     let targetXRaw = 0;
+//     let targetYRaw = 0;
+
+//     if (p.Flags.IsFacingRight) {
+//       const leftCorner = ground[0];
+//       targetXRaw = leftCorner.X1.Raw;
+//       targetYRaw = leftCorner.Y1.Raw;
+//     } else {
+//       const rightCorner = ground[ground.length - 1];
+//       targetXRaw = rightCorner.X2.Raw;
+//       targetYRaw = rightCorner.Y2.Raw;
+//     }
+
+//     const diffXRaw = targetXRaw - p.Position.X.Raw;
+//     const diffYRaw = targetYRaw - p.Position.Y.Raw;
+//     const remainingFramesRaw = NumberToRaw(remainingFrames);
+
+//     const stepXRaw = DivideRaw(diffXRaw, remainingFramesRaw);
+//     const stepYRaw = DivideRaw(diffYRaw, remainingFramesRaw);
+
+//     AddToPlayerXPostionRaw(p, stepXRaw);
+//     AddToPlayerYPositionRaw(p, stepYRaw);
+//   },
+//   OnExit: (p: Player, w: World) => {
+//     p.ECB.ResetECBShape();
+//   },
+// };
+
+export const WallKick: FSMState = {
+  StateName: 'WallSlide',
+  StateId: STATE_IDS.WALL_KICK_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.LEDGE_GUA_S);
+    p.ECB.SetECBShape(STATE_IDS.WALL_KICK_S);
+    p.Flags.FastFallOff();
+    p.Velocity.Y.SetFromRaw(0);
+    p.Velocity.X.SetFromRaw(0);
+    const stateLength = p.FSMInfo.GetCurrentStateFrameLength() ?? 10;
+    p.Flags.SetIntangabilityFrames(stateLength - 3);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    if (p.FSMInfo.CurrentStateFrame == 4) {
+      const xVel = p.Flags.IsFacingRight
+        ? p.Speeds.WallKickVelocityXRaw
+        : -p.Speeds.WallKickVelocityXRaw;
+      p.Velocity.X.SetFromRaw(xVel);
+      p.Velocity.Y.SetFromRaw(-p.Speeds.WallKickVelocityYRaw);
+    }
+  },
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const HitSlide: FSMState = {
+  StateName: 'HitSlide',
+  StateId: STATE_IDS.HIT_SLIDE_S,
+  OnEnter: (p: Player, w: World) => {
+    const pVel = p.Velocity;
+    const hitStun = p.HitStun;
+    pVel.X = hitStun.VX;
+    pVel.Y = hitStun.VY;
+    p.ECB.SetECBShape(STATE_IDS.HIT_SLIDE_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    p.HitStun.DecrementHitStun();
+  },
+  OnExit: (p: Player, w: World) => {
+    p.HitStun.Zero();
+  },
+};
+
+export const HitFlinch: FSMState = {
+  StateName: 'HitFlinch',
+  StateId: STATE_IDS.HIT_FLINCH_S,
+  OnEnter: (p: Player, w: World) => {
+    const pVel = p.Velocity;
+    const hitStun = p.HitStun;
+    pVel.X = hitStun.VX;
+    pVel.Y = hitStun.VY;
+    p.ECB.SetECBShape(STATE_IDS.HIT_FLINCH_S);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    p.HitStun.DecrementHitStun();
+  },
+  OnExit: (p: Player, w: World) => {
+    p.HitStun.Zero();
+  },
+};
+
+export const GroundSlam: FSMState = {
+  StateName: 'GroundSlam',
+  StateId: STATE_IDS.GRND_SLAM_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.GRND_SLAM_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const WallSlam: FSMState = {
+  StateName: 'WallSlam',
+  StateId: STATE_IDS.WALL_SLAM_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.WALL_SLAM_S);
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+  },
+};
+
+export const TechInPlace: FSMState = {
+  StateName: 'TechInPlace',
+  StateId: STATE_IDS.TECH_IN_PLACE_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.TECH_IN_PLACE_S);
+    p.Flags.SetIntangabilityFrames(20);
     p.Velocity.X.Zero();
     p.Velocity.Y.Zero();
   },
-  OnUpdate: (p: Player, w: World) => {
-    const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
-    const currentFrame = p.FSMInfo.CurrentStateFrame;
-    const remainingFrames = framesToStage - currentFrame;
-
-    const stage = w.StageData.Stage;
-    const ground = stage.StageVerticies.GetGround();
-    let targetXRaw = 0;
-    let targetYRaw = 0;
-
-    if (p.Flags.IsFacingRight) {
-      const leftCorner = ground[0];
-      targetXRaw = leftCorner.X1.Raw;
-      targetYRaw = leftCorner.Y1.Raw;
-    } else {
-      const rightCorner = ground[ground.length - 1];
-      targetXRaw = rightCorner.X2.Raw;
-      targetYRaw = rightCorner.Y2.Raw;
-    }
-
-    const diffXRaw = targetXRaw - p.Position.X.Raw;
-    const diffYRaw = targetYRaw - p.Position.Y.Raw;
-    const remainingFramesRaw = NumberToRaw(remainingFrames);
-
-    const stepXRaw = DivideRaw(diffXRaw, remainingFramesRaw);
-    const stepYRaw = DivideRaw(diffYRaw, remainingFramesRaw);
-
-    AddToPlayerXPostionRaw(p, stepXRaw);
-    AddToPlayerYPositionRaw(p, stepYRaw);
-  },
+  OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.ECB.ResetECBShape();
   },
@@ -1047,7 +1150,6 @@ export const legdeGetUp: FSMState = {
  * neutralSpecial EX
  * upSpecial EX
  * tech
- * wallSlide
  * wallKick
  * dirtNap
  * groundRecover

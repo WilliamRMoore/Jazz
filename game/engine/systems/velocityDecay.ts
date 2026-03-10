@@ -1,14 +1,14 @@
-import { NumberToRaw } from '../math/fixedPoint';
 import { PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
+import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { DivideRaw } from '../math/fixedPoint';
+import { POINT_TWO, TWO } from '../math/numberConstants';
 import { World } from '../world/world';
-
-const POINT_TWO = NumberToRaw(0.2);
 
 export function ApplyVelocityDecay(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
-  const stage = stageData.Stage;
+  const stage = stageData.Stages;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex)!;
     const flags = p.Flags;
@@ -17,7 +17,16 @@ export function ApplyVelocityDecay(world: World): void {
       continue;
     }
 
-    const grounded = PlayerOnStageOrPlats(stage, p);
+    //const grounded = PlayerOnStageOrPlats(stage, p);
+    let grounded = false;
+    const stagesLength = stage.length;
+    for (let i = 0; i < stagesLength; i++) {
+      const stagePiece = stage[i];
+      grounded = PlayerOnStageOrPlats(stagePiece, p);
+      if (grounded) {
+        break;
+      }
+    }
     const playerVelocity = p.Velocity;
     const pvxRaw = playerVelocity.X.Raw;
     const pvyRaw = playerVelocity.Y.Raw;

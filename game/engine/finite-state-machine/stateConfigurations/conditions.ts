@@ -1,5 +1,5 @@
-import { InputAction } from '../../../input/Input';
-import { InputStoreLocal } from '../../engine-state-management/Managers';
+import { InputAction } from '../../input/Input';
+import { IInputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
@@ -1039,18 +1039,76 @@ export const ToDownTilt: condition = {
   StateId: STATE_IDS.DOWN_TILT_S,
 };
 
+export const HitStopToFlinch: condition = {
+  Name: 'HitStopToFlinch',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStop.Frames > 0) {
+      return false;
+    }
+    if (p.HitStun.NextStateId === STATE_IDS.HIT_FLINCH_S) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.HIT_FLINCH_S,
+};
+
+export const HitStopToHitSlide: condition = {
+  Name: 'HitStopToHitSlide',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+
+    if (p.HitStop.Frames > 0) {
+      return false;
+    }
+
+    if (p.HitStun.NextStateId === STATE_IDS.HIT_SLIDE_S) {
+      return true;
+    }
+
+    return false;
+  },
+  StateId: STATE_IDS.HIT_SLIDE_S,
+};
+
 export const HitStopToLaunch: condition = {
   Name: 'HitStopToLaunch',
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
-
-    if (p.HitStop.HitStopFrames > 0) {
+    if (p.HitStop.Frames > 0) {
       return false;
     }
-
-    return true;
+    if (p.HitStun.NextStateId === STATE_IDS.LAUNCH_S) {
+      return true;
+    }
+    return false;
   },
   StateId: STATE_IDS.LAUNCH_S,
+};
+
+export const HitSlideToIdle: condition = {
+  Name: 'HitSlideToIdle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStun.Frames > 0) {
+      return false;
+    }
+    return true;
+  },
+  StateId: STATE_IDS.IDLE_S,
+};
+
+export const FlinchToFall: condition = {
+  Name: 'FlinchToFall',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const p = w.PlayerData.Player(playerIndex)!;
+    if (p.HitStun.Frames > 0) {
+      return false;
+    }
+    return true;
+  },
+  StateId: STATE_IDS.N_FALL_S,
 };
 
 export const LaunchToTumble: condition = {
@@ -1058,7 +1116,7 @@ export const LaunchToTumble: condition = {
   ConditionFunc: (w: World, playerIndex: number) => {
     const p = w.PlayerData.Player(playerIndex)!;
 
-    if (p.HitStun.FramesOfHitStun > 0) {
+    if (p.HitStun.Frames > 0) {
       return false;
     }
 
@@ -1196,6 +1254,16 @@ export const ToRollDodge: condition = {
   StateId: STATE_IDS.ROLL_DODGE_S,
 };
 
+// export const ToTechInPlace: condition = {
+//   Name: 'ToTechInPlace',
+//   ConditionFunc: (w: World, playerIndex: number) => {
+//     const ips = w.PlayerData.InputStore(playerIndex);
+//     const curFrame = w.LocalFrame;
+//     const bufferFrames = 7;
+//   },
+//   StateId: STATE_IDS.TECH_IN_PLACE_S,
+// };
+
 export const shieldBreakDefaultShieldTumble: condition = {
   Name: 'ShieldBreakToShieldLaunch',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1297,6 +1365,14 @@ export const defaultHelpess: condition = {
   StateId: STATE_IDS.HELPLESS_S,
 };
 
+export const defaultTumble: condition = {
+  Name: 'DefaultTubmle',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.TUMBLE_S,
+};
+
 export const defaultSideChargeEx: condition = {
   Name: 'DefaultSideChargeEx',
   ConditionFunc: (w: World, playerIndex: number) => {
@@ -1342,7 +1418,7 @@ function inputActionMacthesTargetNotRepeating(
 }
 
 function isBufferedInput(
-  inputStore: InputStoreLocal<InputAction>,
+  inputStore: IInputStore,
   currentFrame: number,
   bufferFrames: number,
   targetGameEvent: GameEventId,

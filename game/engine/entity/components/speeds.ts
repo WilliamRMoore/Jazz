@@ -16,6 +16,9 @@ export class SpeedsComponent {
   public readonly GravityRaw: number;
   public readonly DashMultiplierRaw: number;
   public readonly MaxDashSpeedRaw: number;
+  public readonly WallKickVelocityXRaw: number;
+  public readonly WallKickVelocityYRaw: number;
+
   // Might need a general Aerial speed limit for each character
 
   constructor(
@@ -33,7 +36,9 @@ export class SpeedsComponent {
     fallSpeed: FixedPoint,
     dashMultiplier: FixedPoint,
     maxDashSpeed: FixedPoint,
-    gravity: FixedPoint
+    gravity: FixedPoint,
+    wallKickVelocityX: FixedPoint,
+    wallKickVelocityY: FixedPoint,
   ) {
     this.GroundedVelocityDecayRaw = grndSpeedVelDecay.Raw;
     this.AerialVelocityDecayRaw = aerialVelocityDecay.Raw;
@@ -50,6 +55,8 @@ export class SpeedsComponent {
     this.DashMultiplierRaw = dashMultiplier.Raw;
     this.MaxDashSpeedRaw = maxDashSpeed.Raw;
     this.GravityRaw = gravity.Raw;
+    this.WallKickVelocityXRaw = wallKickVelocityX.Raw;
+    this.WallKickVelocityYRaw = wallKickVelocityY.Raw;
   }
 }
 
@@ -69,11 +76,15 @@ export class SpeedsComponentConfigBuilder {
   private readonly fastFallSpeed: FixedPoint = new FixedPoint();
   private readonly fallSpeed: FixedPoint = new FixedPoint();
   private readonly gravity: FixedPoint = new FixedPoint();
+  private readonly wallKcikVelocityX: FixedPoint = new FixedPoint();
+  private readonly wallKcikVelocityY: FixedPoint = new FixedPoint();
+
+  constructor() {}
 
   SetAerialSpeeds(
     aerialVelocityDecay: number,
     aerialSpeedImpulseLimit: number,
-    aerialSpeedMultiplier: number
+    aerialSpeedMultiplier: number,
   ) {
     this.aerialVelocityDecay.SetFromNumber(aerialVelocityDecay);
     this.aerialSpeedInpulseLimit.SetFromNumber(aerialSpeedImpulseLimit);
@@ -85,10 +96,15 @@ export class SpeedsComponentConfigBuilder {
     this.dodgeRollSpeed.SetFromNumber(dodgeRollSpeed);
   }
 
+  SetWallKickVelocity(x: number, y: number): void {
+    this.wallKcikVelocityX.SetFromNumber(x);
+    this.wallKcikVelocityY.SetFromNumber(y);
+  }
+
   SetFallSpeeds(
     fastFallSpeed: number,
     fallSpeed: number,
-    gravity: number = 1
+    gravity: number = 1,
   ): void {
     this.fallSpeed.SetFromNumber(fallSpeed);
     this.fastFallSpeed.SetFromNumber(fastFallSpeed);
@@ -130,7 +146,9 @@ export class SpeedsComponentConfigBuilder {
       this.fallSpeed,
       this.dashMutiplier,
       this.maxDashSpeed,
-      this.gravity
+      this.gravity,
+      this.wallKcikVelocityX,
+      this.wallKcikVelocityY,
     );
   }
 }

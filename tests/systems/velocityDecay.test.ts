@@ -46,7 +46,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('Grounded velocity decay for X velocity', () => {
-    p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650)); // On ground
+    p.Position.X.SetFromNumber(500);
+    p.Position.Y.SetFromNumber(650);
+    p.ECB.Update(); // On ground
     p.Velocity.X.SetFromNumber(10); // Positive X velocity
     const decayAmount = p.Speeds.GroundedVelocityDecayRaw;
 
@@ -61,7 +63,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('Grounded velocity Y is set to zero if positive', () => {
-    p.ECB.MoveToPosition(new FixedPoint(500), new FixedPoint(650)); // On ground
+    p.Position.X.SetFromNumber(500);
+    p.Position.Y.SetFromNumber(650);
+    p.ECB.Update(); // On ground
     p.Velocity.Y.SetFromNumber(10); // Positive Y velocity
 
     ApplyVelocityDecay(w);
@@ -70,7 +74,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('Aerial velocity decay for X velocity', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
+    p.Position.X.SetFromNumber(0);
+    p.Position.Y.SetFromNumber(-100);
+    p.ECB.Update(); // In air
     p.Velocity.X.SetFromNumber(10);
     const decayAmount = p.Speeds.AerialVelocityDecayRaw;
 
@@ -83,7 +89,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('Aerial velocity decay for Y velocity (positive, greater than fall speed)', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
+    p.Position.X.SetFromNumber(0);
+    p.Position.Y.SetFromNumber(-100);
+    p.ECB.Update(); // In air
     p.Velocity.Y.SetFromNumber(NumberToRaw(20)); // Positive Y velocity, greater than default fall speed
     const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
@@ -94,7 +102,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('Aerial velocity decay for Y velocity (negative)', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
+    p.Position.X.SetFromNumber(0);
+    p.Position.Y.SetFromNumber(-100);
+    p.ECB.Update(); // In air
     p.Velocity.Y.SetFromNumber(-10); // Negative Y velocity
     const aerialDecay = p.Speeds.AerialVelocityDecayRaw;
     const initialVel = p.Velocity.Y.Raw;
@@ -105,7 +115,9 @@ describe('Velocity Decay system tests', () => {
   });
 
   test('X velocity is zeroed if it falls below threshold', () => {
-    p.ECB.MoveToPosition(new FixedPoint(0), new FixedPoint(-100)); // In air
+    p.Position.X.SetFromNumber(0);
+    p.Position.Y.SetFromNumber(-100);
+    p.ECB.Update(); // In air
     p.Velocity.X.SetFromRaw(NumberToRaw(0.1)); // Small X velocity
     ApplyVelocityDecay(w);
     expect(p.Velocity.X.Raw).toBe(0);

@@ -55,6 +55,7 @@ class GAME_EVENTS {
   public readonly GUARD_GE = seq.Next as GameEventId;
   public readonly UP_GE = seq.Next as GameEventId;
   public readonly DOWN_GE = seq.Next as GameEventId;
+  public readonly WALL_KICK_GE = seq.Next as GameEventId;
   // End of GameEvents that can be sourced from player input
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
@@ -68,6 +69,8 @@ class GAME_EVENTS {
   public readonly LAUNCH_GE = seq.Next as GameEventId;
   public readonly TUBMLE_GE = seq.Next as GameEventId;
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
+  public readonly WALL_SLAM_GE = seq.Next as GameEventId;
+  public readonly GRND_SLAM_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -139,6 +142,15 @@ class STATES {
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
   public readonly LEDGE_RECOVER_S = seq.Next as StateId;
   public readonly LEDGE_GUA_S = seq.Next as StateId;
+  public readonly WALL_KICK_S = seq.Next as StateId;
+  public readonly HIT_SLIDE_S = seq.Next as StateId;
+  public readonly HIT_FLINCH_S = seq.Next as StateId;
+  public readonly GRND_SLAM_S = seq.Next as StateId;
+  public readonly WALL_SLAM_S = seq.Next as StateId;
+  public readonly DIRT_NAP_S = seq.Next as StateId;
+  public readonly TECH_IN_PLACE_S = seq.Next as StateId;
+  public readonly ROLL_TECH_S = seq.Next as StateId;
+  public readonly WALL_TECH_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -196,9 +208,16 @@ Object.entries(STATE_IDS).forEach(([key, value]) => {
   StateIdToNameMap.set(value, key);
 });
 
+export const GameEventNameMap = new Map<GrabId, string>();
+Object.entries(GAME_EVENT_IDS).forEach(([key, value]) => {
+  GameEventNameMap.set(value, key);
+});
+
 export const AttackIdToNameMap = new Map<AttackId, string>();
+export const AttackIdValues = new Set<AttackId>();
 Object.entries(ATTACK_IDS).forEach(([key, value]) => {
   AttackIdToNameMap.set(value, key);
+  AttackIdValues.add(value);
 });
 
 export const GrabIdToNameMap = new Map<GrabId, string>();
@@ -233,6 +252,87 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
       return false;
     default:
       return true;
+  }
+}
+
+export function IsStateNecessarilyGrounded(stateId: StateId) {
+  switch (stateId) {
+    case STATE_IDS.JUMP_SQUAT_S:
+    case STATE_IDS.IDLE_S:
+    case STATE_IDS.WALK_S:
+    case STATE_IDS.TURN_S:
+    case STATE_IDS.DASH_S:
+    case STATE_IDS.DASH_ATTACK_S:
+    case STATE_IDS.DASH_TURN_S:
+    case STATE_IDS.RUN_S:
+    case STATE_IDS.RUN_TURN_S:
+    case STATE_IDS.STOP_RUN_S:
+    case STATE_IDS.STOP_RUN_TURN_S:
+    case STATE_IDS.SHIELD_RAISE_S:
+    case STATE_IDS.SHIELD_S:
+    case STATE_IDS.SHIELD_DROP_S:
+    case STATE_IDS.SHIELD_BREAK_LAND_S:
+    case STATE_IDS.DIZZY_S:
+    case STATE_IDS.CROUCH_S:
+    case STATE_IDS.ROLL_DODGE_S:
+    case STATE_IDS.SPOT_DODGE_S:
+    case STATE_IDS.GRAB_S:
+    case STATE_IDS.GRAB_HOLD_S:
+    case STATE_IDS.GRAB_HELD_S:
+    case STATE_IDS.GRAB_RELEASE_S:
+    case STATE_IDS.GRAB_ESCAPE_S:
+    case STATE_IDS.RUN_GRAB_S:
+    case STATE_IDS.LEDGE_GRAB_S:
+    case STATE_IDS.LEDGE_RECOVER_S:
+    case STATE_IDS.LEDGE_GUA_S:
+    case STATE_IDS.LAND_S:
+    case STATE_IDS.SOFT_LAND_S:
+    case STATE_IDS.UP_TILT_S:
+    case STATE_IDS.DOWN_TILT_S:
+    case STATE_IDS.SIDE_TILT_S:
+    case STATE_IDS.SIDE_CHARGE_S:
+    case STATE_IDS.SIDE_CHARGE_EX_S:
+    case STATE_IDS.UP_CHARGE_S:
+    case STATE_IDS.UP_CHARGE_EX_S:
+    case STATE_IDS.DOWN_CHARGE_S:
+    case STATE_IDS.DOWN_CHARGE_EX_S:
+    case STATE_IDS.ATTACK_S:
+      return true;
+    default:
+      return true;
+  }
+}
+
+export function IsStateAttackState(stateId: StateId) {
+  switch (stateId) {
+    case STATE_IDS.ATTACK_S:
+    case STATE_IDS.DASH_ATTACK_S:
+    case STATE_IDS.SIDE_CHARGE_S:
+    case STATE_IDS.SIDE_CHARGE_EX_S:
+    case STATE_IDS.UP_CHARGE_S:
+    case STATE_IDS.UP_CHARGE_EX_S:
+    case STATE_IDS.DOWN_CHARGE_S:
+    case STATE_IDS.DOWN_CHARGE_EX_S:
+    case STATE_IDS.SIDE_TILT_S:
+    case STATE_IDS.UP_TILT_S:
+    case STATE_IDS.DOWN_TILT_S:
+    case STATE_IDS.N_AIR_S:
+    case STATE_IDS.F_AIR_S:
+    case STATE_IDS.B_AIR_S:
+    case STATE_IDS.U_AIR_S:
+    case STATE_IDS.D_AIR_S:
+    case STATE_IDS.SPCL_S:
+    case STATE_IDS.SIDE_SPCL_S:
+    case STATE_IDS.SIDE_SPCL_EX_S:
+    case STATE_IDS.SIDE_SPCL_AIR_S:
+    case STATE_IDS.SIDE_SPCL_EX_AIR_S:
+    case STATE_IDS.DOWN_SPCL_S:
+    case STATE_IDS.DOWN_SPCL_AIR_S:
+    case STATE_IDS.UP_SPCL_S:
+    case STATE_IDS.LEDGE_GUA_S:
+      return true;
+    default:
+      return false;
   }
 }
 

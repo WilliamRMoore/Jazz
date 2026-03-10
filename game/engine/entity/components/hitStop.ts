@@ -1,8 +1,4 @@
-import { IHistoryEnabled } from '../componentHistory';
-
-export type hitStopSnapShot = number;
-
-export class HitStopComponent implements IHistoryEnabled<hitStopSnapShot> {
+export class HitStopComponent {
   private hitStopFrames: number = 0;
 
   public SetHitStop(frames: number): void {
@@ -17,15 +13,15 @@ export class HitStopComponent implements IHistoryEnabled<hitStopSnapShot> {
     this.hitStopFrames = 0;
   }
 
-  public get HitStopFrames(): number {
+  public get Frames(): number {
     return this.hitStopFrames;
   }
 
-  public SnapShot(): hitStopSnapShot {
-    return this.hitStopFrames as hitStopSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: hitStopSnapShot): void {
-    this.hitStopFrames = snapShot;
+  public set CompState(history: HitStopHist) {
+    this.hitStopFrames = history.hitStopFrames;
   }
 }
+
+export type HitStopHist = {
+  hitStopFrames: number;
+};

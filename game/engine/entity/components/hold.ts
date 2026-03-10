@@ -1,8 +1,4 @@
-import { IHistoryEnabled } from '../componentHistory';
-
-type HoldSnapShot = number | undefined;
-
-export class HoldComponent implements IHistoryEnabled<HoldSnapShot> {
+export class HoldComponent {
   private heldPlayerId: number | undefined = undefined;
 
   public SetHeldPlayerId(playerId: number) {
@@ -15,13 +11,5 @@ export class HoldComponent implements IHistoryEnabled<HoldSnapShot> {
 
   public ClearHeldPlayerId() {
     this.heldPlayerId = undefined;
-  }
-
-  public SnapShot(): HoldSnapShot {
-    throw new Error('Method not implemented.');
-  }
-
-  public SetFromSnapShot(snapShot: HoldSnapShot): void {
-    throw new Error('Method not implemented.');
   }
 }

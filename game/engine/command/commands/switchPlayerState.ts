@@ -7,10 +7,10 @@ export type SwitchPlayerStateCommand = {
   payload: GameEventId;
 };
 
-export function SwicthPlayerState(
+export function SwitchPlayerState(
   w: World,
   p: Player,
-  c: SwitchPlayerStateCommand
+  c: SwitchPlayerStateCommand,
 ) {
   const sm = w.PlayerData.StateMachine(p.ID);
   sm.UpdateFromWorld(c.payload);

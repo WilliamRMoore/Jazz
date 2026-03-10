@@ -36,6 +36,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ECBShapes: ECBShapesConfig = new Map<StateId, ECBShape>();
   public HurtCapsules: Array<HurtCapsuleConfig> = [];
   public JumpVelocity = 0;
+  public WallKickVelocity = toCv(0, 0);
   public NumberOfJumps: number;
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
@@ -109,11 +110,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.RUN_TURN_S, 20)
       .set(STATE_IDS.STOP_RUN_S, 15)
       .set(STATE_IDS.JUMP_S, 1)
-      .set(STATE_IDS.AIR_DODGE_S, 22)
-      .set(STATE_IDS.LAND_S, 11)
+      .set(STATE_IDS.AIR_DODGE_S, 49)
+      .set(STATE_IDS.LAND_S, 8)
       .set(STATE_IDS.SOFT_LAND_S, 2)
-      .set(STATE_IDS.SPOT_DODGE_S, 43)
-      .set(STATE_IDS.ROLL_DODGE_S, 35)
+      .set(STATE_IDS.SPOT_DODGE_S, 32)
+      .set(STATE_IDS.ROLL_DODGE_S, 31)
       .set(STATE_IDS.ATTACK_S, neutralAttack.TotalFrameLength)
       .set(STATE_IDS.DASH_ATTACK_S, dashAtk.TotalFrameLength)
       .set(STATE_IDS.DOWN_TILT_S, downTilt.TotalFrameLength)
@@ -138,7 +139,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
-      .set(STATE_IDS.GRAB_S, grab.TotalFrameLength);
+      .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
+      .set(STATE_IDS.WALL_KICK_S, 10)
+      .set(STATE_IDS.WALL_SLAM_S, 20);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -168,6 +171,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
       .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 })
       .set(STATE_IDS.SHIELD_BREAK_S, { height: 90, width: 60, yOffset: 0 })
+      .set(STATE_IDS.WALL_KICK_S, { height: 70, width: 70, yOffset: -25 })
       .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
         height: 60,
         width: 60,
@@ -182,26 +186,31 @@ export class DefaultCharacterConfig implements CharacterConfig {
         height: 70,
         width: 70,
         yOffset: 0,
+      })
+      .set(STATE_IDS.WALL_SLAM_S, {
+        height: 100,
+        width: 40,
+        yOffset: 0,
       });
 
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);
 
-    this.MaxWalkSpeed = 3.5;
+    this.MaxWalkSpeed = 3.7;
     this.WalkSpeedMulitplier = 1.2;
-    this.MaxRunSpeed = 7;
+    this.MaxRunSpeed = 6.5;
     this.RunSpeedMultiplier = 2.2;
-    this.FastFallSpeed = 14;
-    this.FallSpeed = 7.2;
-    this.Gravity = 0.6;
-    this.AerialVelocityDecay = 0.7;
+    this.FastFallSpeed = 12;
+    this.FallSpeed = 6;
+    this.Gravity = 0.8;
+    this.AerialVelocityDecay = 0.35;
     this.AerialSpeedInpulseLimit = 4.8;
-    this.AerialSpeedMultiplier = 1.8;
+    this.AerialSpeedMultiplier = 0.8;
     this.DashMutiplier = 3;
-    this.MaxDashSpeed = 7.8;
-    this.AirDodgeSpeed = 13.5;
-    this.DodgeRollSpeed = 14.5;
-    this.GroundedVelocityDecay = 0.32;
+    this.MaxDashSpeed = 7;
+    this.AirDodgeSpeed = 11.5;
+    this.DodgeRollSpeed = 11;
+    this.GroundedVelocityDecay = 0.4;
 
     this.ECBOffset = 0;
     this.ECBHeight = 100;
@@ -211,8 +220,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
 
     this.Weight = 110;
 
-    this.JumpVelocity = 20;
+    this.JumpVelocity = 18;
     this.NumberOfJumps = 2;
+
+    this.WallKickVelocity.x = 9;
+    this.WallKickVelocity.y = 15;
 
     this.LedgeBoxHeight = 35;
     this.LedgeBoxWidth = 80;
@@ -302,20 +314,20 @@ function GetNAtk() {
 
   bldr
     .WithAttackId(ATTACK_IDS.N_GRND_ATK)
-    .WithBaseKnockBack(15)
-    .WithKnockBackScaling(54)
+    .WithBaseKnockBack(70)
+    .WithKnockBackScaling(300)
     .WithGravity(true)
     .WithTotalFrames(18)
     .WithInteruptableFrame(15)
-    .WithHitBubble(7, 16, 0, 60, hb1OffSets)
-    .WithHitBubble(6, 14, 1, 60, hb2OffSets);
+    .WithHitBubble(7, 16, 0, 45, hb1OffSets, true)
+    .WithHitBubble(6, 14, 1, 45, hb2OffSets, true);
 
   return bldr.Build();
 }
 
 function GetDashAttack() {
-  const basKnowback = 15;
-  const knockBackScaling = 45;
+  const basKnowback = 160;
+  const knockBackScaling = 320;
   const totalFrames = 37;
   const radius = 25;
   const damage = 12;
@@ -348,7 +360,7 @@ function GetDashAttack() {
     .WithKnockBackScaling(knockBackScaling)
     .WithTotalFrames(totalFrames)
     .WithImpulses(impulses, 8)
-    .WithHitBubble(damage, radius, 0, 50, hb1Offsets);
+    .WithHitBubble(damage, radius, 0, 115, hb1Offsets);
 
   return bldr.Build();
 }
@@ -396,16 +408,16 @@ function GetNeutralAir() {
 
   const bldr = new AttackConfigBuilder('NAir')
     .WithAttackId(ATTACK_IDS.N_AIR_ATK)
-    .WithBaseKnockBack(10)
-    .WithKnockBackScaling(50)
+    .WithBaseKnockBack(160)
+    .WithKnockBackScaling(400)
     .WithGravity(true)
     .WithTotalFrames(activeFrames)
-    .WithHitBubble(12, 20, 0, 25, hb1OffSets)
-    .WithHitBubble(11, 19, 1, 25, hb2OffSets)
-    .WithHitBubble(13, 23, 3, 35, hb3offSets)
-    .WithHitBubble(15, 20, 4, 25, hb4offsets)
-    .WithHitBubble(12, 20, 5, 25, hb5Offsets)
-    .WithHitBubble(13, 23, 6, 35, hb6Offsets);
+    .WithHitBubble(10, 20, 0, 65, hb1OffSets)
+    .WithHitBubble(10, 19, 1, 65, hb2OffSets)
+    .WithHitBubble(10, 23, 2, 60, hb3offSets)
+    .WithHitBubble(12, 20, 3, 55, hb4offsets)
+    .WithHitBubble(12, 20, 4, 55, hb5Offsets)
+    .WithHitBubble(12, 23, 5, 55, hb6Offsets);
 
   return bldr.Build();
 }
@@ -416,10 +428,10 @@ function GetUAir() {
   const uairActiveEnd = 16;
   const uairFramesActive = uairActiveEnd - uairActiveStart + 1;
   const uairRadius = 22;
-  const uairDamage = 12;
-  const uairBaseKnockBack = 12;
-  const uAirLaunchAngle = 20;
-  const toeOfNoLaunchAngle = 340;
+  const uairDamage = 13;
+  const uairBaseKnockBack = 110;
+  const uAirLaunchAngle = 30;
+  const toeOfNoLaunchAngle = 325;
 
   const startAngle = 0; // 0 degrees, in front
   const endAngle = (200 * Math.PI) / 180; // 200 degrees, down and to the left
@@ -453,7 +465,7 @@ function GetUAir() {
     .WithTotalFrames(uairTotalFrames)
     .WithInteruptableFrame(uairTotalFrames)
     .WithBaseKnockBack(uairBaseKnockBack)
-    .WithKnockBackScaling(50)
+    .WithKnockBackScaling(400)
     .WithGravity(true)
     .WithHitBubble(uairDamage, uairRadius, 2, uAirLaunchAngle, bubble1Offsets)
     .WithHitBubble(uairDamage, uairRadius, 1, uAirLaunchAngle, bubble2Offsets)
@@ -477,7 +489,7 @@ function GetFAir() {
   const fairFramesActive = fairActiveEnd - fairActiveStart + 1;
   const fairRadius = 25;
   const fairDamage = 17;
-  const fairBaseKnockback = 15;
+  const fairBaseKnockback = 240;
   const fairLaunchAngle = 30;
 
   // Bubble 1: closer to player, rotates from above to below, retracts inward
@@ -518,7 +530,7 @@ function GetFAir() {
     .WithTotalFrames(fairTotalFrames)
     .WithInteruptableFrame(fairTotalFrames)
     .WithBaseKnockBack(fairBaseKnockback)
-    .WithKnockBackScaling(45)
+    .WithKnockBackScaling(320)
     .WithGravity(true)
     .WithHitBubble(fairDamage, fairRadius, 2, fairLaunchAngle, bubble1Offsets)
     .WithHitBubble(fairDamage, fairRadius, 1, fairLaunchAngle, bubble2Offsets)
@@ -529,8 +541,8 @@ function GetFAir() {
 }
 function GetBAir() {
   const totalFrames = 33;
-  const baseKnockBack = 17;
-  const knockBackScaling = 50;
+  const baseKnockBack = 100;
+  const knockBackScaling = 400;
   const damage = 16;
   const radius = 27;
   const launchAngle = 150;
@@ -588,9 +600,9 @@ function GetBAir() {
 function GetDAir() {
   const activeFrames = 35;
   const radius = 30;
-  const damage = 20;
-  const baseKnockBack = 20;
-  const knockBackScaling = 45;
+  const damage = 22;
+  const baseKnockBack = 200;
+  const knockBackScaling = 400;
   const launchAngle = 285;
 
   const hb1OffSets = new Map<frameNumber, ConfigVec>();
@@ -633,11 +645,11 @@ function GetDAir() {
 
 function GetDownTilt() {
   const totalFrames = 33;
-  const damage = 11;
+  const damage = 12;
   const launchAngle = 70;
   const radius = 27;
-  const baseKnockBack = 20;
-  const knockBackScaling = 30;
+  const baseKnockBack = 120;
+  const knockBackScaling = 400;
 
   const hb1Offsets = new Map<frameNumber, ConfigVec>();
   const hb2Offsets = new Map<frameNumber, ConfigVec>();
@@ -687,8 +699,8 @@ function GetSideTilt() {
   const damage = 12;
   const launchAngle = 40;
   const radius = 27;
-  const baseKnockBack = 20;
-  const knockBackScaling = 30;
+  const baseKnockBack = 80;
+  const knockBackScaling = 400;
 
   const hb1Offsets = new Map<frameNumber, ConfigVec>();
   const hb2Offsets = new Map<frameNumber, ConfigVec>();
@@ -738,8 +750,8 @@ function GetSideTiltDown() {
   const damage = 12;
   const launchAngle = 40;
   const radius = 27;
-  const baseKnockBack = 20;
-  const knockBackScaling = 30;
+  const baseKnockBack = 80;
+  const knockBackScaling = 400;
 
   const hb1Offsets = new Map<frameNumber, ConfigVec>();
   const hb2Offsets = new Map<frameNumber, ConfigVec>();
@@ -789,8 +801,8 @@ function GetSideTiltUp() {
   const damage = 12;
   const launchAngle = 40;
   const radius = 27;
-  const baseKnockBack = 20;
-  const knockBackScaling = 30;
+  const baseKnockBack = 80;
+  const knockBackScaling = 400;
 
   const hb1Offsets = new Map<frameNumber, ConfigVec>();
   const hb2Offsets = new Map<frameNumber, ConfigVec>();
@@ -841,8 +853,8 @@ function GetUpTilt() {
   const launchAngle = 65;
   const nonExplsoiveRadius = 30;
   const explosiveRadius = 50;
-  const BaseKnockBack = 30;
-  const knockBackScaling = 45;
+  const BaseKnockBack = 440;
+  const knockBackScaling = 320;
 
   const startAngle = (90 * Math.PI) / 180;
   const endAngle = (-315 * Math.PI) / 180;
@@ -869,7 +881,7 @@ function GetUpTilt() {
     .WithKnockBackScaling(knockBackScaling)
     .WithGravity(true)
     .WithTotalFrames(totalFrames)
-    .WithHitBubble(damage, nonExplsoiveRadius, 0, launchAngle, hitBubbleOffsets)
+    //.WithHitBubble(damage, nonExplsoiveRadius, 0, launchAngle, hitBubbleOffsets)
     .WithHitBubble(
       damage * 2,
       explosiveRadius,
@@ -897,8 +909,8 @@ function GetUpchargeExt() {
   const damage = 20;
   const launchAngle = 75;
   const radius = 30;
-  const baseKb = 25;
-  const knockBackScaling = 35;
+  const baseKb = 180;
+  const knockBackScaling = 320;
 
   const startAngle = (1 * Math.PI) / 100;
   const endAngle = (50 * Math.PI) / 100;
@@ -945,8 +957,8 @@ function GetDownChargeExtension() {
   const damage = 15;
   const launchAngle = 90;
   const radius = 30;
-  const baseKb = 35;
-  const knockBackScaling = 15;
+  const baseKb = 100;
+  const knockBackScaling = 400;
 
   const of1 = new Map<frameNumber, ConfigVec>();
   const of2 = new Map<frameNumber, ConfigVec>();
@@ -1003,10 +1015,10 @@ function GetSideCharge() {
 
 function GetSideChargeExtension() {
   const totalFrames = 60;
-  const hb1Damage = 22;
-  const hb2Damage = 20;
-  const baseKnockBack = 30;
-  const knockBackScaling = 45;
+  const hb1Damage = 17;
+  const hb2Damage = 17;
+  const baseKnockBack = 240;
+  const knockBackScaling = 280;
   const radius = 18;
 
   const hitBubbleOffsets1 = new Map<frameNumber, ConfigVec>();
@@ -1044,14 +1056,14 @@ function GetSideChargeExtension() {
 }
 
 function GetNSpecial() {
-  const activeFrames = 120;
-  const h1Damage = 24;
-  const baseKb = 35;
-  const knockBackScaling = 45;
+  const activeFrames = 110;
+  const h1Damage = 34;
+  const baseKb = 120;
+  const knockBackScaling = 400;
   const radius = 25;
   const h1Offset = new Map<frameNumber, ConfigVec>();
 
-  for (let i = 80; i < 100; i++) {
+  for (let i = 65; i < 71; i++) {
     h1Offset.set(i, toCv(90, -40));
   }
 
@@ -1135,11 +1147,11 @@ function GetSideSpecial() {
     .WithAttackId(ATTACK_IDS.S_SPCL_ATK)
     .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithOnEnterCommand(sensorReactorChangeStateOnDetection)
-    .WithOnUpdateEvent(frameActivate, sensor1)
-    .WithOnUpdateEvent(frameActivate, sensor2)
-    .WithOnUpdateEvent(frameActivate, sensor3)
-    .WithOnUpdateEvent(frameDeactivate, deactivateSensor)
-    .WithOnExitEvent(deactivateSensor)
+    .WithOnUpdateCommand(frameActivate, sensor1)
+    .WithOnUpdateCommand(frameActivate, sensor2)
+    .WithOnUpdateCommand(frameActivate, sensor3)
+    .WithOnUpdateCommand(frameDeactivate, deactivateSensor)
+    .WithOnExitCommand(deactivateSensor)
     .WithImpulses(impulses, 13)
     .WithTotalFrames(activeFrames)
     .CanOnlyFallOffLedgeIfFacingIt()
@@ -1249,11 +1261,11 @@ function GetSideSpecialAir() {
     .WithAttackId(ATTACK_IDS.S_SPCL_AIR_ATK)
     .WithOnEnterCommand(setPlayerVelocityToZero)
     .WithOnEnterCommand(setSensorReactorToSwicthStateOnDetection)
-    .WithOnUpdateEvent(frameToActivate, activateSensor1)
-    .WithOnUpdateEvent(frameToActivate, activateSensor2)
-    .WithOnUpdateEvent(frameToActivate, activateSensor3)
-    .WithOnUpdateEvent(frameToDeactivate, deactivateSensor)
-    .WithOnExitEvent(deactivateSensor)
+    .WithOnUpdateCommand(frameToActivate, activateSensor1)
+    .WithOnUpdateCommand(frameToActivate, activateSensor2)
+    .WithOnUpdateCommand(frameToActivate, activateSensor3)
+    .WithOnUpdateCommand(frameToDeactivate, deactivateSensor)
+    .WithOnExitCommand(deactivateSensor)
     .WithImpulses(impulses, 12)
     .WithTotalFrames(activeFrames)
     .WithGravity(false);
@@ -1306,7 +1318,7 @@ function GetDownSpecial() {
   const hb3offSets = new Map<frameNumber, ConfigVec>();
   //const hb4OffSets = new Map<frameNumber, ConfigVec>();
 
-  for (let i = 23; i < activeFrames - 10; i++) {
+  for (let i = 14; i < activeFrames - 25; i++) {
     impulses.set(i, toCv(2, 0));
     hb1OffSets.set(i, toCv(100, -25));
     hb2OffSets.set(i, toCv(70, -25));
@@ -1320,13 +1332,13 @@ function GetDownSpecial() {
 
   blrd
     .WithAttackId(ATTACK_IDS.D_SPCL_ATK)
-    .WithBaseKnockBack(15)
-    .WithKnockBackScaling(66)
+    .WithBaseKnockBack(240)
+    .WithKnockBackScaling(135)
     .WithGravity(false)
     .WithTotalFrames(activeFrames)
-    .WithHitBubble(15, 20, 0, 45, hb1OffSets)
+    .WithHitBubble(13, 20, 0, 45, hb1OffSets)
     .WithHitBubble(13, 19, 1, 45, hb2OffSets)
-    .WithHitBubble(12, 18, 2, 45, hb3offSets)
+    .WithHitBubble(13, 18, 2, 45, hb3offSets)
     //.WithHitBubble(16, 25, 3, 45, hb4OffSets)
     .WithImpulses(impulses, 12);
 
@@ -1366,8 +1378,8 @@ function GetDownSpecialAerial() {
 
   blrd
     .WithAttackId(ATTACK_IDS.D_SPCL_AIR_ATK)
-    .WithBaseKnockBack(15)
-    .WithKnockBackScaling(66)
+    .WithBaseKnockBack(200)
+    .WithKnockBackScaling(130)
     .WithGravity(false)
     .WithTotalFrames(activeFrames)
     .WithHitBubble(15, 20, 0, launchAngle, hb1OffSets)
@@ -1376,7 +1388,7 @@ function GetDownSpecialAerial() {
     .WithHitBubble(16, 25, 4, launchAngle, hb4OffSets)
     .WithImpulses(impulses, 8)
     .WithOnEnterCommand(setPlayerVelocityToZero)
-    .WithOnExitEvent(setJumpToOne);
+    .WithOnExitCommand(setJumpToOne);
 
   return blrd.Build();
 }

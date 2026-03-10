@@ -1,30 +1,29 @@
 import { CharacterConfig } from '../../character/shared';
-import { InputAction } from '../../input/Input';
-import { PlayerSnapShot } from '../entity/componentHistory';
+import { InputAction } from '../input/Input';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { IJazz, Jazz } from '../jazz';
 import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
+import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
 
-export interface IJazzDebugger extends IJazz {
+export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;
   AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined): void;
 }
 
 export class JazzDebugger implements IJazzDebugger {
   readonly playerDebuggers = new Array<PlayerDebugAdapter>();
-  private jazz: Jazz;
+  private jazz: JazzLocal;
   private world: World;
   private paused: boolean = false;
   private previousInput: InputAction | undefined = undefined;
   private advanceFrame: boolean = false;
 
   constructor() {
-    this.jazz = new Jazz();
+    this.jazz = new JazzLocal();
     this.world = this.jazz.World;
   }
 
@@ -124,32 +123,4 @@ export class JazzDebugger implements IJazzDebugger {
 
     return selectPressed && !selectHeld;
   }
-}
-
-function GetPlayerDataForFrame(
-  pId: number,
-  frame: number,
-  w: World,
-): PlayerSnapShot {
-  const hist = w.HistoryData.PlayerComponentHistories[pId];
-
-  const r = {
-    Shield: hist.ShieldHistory[frame],
-    Position: hist.PositionHistory[frame],
-    FSMInfo: hist.FsmInfoHistory[frame],
-    Damage: hist.DamageHistory[frame],
-    Velocity: hist.VelocityHistory[frame],
-    Flags: hist.FlagsHistory[frame],
-    PlayerHitStop: hist.PlayerHitStopHistory[frame],
-    PlayerHitStun: hist.PlayerHitStunHistory[frame],
-    LedgeDetector: hist.LedgeDetectorHistory[frame],
-    Sensors: hist.SensorsHistory[frame],
-    Ecb: hist.EcbHistory[frame],
-    Jump: hist.JumpHistroy[frame],
-    Attack: hist.AttackHistory[frame],
-    Grab: hist.GrabHistory[frame],
-    GrabMeter: hist.GrabMeterHistory[frame],
-  } as PlayerSnapShot;
-
-  return r;
 }

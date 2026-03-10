@@ -2,7 +2,7 @@
 
 ## Systems
 
-1. Update ledge grab system (consisten placement, prevent others from grabbing)
+1. Update ledge grab system (consisten placement)
 2. Projectiles
 3. Throws?
 4. Add an iteration mechanic to the attack system (combos)
@@ -15,33 +15,25 @@
 3. Launch DI
 4. Smash DI
 5. throws
-6. flinch
-7. clang
-8. wall slam
-9. Wall Kick
-10. ground slam (Do we re-bound, or not?)
-11. Bonk
-12. pummel
-13. dirct nap
-14. Get up attack
-15. GroundTech
-16. GrundTech Roll
-17. ECB track system (the shape changes per-frame)
+6. clang
+7. wall slam
+8. ground slam (Do we re-bound, or not?)
+9. Bonk
+10. pummel
+11. dirt nap
+12. Get up attack
+13. GroundTech
+14. GrundTech Roll
+15. ECB track system (the shape changes per-frame)
 
 ## State-Relations
 
 1. Clean up buggy graph (not all states are transitioning properly [forward tilt to walk, dash to turn])
-2. Add stick jumping
 
 ## Character
 
 1. Finish out the default character config
 2. Create a tool to turn that config into json
-
-## world
-
-1. Create a working networked input manager [and have the world use an interface so it can use local or remote]
-2. Implement a "set world to frame" function for resetting world state to a specific snapshot.
 
 ## Features
 
@@ -63,3 +55,12 @@
 2. Art (models / sprites)
 3. Sound (effects, music)
 4. Menu (fighter select, stage select, etc)
+
+## character Ideas
+
+Ogua
+Mothman
+Chuppa Cabra
+Squatch
+Wendigo
+Wolfman

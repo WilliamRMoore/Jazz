@@ -2,21 +2,24 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { MultiplyRaw, NumberToRaw } from '../math/fixedPoint';
+import { MultiplyRaw } from '../math/fixedPoint';
+import {
+  ONE_POINT_FIVE,
+  POINT_FOUR,
+  POINT_TWO_FIVE,
+  SIXTY,
+  TWO,
+} from '../math/numberConstants';
 import { World } from '../world/world';
 
-const POINT_TWO_FIVE = NumberToRaw(0.25);
-const POINT_FOUR = NumberToRaw(0.4);
-const ONE_POINT_FIVE = NumberToRaw(1.5);
-const TWO = NumberToRaw(2);
-const BASE_METER = NumberToRaw(60);
+const BASE_METER = SIXTY;
 
 export function GrabMeter(w: World) {
   const pd = w.PlayerData;
   const playerCount = pd.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = pd.Player(playerIndex);
-    if (p.FSMInfo.CurrentStatetId !== STATE_IDS.GRAB_HELD_S) {
+    if (p.FSMInfo.CurrentStateId !== STATE_IDS.GRAB_HELD_S) {
       continue;
     }
     const grabMeterComp = p.GrabMeter;

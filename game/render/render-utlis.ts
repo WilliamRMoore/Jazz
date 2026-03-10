@@ -2,8 +2,9 @@ import { World } from '../engine/world/world';
 import { Lerp } from '../engine/utils';
 import { frameNumber } from '../engine/entity/components/attack';
 import { MainConfig } from '../engine/config/main-config';
+import { RawToNumber } from '../engine/math/fixedPoint';
 
-class PlayerLerper {
+export class PlayerLerper {
   private pool: LerpedPlayer[] = [];
   private poolIndex = 0;
   private maxAtkB: number;
@@ -60,13 +61,20 @@ class PlayerLerper {
   }
 }
 
-type lerpLine = { a: boolean; x1: number; y1: number; x2: number; y2: number };
+type lerpHurt = {
+  a: boolean;
+  r: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
 
-function makeLerpLine(): lerpLine {
-  return { a: false, x1: 0, y1: 0, x2: 0, y2: 0 };
+function makeLerpHurt(): lerpHurt {
+  return { a: false, r: 0, x1: 0, y1: 0, x2: 0, y2: 0 };
 }
 
-class LerpedPlayer {
+export class LerpedPlayer {
   public Position = { X: 0, Y: 0 };
   public PreviousEcb = {
     b: { x: 0, y: 0 },
@@ -82,22 +90,28 @@ class LerpedPlayer {
   };
   public Shield = { a: false, radius: 0, X: 0, Y: 0 };
   public Flags = { FacingRight: true, intangible: false, inHitPause: false };
-  public LedgeDetector = {
-    midTopX: 0,
-    midTopY: 0,
+  public LedgeDetectorRight = {
+    bottomLeftX: 0,
+    bottomLeftY: 0,
+    topLeftX: 0,
+    topLeftY: 0,
     topRightX: 0,
     topRightY: 0,
     bottomRightX: 0,
     bottomRightY: 0,
-    midBottomX: 0,
-    midBottomY: 0,
-    topLeftX: 0,
-    topLeftY: 0,
+  };
+  public LedgeDetectorLeft = {
     bottomLeftX: 0,
     bottomLeftY: 0,
+    topLeftX: 0,
+    topLeftY: 0,
+    topRightX: 0,
+    topRightY: 0,
+    bottomRightX: 0,
+    bottomRightY: 0,
   };
-  public Sensors: { a: boolean; r: number; x: number; y: number }[] = [];
-  public HurtBubbles: lerpLine[] = [];
+  public Sensors: { a: boolean; x: number; y: number; r: number }[] = [];
+  public HurtBubbles: lerpHurt[] = [];
   public AttackBubbles: { a: boolean; x: number; y: number; r: number }[] = [];
   public GrabBubbles: { a: boolean; x: number; y: number; r: number }[] = [];
 
@@ -108,13 +122,13 @@ class LerpedPlayer {
     maxSensors: number,
   ) {
     for (let i = 0; i < maxSensors; i++) {
-      this.Sensors.push({ a: false, r: 0, x: 0, y: 0 });
+      this.Sensors.push({ a: false, x: 0, y: 0, r: 0 });
     }
     for (let i = 0; i < maxAtkB; i++) {
       this.AttackBubbles.push({ a: false, x: 0, y: 0, r: 0 });
     }
     for (let i = 0; i < maxHurtB; i++) {
-      this.HurtBubbles.push(makeLerpLine());
+      this.HurtBubbles.push(makeLerpHurt());
     }
     for (let i = 0; i < maxGrabB; i++) {
       this.GrabBubbles.push({ a: false, x: 0, y: 0, r: 0 });
@@ -122,36 +136,54 @@ class LerpedPlayer {
   }
 
   Zero() {
-    this.Position.X = 0;
-    this.Position.Y = 0;
-    this.Ecb.b.x = 0;
-    this.Ecb.b.y = 0;
-    this.Ecb.l.x = 0;
-    this.Ecb.l.y = 0;
-    this.Ecb.t.x = 0;
-    this.Ecb.t.y = 0;
-    this.Ecb.r.x = 0;
-    this.Ecb.r.y = 0;
-    this.Shield.radius = 0;
-    this.Shield.a = false;
-    this.Shield.X = 0;
-    this.Shield.Y = 0;
-    this.Flags.FacingRight = true;
-    this.Flags.intangible = false;
-    this.Flags.inHitPause = false;
-    const ld = this.LedgeDetector;
-    ld.bottomLeftX = 0;
-    ld.bottomLeftY = 0;
-    ld.bottomRightX = 0;
-    ld.bottomRightY = 0;
-    ld.midBottomX = 0;
-    ld.midBottomY = 0;
-    ld.midTopX = 0;
-    ld.midTopY = 0;
-    ld.topLeftX = 0;
-    ld.topLeftY = 0;
-    ld.topRightX = 0;
-    ld.topRightY = 0;
+    const pos = this.Position;
+    pos.X = 0;
+    pos.Y = 0;
+    const previousEcb = this.PreviousEcb;
+    previousEcb.b.x = 0;
+    previousEcb.b.y = 0;
+    previousEcb.l.x = 0;
+    previousEcb.l.y = 0;
+    previousEcb.t.x = 0;
+    previousEcb.t.y = 0;
+    previousEcb.r.x = 0;
+    previousEcb.r.y = 0;
+    const ecb = this.Ecb;
+    ecb.b.x = 0;
+    ecb.b.y = 0;
+    ecb.l.x = 0;
+    ecb.l.y = 0;
+    ecb.t.x = 0;
+    ecb.t.y = 0;
+    ecb.r.x = 0;
+    ecb.r.y = 0;
+    const shield = this.Shield;
+    shield.radius = 0;
+    shield.a = false;
+    shield.X = 0;
+    shield.Y = 0;
+    const flags = this.Flags;
+    flags.FacingRight = true;
+    flags.intangible = false;
+    flags.inHitPause = false;
+    const ldr = this.LedgeDetectorRight;
+    ldr.bottomLeftX = 0;
+    ldr.bottomLeftY = 0;
+    ldr.bottomRightX = 0;
+    ldr.bottomRightY = 0;
+    ldr.topLeftX = 0;
+    ldr.topLeftY = 0;
+    ldr.topRightX = 0;
+    ldr.topRightY = 0;
+    const ldl = this.LedgeDetectorLeft;
+    ldl.bottomLeftX = 0;
+    ldl.bottomLeftY = 0;
+    ldl.bottomRightX = 0;
+    ldl.bottomRightY = 0;
+    ldl.topLeftX = 0;
+    ldl.topLeftY = 0;
+    ldl.topRightX = 0;
+    ldl.topRightY = 0;
     const sensorLength = this.Sensors.length;
     for (let i = 0; i < sensorLength; i++) {
       const sensor = this.Sensors[i];
@@ -164,6 +196,7 @@ class LerpedPlayer {
     for (let i = 0; i < hurtLength; i++) {
       const hurt = this.HurtBubbles[i];
       hurt.a = false;
+      hurt.r = 0;
       hurt.x1 = 0;
       hurt.y1 = 0;
       hurt.x2 = 0;
@@ -188,6 +221,14 @@ class LerpedPlayer {
   }
 }
 
+const lerpAndConvert = (
+  thenRaw: number,
+  nowRaw: number,
+  alpha: number,
+): number => {
+  return RawToNumber(Lerp(thenRaw, nowRaw, alpha)) as number;
+};
+
 function LerpPlayer(
   then: frameNumber,
   now: frameNumber,
@@ -196,239 +237,272 @@ function LerpPlayer(
   w: World,
   dto: LerpedPlayer,
 ) {
-  const playerHist = w.HistoryData.PlayerComponentHistories[pIndex];
-  const inputHist = w.PlayerData.InputStore(pIndex);
-  const input = inputHist.GetInputForFrame(now);
-  const lastInput = inputHist.GetInputForFrame(then);
-  const lastPos = playerHist.PositionHistory[then];
-  const currentPos = playerHist.PositionHistory[now];
-  const weightedFrame = alpha < 0.5 ? then : now;
-  dto.Flags.FacingRight = playerHist.FlagsHistory[weightedFrame].FacingRight;
-  dto.Flags.intangible =
-    playerHist.FlagsHistory[weightedFrame].IntangabilityFrames > 0;
-  dto.Flags.inHitPause =
-    playerHist.FlagsHistory[weightedFrame].HitPauseFrames > 0;
-  dto.Position.X = Lerp(lastPos.X, currentPos.X, alpha);
-  dto.Position.Y = Lerp(lastPos.Y, currentPos.Y, alpha);
-  dto.Shield.a = playerHist.ShieldHistory[weightedFrame].Active;
-
-  if (dto.Shield.a) {
-    const lastTriggerVal =
-      lastInput.RTValRaw > lastInput.LTValRaw
-        ? lastInput.RTValRaw
-        : lastInput.LTValRaw;
-    const currentTriggerVal =
-      input.RTValRaw > input.LTValRaw ? input.RTValRaw : input.LTValRaw;
-    const lerpedTriggerRaw = Lerp(lastTriggerVal, currentTriggerVal, alpha);
-    const radius = Lerp(
-      playerHist.ShieldHistory[then].CurrentRadius,
-      playerHist.ShieldHistory[now].CurrentRadius,
-      alpha,
-    );
-    const shieldRadius = LerpRadiusFromTrigger(lerpedTriggerRaw, radius);
-    dto.Shield.radius = shieldRadius;
-    const tiltx = Lerp(
-      playerHist.ShieldHistory[then].ShieldTiltX,
-      playerHist.ShieldHistory[now].ShieldTiltX,
-      alpha,
-    );
-    const tilty = Lerp(
-      playerHist.ShieldHistory[then].ShieldTiltY,
-      playerHist.ShieldHistory[now].ShieldTiltY,
-      alpha,
-    );
-    dto.Shield.X = dto.Position.X + tiltx;
-    dto.Shield.Y =
-      dto.Position.Y + tilty + playerHist.BaseConfigValues.ShieldOffset;
+  const pTable = w.HistoryData.PlayerHistoryDB[pIndex];
+  const previousECBFrame = then < 1 ? 0 : then - 1;
+  const previousState = pTable.get(previousECBFrame);
+  const thenState = pTable.get(then);
+  const nowState = pTable.get(now);
+  const lp = dto;
+  const lc = lerpAndConvert;
+  lp.Position.X = lc(thenState.posXRaw, nowState.posXRaw, alpha);
+  lp.Position.Y = lc(thenState.posYRaw, nowState.posYRaw, alpha);
+  lp.PreviousEcb.b.x = lc(
+    previousState.comp_ecbDiamond[0].xRaw,
+    thenState.comp_ecbDiamond[0].xRaw,
+    alpha,
+  );
+  lp.PreviousEcb.b.y = lc(
+    previousState.comp_ecbDiamond[0].yRaw,
+    thenState.comp_ecbDiamond[0].yRaw,
+    alpha,
+  );
+  lp.PreviousEcb.l.x = lc(
+    previousState.comp_ecbDiamond[1].xRaw,
+    thenState.comp_ecbDiamond[1].xRaw,
+    alpha,
+  );
+  lp.PreviousEcb.l.y = lc(
+    previousState.comp_ecbDiamond[1].yRaw,
+    thenState.comp_ecbDiamond[1].yRaw,
+    alpha,
+  );
+  lp.PreviousEcb.t.x = lc(
+    previousState.comp_ecbDiamond[2].xRaw,
+    thenState.comp_ecbDiamond[2].xRaw,
+    alpha,
+  );
+  lp.PreviousEcb.t.y = lc(
+    previousState.comp_ecbDiamond[2].yRaw,
+    thenState.comp_ecbDiamond[2].yRaw,
+    alpha,
+  );
+  lp.PreviousEcb.r.x = lc(
+    previousState.comp_ecbDiamond[3].xRaw,
+    thenState.comp_ecbDiamond[3].xRaw,
+    alpha,
+  );
+  lp.PreviousEcb.r.y = lc(
+    previousState.comp_ecbDiamond[3].yRaw,
+    thenState.comp_ecbDiamond[3].yRaw,
+    alpha,
+  );
+  lp.Ecb.b.x = lc(
+    thenState.comp_ecbDiamond[0].xRaw,
+    nowState.comp_ecbDiamond[0].xRaw,
+    alpha,
+  );
+  lp.Ecb.b.y = lc(
+    thenState.comp_ecbDiamond[0].yRaw,
+    nowState.comp_ecbDiamond[0].yRaw,
+    alpha,
+  );
+  lp.Ecb.l.x = lc(
+    thenState.comp_ecbDiamond[1].xRaw,
+    nowState.comp_ecbDiamond[1].xRaw,
+    alpha,
+  );
+  lp.Ecb.l.y = lc(
+    thenState.comp_ecbDiamond[1].yRaw,
+    nowState.comp_ecbDiamond[1].yRaw,
+    alpha,
+  );
+  lp.Ecb.t.x = lc(
+    thenState.comp_ecbDiamond[2].xRaw,
+    nowState.comp_ecbDiamond[2].xRaw,
+    alpha,
+  );
+  lp.Ecb.t.y = lc(
+    thenState.comp_ecbDiamond[2].yRaw,
+    nowState.comp_ecbDiamond[2].yRaw,
+    alpha,
+  );
+  lp.Ecb.r.x = lc(
+    thenState.comp_ecbDiamond[3].xRaw,
+    nowState.comp_ecbDiamond[3].xRaw,
+    alpha,
+  );
+  lp.Ecb.r.y = lc(
+    thenState.comp_ecbDiamond[3].yRaw,
+    nowState.comp_ecbDiamond[3].yRaw,
+    alpha,
+  );
+  lp.Shield.a = nowState.shieldActive;
+  const compShieldThen = thenState.comp_shield;
+  const compShieldNow = nowState.comp_shield;
+  if (lp.Shield.a) {
+    const shieldWasActiveThen = thenState.shieldActive;
+    const thenRadiusRaw = shieldWasActiveThen
+      ? thenState.calcRadiusRaw
+      : nowState.calcRadiusRaw;
+    const thenXRaw = shieldWasActiveThen
+      ? compShieldThen.calcXRaw
+      : compShieldNow.calcXRaw;
+    const thenYRaw = shieldWasActiveThen
+      ? compShieldThen.calcYRaw
+      : compShieldNow.calcYRaw;
+    lp.Shield.radius = lc(thenRadiusRaw, nowState.calcRadiusRaw, alpha);
+    lp.Shield.X = lc(thenXRaw, compShieldNow.calcXRaw, alpha);
+    lp.Shield.Y = lc(thenYRaw, compShieldNow.calcYRaw, alpha);
   }
-
-  const lastLastEcb = playerHist.EcbHistory[then < 1 ? 0 : then - 1];
-  const lastEcb = playerHist.EcbHistory[then];
-  const currentEcb = playerHist.EcbHistory[now];
-  const lastLastYOffset = lastLastEcb.ecbShape.yOffset.AsNumber;
-  const lastYOffset = lastEcb.ecbShape.yOffset.AsNumber;
-  const currentYOffset = currentEcb.ecbShape.yOffset.AsNumber;
-
-  const lastlastecbWidth = lastLastEcb.ecbShape.width.AsNumber;
-  const lastecbWidth = lastEcb.ecbShape.width.AsNumber;
-  const currentecbWidth = currentEcb.ecbShape.width.AsNumber;
-  const lastlastecbHeight = lastLastEcb.ecbShape.height.AsNumber;
-  const lastecbHeight = lastEcb.ecbShape.height.AsNumber;
-  const currentecbHeight = currentEcb.ecbShape.height.AsNumber;
-
-  dto.PreviousEcb.b.x = Lerp(lastLastEcb.posX, lastEcb.posX, alpha);
-  dto.PreviousEcb.b.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset,
-    lastEcb.posY + lastYOffset,
+  const ldr = lp.LedgeDetectorRight;
+  ldr.bottomLeftX = lc(
+    thenState.comp_ledgeDetectorRight[0].xRaw,
+    nowState.comp_ledgeDetectorRight[0].xRaw,
     alpha,
   );
-  dto.PreviousEcb.l.x = Lerp(
-    lastLastEcb.posX - lastlastecbWidth / 2,
-    lastEcb.posX - lastecbWidth / 2,
+  ldr.bottomLeftY = lc(
+    thenState.comp_ledgeDetectorRight[0].yRaw,
+    nowState.comp_ledgeDetectorRight[0].yRaw,
     alpha,
   );
-  dto.PreviousEcb.l.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset + lastlastecbHeight / 2,
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
+  ldr.topLeftX = lc(
+    thenState.comp_ledgeDetectorRight[1].xRaw,
+    nowState.comp_ledgeDetectorRight[1].xRaw,
     alpha,
   );
-  dto.PreviousEcb.t.x = Lerp(
-    lastLastEcb.posX - lastlastecbWidth / 2,
-    lastEcb.posX - lastecbWidth / 2,
+  ldr.topLeftY = lc(
+    thenState.comp_ledgeDetectorRight[1].yRaw,
+    nowState.comp_ledgeDetectorRight[1].yRaw,
     alpha,
   );
-  dto.PreviousEcb.t.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset + lastlastecbHeight,
-    lastEcb.posY + lastYOffset + lastecbHeight,
+  ldr.topRightX = lc(
+    thenState.comp_ledgeDetectorRight[2].xRaw,
+    nowState.comp_ledgeDetectorRight[2].xRaw,
     alpha,
   );
-  dto.PreviousEcb.r.x = Lerp(
-    lastLastEcb.posX + lastlastecbWidth / 2,
-    lastEcb.posX + lastecbWidth / 2,
+  ldr.topRightY = lc(
+    thenState.comp_ledgeDetectorRight[2].yRaw,
+    nowState.comp_ledgeDetectorRight[2].yRaw,
     alpha,
   );
-  dto.PreviousEcb.r.y = Lerp(
-    lastLastEcb.posY + lastLastYOffset + lastlastecbHeight / 2,
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
+  ldr.bottomRightX = lc(
+    thenState.comp_ledgeDetectorRight[3].xRaw,
+    nowState.comp_ledgeDetectorRight[3].xRaw,
     alpha,
   );
-
-  dto.Ecb.b.x = Lerp(lastEcb.posX, currentEcb.posX, alpha);
-  dto.Ecb.b.y = Lerp(
-    lastEcb.posY + lastYOffset,
-    currentEcb.posY + currentYOffset,
+  ldr.bottomRightY = lc(
+    thenState.comp_ledgeDetectorRight[3].yRaw,
+    nowState.comp_ledgeDetectorRight[3].yRaw,
     alpha,
   );
-  dto.Ecb.l.x = Lerp(
-    lastEcb.posX - lastecbWidth / 2,
-    currentEcb.posX - currentecbWidth / 2,
+  const ldl = lp.LedgeDetectorLeft;
+  ldl.bottomLeftX = lc(
+    thenState.comp_ledgeDetectorLeft[0].xRaw,
+    nowState.comp_ledgeDetectorLeft[0].xRaw,
     alpha,
   );
-  dto.Ecb.l.y = Lerp(
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
-    currentEcb.posY + currentYOffset + currentecbHeight / 2,
+  ldl.bottomLeftY = lc(
+    thenState.comp_ledgeDetectorLeft[0].yRaw,
+    nowState.comp_ledgeDetectorLeft[0].yRaw,
     alpha,
   );
-  dto.Ecb.t.x = Lerp(
-    lastEcb.posX - lastecbWidth / 2,
-    currentEcb.posX - currentecbWidth / 2,
+  ldl.topLeftX = lc(
+    thenState.comp_ledgeDetectorLeft[1].xRaw,
+    nowState.comp_ledgeDetectorLeft[1].xRaw,
     alpha,
   );
-  dto.Ecb.t.y = Lerp(
-    lastEcb.posY + lastYOffset + lastecbHeight,
-    currentEcb.posY + currentYOffset + currentecbHeight,
+  ldl.topLeftY = lc(
+    thenState.comp_ledgeDetectorLeft[1].yRaw,
+    nowState.comp_ledgeDetectorLeft[1].yRaw,
     alpha,
   );
-  dto.Ecb.r.x = Lerp(
-    lastEcb.posX + lastecbWidth / 2,
-    currentEcb.posX + currentecbWidth / 2,
+  ldl.topRightX = lc(
+    thenState.comp_ledgeDetectorLeft[2].xRaw,
+    nowState.comp_ledgeDetectorLeft[2].xRaw,
     alpha,
   );
-  dto.Ecb.r.y = Lerp(
-    lastEcb.posY + lastYOffset + lastecbHeight / 2,
-    currentEcb.posY + currentYOffset + currentecbHeight / 2,
+  ldl.topRightY = lc(
+    thenState.comp_ledgeDetectorLeft[2].yRaw,
+    nowState.comp_ledgeDetectorLeft[2].yRaw,
     alpha,
   );
-
-  const hcs = playerHist.BaseConfigValues.HurtCapsules;
-  const numHcs = hcs.length;
-  for (let i = 0; i < numHcs; i++) {
-    const hc = hcs[i];
-    dto.HurtBubbles[i].x1 = dto.Position.X + hc.StartOffsetX.AsNumber;
-    dto.HurtBubbles[i].y1 = dto.Position.Y + hc.StartOffsetY.AsNumber;
-    dto.HurtBubbles[i].x2 = dto.Position.X + hc.EndOffsetX.AsNumber;
-    dto.HurtBubbles[i].y2 = dto.Position.Y + hc.EndOffsetY.AsNumber;
-  }
-
-  const ldHeight = playerHist.BaseConfigValues.LedgeDetectorHeight;
-  const ldWidth = playerHist.BaseConfigValues.LedgeDetectorWidth;
-  const prevLd = playerHist.LedgeDetectorHistory[then];
-  const currentLd = playerHist.LedgeDetectorHistory[now];
-
-  const lerpMiddleTopX = Lerp(prevLd.middleX, currentLd.middleX, alpha);
-  const lerpMiddleTopY = Lerp(prevLd.middleY, currentLd.middleY, alpha);
-  const lerpTopRightX = lerpMiddleTopX + ldWidth;
-  const lerpTopRightY = lerpMiddleTopY;
-  const lerpBottomRightX = lerpMiddleTopX + ldWidth;
-  const lerpBottomRightY = lerpMiddleTopY + ldHeight;
-  const lerpMidBottomX = lerpMiddleTopX;
-  const lerpMidBottomY = lerpMiddleTopY + ldHeight;
-  const lerpTopLeftX = lerpMiddleTopX - ldWidth;
-  const lerpTopLeftY = lerpMiddleTopY;
-  const lerpBottomLeftX = lerpMiddleTopX - ldWidth;
-  const lerpBottomLeftY = lerpMiddleTopY + ldHeight;
-
-  dto.LedgeDetector.midTopX = lerpMiddleTopX;
-  dto.LedgeDetector.midTopY = lerpMiddleTopY;
-  dto.LedgeDetector.topRightX = lerpTopRightX;
-  dto.LedgeDetector.topRightY = lerpTopRightY;
-  dto.LedgeDetector.bottomRightX = lerpBottomRightX;
-  dto.LedgeDetector.bottomRightY = lerpBottomRightY;
-  dto.LedgeDetector.midBottomX = lerpMidBottomX;
-  dto.LedgeDetector.midBottomY = lerpMidBottomY;
-  dto.LedgeDetector.topLeftX = lerpTopLeftX;
-  dto.LedgeDetector.topLeftY = lerpTopLeftY;
-  dto.LedgeDetector.bottomLeftX = lerpBottomLeftX;
-  dto.LedgeDetector.bottomLeftY = lerpBottomLeftY;
-
-  const sensors = playerHist.SensorsHistory[now];
-  const numSensors = sensors.sensors?.length ?? 0;
-  for (let i = 0; i < numSensors; i++) {
-    const sensor = sensors.sensors![i];
-    const dtoSensor = dto.Sensors[i];
-    dtoSensor.a = true;
-    dtoSensor.r = sensor.radius;
-    dtoSensor.x = Lerp(
-      lastPos.X + sensor.xOffset,
-      currentPos.X + sensor.xOffset,
-      alpha,
-    );
-    dtoSensor.y = Lerp(
-      lastPos.Y + sensor.yOffset,
-      currentPos.Y + sensor.yOffset,
-      alpha,
-    );
-  }
-
-  const attackHist = playerHist.AttackHistory[now];
-  const atk = attackHist.attack;
-  const hitBubbles = atk?.HitBubbles;
-  const numBubbles = hitBubbles?.length ?? 0;
-  for (let i = 0; i < numBubbles; i++) {
-    const bubble = hitBubbles![i];
-    if (!bubble.IsActive(now)) {
+  ldl.bottomRightX = lc(
+    thenState.comp_ledgeDetectorLeft[3].xRaw,
+    nowState.comp_ledgeDetectorLeft[3].xRaw,
+    alpha,
+  );
+  ldl.bottomRightY = lc(
+    thenState.comp_ledgeDetectorLeft[3].yRaw,
+    nowState.comp_ledgeDetectorLeft[3].yRaw,
+    alpha,
+  );
+  const nowSensors = nowState.comp_sensors;
+  const thenSensors = thenState.comp_sensors;
+  const sensorLength = lp.Sensors.length;
+  for (let i = 0; i < sensorLength; i++) {
+    const nowSensor = nowSensors[i];
+    const isActive = nowSensor.active;
+    if (!isActive) {
+      lp.Sensors[i].a = false;
       continue;
     }
-    const lp = bubble.GetLocalPosiitionOffsetForFrame(now);
-    if (lp === undefined) {
+    const thenSensor = thenSensors[i];
+    const wasActive = thenSensor.active;
+    const thenRadiusRaw = wasActive
+      ? thenSensor.radiusRaw
+      : nowSensor.radiusRaw;
+    const thenXRaw = wasActive ? thenSensor.globalXRaw : nowSensor.globalXRaw;
+    const thenYRaw = wasActive ? thenSensor.globalYRaw : nowSensor.globalYRaw;
+    const lpSensor = lp.Sensors[i];
+    lpSensor.a = true;
+    lpSensor.r = lc(thenRadiusRaw, nowSensor.radiusRaw, alpha);
+    lpSensor.x = lc(thenXRaw, nowSensor.globalXRaw, alpha);
+    lpSensor.y = lc(thenYRaw, nowSensor.globalYRaw, alpha);
+  }
+  const hsLength = nowState.comp_hurtCapsules.length;
+  for (let i = 0; i < hsLength; i++) {
+    const nowHurt = nowState.comp_hurtCapsules[i];
+    const thenHurt = thenState.comp_hurtCapsules[i];
+    if (nowHurt.active) {
+      const lpHurt = lp.HurtBubbles[i];
+      lpHurt.a = true;
+      lpHurt.r = lc(thenHurt.radiusRaw, nowHurt.radiusRaw, alpha);
+      lpHurt.x1 = lc(thenHurt.x1Raw, nowHurt.x1Raw, alpha);
+      lpHurt.y1 = lc(thenHurt.y1Raw, nowHurt.y1Raw, alpha);
+      lpHurt.x2 = lc(thenHurt.x2Raw, nowHurt.x2Raw, alpha);
+      lpHurt.y2 = lc(thenHurt.y2Raw, nowHurt.y2Raw, alpha);
+    }
+  }
+  const atkLength = nowState.comp_attackCircles.length;
+  for (let i = 0; i < atkLength; i++) {
+    const nowAtk = nowState.comp_attackCircles[i];
+    if (!nowAtk.active) {
+      lp.AttackBubbles[i].a = false;
       continue;
     }
-    dto.AttackBubbles[i].a = true;
-    dto.AttackBubbles[i].r = bubble.Radius.AsNumber;
-    dto.AttackBubbles[i].x = dto.Position.X + lp.X.AsNumber;
-    dto.AttackBubbles[i].y = dto.Position.Y + lp.Y.AsNumber;
+    const thenAtk = thenState.comp_attackCircles[i];
+    const lpAtk = lp.AttackBubbles[i];
+    const thenRadiusRaw = thenAtk.active ? thenAtk.radiusRaw : nowAtk.radiusRaw;
+    const thenXRaw = thenAtk.active ? thenAtk.xRaw : nowAtk.xRaw;
+    const thenYRaw = thenAtk.active ? thenAtk.yRaw : nowAtk.yRaw;
+    lpAtk.a = true;
+    lpAtk.r = lc(thenRadiusRaw, nowAtk.radiusRaw, alpha);
+    lpAtk.x = lc(thenXRaw, nowAtk.xRaw, alpha);
+    lpAtk.y = lc(thenYRaw, nowAtk.yRaw, alpha);
   }
-
-  const grabHist = playerHist.GrabHistory[now];
-  const grab = grabHist?.GrabBubbles;
-
-  if (grab !== undefined) {
-    const numBubbles = grab.length;
-    for (let i = 0; i < numBubbles; i++) {
-      const bubble = grab![i];
-      if (!bubble.IsActive(now)) {
-        continue;
-      }
-      const lp = bubble.GetLocalPositionOffsetForFrame(now);
-      if (lp === undefined) {
-        continue;
-      }
-      dto.GrabBubbles[i].a = true;
-      dto.GrabBubbles[i].r = bubble.Radius.AsNumber;
-      dto.GrabBubbles[i].x = dto.Position.X + lp.X.AsNumber;
-      dto.GrabBubbles[i].y = dto.Position.Y + lp.Y.AsNumber;
+  const grabLength = nowState.comp_grabCircles.length;
+  for (let i = 0; i < grabLength; i++) {
+    const nowGrab = nowState.comp_grabCircles[i];
+    if (!nowGrab.active) {
+      lp.GrabBubbles[i].a = false;
+      continue;
     }
+    const thenGrab = thenState.comp_grabCircles[i];
+    const lpGrab = lp.GrabBubbles[i];
+    const thenRadiusRaw = thenGrab.active
+      ? thenGrab.radiusRaw
+      : nowGrab.radiusRaw;
+    const thenXRaw = thenGrab.active ? thenGrab.xRaw : nowGrab.xRaw;
+    const thenYRaw = thenGrab.active ? thenGrab.yRaw : nowGrab.yRaw;
+    lpGrab.a = true;
+    lpGrab.r = lc(thenRadiusRaw, nowGrab.radiusRaw, alpha);
+    lpGrab.x = lc(thenXRaw, nowGrab.xRaw, alpha);
+    lpGrab.y = lc(thenYRaw, nowGrab.yRaw, alpha);
   }
+  const flags = lp.Flags;
+  flags.intangible = nowState.intangabilityFrames > 0;
+  flags.inHitPause = nowState.hitPauseFrames > 0;
+  flags.FacingRight = nowState.facingRight;
 }
 
 function LerpRadiusFromTrigger(triggerValue: number, raddius: number): number {

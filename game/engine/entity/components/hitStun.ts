@@ -1,22 +1,20 @@
+import {
+  STATE_IDS,
+  StateId,
+} from '../../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../../math/fixedPoint';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type hitStunSnapShot = {
-  hitStunFrames: number;
-  vx: number;
-  vy: number;
-};
-
-export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
+export class HitStunComponent {
   private framesOfHitStun: number = 0;
   private readonly xVelocity: FixedPoint = new FixedPoint(0);
   private readonly yVelocity: FixedPoint = new FixedPoint(0);
+  public NextStateId: StateId = STATE_IDS.LAUNCH_S;
 
-  public set FramesOfHitStun(hitStunFrames: number) {
+  public set Frames(hitStunFrames: number) {
     this.framesOfHitStun = hitStunFrames;
   }
 
-  public get FramesOfHitStun(): number {
+  public get Frames(): number {
     return this.framesOfHitStun;
   }
 
@@ -48,17 +46,17 @@ export class HitStunComponent implements IHistoryEnabled<hitStunSnapShot> {
     this.yVelocity.Zero();
   }
 
-  public SnapShot(): hitStunSnapShot {
-    return {
-      hitStunFrames: this.framesOfHitStun,
-      vx: this.xVelocity.AsNumber,
-      vy: this.yVelocity.AsNumber,
-    } as hitStunSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: hitStunSnapShot): void {
-    this.framesOfHitStun = snapShot.hitStunFrames;
-    this.xVelocity.SetFromNumber(snapShot.vx);
-    this.yVelocity.SetFromNumber(snapShot.vy);
+  public set CompState(history: HitStunHist) {
+    this.framesOfHitStun = history.hitStunFrames;
+    this.xVelocity.SetFromRaw(history.hitStunVxRaw);
+    this.yVelocity.SetFromRaw(history.hitStunVyRaw);
+    this.NextStateId = history.hitStunNextStateId;
   }
 }
+
+export type HitStunHist = {
+  hitStunFrames: number;
+  hitStunVxRaw: number;
+  hitStunVyRaw: number;
+  hitStunNextStateId: StateId;
+};

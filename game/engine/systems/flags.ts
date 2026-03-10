@@ -23,7 +23,7 @@ export function Flags(world: World): void {
       const curFrame = world.LocalFrame;
       const is = playerData.InputStore(playerIndex);
       const ia = is.GetInputForFrame(curFrame);
-      const stateId = p.FSMInfo.CurrentStatetId;
+      const stateId = p.FSMInfo.CurrentStateId;
       if (
         (ia.LTValRaw === 0 && ia.RTValRaw === 0) ||
         stateShouldResetJumpFromShield(stateId)
