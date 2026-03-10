@@ -1,6 +1,5 @@
 import { CharacterConfig } from '../../character/shared';
 import { InputAction } from '../input/Input';
-import { PlayerSnapShot } from '../entity/componentHistory';
 import {
   Player,
   SetPlayerInitialPositionRaw,

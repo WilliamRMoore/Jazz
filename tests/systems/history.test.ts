@@ -126,7 +126,7 @@ describe('History System Tests', () => {
     w.LocalFrame = frame;
     p.Position.X.SetFromNumber(100);
     p.Position.Y.SetFromNumber(200);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
 
     RecordHistory(w);
 

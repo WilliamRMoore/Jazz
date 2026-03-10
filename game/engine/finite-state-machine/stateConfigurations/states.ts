@@ -435,6 +435,7 @@ export const Shield: FSMState = {
     const triggerValue =
       input.LTValRaw >= input.RTValRaw ? input.LTValRaw : input.RTValRaw;
     s.ShrinkRaw(triggerValue);
+    s.SetCalculatedRadiusRaw(triggerValue);
     // tilt shield
     const lxAxis = input.LXAxis;
     const lyAxis = input.LYAxis;
@@ -470,6 +471,7 @@ export const Shield: FSMState = {
     p.Shield.Active = false;
     p.Shield.ShieldTiltX.Zero();
     p.Shield.ShieldTiltY.Zero();
+    p.Shield.SetCalculatedRadiusRaw(0);
   },
 };
 

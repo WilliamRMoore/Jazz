@@ -26,10 +26,10 @@ describe('Player Collision system tests', () => {
   test('Players are moved apart when overlapping', () => {
     p1.Position.X.SetFromNumber(500);
     p1.Position.Y.SetFromNumber(500);
-    p1.ECB.MoveToPosition();
+    p1.ECB.Update();
     p2.Position.X.SetFromNumber(500);
     p2.Position.Y.SetFromNumber(500);
-    p2.ECB.MoveToPosition();
+    p2.ECB.Update();
 
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
@@ -46,10 +46,10 @@ describe('Player Collision system tests', () => {
   test('Players are not moved when not overlapping', () => {
     p1.Position.X.SetFromNumber(300);
     p1.Position.Y.SetFromNumber(500);
-    p1.ECB.MoveToPosition();
+    p1.ECB.Update();
     p2.Position.X.SetFromNumber(700);
     p2.Position.Y.SetFromNumber(500);
-    p2.ECB.MoveToPosition();
+    p2.ECB.Update();
 
     const p1InitialX = p1.Position.X.AsNumber;
     const p2InitialX = p2.Position.X.AsNumber;
@@ -63,10 +63,10 @@ describe('Player Collision system tests', () => {
   test('Players are not moved if one is in ledge grab state', () => {
     p1.Position.X.SetFromNumber(500);
     p1.Position.Y.SetFromNumber(500);
-    p1.ECB.MoveToPosition();
+    p1.ECB.Update();
     p2.Position.X.SetFromNumber(500);
     p2.Position.Y.SetFromNumber(500);
-    p2.ECB.MoveToPosition();
+    p2.ECB.Update();
 
     const fsm1 = w.PlayerData.StateMachine(p1.ID);
     fsm1.ForceState(STATE_IDS.LEDGE_GRAB_S);

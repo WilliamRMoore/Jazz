@@ -1,9 +1,8 @@
 import { Command } from '../../command/command';
 import { envConfig } from '../../config/main-config';
-import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
+import { FixedPoint } from '../../math/fixedPoint';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
-import { IHistoryEnabled } from '../componentHistory';
 
 class Sensor {
   private readonly xOffset: FixedPoint = new FixedPoint();
@@ -57,18 +56,7 @@ class Sensor {
   }
 }
 
-export type SensorSnapShot = {
-  sensors:
-    | Array<{
-        xOffset: number;
-        yOffset: number;
-        radius: number;
-      }>
-    | undefined;
-  reactor: Command | undefined;
-};
-
-export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
+export class SensorComponent {
   private currentSensorIdx: number = 0;
   private readonly sensors: Array<Sensor>;
   public ReactCommand: Command | undefined;
@@ -81,23 +69,14 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
     }
   }
 
-  public ActivateSensor(
-    xOffset: FixedPoint,
-    yOffset: FixedPoint,
-    radius: FixedPoint,
-  ): SensorComponent {
-    if (this.currentSensorIdx >= this.sensors.length) {
-      throw new Error('No more sensors available to activate.');
-    }
-    this.ActivateSensorRaw(yOffset.Raw, xOffset.Raw, radius.Raw);
-    return this;
-  }
-
   public ActivateSensorRaw(
     xOffsetRaw: number,
     yOffsetRaw: number,
     radiusRaw: number,
   ): void {
+    if (this.currentSensorIdx >= this.sensors.length) {
+      throw new Error('No more sensors available to activate.');
+    }
     const sensor = this.sensors[this.currentSensorIdx];
     sensor.XOffset.SetFromRaw(xOffsetRaw);
     sensor.YOffset.SetFromRaw(yOffsetRaw);
@@ -124,52 +103,6 @@ export class SensorComponent implements IHistoryEnabled<SensorSnapShot> {
 
   public get NumberActive(): number {
     return this.currentSensorIdx;
-  }
-
-  public SnapShot(): SensorSnapShot {
-    const snapShot: SensorSnapShot = {
-      sensors: undefined,
-      reactor: undefined,
-    };
-
-    const length = this.sensors.length;
-    if (length > 0) {
-      snapShot.sensors = [];
-    }
-    for (let i = 0; i < length; i++) {
-      const sensor = this.sensors[i];
-      if (sensor.IsActive) {
-        snapShot.sensors!.push({
-          yOffset: sensor.YOffset.AsNumber,
-          xOffset: sensor.XOffset.AsNumber,
-          radius: sensor.Radius.AsNumber,
-        });
-      }
-    }
-
-    if (this.ReactCommand !== undefined) {
-      snapShot.reactor = this.ReactCommand;
-    }
-    return snapShot;
-  }
-
-  public SetFromSnapShot(snapShot: SensorSnapShot): void {
-    this.DeactivateSensors();
-    const snapShotSensorLength = snapShot.sensors?.length ?? 0;
-    for (let i = 0; i < snapShotSensorLength; i++) {
-      const snapShotSensor = snapShot.sensors![i];
-      this.ActivateSensorRaw(
-        NumberToRaw(snapShotSensor.yOffset),
-        NumberToRaw(snapShotSensor.xOffset),
-        NumberToRaw(snapShotSensor.radius),
-      );
-    }
-    if (snapShot.reactor !== undefined) {
-      this.ReactCommand = snapShot.reactor;
-    } else {
-      this.ReactCommand = undefined;
-    }
-    this.currentSensorIdx = snapShot.sensors?.length ?? 0;
   }
 
   public set CompState(state: SensorHist) {

@@ -104,23 +104,7 @@ export class JazzNetwork {
   }
 
   private setPlayerToFrame(p: Player, frameNumber: number) {
-    const pDb = this.World.HistoryData.PlayerHistoryDB[p.ID];
-    const r = pDb.get(frameNumber);
-    p.Position.CompState = r;
-    p.Velocity.CompState = r;
-    p.Damage.CompState = r;
-    p.Flags.CompState = r;
-    p.HitStop.CompState = r;
-    p.HitStun.CompState = r;
-    p.LedgeDetector.CompState = r;
-    p.Sensors.CompState = r;
-    p.ECB.CompState = r;
-    p.Jump.CompState = r;
-    p.Attacks.CompState = r;
-    p.Grabs.CompState = r;
-    p.GrabMeter.CompState = r;
-    p.Shield.CompState = r;
-    p.FSMInfo.CompState = r;
+    SetPlayerToFrame(p, frameNumber, this.World);
   }
 
   private tickLoop() {
@@ -148,4 +132,24 @@ export class JazzNetwork {
   public _rollBackManager(): RollBackManager {
     return this.rollBack;
   }
+}
+
+export function SetPlayerToFrame(p: Player, frameNumber: number, w: World) {
+  const pDb = w.HistoryData.PlayerHistoryDB[p.ID];
+  const r = pDb.get(frameNumber);
+  p.Position.CompState = r;
+  p.Velocity.CompState = r;
+  p.Damage.CompState = r;
+  p.Flags.CompState = r;
+  p.HitStop.CompState = r;
+  p.HitStun.CompState = r;
+  p.LedgeDetector.CompState = r;
+  p.Sensors.CompState = r;
+  p.ECB.CompState = r;
+  p.Jump.CompState = r;
+  p.Attacks.CompState = r;
+  p.Grabs.CompState = r;
+  p.GrabMeter.CompState = r;
+  p.Shield.CompState = r;
+  p.FSMInfo.CompState = r;
 }

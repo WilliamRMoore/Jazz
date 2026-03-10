@@ -1,14 +1,7 @@
 import { HurtCapsuleConfig } from '../../../character/shared';
 import { FixedPoint } from '../../math/fixedPoint';
-import { Circle } from '../../physics/circle';
-import { FlatVec } from '../../physics/vector';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
-
-export type HurtCirclesSnapShot = {
-  position: FlatVec;
-  circls: Array<Circle>;
-};
 
 export class HurtCapsule {
   public readonly StartOffsetX: FixedPoint = new FixedPoint();

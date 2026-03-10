@@ -3,7 +3,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { DivideRaw, NumberToRaw } from '../math/fixedPoint';
+import { DivideRaw } from '../math/fixedPoint';
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -39,7 +39,7 @@ const CORNER_JITTER_CORRECTION_RAW = TWO;
 
 export function StageCollisionDetection(world: World): void {
   const playerData: PlayerData = world.PlayerData;
-  const playerHistories = world.HistoryData.PlayerHistoryDB; //world.HistoryData.PlayerComponentHistories;
+  const playerHistories = world.HistoryData.PlayerHistoryDB;
   const stageData: StageData = world.StageData;
   const pools: Pools = world.Pools;
   const playerCount = playerData.PlayerCount;
@@ -66,10 +66,6 @@ export function StageCollisionDetection(world: World): void {
     const prevState = pDb.get(world.PreviousFrame);
     const prevEcbShape =
       ecb.ecbStateShapes.get(prevState.stateId) ?? ecb.OriginalShape;
-    // const prevEcbSnapShot =
-    //   componentHistories[playerIndex].EcbHistory[world.PreviousFrame];
-    // const prePos =
-    //   componentHistories[playerIndex].PositionHistory[world.PreviousFrame];
     const preXRaw = prevState.posXRaw;
     const preYRaw = prevState.posYRaw;
     const preEcb = CreateDiamondFromHistory(

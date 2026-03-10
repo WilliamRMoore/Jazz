@@ -68,7 +68,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.Flags.FaceLeft();
     p.Position.X.SetFromNumber(1650);
     p.Position.Y.SetFromNumber(600);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
@@ -83,7 +83,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.Flags.FaceLeft();
     p.Position.X.SetFromNumber(1650);
     p.Position.Y.SetFromNumber(600);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
@@ -99,7 +99,7 @@ describe('Ledge Grab Detection system tests', () => {
     p.Flags.FaceLeft();
     p.Position.X.SetFromNumber(1650);
     p.Position.Y.SetFromNumber(600);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;
@@ -115,7 +115,7 @@ describe('Ledge Grab Detection system tests', () => {
     // Position player on the ground
     p.Position.X.SetFromNumber(600);
     p.Position.Y.SetFromNumber(650);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.LedgeDetector.MoveToPos();
 
     const initialState = p.FSMInfo.CurrentState.StateId;

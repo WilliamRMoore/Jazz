@@ -10,7 +10,6 @@ import { ActiveGrabBubblesDTO } from '../../pools/ActiveGrabBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 import { frameNumber } from './attack';
 
 type bubbleId = number;
@@ -81,7 +80,6 @@ export class GrabBubble {
 export class Grab {
   public readonly Name: string;
   public readonly GrabId: GrabId;
-  public readonly TotalFrameLength: number;
   public readonly ImpulseClamp: FixedPoint | undefined;
   public readonly Impulses: Map<frameNumber, FlatVec> | undefined;
   public readonly GrabBubbles: Array<GrabBubble>;
@@ -89,7 +87,6 @@ export class Grab {
   constructor(conf: GrabConfig) {
     this.Name = conf.Name;
     this.GrabId = conf.GrabId;
-    this.TotalFrameLength = conf.TotalFrameLength;
     const gbs = conf.GrabBubbles.map((gbc) => new GrabBubble(gbc));
     this.GrabBubbles = gbs.sort((a, b) => a.BubbleId - b.BubbleId);
     if (conf.Impulses !== undefined) {
@@ -126,9 +123,7 @@ export class Grab {
   }
 }
 
-export type GrabSnapShot = Grab | undefined;
-
-export class GrabComponent implements IHistoryEnabled<GrabSnapShot> {
+export class GrabComponent {
   private grabs: Map<GrabId, Grab> = new Map();
   private currentGrab: Grab | undefined = undefined;
 
@@ -156,14 +151,6 @@ export class GrabComponent implements IHistoryEnabled<GrabSnapShot> {
 
   public ZeroCurrentGrab(): void {
     this.currentGrab = undefined;
-  }
-
-  public SnapShot(): GrabSnapShot {
-    return this.currentGrab;
-  }
-
-  public SetFromSnapShot(snapShot: GrabSnapShot): void {
-    this.currentGrab = snapShot;
   }
 
   public set CompState(history: GrabHist) {

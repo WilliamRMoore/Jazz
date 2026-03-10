@@ -124,7 +124,7 @@ describe('CommandTests', () => {
   });
 
   test('should set jump count', () => {
-    expect(player.Jump.SnapShot()).toBe(0);
+    expect(player.Jump.JumpCount).toBe(0);
 
     const setJumpCountCommand = {
       commandName: COMMAND_NAMES.SET_JUMP_COUNT,
@@ -133,6 +133,6 @@ describe('CommandTests', () => {
 
     HandleCommand(world, player, setJumpCountCommand);
 
-    expect(player.Jump.SnapShot()).toBe(2);
+    expect(player.Jump.JumpCount).toBe(2);
   });
 });

@@ -332,15 +332,15 @@ function LerpPlayer(
   if (lp.Shield.a) {
     const shieldWasActiveThen = thenState.shieldActive;
     const thenRadiusRaw = shieldWasActiveThen
-      ? compShieldThen.calcRadiusRaw
-      : compShieldNow.calcRadiusRaw;
+      ? thenState.calcRadiusRaw
+      : nowState.calcRadiusRaw;
     const thenXRaw = shieldWasActiveThen
       ? compShieldThen.calcXRaw
       : compShieldNow.calcXRaw;
     const thenYRaw = shieldWasActiveThen
       ? compShieldThen.calcYRaw
       : compShieldNow.calcYRaw;
-    lp.Shield.radius = lc(thenRadiusRaw, compShieldNow.calcRadiusRaw, alpha);
+    lp.Shield.radius = lc(thenRadiusRaw, nowState.calcRadiusRaw, alpha);
     lp.Shield.X = lc(thenXRaw, compShieldNow.calcXRaw, alpha);
     lp.Shield.Y = lc(thenYRaw, compShieldNow.calcYRaw, alpha);
   }

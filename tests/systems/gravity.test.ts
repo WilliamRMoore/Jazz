@@ -29,7 +29,7 @@ describe('Gravity system tests', () => {
     // position player in the air
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.LedgeDetector.MoveToPos();
     const initialVelocityY = p.Velocity.Y.Raw;
 
@@ -42,7 +42,7 @@ describe('Gravity system tests', () => {
     // position player on the ground
     p.Position.Y.SetFromNumber(650);
     p.Position.X.SetFromNumber(500);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     const initialVelocityY = p.Velocity.Y.Raw;
 
     Gravity(w);
@@ -58,7 +58,7 @@ describe('Gravity system tests', () => {
     ];
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
 
     for (const state of states) {
       p.FSMInfo.SetCurrentState({ StateId: state } as any);
@@ -71,7 +71,7 @@ describe('Gravity system tests', () => {
   test('Gravity is not applied when in hit pause', () => {
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.Flags.SetHitPauseFrames(10);
     const initialVelocityY = p.Velocity.Y.Raw;
 
@@ -93,7 +93,7 @@ describe('Gravity system tests', () => {
 
       p.Position.Y.SetFromNumber(-100);
       p.Position.X.SetFromNumber(0);
-      p.ECB.MoveToPosition();
+      p.ECB.Update();
       const initialVelocityY = p.Velocity.Y.Raw;
 
       Gravity(w);
@@ -106,7 +106,7 @@ describe('Gravity system tests', () => {
   test('Gravity is applied with fast falling', () => {
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
-    p.ECB.MoveToPosition();
+    p.ECB.Update();
     p.Flags.FastFallOn();
     const initialVelocityY = p.Velocity.Y.Raw;
 

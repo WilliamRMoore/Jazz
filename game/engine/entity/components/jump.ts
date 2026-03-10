@@ -1,9 +1,6 @@
 import { FixedPoint } from '../../math/fixedPoint';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type JumpSnapShot = number;
-
-export class JumpComponent implements IHistoryEnabled<JumpSnapShot> {
+export class JumpComponent {
   private readonly numberOfJumps: number = 2;
   private jumpCount: number = 0;
   public readonly JumpVelocity: FixedPoint = new FixedPoint(0);
@@ -33,16 +30,8 @@ export class JumpComponent implements IHistoryEnabled<JumpSnapShot> {
     this.jumpCount = 0;
   }
 
-  public SnapShot(): JumpSnapShot {
-    return this.jumpCount;
-  }
-
   public Set(jumps: number) {
     this.jumpCount = jumps;
-  }
-
-  public SetFromSnapShot(snapShot: JumpSnapShot): void {
-    this.jumpCount = snapShot;
   }
 
   public get JumpCount(): number {

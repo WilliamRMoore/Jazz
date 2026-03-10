@@ -11,7 +11,6 @@ import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 
 type bubbleId = number;
 export type frameNumber = number;
@@ -153,12 +152,7 @@ export class Attack {
   }
 }
 
-export type AttackSnapShot = {
-  attack: Attack | undefined;
-  playersHit: Array<number> | undefined;
-};
-
-export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
+export class AttackComponment {
   private readonly attacks: Map<AttackId, Attack>;
   private currentAttack: Attack | undefined = undefined;
   public readonly PlayerIdsHit = new Set<number>();
@@ -194,32 +188,6 @@ export class AttackComponment implements IHistoryEnabled<AttackSnapShot> {
     }
     this.ResetPlayerIdsHit();
     this.currentAttack = undefined;
-  }
-
-  public SnapShot(): AttackSnapShot {
-    const snapShot = {
-      attack: undefined,
-      playersHit: undefined,
-    } as AttackSnapShot;
-    if (this.currentAttack !== undefined) {
-      snapShot.attack = this.currentAttack;
-    }
-    if (this.PlayerIdsHit.size > 0) {
-      snapShot.playersHit = Array.from(this.PlayerIdsHit).sort();
-    }
-    return snapShot;
-  }
-
-  public SetFromSnapShot(snapShot: AttackSnapShot): void {
-    this.currentAttack = snapShot.attack;
-    this.PlayerIdsHit.clear();
-    if (snapShot.playersHit !== undefined) {
-      for (let i = 0; i < snapShot.playersHit.length; i++) {
-        this.PlayerIdsHit.add(snapShot.playersHit[i]);
-      }
-    } else {
-      this.PlayerIdsHit.clear();
-    }
   }
 
   public HitPlayer(playerID: number): void {

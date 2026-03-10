@@ -14,7 +14,7 @@ import { LedgeDetectorHist } from '../entity/components/ledgeDetector';
 import { PositionHist } from '../entity/components/position';
 import { SensorHist } from '../entity/components/sensor';
 import {
-  CalculateRadiusFromTriggerRaw,
+  // CalculateRadiusFromTriggerRaw,
   ShieldHist,
 } from '../entity/components/shield';
 import { VelocityHist } from '../entity/components/velocity';
@@ -25,54 +25,15 @@ import {
   STATE_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
 import { FlatVec } from '../physics/vector';
+import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
-
-// export function RecordHistory(w: World): void {
-//   const playerData = w.PlayerData;
-//   const historyData = w.HistoryData;
-//   const frameNumber = w.LocalFrame;
-//   const playerCount = playerData.PlayerCount;
-//   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
-//     const p = playerData.Player(playerIndex);
-//     const history = historyData.PlayerComponentHistories[playerIndex];
-//     record(p, history, frameNumber);
-//   }
-//   w.SetPoolHistory();
-// }
-
-// function record(p: Player, h: ComponentHistory, fn: frameNumber) {
-//   //h.ShieldHistory[fn] = p.Shield.SnapShot();
-//   //h.PositionHistory[fn] = p.Position.SnapShot();
-//   //h.FsmInfoHistory[fn] = p.FSMInfo.SnapShot();
-//   //h.DamageHistory[fn] = p.Damage.SnapShot();
-//   //h.VelocityHistory[fn] = p.Velocity.SnapShot();
-//   //h.FlagsHistory[fn] = p.Flags.SnapShot();
-//   //h.PlayerHitStopHistory[fn] = p.HitStop.SnapShot();
-//   //h.PlayerHitStunHistory[fn] = p.HitStun.SnapShot();
-//   //h.LedgeDetectorHistory[fn] = p.LedgeDetector.SnapShot();
-//   //h.SensorsHistory[fn] = p.Sensors.SnapShot();
-//   //h.EcbHistory[fn] = p.ECB.SnapShot();
-//   //h.JumpHistroy[fn] = p.Jump.SnapShot();
-//   //h.AttackHistory[fn] = p.Attacks.SnapShot();
-//   //h.GrabHistory[fn] = p.Grabs.SnapShot();
-//   //h.GrabMeterHistory[fn] = p.GrabMeter.SnapShot();
-// }
-
-// export function InitPlayerHistory(p: Player, w: World) {
-//   const pId = p.ID;
-//   const curFrame = w.LocalFrame;
-//   const hist = w.HistoryData.PlayerComponentHistories[pId];
-//   for (let i = 0; i <= curFrame; i++) {
-//     record(p, hist, i);
-//   }
-// }
 
 export function InitPlayerHistory(p: Player, w: World) {
   const curFrame = w.LocalFrame;
   const frameHistLimit = envConfig.get('State.MaxFrameStorage') as number;
   const startFrame = curFrame > frameHistLimit ? curFrame - frameHistLimit : 0;
   for (let i = startFrame; i <= curFrame; i++) {
-    record(p, w, i);
+    record(p, w.HistoryData.PlayerHistoryDB[p.ID], i);
   }
 }
 
@@ -82,17 +43,21 @@ export function RecordHistory(w: World) {
   const frameNumber = w.LocalFrame;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = pd.Player(playerIndex);
-    record(p, w, frameNumber);
+    record(p, w.HistoryData.PlayerHistoryDB[playerIndex], frameNumber);
   }
-  //const atkBubbles = atk.
+  w.SetPoolHistory();
 }
 
-function record(p: Player, w: World, frameNumber: frameNumber) {
-  const pd = w.PlayerData;
-  const playerIndex = p.ID;
-  const ia = pd.InputStore(playerIndex).GetInputForFrame(frameNumber);
-  const pTable = w.HistoryData.PlayerHistoryDB[playerIndex];
+export function record(
+  p: Player,
+  pTable: PlayerHistoryTable,
+  frameNumber: frameNumber,
+) {
   const r = pTable.get(frameNumber);
+  RecordIntoHistory(p, r);
+}
+
+export function RecordIntoHistory(p: Player, r: PlayerStateHistory) {
   const position = p.Position;
   const velocity = p.Velocity;
   const damage = p.Damage;
@@ -170,11 +135,7 @@ function record(p: Player, w: World, frameNumber: frameNumber) {
     const shGPosX = posXRaw + shield.ShieldTiltX.Raw;
     const shGPosY =
       posYRaw + shield.ShieldTiltY.Raw + shield.YOffsetConstant.Raw;
-    const triggerValue = ia.RTValRaw > ia.LTValRaw ? ia.RTValRaw : ia.LTValRaw;
-    r.comp_shield.calcRadiusRaw = CalculateRadiusFromTriggerRaw(
-      triggerValue,
-      shield.PreModCurrentRadius.Raw,
-    );
+    r.calcRadiusRaw = shield.CalculatedRadiusRaw;
     r.comp_shield.calcXRaw = shGPosX;
     r.comp_shield.calcYRaw = shGPosY;
   }
@@ -185,7 +146,9 @@ function record(p: Player, w: World, frameNumber: frameNumber) {
       rS.active = false;
       continue;
     }
-    rS.globalXRaw = s.XOffset.Raw;
+    rS.globalXRaw = r.facingRight
+      ? posXRaw + s.XOffset.Raw
+      : posXRaw - s.XOffset.Raw;
     rS.globalYRaw = posYRaw + s.YOffset.Raw;
     rS.radiusRaw = s.Radius.Raw;
     rS.active = s.IsActive;
@@ -322,6 +285,7 @@ export class PlayerStateHistory
   // shield
   shieldActive = false;
   shieldRadiusRaw = 0;
+  calcRadiusRaw = 0;
   shieldTiltXRaw = 0;
   shieldTiltYRaw = 0;
   // sensors
@@ -348,7 +312,6 @@ export class PlayerStateHistory
   playersHit: Set<number> = new Set<number>();
   // computed values
   readonly comp_shield = {
-    calcRadiusRaw: 0,
     calcXRaw: 0,
     calcYRaw: 0,
   };
@@ -473,6 +436,7 @@ export class PlayerStateHistory
     this.holdingPlayerId = undefined;
     this.shieldActive = false;
     this.shieldRadiusRaw = 0;
+    this.calcRadiusRaw = 0;
     this.shieldTiltXRaw = 0;
     this.shieldTiltYRaw = 0;
     const sLength = this.sensors.length;
@@ -489,7 +453,6 @@ export class PlayerStateHistory
     this.ldgGrbdLdg = undefined;
     this.atkId = undefined;
     this.playersHit.clear();
-    this.comp_shield.calcRadiusRaw = 0;
     this.comp_shield.calcXRaw = 0;
     this.comp_shield.calcYRaw = 0;
     const csLength = this.comp_sensors.length;

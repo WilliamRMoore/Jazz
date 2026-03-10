@@ -151,7 +151,7 @@ describe('Attack systesm tests', () => {
 
     // p1 moves very fast, tunneling through p2.
     p1.Position.X.SetFromNumber(1250);
-    p1.ECB.MoveToPosition();
+    p1.ECB.Update();
 
     // Set attack to be on an active frame where the *previous* frame was also active.
     // This is because the continuous collision logic checks the hitbox position on the previous state frame.

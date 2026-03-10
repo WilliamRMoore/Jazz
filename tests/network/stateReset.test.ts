@@ -5,11 +5,18 @@ import {
   STATE_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { InputAction, NewInputAction } from '../../game/engine/input/Input';
-import { JazzNetwork } from '../../game/engine/jazz/jazzNetwork';
+import {
+  JazzNetwork,
+  SetPlayerToFrame,
+} from '../../game/engine/jazz/jazzNetwork';
 import { RollBackManager } from '../../game/engine/managers/rollBack';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { ToFV } from '../../game/engine/utils';
 import { World } from '../../game/engine/world/world';
+import {
+  PlayerStateHistory,
+  RecordIntoHistory,
+} from '../../game/engine/systems/history';
 
 /**
  * Helper function to compare player state snapshots component by component.
@@ -126,26 +133,30 @@ describe('state reset testing', () => {
       rinput12,
     ];
 
-    let p1SnapshotForFrame4: any;
-    let p2SnapshotForFrame4: any;
+    let p1SnapshotForFrame4: PlayerStateHistory = new PlayerStateHistory();
+    let p2SnapshotForFrame4: PlayerStateHistory = new PlayerStateHistory();
     for (let i = 0; i < 12; i++) {
       curInputForLocal = localInputs[i];
       const RemoteInput = remoteInputs[i];
       nj.AddRemoteInputForFrame(i, 1, RemoteInput);
       nj.Tick();
       if (i === 3) {
-        p1SnapshotForFrame4 = pl.ToState();
-        p2SnapshotForFrame4 = pr.ToState();
+        p1SnapshotForFrame4 = new PlayerStateHistory();
+        RecordIntoHistory(pl, p1SnapshotForFrame4);
+        p2SnapshotForFrame4 = new PlayerStateHistory();
+        RecordIntoHistory(pr, p2SnapshotForFrame4);
       }
     }
 
-    w.GetComponentHistory(0)?.SetPlayerToFrame(pl, 3);
-    w.GetComponentHistory(1)?.SetPlayerToFrame(pr, 3);
+    SetPlayerToFrame(pl, 3, w);
+    SetPlayerToFrame(pr, 3, w);
 
     expect(pl.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.DOWN_CHARGE_S);
 
-    const newPLSnapshot = pl.ToState();
-    const newPRSnapshot = pr.ToState();
+    const newPLSnapshot = new PlayerStateHistory();
+    RecordIntoHistory(pl, newPLSnapshot);
+    const newPRSnapshot = new PlayerStateHistory();
+    RecordIntoHistory(pr, newPRSnapshot);
 
     comparePlayerStates('Player 1', p1SnapshotForFrame4, newPLSnapshot);
     comparePlayerStates('Player 2', p2SnapshotForFrame4, newPRSnapshot);
@@ -191,8 +202,8 @@ describe('state reset testing', () => {
     const localInputs = Array.from({ length: fuzzFrames }, createRandomInput);
     const remoteInputs = Array.from({ length: fuzzFrames }, createRandomInput);
 
-    let p1Snapshot: any;
-    let p2Snapshot: any;
+    let p1Snapshot = new PlayerStateHistory();
+    let p2Snapshot = new PlayerStateHistory();
 
     for (let i = 0; i < fuzzFrames; i++) {
       curInputForLocal = localInputs[i];
@@ -200,17 +211,21 @@ describe('state reset testing', () => {
       nj.Tick();
 
       if (i === resetFrame) {
-        p1Snapshot = pl.ToState();
-        p2Snapshot = pr.ToState();
+        p1Snapshot = new PlayerStateHistory();
+        RecordIntoHistory(pl, p1Snapshot);
+        p2Snapshot = new PlayerStateHistory();
+        RecordIntoHistory(pr, p2Snapshot);
       }
     }
 
     // Reset to the state at `resetFrame`
-    w.GetComponentHistory(0)?.SetPlayerToFrame(pl, resetFrame);
-    w.GetComponentHistory(1)?.SetPlayerToFrame(pr, resetFrame);
+    SetPlayerToFrame(pl, resetFrame, w);
+    SetPlayerToFrame(pr, resetFrame, w);
 
-    const newPLSnapshot = pl.ToState();
-    const newPRSnapshot = pr.ToState();
+    const newPLSnapshot = new PlayerStateHistory();
+    RecordIntoHistory(pl, newPLSnapshot);
+    const newPRSnapshot = new PlayerStateHistory();
+    RecordIntoHistory(pr, newPRSnapshot);
 
     comparePlayerStates('Player 1 (Fuzz)', p1Snapshot, newPLSnapshot);
     comparePlayerStates('Player 2 (Fuzz)', p2Snapshot, newPRSnapshot);

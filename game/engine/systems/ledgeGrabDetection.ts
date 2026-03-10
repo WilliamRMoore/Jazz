@@ -2,7 +2,7 @@ import {
   STATE_IDS,
   GAME_EVENT_IDS,
 } from '../finite-state-machine/stateConfigurations/shared';
-import { NumberToRaw, DivideRaw } from '../math/fixedPoint';
+import { DivideRaw } from '../math/fixedPoint';
 
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {

@@ -145,7 +145,6 @@ export class PoolContainer implements Pools {
 }
 
 export class HistoryData implements IHistoryData {
-  //public readonly PlayerComponentHistories: Array<ComponentHistory> = [];
   public readonly PlayerHistoryDB: Array<PlayerHistoryTable> = [];
   public readonly RentedVecHistory: Array<number> = [];
   public readonly RentedColResHsitory: Array<number> = [];

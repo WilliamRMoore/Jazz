@@ -95,28 +95,6 @@ export class Player {
     this.GrabMeter = new GrabMeterComponent();
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
-
-  public ToState() {
-    // This creates a serializable snapshot of the player's state, which is used
-    // by the HashCode function for deterministic state hashing.
-    return {
-      Shield: this.Shield.SnapShot(),
-      Position: this.Position.SnapShot(),
-      FSMInfo: this.FSMInfo.SnapShot(),
-      Damage: this.Damage.SnapShot(),
-      Velocity: this.Velocity.SnapShot(),
-      Flags: this.Flags.SnapShot(),
-      PlayerHitStop: this.HitStop.SnapShot(),
-      PlayerHitStun: this.HitStun.SnapShot(),
-      LedgeDetector: this.LedgeDetector.SnapShot(),
-      Sensors: this.Sensors.SnapShot(),
-      ECB: this.ECB.SnapShot(),
-      Jump: this.Jump.SnapShot(),
-      Attacks: this.Attacks.SnapShot(),
-      Grabs: this.Grabs.SnapShot(),
-      GrabMeter: this.GrabMeter.SnapShot(),
-    };
-  }
 }
 
 export function CanOnlyFallOffLedgeWhenFacingAwayFromIt(p: Player): boolean {
@@ -136,21 +114,21 @@ export function SetPlayerInitialPositionRaw(
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
   const position = p.Position;
   position.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerXPostionRaw(p: Player, xRaw: number): void {
   const position = p.Position;
   position.X.AddRaw(xRaw);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 
@@ -158,7 +136,7 @@ export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
   const position = p.Position;
   position.X.SetFromFp(x);
   position.Y.SetFromFp(y);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 
@@ -166,7 +144,7 @@ export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
   const position = p.Position;
   position.X.SetFromRaw(xRaw);
   position.Y.SetFromRaw(yRaw);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 
@@ -190,7 +168,7 @@ export function AddToPlayerPositionRaw(
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
   pos.Y.AddRaw(yRaw);
-  p.ECB.MoveToPosition();
+  p.ECB.Update();
   p.LedgeDetector.MoveToPos();
 }
 

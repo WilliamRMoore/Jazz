@@ -1,14 +1,8 @@
 import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { FillArrayWithFlatVec } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type LedgeDetectorSnapShot = {
-  numberOfLedgeGrabs: number;
-  grabbedLedge?: FlatVec[];
-};
-
-export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnapShot> {
+export class LedgeDetectorComponent {
   private readonly posRef: FlatVec;
   private maxGrabs: number = 15;
   private numberOfLedgeGrabs: number = 0;
@@ -125,19 +119,6 @@ export class LedgeDetectorComponent implements IHistoryEnabled<LedgeDetectorSnap
 
   public ReleaseLedge(): void {
     this.grabbedLedge = undefined;
-  }
-
-  public SnapShot(): LedgeDetectorSnapShot {
-    return {
-      numberOfLedgeGrabs: this.numberOfLedgeGrabs,
-      grabbedLedge: this.grabbedLedge,
-    } as LedgeDetectorSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: LedgeDetectorSnapShot): void {
-    this.numberOfLedgeGrabs = snapShot.numberOfLedgeGrabs;
-    this.grabbedLedge = snapShot.grabbedLedge;
-    this.update();
   }
 
   public set CompState(state: LedgeDetectorHist) {

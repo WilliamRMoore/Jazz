@@ -41,6 +41,7 @@ describe('OutOfBounds system tests', () => {
       ({ x, y }) => {
         p.Position.X.SetFromNumber(x);
         p.Position.Y.SetFromNumber(y);
+        p.HitStun.Frames = 10; // Set hit stun to ensure player is killed when out of bounds
 
         OutOfBoundsCheck(w);
 

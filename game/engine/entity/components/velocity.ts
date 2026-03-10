@@ -1,15 +1,8 @@
 import { FixedPoint } from '../../math/fixedPoint';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type VelocitySnapShot = { X: number; Y: number };
-
-export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
+export class VelocityComponent {
   private readonly x: FixedPoint = new FixedPoint();
   private readonly y: FixedPoint = new FixedPoint();
-
-  public AddClampedXImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    this.AddClampedXImpulseRaw(clamp.Raw, impulse.Raw);
-  }
 
   public AddClampedXImpulseRaw(clampRaw: number, impulseRaw: number): void {
     const clampValueRaw = Math.abs(clampRaw);
@@ -19,10 +12,6 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
       return;
     }
     this.x.SetFromRaw(currentVelocityRaw + impulseRaw);
-  }
-
-  public AddClampedYImpulse(clamp: FixedPoint, impulse: FixedPoint): void {
-    this.AddClampedYImpulseRaw(clamp.Raw, impulse.Raw);
   }
 
   public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {
@@ -49,15 +38,6 @@ export class VelocityComponent implements IHistoryEnabled<VelocitySnapShot> {
 
   public set Y(val: FixedPoint) {
     this.y.SetFromFp(val);
-  }
-
-  public SnapShot(): VelocitySnapShot {
-    return { X: this.x.AsNumber, Y: this.y.AsNumber } as VelocitySnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: VelocitySnapShot): void {
-    this.x.SetFromNumber(snapShot.X);
-    this.y.SetFromNumber(snapShot.Y);
   }
 
   public set CompState(state: VelocityHist) {

@@ -1,5 +1,4 @@
 import { InputAction } from '../input/Input';
-import { PlayerSnapShot } from '../entity/componentHistory';
 import { frameNumber } from '../entity/components/attack';
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
@@ -8,6 +7,7 @@ import { IInputStore } from '../managers/inputManager';
 import { NumberToRaw } from '../math/fixedPoint';
 import { World } from '../world/world';
 import { PlayerHistoryTable } from '../world/stateModules';
+import { PlayerStateHistory } from '../systems/history';
 
 const ntr = NumberToRaw;
 
@@ -66,25 +66,8 @@ export class PlayerDebugAdapter {
     this.player.Velocity.Y.SetFromRaw(ntr(velY));
   }
 
-  public get LiveStateData(): PlayerSnapShot {
-    const p = this.player;
-    const pd = {
-      Shield: p.Shield.SnapShot(),
-      Position: p.Position.SnapShot(),
-      FSMInfo: p.FSMInfo.SnapShot(),
-      Damage: p.Damage.SnapShot(),
-      Velocity: p.Velocity.SnapShot(),
-      Flags: p.Flags.SnapShot(),
-      PlayerHitStop: p.HitStop.SnapShot(),
-      PlayerHitStun: p.HitStun.SnapShot(),
-      LedgeDetector: p.LedgeDetector.SnapShot(),
-      Sensors: p.Sensors.SnapShot(),
-      Ecb: p.ECB.SnapShot(),
-      Jump: p.Jump.SnapShot(),
-      Attack: p.Attacks.SnapShot(),
-      Grab: p.Grabs.SnapShot(),
-      GrabMeter: p.GrabMeter.SnapShot(),
-    } as PlayerSnapShot;
-    return pd;
+  public get LiveStateData(): PlayerStateHistory {
+    const frame = this.world.LocalFrame > 0 ? this.world.LocalFrame - 1 : 0;
+    return this.hist.get(frame);
   }
 }

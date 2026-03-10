@@ -5,7 +5,6 @@ import { FlatVec } from '../../physics/vector';
 import { DiamondDTO } from '../../pools/ECBDiamonDTO';
 import { Pool } from '../../pools/Pool';
 import { FillArrayWithFlatVec } from '../../utils';
-import { IHistoryEnabled } from '../componentHistory';
 
 const POINT_FIVE = NumberToRaw(0.5);
 
@@ -43,10 +42,6 @@ export function CreateDiamondFromHistory(
   return diamondDTO;
 }
 
-export type ECBSnapShot = {
-  readonly ecbShape: ECBShape;
-};
-
 export type ECBShape = {
   readonly height: FixedPoint;
   readonly width: FixedPoint;
@@ -55,7 +50,7 @@ export type ECBShape = {
 
 export type ECBShapes = Map<StateId, ECBShape>;
 
-export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
+export class ECBComponent {
   // this is a reference
   private playerPosRef: FlatVec;
   public readonly SensorDepth = new FixedPoint(1);
@@ -87,23 +82,19 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
     this.currentShape = this.OriginalShape;
     FillArrayWithFlatVec(this.curVerts);
     this.playerPosRef = positionRef;
-    this.update();
+    this.Update();
   }
 
   public GetActiveVerts(): FlatVec[] {
     return this.curVerts;
   }
 
-  public MoveToPosition(): void {
-    this.update();
-  }
-
   public SetECBShape(stateId: StateId): void {
     this.currentShape = this.ecbStateShapes.get(stateId) || this.OriginalShape;
-    this.update();
+    this.Update();
   }
 
-  private update(): void {
+  public Update(): void {
     const half = POINT_FIVE;
     const px = this.playerPosRef.X.Raw;
     const py = this.playerPosRef.Y.Raw;
@@ -174,18 +165,7 @@ export class ECBComponent implements IHistoryEnabled<ECBSnapShot> {
 
   public ResetECBShape(): void {
     this.currentShape = this.OriginalShape;
-    this.update();
-  }
-
-  public SnapShot(): ECBSnapShot {
-    return {
-      ecbShape: this.currentShape,
-    } as ECBSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: ECBSnapShot): void {
-    this.currentShape = snapShot.ecbShape;
-    this.update();
+    this.Update();
   }
 
   public set CompState(history: ECBHist) {

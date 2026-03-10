@@ -1,13 +1,7 @@
 import { FixedPoint } from '../../math/fixedPoint';
 import { ONE } from '../../math/numberConstants';
-import { IHistoryEnabled } from '../componentHistory';
 
-export type GrabMeterSnapShot = {
-  meter: number;
-  holdingPlayerId: number | undefined;
-};
-
-export class GrabMeterComponent implements IHistoryEnabled<GrabMeterSnapShot> {
+export class GrabMeterComponent {
   public readonly Meter = new FixedPoint(0);
   public readonly BaseDecayRate = ONE; // 1 frame per frame
   private playerId: number | undefined = undefined;
@@ -22,18 +16,6 @@ export class GrabMeterComponent implements IHistoryEnabled<GrabMeterSnapShot> {
 
   public ZeroHoldingPlayerId(): void {
     this.playerId = undefined;
-  }
-
-  public SnapShot(): GrabMeterSnapShot {
-    return {
-      meter: this.Meter.AsNumber,
-      holdingPlayerId: this.playerId,
-    } as GrabMeterSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: GrabMeterSnapShot): void {
-    this.Meter.SetFromNumber(snapShot.meter);
-    this.playerId = snapShot.holdingPlayerId;
   }
 
   public set CompState(history: GrabMetereHist) {

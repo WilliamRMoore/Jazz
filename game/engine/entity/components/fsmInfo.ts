@@ -2,22 +2,12 @@ import { FSMState } from '../../finite-state-machine/PlayerStateMachine';
 import { FSMStates } from '../../finite-state-machine/PlayerStates';
 import { StateId } from '../../finite-state-machine/stateConfigurations/shared';
 import { Idle } from '../../finite-state-machine/stateConfigurations/states';
-import { IHistoryEnabled } from '../componentHistory';
-
-export type FSMInfoSnapShot = {
-  State: FSMState;
-  StateFrame: number;
-};
-
-type StateFrame = {
-  Frame: number;
-};
 
 export type StateFrameRef = {
   readonly Frame: number;
 };
 
-export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
+export class FSMInfoComponent {
   private currentState: FSMState = Idle;
   private currentStateFrame: number = 0;
   private readonly frameLengths: Map<StateId, number>;
@@ -60,18 +50,6 @@ export class FSMInfoComponent implements IHistoryEnabled<FSMInfoSnapShot> {
 
   public GetCurrentStateFrameLength(): number | undefined {
     return this.frameLengths.get(this.CurrentState.StateId);
-  }
-
-  public SnapShot(): FSMInfoSnapShot {
-    return {
-      State: this.currentState,
-      StateFrame: this.currentStateFrame,
-    } as FSMInfoSnapShot;
-  }
-
-  public SetFromSnapShot(snapShot: FSMInfoSnapShot): void {
-    this.currentState = snapShot.State;
-    this.currentStateFrame = snapShot.StateFrame;
   }
 
   public set CompState(history: FSMInfoHist) {

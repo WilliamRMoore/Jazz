@@ -8,7 +8,6 @@ import { ActionStateMappings } from './stateConfigurations/relationshipMappings'
 import { StateId, GameEventId, STATE_IDS } from './stateConfigurations/shared';
 import { Idle } from './stateConfigurations/states';
 import { FSMInfoComponent } from '../entity/components/fsmInfo';
-import { GetGameEventName, GetStateName } from '../debug/debugUtils';
 
 export type FSMState = {
   StateName: string;
@@ -41,11 +40,6 @@ export class StateMachine {
     const state = this.getTranslation(gameEventId);
 
     if (state === undefined) {
-      // const geName = GetGameEventName(gameEventId);
-      // const curStateName = GetStateName(this.player.FSMInfo.CurrentStatetId);
-      // console.warn(
-      //   ` No mapping esists for [State: ${curStateName} -> GameEvent: ${geName}]`,
-      // );
       return;
     }
 
@@ -140,7 +134,7 @@ export class StateMachine {
   private runDefault(w: World, fsmInfo: FSMInfoComponent): boolean {
     // Check to see if we are on a default frame
     // If not, return false
-    if (this.isDefaultFrame(fsmInfo) === false) {
+    if (!this.isDefaultFrame(fsmInfo)) {
       return false;
     }
 
@@ -224,15 +218,9 @@ export class StateMachine {
 
   private isDefaultFrame(fsmInfo: FSMInfoComponent): boolean {
     const fl = fsmInfo.GetCurrentStateFrameLength();
-
-    if (fl === undefined) {
+    if (fl === undefined || fl !== fsmInfo.CurrentStateFrame) {
       return false;
     }
-
-    if (fl === fsmInfo.CurrentStateFrame) {
-      return true;
-    }
-
-    return false;
+    return true;
   }
 }

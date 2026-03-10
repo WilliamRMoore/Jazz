@@ -9,7 +9,7 @@ const config = {
   PoolSizes: {
     PooledVectorCount: 1000,
     CollisionResultCount: 500,
-    ProjectionResultCount: 300,
+    ProjectionResultCount: 500,
     AttackResultCount: 100,
     ClosestPointsResultCount: 500,
     ActiveHitBubblesDTOCount: 200,
