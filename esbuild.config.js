@@ -7,6 +7,7 @@ const buildOptions = {
   bundle: true,
   outfile: 'public/index.js',
   sourcemap: true,
+  target: 'es2024'
 };
 
 async function build() {

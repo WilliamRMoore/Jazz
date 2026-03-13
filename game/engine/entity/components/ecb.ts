@@ -163,6 +163,22 @@ export class ECBComponent {
     return this.ecbStateShapes;
   }
 
+  public get AABBOrgXRaw(): number {
+    return this.Left.X.Raw;
+  }
+
+  public get AABBOrgYRaw(): number {
+    return this.Top.Y.Raw;
+  }
+
+  public get AABBWidthRaw(): number {
+    return this.currentShape.width.Raw;
+  }
+
+  public get AABBHeightRaw(): number {
+    return this.currentShape.height.Raw;
+  }
+
   public ResetECBShape(): void {
     this.currentShape = this.OriginalShape;
     this.Update();

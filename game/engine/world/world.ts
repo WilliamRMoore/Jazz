@@ -118,6 +118,7 @@ export class World {
 }
 
 type NetworkPlayers = { pIndex: number; player: Player };
+
 export function AddNetowrkedPlayers(
   w: World,
   local: NetworkPlayers,

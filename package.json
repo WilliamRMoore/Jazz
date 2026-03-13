@@ -7,7 +7,7 @@
     "test": "jest",
     "build": "node esbuild.config.js",
     "start": "esbuild game/index.ts --bundle --outfile=public/index.js --servedir=public --watch",
-    "deploy": "npm run build && gh-pages -d public"
+    "deploy": "npm run build && esbuild public/index.js --minify --allow-overwrite --outfile=public/index.js && gh-pages -d public"
   },
   "repository": {
     "type": "git",

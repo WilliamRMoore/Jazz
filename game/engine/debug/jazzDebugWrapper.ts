@@ -8,6 +8,7 @@ import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
 import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
+import { SetPlayerToFrame } from '../jazz/jazzNetwork';
 
 export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;
@@ -104,8 +105,24 @@ export class JazzDebugger implements IJazzDebugger {
     }
   }
 
+  public StepBackOneFrame(): void {
+    if (this.world.LocalFrame <= 0) {
+      return;
+    }
+    this.world.LocalFrame = this.world.LocalFrame - 1;
+    const pl = this.world.PlayerData.PlayerCount;
+    for (let i = 0; i < pl; i++) {
+      const p = this.world.PlayerData.Player(i);
+      SetPlayerToFrame(p, this.world.LocalFrame, this.world);
+    }
+  }
+
   public get World(): World {
     return this.jazz.World;
+  }
+
+  public get IsPaused(): boolean {
+    return this.paused;
   }
 
   private togglePause(ia: InputAction): void {
