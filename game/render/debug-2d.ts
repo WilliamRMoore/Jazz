@@ -50,6 +50,8 @@ export class DebugRenderer {
   private lastFrame: number = 0;
   public PlayerDeBugInfo: boolean = false;
   private playerLerper: PlayerLerper;
+  private averageTickRate: number = 0;
+  private tickHistory: Array<{ t: number; f: number }> = [];
 
   constructor(mainWindow: renderTarget, debugInfoWindow: renderTarget) {
     this.canvas = mainWindow.canvas;
@@ -68,6 +70,25 @@ export class DebugRenderer {
   }
 
   render(world: World, timeStampNow: number) {
+    // Calculate tick rate
+    this.tickHistory.push({ t: timeStampNow, f: world.LocalFrame });
+    const fiveSecondsAgo = timeStampNow - 5000;
+    while (
+      this.tickHistory.length > 0 &&
+      this.tickHistory[0].t < fiveSecondsAgo
+    ) {
+      this.tickHistory.shift();
+    }
+
+    if (this.tickHistory.length > 1) {
+      const oldest = this.tickHistory[0];
+      const newest = this.tickHistory[this.tickHistory.length - 1];
+      const timeDelta = (newest.t - oldest.t) / 1000;
+      if (timeDelta > 0) {
+        this.averageTickRate = (newest.f - oldest.f) / timeDelta;
+      }
+    }
+
     const localFrame = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1; // world frame is incremented at the end of the loop, so we actually need to get the previous frame, as that is the frame with the most current render artifact.
     const previousFrameTimeStamp = world.GetFrameTimeStampForFrame(
       localFrame === 0 ? 0 : localFrame - 1,
@@ -147,6 +168,11 @@ export class DebugRenderer {
       270,
     );
 
+    ctx.fillText(
+      `Avg Tick Rate (5s): ${this.averageTickRate.toFixed(2)} Hz`,
+      10,
+      300,
+    );
     if (this.PlayerDeBugInfo) {
       this.renderLiveDebugInfo(world);
     }

@@ -71,7 +71,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
 function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
   const logicLoopHandle = setInterval(() => {
     logicStep(engine, gpInfo);
-  }, frameInterval);
+  }, 8);
 }
 
 function RENDER_LOOP(jazzDebugger: JazzDebugger) {
@@ -95,25 +95,35 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   });
 }
 
+let accumulator = 0;
+const loopRate = 1000 / 60; //60 hrz
+let lastTime = performance.now();
 function logicStep(
   engine: IJazzLocal,
   gamePadInfo: Array<playerControllerInfo>,
 ) {
-  //const gamePadCount = gamePadInfo.length;
-  const w = engine.World;
-  const playerCount = w?.PlayerData.PlayerCount!;
+  const now = performance.now();
+  const delta = now - lastTime;
+  lastTime = now;
+  accumulator += delta;
+  while (accumulator >= loopRate) {
+    accumulator -= loopRate;
+    //const gamePadCount = gamePadInfo.length;
+    const w = engine.World;
+    const playerCount = w?.PlayerData.PlayerCount!;
 
-  for (let i = 0; i < playerCount; i++) {
-    const info = gamePadInfo[i];
-    if (info === undefined) {
-      const dbInput = NewInputAction();
-      engine.UpdateInputForCurrentFrame(dbInput, i);
-      continue;
+    for (let i = 0; i < playerCount; i++) {
+      const info = gamePadInfo[i];
+      if (info === undefined) {
+        const dbInput = NewInputAction();
+        engine.UpdateInputForCurrentFrame(dbInput, i);
+        continue;
+      }
+      const gpI = info.inputIndex;
+      const pi = info.playerIndex;
+      const input = GetInput(gpI);
+      engine.UpdateInputForCurrentFrame(input, pi);
     }
-    const gpI = info.inputIndex;
-    const pi = info.playerIndex;
-    const input = GetInput(gpI);
-    engine.UpdateInputForCurrentFrame(input, pi);
+    engine.Tick();
   }
-  engine.Tick();
 }
