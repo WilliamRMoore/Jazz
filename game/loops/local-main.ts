@@ -1,7 +1,6 @@
-import { DebugRenderer, resolution, renderTarget } from '../render/debug-2d';
+import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
 import { GetInput, NewInputAction } from '../engine/input/Input';
-import { World } from '../engine/world/world';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../engine/math/fixedPoint';
@@ -24,6 +23,14 @@ function ENGINE_DEBUG_LISTENERS(jdb: JazzDebugger) {
   window.addEventListener('keyup', (e) => {
     if (e.key === '1') {
       SpawnAndAttackWithNSpecial(jdb);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    switch (e.key) {
+      case 'ArrowLeft':
+        jdb.StepBackOneFrame();
+        break;
     }
   });
 }

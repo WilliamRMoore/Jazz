@@ -62,6 +62,33 @@ export class Stage {
     this.Ledges = sl;
     this.Platforms = pl;
   }
+
+  public AABBInterSectCheck(
+    xRaw: number,
+    yRaw: number,
+    widthRaw: number,
+    heightRaw: number,
+  ): boolean {
+    const left = xRaw;
+    const right = xRaw + widthRaw;
+    const top = yRaw + heightRaw;
+    const bottom = yRaw;
+    const stageXRaw = this.StageVerticies.OriginXRaw;
+    const stageYRaw = this.StageVerticies.OriginYRaw;
+    const stageWidthRaw = this.StageVerticies.WidthRaw;
+    const stageHeightRaw = this.StageVerticies.HeightRaw;
+
+    if (
+      left > stageXRaw + stageWidthRaw ||
+      right < stageXRaw ||
+      top < stageYRaw ||
+      bottom > stageYRaw + stageHeightRaw
+    ) {
+      return false;
+    }
+
+    return true;
+  }
 }
 
 function DefaultStageVerticies() {
@@ -85,6 +112,10 @@ export class StageVerticies {
   private leftWall: Array<Line>;
   private RightWall: Array<Line>;
   private Ceiling: Array<Line>;
+  public readonly OriginXRaw: number;
+  public readonly OriginYRaw: number;
+  public readonly WidthRaw: number;
+  public readonly HeightRaw: number;
 
   public constructor(
     groundPeices: Array<Line>,
@@ -115,6 +146,11 @@ export class StageVerticies {
     this.Ceiling.forEach(pushFunc);
 
     this.leftWall.forEach(pushFunc);
+    this.OriginXRaw = this.Ground[0].X1.Raw;
+    this.OriginYRaw = this.Ground[0].Y1.Raw;
+    this.WidthRaw =
+      this.Ground[this.Ground.length - 1].X2.Raw - this.OriginXRaw;
+    this.HeightRaw = this.Ceiling[0].Y1.Raw - this.OriginYRaw;
   }
 
   public GetVerts(): Array<FlatVec> {
