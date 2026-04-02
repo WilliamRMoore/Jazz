@@ -171,11 +171,11 @@ export class ECBComponent {
     return this.Top.Y.Raw;
   }
 
-  public get AABBWidthRaw(): number {
+  public get ECBWidthRaw(): number {
     return this.currentShape.width.Raw;
   }
 
-  public get AABBHeightRaw(): number {
+  public get ECBHeightRaw(): number {
     return this.currentShape.height.Raw;
   }
 

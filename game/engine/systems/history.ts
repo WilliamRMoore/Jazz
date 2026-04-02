@@ -13,10 +13,7 @@ import { JumpHist } from '../entity/components/jump';
 import { LedgeDetectorHist } from '../entity/components/ledgeDetector';
 import { PositionHist } from '../entity/components/position';
 import { SensorHist } from '../entity/components/sensor';
-import {
-  // CalculateRadiusFromTriggerRaw,
-  ShieldHist,
-} from '../entity/components/shield';
+import { ShieldHist } from '../entity/components/shield';
 import { VelocityHist } from '../entity/components/velocity';
 import { Player } from '../entity/playerOrchestrator';
 import {
@@ -249,6 +246,9 @@ export class PlayerStateHistory
     ShieldHist,
     VelocityHist
 {
+  static readonly stride = 1000;
+
+  public readonly stride = PlayerStateHistory.stride;
   // pos
   posXRaw = 0;
   posYRaw = 0;
@@ -507,5 +507,271 @@ export class PlayerStateHistory
       p.xRaw = 0;
       p.yRaw = 0;
     }
+  }
+
+  private write(buffer: Int32Array, val: number, prt: number) {
+    Atomics.store(buffer, prt, val);
+  }
+
+  public Serialize(
+    buffer: Int32Array,
+    offset: number,
+    frameNumber: number,
+  ): number {
+    let ptr = offset;
+    Atomics.add(buffer, ptr++, 1);
+
+    const write = this.write;
+    write(buffer, frameNumber, ptr++);
+    // 1. Core Numerics
+    write(buffer, this.posXRaw, ptr++);
+    write(buffer, this.posYRaw, ptr++);
+    write(buffer, this.velXRaw, ptr++);
+    write(buffer, this.velYRaw, ptr++);
+    write(buffer, this.damageRaw, ptr++);
+    write(buffer, this.stateId, ptr++);
+    write(buffer, this.stateFrame, ptr++);
+    write(buffer, this.hitStopFrames, ptr++);
+    write(buffer, this.hitStunFrames, ptr++);
+    write(buffer, this.jumpCount, ptr++);
+    write(buffer, this.hitPauseFrames, ptr++);
+    write(buffer, this.intangabilityFrames, ptr++);
+    write(buffer, this.disablePlatformDetectionFrames, ptr++);
+    write(buffer, this.hitStunVxRaw, ptr++);
+    write(buffer, this.hitStunVyRaw, ptr++);
+    write(buffer, this.hitStunNextStateId, ptr++);
+    write(buffer, this.grabMeterRaw, ptr++);
+    write(buffer, this.shieldRadiusRaw, ptr++);
+    write(buffer, this.calcRadiusRaw, ptr++);
+    write(buffer, this.shieldTiltXRaw, ptr++);
+    write(buffer, this.shieldTiltYRaw, ptr++);
+    write(buffer, this.ldGrabCount, ptr++);
+    write(buffer, this.grabId ?? -1, ptr++);
+    write(buffer, this.holdingPlayerId ?? -1, ptr++);
+    write(buffer, this.atkId ?? -1, ptr++);
+    //22
+
+    // 2. Booleans (Packed into 1 Integer)
+    let flags = 0;
+    if (this.facingRight) flags |= 1 << 0;
+    if (this.fasFalling) flags |= 1 << 1;
+    if (this.velocityDecayActive) flags |= 1 << 2;
+    if (this.shieldJump) flags |= 1 << 3;
+    if (this.shieldActive) flags |= 1 << 4;
+    write(buffer, flags, ptr++);
+    //23
+
+    // 3. Nested Arrays (Sensors, Bubbles, Diamonds)
+    const sLength = this.sensors.length;
+    for (let i = 0; i < sLength; i++) {
+      const s = this.sensors[i];
+      write(buffer, s.xOffsetRaw, ptr++);
+      write(buffer, s.yOffsetRaw, ptr++);
+      write(buffer, s.radiusRaw, ptr++);
+      write(buffer, s.active ? 1 : 0, ptr++);
+    }
+    // 4 X 25 = 100
+    // 123
+    const csLength = this.comp_sensors.length;
+    for (let i = 0; i < csLength; i++) {
+      const s = this.comp_sensors[i];
+      write(buffer, s.globalXRaw, ptr++);
+      write(buffer, s.globalYRaw, ptr++);
+      write(buffer, s.radiusRaw, ptr++);
+      write(buffer, s.active ? 1 : 0, ptr++);
+    }
+    // 4 x 25 = 100
+    // 223
+    const eLength = this.comp_ecbDiamond.length;
+    for (let i = 0; i < eLength; i++) {
+      const p = this.comp_ecbDiamond[i];
+      write(buffer, p.xRaw, ptr++);
+      write(buffer, p.yRaw, ptr++);
+    }
+    // 2 X 4 = 8
+    // 231
+    const hcLength = this.comp_hurtCapsules.length;
+    for (let i = 0; i < hcLength; i++) {
+      const hc = this.comp_hurtCapsules[i];
+      write(buffer, hc.x1Raw, ptr++);
+      write(buffer, hc.y1Raw, ptr++);
+      write(buffer, hc.x2Raw, ptr++);
+      write(buffer, hc.y2Raw, ptr++);
+      write(buffer, hc.radiusRaw, ptr++);
+      write(buffer, hc.active ? 1 : 0, ptr++);
+    }
+    // 6 X 25 = 150
+    // 381
+    const aLength = this.comp_attackCircles.length;
+    for (let i = 0; i < aLength; i++) {
+      const ac = this.comp_attackCircles[i];
+      write(buffer, ac.xRaw, ptr++);
+      write(buffer, ac.yRaw, ptr++);
+      write(buffer, ac.radiusRaw, ptr++);
+      write(buffer, ac.active ? 1 : 0, ptr++);
+    }
+    // 4 X 25 = 100
+    // 481
+    const gLength = this.comp_grabCircles.length;
+    for (let i = 0; i < gLength; i++) {
+      const gc = this.comp_grabCircles[i];
+      write(buffer, gc.iD, ptr++);
+      write(buffer, gc.xRaw, ptr++);
+      write(buffer, gc.yRaw, ptr++);
+      write(buffer, gc.radiusRaw, ptr++);
+      write(buffer, gc.active ? 1 : 0, ptr++);
+    }
+    // 5 X 25 = 125
+    // 606
+    const ldlLength = this.comp_ledgeDetectorLeft.length;
+    for (let i = 0; i < ldlLength; i++) {
+      const p = this.comp_ledgeDetectorLeft[i];
+      write(buffer, p.xRaw, ptr++);
+      write(buffer, p.yRaw, ptr++);
+    }
+    // 2 X 4 = 8
+    // 614
+    const ldrLength = this.comp_ledgeDetectorRight.length;
+    for (let i = 0; i < ldrLength; i++) {
+      const p = this.comp_ledgeDetectorRight[i];
+      write(buffer, p.xRaw, ptr++);
+      write(buffer, p.yRaw, ptr++);
+    }
+    // 2 X 4 = 8
+    // 622
+    Atomics.add(buffer, offset, 1);
+    return ptr - offset; // Stride size
+  }
+
+  private load(buffer: Int32Array, prtr: number): number {
+    return Atomics.load(buffer, prtr);
+  }
+
+  public Deserialize(buffer: Int32Array, offset: number): boolean {
+    let start = offset;
+    let ptr = offset;
+    // 1. Core Numerics
+    let seqStart = Atomics.load(buffer, ptr++);
+
+    if (seqStart % 2 !== 0) {
+      return false;
+    }
+    const load = this.load;
+    const frameNumber = load(buffer, ptr++);
+    this.posXRaw = load(buffer, ptr++);
+    this.posYRaw = load(buffer, ptr++);
+    this.velXRaw = load(buffer, ptr++);
+    this.velYRaw = load(buffer, ptr++);
+    this.damageRaw = load(buffer, ptr++);
+    this.stateId = load(buffer, ptr++);
+    this.stateFrame = load(buffer, ptr++);
+    this.hitStopFrames = load(buffer, ptr++);
+    this.hitStunFrames = load(buffer, ptr++);
+    this.jumpCount = load(buffer, ptr++);
+    this.hitPauseFrames = load(buffer, ptr++);
+    this.intangabilityFrames = load(buffer, ptr++);
+    this.disablePlatformDetectionFrames = load(buffer, ptr++);
+    this.hitStunVxRaw = load(buffer, ptr++);
+    this.hitStunVyRaw = load(buffer, ptr++);
+    this.hitStunNextStateId = load(buffer, ptr++);
+    this.grabMeterRaw = load(buffer, ptr++);
+    this.shieldRadiusRaw = load(buffer, ptr++);
+    this.calcRadiusRaw = load(buffer, ptr++);
+    this.shieldTiltXRaw = load(buffer, ptr++);
+    this.shieldTiltYRaw = load(buffer, ptr++);
+    this.ldGrabCount = load(buffer, ptr++);
+    const grabId = load(buffer, ptr++);
+    this.grabId = grabId === -1 ? undefined : grabId;
+    const holdingPlayerId = load(buffer, ptr++);
+    this.holdingPlayerId = holdingPlayerId === -1 ? undefined : holdingPlayerId;
+    const atkId = load(buffer, ptr++);
+    this.atkId = atkId === -1 ? undefined : atkId;
+
+    const flags = load(buffer, ptr++);
+    this.facingRight = (flags & (1 << 0)) !== 0;
+    this.fasFalling = (flags & (1 << 1)) !== 0;
+    this.velocityDecayActive = (flags & (1 << 2)) !== 0;
+    this.shieldJump = (flags & (1 << 3)) !== 0;
+    this.shieldActive = (flags & (1 << 4)) !== 0;
+
+    const sLength = this.sensors.length;
+    for (let i = 0; i < sLength; i++) {
+      const s = this.sensors[i];
+      s.xOffsetRaw = load(buffer, ptr++);
+      s.yOffsetRaw = load(buffer, ptr++);
+      s.radiusRaw = load(buffer, ptr++);
+      s.active = load(buffer, ptr++) === 1;
+    }
+
+    const csLength = this.comp_sensors.length;
+    for (let i = 0; i < csLength; i++) {
+      const cs = this.comp_sensors[i];
+      cs.globalXRaw = load(buffer, ptr++);
+      cs.globalYRaw = load(buffer, ptr++);
+      cs.radiusRaw = load(buffer, ptr++);
+      cs.active = load(buffer, ptr++) === 1;
+    }
+
+    const eLength = this.comp_ecbDiamond.length;
+    for (let i = 0; i < eLength; i++) {
+      const p = this.comp_ecbDiamond[i];
+      p.xRaw = load(buffer, ptr++);
+      p.yRaw = load(buffer, ptr++);
+    }
+
+    const hcLength = this.comp_hurtCapsules.length;
+    for (let i = 0; i < hcLength; i++) {
+      const hc = this.comp_hurtCapsules[i];
+      hc.x1Raw = load(buffer, ptr++);
+      hc.y1Raw = load(buffer, ptr++);
+      hc.x2Raw = load(buffer, ptr++);
+      hc.y2Raw = load(buffer, ptr++);
+      hc.radiusRaw = load(buffer, ptr++);
+      hc.active = load(buffer, ptr++) === 1;
+    }
+
+    const aLength = this.comp_attackCircles.length;
+    for (let i = 0; i < aLength; i++) {
+      const ac = this.comp_attackCircles[i];
+      ac.xRaw = load(buffer, ptr++);
+      ac.yRaw = load(buffer, ptr++);
+      ac.radiusRaw = load(buffer, ptr++);
+      ac.active = load(buffer, ptr++) === 1;
+    }
+
+    const gLength = this.comp_grabCircles.length;
+    for (let i = 0; i < gLength; i++) {
+      const gc = this.comp_grabCircles[i];
+      gc.iD = load(buffer, ptr++);
+      gc.xRaw = load(buffer, ptr++);
+      gc.yRaw = load(buffer, ptr++);
+      gc.radiusRaw = load(buffer, ptr++);
+      gc.active = load(buffer, ptr++) === 1;
+    }
+
+    const ldlLength = this.comp_ledgeDetectorLeft.length;
+    for (let i = 0; i < ldlLength; i++) {
+      const p = this.comp_ledgeDetectorLeft[i];
+      p.xRaw = load(buffer, ptr++);
+      p.yRaw = load(buffer, ptr++);
+    }
+
+    const ldrLength = this.comp_ledgeDetectorRight.length;
+    for (let i = 0; i < ldrLength; i++) {
+      const p = this.comp_ledgeDetectorRight[i];
+      p.xRaw = load(buffer, ptr++);
+      p.yRaw = load(buffer, ptr++);
+    }
+
+    const seqEnd = Atomics.load(buffer, start);
+    if (seqStart !== seqEnd) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static BufferSize() {
+    return this.stride * Int32Array.BYTES_PER_ELEMENT;
   }
 }

@@ -11,6 +11,8 @@ import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlaye
 import { IJazzLocal } from '../engine/jazz/jazzLocal';
 
 const frameInterval = 1000 / 60;
+let accumulator = 0;
+let lastTime = performance.now();
 
 export type GamePadIndexes = Array<number>;
 
@@ -76,9 +78,11 @@ export function start(playerInfo: Array<playerControllerInfo>) {
 }
 
 function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
+  accumulator = 0;
+  lastTime = performance.now();
   const logicLoopHandle = setInterval(() => {
     logicStep(engine, gpInfo);
-  }, 8);
+  }, 16);
 }
 
 function RENDER_LOOP(jazzDebugger: JazzDebugger) {
@@ -102,9 +106,7 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   });
 }
 
-let accumulator = 0;
 const loopRate = 1000 / 60; //60 hrz
-let lastTime = performance.now();
 function logicStep(
   engine: IJazzLocal,
   gamePadInfo: Array<playerControllerInfo>,

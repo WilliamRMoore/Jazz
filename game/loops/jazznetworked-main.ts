@@ -1,11 +1,11 @@
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDERFPS60Loop } from './FPS60LoopExecutor';
-import { GetInput, InputAction } from '../engine/input/Input';
-import { FlatVec } from '../engine/physics/vector';
+import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
 import { DefaultCharacterConfig } from '../character/default';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { World } from '../engine/world/world';
 import { JazzNetwork } from '../engine/jazz/jazzNetwork';
+import { ToFV } from '../engine/utils';
 
 export type GamePadIndexes = Array<number>;
 
@@ -28,6 +28,45 @@ function SHOW_DEBUG_INFO(dbr: DebugRenderer) {
       dbr.PlayerDeBugInfo = !dbr.PlayerDeBugInfo;
     }
   });
+}
+
+type messageType = loadMessage | startMessage;
+
+type loadMessage = {
+  type: 'LOAD';
+};
+
+type startMessage = {
+  type: 'START';
+  payload: SharedArrayBuffer;
+};
+
+self.onmessage = (event: MessageEvent<messageType>) => {
+  switch (event.data.type) {
+    case 'LOAD':
+      // Handle loading resources if needed
+      break;
+    case 'START':
+      const sab = event.data.payload;
+      // Initialize the game loop with the SharedArrayBuffer for communication
+      //startGameLoop(sab);
+      break;
+  }
+};
+
+function getLocalInput(sharedBuffer: SharedArrayBuffer): InputAction {
+  const int32View = new Int32Array(sharedBuffer);
+  const ia = NewInputAction();
+  ia.Action = Atomics.load(int32View, 10);
+  ia.LXAxis.SetFromNumber(Atomics.load(int32View, 11));
+  ia.LYAxis.SetFromNumber(Atomics.load(int32View, 12));
+  ia.RXAxis.SetFromNumber(Atomics.load(int32View, 13));
+  ia.RYAxis.SetFromNumber(Atomics.load(int32View, 14));
+  ia.LTVal.SetFromNumber(Atomics.load(int32View, 15));
+  ia.RTVal.SetFromNumber(Atomics.load(int32View, 16));
+  ia.Start = Atomics.load(int32View, 17) === 1;
+  ia.Select = Atomics.load(int32View, 18) === 1;
+  return ia;
 }
 
 export function start(playerInfo: playerControllerInfo) {
@@ -93,7 +132,4 @@ function logicStep(engine: JazzNetwork) {
   const playerCount = w?.PlayerData.PlayerCount!;
 
   engine.Tick();
-}
-function ToFV(arg0: number, arg1: number): FlatVec {
-  throw new Error('Function not implemented.');
 }

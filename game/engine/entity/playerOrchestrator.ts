@@ -25,6 +25,7 @@ import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
+import { PlayerStateHistory } from '../systems/history';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -392,4 +393,96 @@ export function PlayerTouchingStageCeiling(
   }
 
   return false;
+}
+
+type aabbdto = {
+  xRaw: number;
+  yRaw: number;
+  widthRaw: number;
+  heightRaw: number;
+};
+
+export function PlayerECBAABB(
+  p: Player,
+  lastPState: PlayerStateHistory,
+  abdto: aabbdto,
+) {
+  const curLeft = p.ECB.Left.X.Raw;
+  const curTop = p.ECB.Top.Y.Raw;
+  const curRight = p.ECB.Right.X.Raw;
+  const curBottom = p.ECB.Bottom.Y.Raw;
+
+  const lastBottom = lastPState.comp_ecbDiamond[0].yRaw;
+  const lastLeft = lastPState.comp_ecbDiamond[1].xRaw;
+  const lastRight = lastPState.comp_ecbDiamond[2].xRaw;
+  const lastTop = lastPState.comp_ecbDiamond[3].yRaw;
+
+  abdto.xRaw = Math.min(curLeft, lastLeft);
+  abdto.yRaw = Math.min(curTop, lastTop);
+  abdto.widthRaw = Math.max(curRight, lastRight) - abdto.xRaw;
+  abdto.heightRaw = Math.max(curBottom, lastBottom) - abdto.yRaw;
+}
+
+export function PlayerHurtCapAABB(
+  p: Player,
+  lastPState: PlayerStateHistory,
+  abdto: aabbdto,
+) {
+  const maxInt = Number.MAX_SAFE_INTEGER;
+  const minInt = -maxInt;
+
+  // --- Current Frame ---
+  let currentLeft = maxInt;
+  let currentRight = minInt;
+  let currentTop = maxInt;
+  let currentBottom = minInt;
+
+  const pX = p.Position.X.Raw;
+  const pY = p.Position.Y.Raw;
+  const hurtCapsules = p.HurtCircles.HurtCapsules;
+
+  for (let i = 0; i < hurtCapsules.length; i++) {
+    const cap = hurtCapsules[i];
+    const radius = cap.Radius.Raw;
+    const x1 = cap.StartOffsetX.Raw + pX;
+    const y1 = cap.StartOffsetY.Raw + pY;
+    const x2 = cap.EndOffsetX.Raw + pX;
+    const y2 = cap.EndOffsetY.Raw + pY;
+
+    currentLeft = Math.min(currentLeft, Math.min(x1, x2) - radius);
+    currentRight = Math.max(currentRight, Math.max(x1, x2) + radius);
+    currentTop = Math.min(currentTop, Math.min(y1, y2) - radius);
+    currentBottom = Math.max(currentBottom, Math.max(y1, y2) + radius);
+  }
+
+  // --- Previous Frame ---
+  let prevLeft = maxInt;
+  let prevRight = minInt;
+  let prevTop = maxInt;
+  let prevBottom = minInt;
+
+  const prevHurtCapsules = lastPState.comp_hurtCapsules;
+
+  for (let i = 0; i < prevHurtCapsules.length; i++) {
+    const cap = prevHurtCapsules[i];
+    if (!cap.active) {
+      continue;
+    }
+    const radius = cap.radiusRaw;
+    const x1 = cap.x1Raw;
+    const y1 = cap.y1Raw;
+    const x2 = cap.x2Raw;
+    const y2 = cap.y2Raw;
+
+    prevLeft = Math.min(prevLeft, Math.min(x1, x2) - radius);
+    prevRight = Math.max(prevRight, Math.max(x1, x2) + radius);
+    prevTop = Math.min(prevTop, Math.min(y1, y2) - radius);
+    prevBottom = Math.max(prevBottom, Math.max(y1, y2) + radius);
+  }
+
+  // --- Union AABB ---
+  abdto.xRaw = Math.min(currentLeft, prevLeft);
+  abdto.yRaw = Math.min(currentTop, prevTop);
+  abdto.widthRaw = Math.max(currentRight, prevRight) - abdto.xRaw;
+  abdto.heightRaw = Math.max(currentBottom, prevBottom) - abdto.yRaw;
 }

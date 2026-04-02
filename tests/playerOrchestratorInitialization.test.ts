@@ -9,6 +9,11 @@ import {
   STATE_IDS,
 } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { Player } from '../game/engine/entity/playerOrchestrator';
+import { PlayerStateHistory } from '../game/engine/systems/history';
+import {
+  PlayerECBAABB,
+  PlayerHurtCapAABB,
+} from '../game/engine/entity/playerOrchestrator';
 
 describe('Player Orechstraotr Initialization', () => {
   let config: DefaultCharacterConfig;
@@ -55,5 +60,131 @@ describe('Player Orechstraotr Initialization', () => {
     const shield = po.Shield;
     expect(shield.InitialRadius.AsNumber).toBeGreaterThan(0);
     expect(shield.YOffsetConstant.AsNumber).toBeLessThan(1);
+  });
+});
+
+describe('PlayerECBAABB', () => {
+  it('should create an AABB encompassing the current and previous ECB states (union)', () => {
+    // Mock the current Player object's ECB state
+    const mockPlayer = {
+      ECB: {
+        Left: { X: { Raw: 100 }, Y: { Raw: 75 } },
+        Top: { X: { Raw: 125 }, Y: { Raw: 50 } },
+        Right: { X: { Raw: 150 }, Y: { Raw: 75 } },
+        Bottom: { X: { Raw: 125 }, Y: { Raw: 100 } },
+        Width: { Raw: 50 },
+        Height: { Raw: 50 },
+      },
+    } as unknown as Player;
+
+    // Mock the previous player state history
+    // Based on the array indices used in the orchestrator: 0=Bottom, 1=Left, 2=Right, 3=Top
+    const mockLastState = {
+      comp_ecbDiamond: [
+        { xRaw: 105, yRaw: 120 }, // Bottom (0)
+        { xRaw: 80, yRaw: 95 }, // Left (1)
+        { xRaw: 130, yRaw: 95 }, // Right (2)
+        { xRaw: 105, yRaw: 70 }, // Top (3)
+      ],
+    } as unknown as PlayerStateHistory;
+
+    const aabb = {
+      xRaw: 0,
+      yRaw: 0,
+      widthRaw: 0,
+      heightRaw: 0,
+    };
+
+    PlayerECBAABB(mockPlayer, mockLastState, aabb);
+
+    // Verify that the resulting AABB fully encapsulates both current and previous ECB positions
+    expect(aabb.xRaw).toBe(80); // Math.min(100, 80)
+    expect(aabb.yRaw).toBe(50); // Math.min(50, 70)
+    expect(aabb.widthRaw).toBe(70); // Math.max(150, 130) - 80
+    expect(aabb.heightRaw).toBe(70); // Math.max(100, 120) - 50
+  });
+});
+
+describe('PlayerHurtCapAABB', () => {
+  it('should create a swept AABB encompassing current and previous hurt capsules', () => {
+    // Mock current player state
+    const mockPlayer = {
+      Position: {
+        X: { Raw: 200 },
+        Y: { Raw: 150 },
+      },
+      HurtCircles: {
+        HurtCapsules: [
+          {
+            // Main body capsule
+            StartOffsetX: { Raw: 0 },
+            StartOffsetY: { Raw: -80 },
+            EndOffsetX: { Raw: 0 },
+            EndOffsetY: { Raw: -20 },
+            Radius: { Raw: 25 },
+          },
+          {
+            // Head capsule
+            StartOffsetX: { Raw: 0 },
+            StartOffsetY: { Raw: -100 },
+            EndOffsetX: { Raw: 0 },
+            EndOffsetY: { Raw: -80 },
+            Radius: { Raw: 20 },
+          },
+        ],
+      },
+    } as unknown as Player;
+
+    //x: 200 - 25 = 175
+    //y: 150 -100 - 20 = 30;
+    //width = 0 + 25
+    //height = -100 - 20 = -120 or just 120
+
+    // Mock previous player state
+    const mockLastState = {
+      posXRaw: 180,
+      posYRaw: 140,
+      comp_hurtCapsules: [
+        {
+          // Main body capsule
+          active: true,
+          x1Raw: 180, // Global: 180 + 0
+          y1Raw: 65, // Global: 140 + (-75)
+          x2Raw: 180, // Global: 180 + 0
+          y2Raw: 125, // Global: 140 + (-15)
+          radiusRaw: 25,
+        },
+        {
+          // Head capsule
+          active: true,
+          x1Raw: 180, // Global: 180 + 0
+          y1Raw: 45, // Global: 140 + (-95)
+          x2Raw: 180, // Global: 180 + 0
+          y2Raw: 65, // Global: 140 + (-75)
+          radiusRaw: 20,
+        },
+      ],
+    } as unknown as PlayerStateHistory;
+
+    const aabb = { xRaw: 0, yRaw: 0, widthRaw: 0, heightRaw: 0 };
+
+    PlayerHurtCapAABB(mockPlayer, mockLastState, aabb);
+
+    // --- Expected values calculation ---
+    // Current AABB: { x: 175, y: 30, right: 225, bottom: 155 }
+    // Previous AABB: { x: 155, y: 25, right: 205, bottom: 150 }
+
+    // Swept AABB (union of current and previous):
+    const expectedX = 155; // Math.min(175, 155)
+    const expectedY = 25; // Math.min(30, 25)
+    const expectedRight = 225; // Math.max(225, 205)
+    const expectedBottom = 155; // Math.max(155, 150)
+    const expectedWidth = expectedRight - expectedX; // 225 - 155 = 70
+    const expectedHeight = expectedBottom - expectedY; // 155 - 25 = 130
+
+    expect(aabb.xRaw).toBe(expectedX);
+    expect(aabb.yRaw).toBe(expectedY);
+    expect(aabb.widthRaw).toBe(expectedWidth);
+    expect(aabb.heightRaw).toBe(expectedHeight);
   });
 });
