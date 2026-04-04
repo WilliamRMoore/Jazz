@@ -247,8 +247,6 @@ export class PlayerStateHistory
     VelocityHist
 {
   static readonly stride = 1000;
-
-  public readonly stride = PlayerStateHistory.stride;
   // pos
   posXRaw = 0;
   posYRaw = 0;
@@ -519,11 +517,12 @@ export class PlayerStateHistory
     frameNumber: number,
   ): number {
     let ptr = offset;
+    // This method's logic MUST be kept in sync with the static BufferSize() method.
     Atomics.add(buffer, ptr++, 1);
-
+    //1
     const write = this.write;
-    write(buffer, frameNumber, ptr++);
     // 1. Core Numerics
+    write(buffer, frameNumber, ptr++);
     write(buffer, this.posXRaw, ptr++);
     write(buffer, this.posYRaw, ptr++);
     write(buffer, this.velXRaw, ptr++);
@@ -549,7 +548,8 @@ export class PlayerStateHistory
     write(buffer, this.grabId ?? -1, ptr++);
     write(buffer, this.holdingPlayerId ?? -1, ptr++);
     write(buffer, this.atkId ?? -1, ptr++);
-    //22
+    // 1 + 26
+    //27
 
     // 2. Booleans (Packed into 1 Integer)
     let flags = 0;
@@ -559,7 +559,7 @@ export class PlayerStateHistory
     if (this.shieldJump) flags |= 1 << 3;
     if (this.shieldActive) flags |= 1 << 4;
     write(buffer, flags, ptr++);
-    //23
+    //28
 
     // 3. Nested Arrays (Sensors, Bubbles, Diamonds)
     const sLength = this.sensors.length;
@@ -571,7 +571,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 123
+    // 128
     const csLength = this.comp_sensors.length;
     for (let i = 0; i < csLength; i++) {
       const s = this.comp_sensors[i];
@@ -581,7 +581,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 x 25 = 100
-    // 223
+    // 228
     const eLength = this.comp_ecbDiamond.length;
     for (let i = 0; i < eLength; i++) {
       const p = this.comp_ecbDiamond[i];
@@ -589,7 +589,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 231
+    // 236
     const hcLength = this.comp_hurtCapsules.length;
     for (let i = 0; i < hcLength; i++) {
       const hc = this.comp_hurtCapsules[i];
@@ -601,7 +601,7 @@ export class PlayerStateHistory
       write(buffer, hc.active ? 1 : 0, ptr++);
     }
     // 6 X 25 = 150
-    // 381
+    // 386
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       const ac = this.comp_attackCircles[i];
@@ -611,7 +611,7 @@ export class PlayerStateHistory
       write(buffer, ac.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 481
+    // 486
     const gLength = this.comp_grabCircles.length;
     for (let i = 0; i < gLength; i++) {
       const gc = this.comp_grabCircles[i];
@@ -622,7 +622,7 @@ export class PlayerStateHistory
       write(buffer, gc.active ? 1 : 0, ptr++);
     }
     // 5 X 25 = 125
-    // 606
+    // 611
     const ldlLength = this.comp_ledgeDetectorLeft.length;
     for (let i = 0; i < ldlLength; i++) {
       const p = this.comp_ledgeDetectorLeft[i];
@@ -630,7 +630,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 614
+    // 619
     const ldrLength = this.comp_ledgeDetectorRight.length;
     for (let i = 0; i < ldrLength; i++) {
       const p = this.comp_ledgeDetectorRight[i];
@@ -638,7 +638,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 622
+    // 627
     Atomics.add(buffer, offset, 1);
     return ptr - offset; // Stride size
   }
@@ -647,7 +647,7 @@ export class PlayerStateHistory
     return Atomics.load(buffer, prtr);
   }
 
-  public Deserialize(buffer: Int32Array, offset: number): boolean {
+  public Deserialize(buffer: Int32Array, offset: number): boolean | number {
     let start = offset;
     let ptr = offset;
     // 1. Core Numerics
@@ -768,10 +768,39 @@ export class PlayerStateHistory
       return false;
     }
 
-    return true;
+    return frameNumber;
   }
 
   static BufferSize() {
-    return this.stride * Int32Array.BYTES_PER_ELEMENT;
+    // This calculation MUST be kept in sync with the Serialize/Deserialize methods.
+    // Verify with test 'should calculate the exact BufferSize needed for serialization'.
+    // It calculates the total number of Int32s needed for one state history entry.
+    let stride = 0;
+
+    // Sequence and Frame numbers
+    stride += 2; // seq, frameNumber
+
+    // 1. Core Numerics (25 properties)
+    stride += 25;
+
+    // 2. Booleans (Packed into 1 Integer)
+    stride += 1;
+
+    // 3. Nested Arrays (Sensors, Bubbles, Diamonds)
+    const maxSensors = envConfig.get('MaxSensorsPerPlayer') as number;
+    const maxHurt = envConfig.get('MaxHurtBubblesPerPlayer') as number;
+    const maxAtk = envConfig.get('MaxAtkBubblesPerPlayer') as number;
+    const maxGrab = envConfig.get('MaxGrabBubblesPerPlayer') as number;
+
+    stride += maxSensors * 4; // sensors array (x, y, r, active)
+    stride += maxSensors * 4; // comp_sensors array (x, y, r, active)
+    stride += 4 * 2; // comp_ecbDiamond (4 points * 2 coords)
+    stride += maxHurt * 6; // comp_hurtCapsules (x1, y1, x2, y2, r, active)
+    stride += maxAtk * 4; // comp_attackCircles (x, y, r, active)
+    stride += maxGrab * 5; // comp_grabCircles (id, x, y, r, active)
+    stride += 4 * 2; // comp_ledgeDetectorLeft (4 points * 2 coords)
+    stride += 4 * 2; // comp_ledgeDetectorRight (4 points * 2 coords)
+
+    return stride * Int32Array.BYTES_PER_ELEMENT;
   }
 }

@@ -10,13 +10,13 @@ jest.mock('../../game/engine/config/main-config', () => ({
     get: jest.fn((key: string) => {
       switch (key) {
         case 'MaxSensorsPerPlayer':
-          return 2;
+          return 25;
         case 'MaxHurtBubblesPerPlayer':
-          return 2;
+          return 25;
         case 'MaxGrabBubblesPerPlayer':
-          return 2;
+          return 25;
         case 'MaxAtkBubblesPerPlayer':
-          return 2;
+          return 25;
         default:
           return 10; // Default for other things like MaxFrameStorage
       }
@@ -113,10 +113,10 @@ describe('PlayerStateHistory Serialization', () => {
 
     // 3. Deserialize into a new object
     const destHistory = new PlayerStateHistory();
-    const success = destHistory.Deserialize(buffer, 0);
+    const stateForFrame = destHistory.Deserialize(buffer, 0);
 
     // 4. Assert
-    expect(success).toBe(true);
+    expect(stateForFrame).toBe(frameNumber);
 
     // Create a clean version for comparison of non-serialized parts
     const freshHistory = new PlayerStateHistory();
@@ -140,5 +140,28 @@ describe('PlayerStateHistory Serialization', () => {
     expect(destHistory.playersHit).toEqual(freshHistory.playersHit);
     expect(destHistory.sensorReactor).toEqual(freshHistory.sensorReactor);
     expect(destHistory.ldgGrbdLdg).toEqual(freshHistory.ldgGrbdLdg);
+  });
+
+  it('should calculate the exact BufferSize needed for serialization', () => {
+    const history = new PlayerStateHistory();
+    const byteSize = PlayerStateHistory.BufferSize();
+    const elementCount = byteSize / Int32Array.BYTES_PER_ELEMENT;
+
+    // Allocate a buffer of the EXACT size predicted by BufferSize()
+    const sharedBuffer = new SharedArrayBuffer(byteSize);
+    const buffer = new Int32Array(sharedBuffer);
+
+    // Fill with a sentinel value to verify the entire buffer is utilized
+    const sentinel = -999;
+    buffer.fill(sentinel);
+
+    const frameNumber = 1;
+    const writtenElements = history.Serialize(buffer, 0, frameNumber);
+
+    // The number of elements written must exactly match the calculated size
+    expect(writtenElements).toBe(elementCount);
+
+    // The very last slot should have been utilized (overwritten)
+    expect(buffer[elementCount - 1]).not.toBe(sentinel);
   });
 });
