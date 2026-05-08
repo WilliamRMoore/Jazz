@@ -142,44 +142,50 @@ export class LocalInputBufferReader {
     this.buffer = buffer;
   }
 
-  private load = (index: number) => Atomics.load(this.buffer, index);
-
   public Load(ia: InputAction) {
-    const load = this.load;
-    ia.Action = load(0);
-    ia.LXAxis.SetFromRaw(load(1));
-    ia.LYAxis.SetFromRaw(load(2));
-    ia.RXAxis.SetFromRaw(load(3));
-    ia.RYAxis.SetFromRaw(load(4));
-    ia.LTVal.SetFromRaw(load(5));
-    ia.RTVal.SetFromRaw(load(6));
-    ia.Start = load(7) === 1;
-    ia.Select = load(8) === 1;
+    // Index 0 tells us which slot is the most recently completed write.
+    const activeSlot = Atomics.load(this.buffer, 0);
+    if (activeSlot === 0) return; // No inputs written yet
+
+    const base = 1 + activeSlot * 9;
+    ia.Action = Atomics.load(this.buffer, base + 0);
+    ia.LXAxis.SetFromRaw(Atomics.load(this.buffer, base + 1));
+    ia.LYAxis.SetFromRaw(Atomics.load(this.buffer, base + 2));
+    ia.RXAxis.SetFromRaw(Atomics.load(this.buffer, base + 3));
+    ia.RYAxis.SetFromRaw(Atomics.load(this.buffer, base + 4));
+    ia.LTVal.SetFromRaw(Atomics.load(this.buffer, base + 5));
+    ia.RTVal.SetFromRaw(Atomics.load(this.buffer, base + 6));
+    ia.Start = Atomics.load(this.buffer, base + 7) === 1;
+    ia.Select = Atomics.load(this.buffer, base + 8) === 1;
   }
 }
 
 export class LocalInputBufferWriter {
   private readonly buffer: Int32Array;
+  private currentWriteSlot = 1;
 
   constructor(buffer: Int32Array) {
     this.buffer = buffer;
   }
 
-  private store = (index: number, value: number) =>
-    Atomics.store(this.buffer, index, value);
-
   public Store(ia: InputAction) {
-    const store = this.store;
-    store(0, ia.Action);
-    store(1, ia.LXAxis.Raw);
-    store(2, ia.LYAxis.Raw);
-    store(3, ia.RXAxis.Raw);
-    store(4, ia.RYAxis.Raw);
-    store(5, ia.LTVal.Raw);
-    store(6, ia.RTVal.Raw);
-    store(7, ia.Start ? 1 : 0);
-    store(8, ia.Select ? 1 : 0);
-    Atomics.add(this.buffer, 9, 1);
+    // Cycle to the next slot (1, 2, or 3)
+    const slot = this.currentWriteSlot;
+    this.currentWriteSlot = (this.currentWriteSlot % 3) + 1;
+
+    const base = 1 + slot * 9;
+    Atomics.store(this.buffer, base + 0, ia.Action);
+    Atomics.store(this.buffer, base + 1, ia.LXAxis.Raw);
+    Atomics.store(this.buffer, base + 2, ia.LYAxis.Raw);
+    Atomics.store(this.buffer, base + 3, ia.RXAxis.Raw);
+    Atomics.store(this.buffer, base + 4, ia.RYAxis.Raw);
+    Atomics.store(this.buffer, base + 5, ia.LTVal.Raw);
+    Atomics.store(this.buffer, base + 6, ia.RTVal.Raw);
+    Atomics.store(this.buffer, base + 7, ia.Start ? 1 : 0);
+    Atomics.store(this.buffer, base + 8, ia.Select ? 1 : 0);
+
+    // Publish the completed slot to index 0 so the reader can see it
+    Atomics.store(this.buffer, 0, slot);
   }
 }
 
@@ -190,7 +196,7 @@ type loadStageCommand = {
 type setPlayerCommand = {
   type: 'SET_PLAYER';
   payload: {
-    cc: CharacterConfig;
+    ccJson: string;
     pos: FlatVec;
   };
 };
@@ -203,7 +209,19 @@ type initCommand = {
   };
 };
 
-export type jMessage = loadStageCommand | setPlayerCommand | initCommand;
+type testCommand = {
+  type: 'TEST';
+  payload: {
+    inputBuffer: SharedArrayBuffer;
+    writeBackBuffer: SharedArrayBuffer;
+  };
+};
+
+export type jMessage =
+  | loadStageCommand
+  | setPlayerCommand
+  | initCommand
+  | testCommand;
 
 // INPUT Architechture
 /***

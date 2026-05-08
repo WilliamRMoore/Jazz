@@ -5,19 +5,23 @@ const isWorker = process.argv.includes('--worker');
 
 // ESBuild configuration
 const buildOptions = {
-  entryPoints: ['game/index.ts'],
+  entryPoints: [{ in: 'game/index.ts', out: 'index' }],
   bundle: true,
-  outfile: 'public/index.js',
+  outdir: 'public',
   sourcemap: true,
-  target: 'es2024'
+  target: 'es2024',
+  format: 'esm'
 };
 
 const workerBuildOptions = {
-  entryPoints: ['worker.ts'],
+  entryPoints: [
+    { in: 'game/workers/local-worker.ts', out: 'local-worker' }
+  ],
   bundle: true,
-  outfile: 'public/worker.js',
+  outdir: 'public',
   sourcemap: true,
-  target: 'es2024'
+  target: 'es2024',
+  format: 'esm'
 };
 
 async function build() {
@@ -25,9 +29,6 @@ async function build() {
     if (isWorker) {
       await esbuild.build(workerBuildOptions);
       console.log('esbuild worker build successful');
-
-      fs.copyFileSync('workertest.html', 'public/workertest.html');
-      console.log('Copied workertest.html to public/workertest.html');
     } else {
       // Run esbuild
       await esbuild.build(buildOptions);

@@ -46,7 +46,7 @@ export function populateControllerList(selectId: string): void {
 
   if (!elem || !(elem instanceof HTMLSelectElement)) {
     console.error(
-      `Element with ID '${selectId}' is not a valid <select> element.`
+      `Element with ID '${selectId}' is not a valid <select> element.`,
     );
     return;
   }
@@ -91,7 +91,7 @@ let gameMode: number = -1;
 function setUpListeners(): void {
   console.log('setUpListeners called');
   const modeSelect = document.getElementById(
-    'mode-select'
+    'mode-select',
   ) as HTMLSelectElement;
   if (modeSelect) {
     console.log('mode-select found');
@@ -99,13 +99,13 @@ function setUpListeners(): void {
       console.log('mode-select change event fired');
       const selectedValue = (event.target as HTMLSelectElement).value;
       const p1Select = document.getElementById(
-        'p1-gamepad-select'
+        'p1-gamepad-select',
       ) as HTMLSelectElement;
       const p2Select = document.getElementById(
-        'p2-gamepad-select'
+        'p2-gamepad-select',
       ) as HTMLSelectElement;
       const refreshButton = document.getElementById(
-        'refresh-gamepad-select'
+        'refresh-gamepad-select',
       ) as HTMLButtonElement;
 
       // Initial state for disabled buttons
@@ -119,7 +119,11 @@ function setUpListeners(): void {
         refreshButton.disabled = true;
       }
 
-      if (selectedValue == '1' || selectedValue == '2') {
+      if (
+        selectedValue == '1' ||
+        selectedValue == '2' ||
+        selectedValue == '3'
+      ) {
         if (p1Select) {
           p1Select.disabled = false;
         }
@@ -144,7 +148,7 @@ function setUpListeners(): void {
   }
 
   const refreshBtn = document.getElementById(
-    'refresh-gamepad-select'
+    'refresh-gamepad-select',
   ) as HTMLButtonElement;
   if (refreshBtn) {
     console.log('refresh-gamepad-select found');
@@ -159,7 +163,7 @@ function setUpListeners(): void {
   });
 
   const p1Select = document.getElementById(
-    'p1-gamepad-select'
+    'p1-gamepad-select',
   ) as HTMLSelectElement;
   if (p1Select) {
     console.log('p1-gamepad-select found');
@@ -171,7 +175,7 @@ function setUpListeners(): void {
   }
 
   const p2Select = document.getElementById(
-    'p2-gamepad-select'
+    'p2-gamepad-select',
   ) as HTMLSelectElement;
   if (p2Select) {
     console.log('p2-gamepad-select found');
@@ -185,10 +189,10 @@ function setUpListeners(): void {
 
 function canStart(): boolean {
   const p1Select = document.getElementById(
-    'p1-gamepad-select'
+    'p1-gamepad-select',
   ) as HTMLSelectElement;
   const p2Select = document.getElementById(
-    'p2-gamepad-select'
+    'p2-gamepad-select',
   ) as HTMLSelectElement;
 
   if (!p1Select) {
@@ -204,6 +208,10 @@ function canStart(): boolean {
       return false;
     }
     return p1Select.value !== '' && p2Select.value !== '';
+  }
+
+  if (gameMode === 3) {
+    return p1Select.value !== '';
   }
 
   return false;

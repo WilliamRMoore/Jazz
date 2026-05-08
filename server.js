@@ -27,43 +27,26 @@ async function start() {
   if (fs.existsSync('index.html')) {
     fs.copyFileSync('index.html', path.join(PUBLIC_DIR, 'index.html'));
   }
-  if (fs.existsSync('workertest.html')) {
-    fs.copyFileSync('workertest.html', path.join(PUBLIC_DIR, 'workertest.html'));
-  }
 
   // Setup ESBuild contexts for watch mode
   const mainCtx = await esbuild.context({
-    entryPoints: ['game/index.ts'],
+    entryPoints: [
+      { in: 'game/index.ts', out: 'index' },
+      { in: 'game/workers/local-worker.ts', out: 'local-worker' }
+    ],
     bundle: true,
-    outfile: 'public/index.js',
+    outdir: 'public',
     sourcemap: true,
-    target: 'es2024'
-  });
-
-  const workerCtx = await esbuild.context({
-    entryPoints: ['worker.ts'],
-    bundle: true,
-    outfile: 'public/worker.js',
-    sourcemap: true,
-    target: 'es2024'
-  });
-
-  const workerTestCtx = await esbuild.context({
-    entryPoints: ['workertest.ts'],
-    bundle: true,
-    outfile: 'public/workertest.js',
-    sourcemap: true,
-    target: 'es2024'
+    target: 'es2024',
+    format: 'esm'
   });
 
   await mainCtx.watch();
-  await workerCtx.watch();
-  await workerTestCtx.watch();
   console.log('esbuild is watching for changes...');
 
   // Create an HTTP server
   const server = http.createServer((req, res) => {
-    let urlPath = req.url === '/' ? '/workertest.html' : req.url;
+    let urlPath = req.url === '/' ? '/index.html' : req.url;
     let filePath = path.join(PUBLIC_DIR, urlPath);
 
     // Provide a fallback to root for HTML files during development
@@ -79,7 +62,10 @@ async function start() {
 
     fs.readFile(filePath, (err, content) => {
       if (err) {
-        res.writeHead(err.code === 'ENOENT' ? 404 : 500);
+        res.writeHead(err.code === 'ENOENT' ? 404 : 500, {
+          'Cross-Origin-Opener-Policy': 'same-origin',
+          'Cross-Origin-Embedder-Policy': 'require-corp'
+        });
         res.end(err.code === 'ENOENT' ? '404 Not Found' : `Server Error: ${err.code}`);
       } else {
         res.writeHead(200, {

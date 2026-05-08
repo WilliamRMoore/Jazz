@@ -207,19 +207,16 @@ export const StateIdToNameMap = new Map<StateId, string>();
 Object.entries(STATE_IDS).forEach(([key, value]) => {
   StateIdToNameMap.set(value, key);
 });
-
 export const GameEventNameMap = new Map<GrabId, string>();
 Object.entries(GAME_EVENT_IDS).forEach(([key, value]) => {
   GameEventNameMap.set(value, key);
 });
-
 export const AttackIdToNameMap = new Map<AttackId, string>();
 export const AttackIdValues = new Set<AttackId>();
 Object.entries(ATTACK_IDS).forEach(([key, value]) => {
   AttackIdToNameMap.set(value, key);
   AttackIdValues.add(value);
 });
-
 export const GrabIdToNameMap = new Map<GrabId, string>();
 Object.entries(GRAB_IDS).forEach(([key, value]) => {
   GrabIdToNameMap.set(value, key);
