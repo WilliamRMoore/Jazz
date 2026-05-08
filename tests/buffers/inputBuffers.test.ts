@@ -9,7 +9,7 @@ import {
 describe('LocalInputBuffer', () => {
   describe('LocalInputBufferWriter', () => {
     it('should correctly write an InputAction to the Int32Array buffer', () => {
-      const buffer = new Int32Array(10);
+      const buffer = new Int32Array(40);
       const writer = new LocalInputBufferWriter(buffer);
       const input = NewInputAction();
 
@@ -25,39 +25,38 @@ describe('LocalInputBuffer', () => {
 
       writer.Store(input);
 
-      // Verify Atomics.store was called correctly based on workerUtils.ts implementation
-      expect(Atomics.load(buffer, 0)).toBe(5);
-      expect(Atomics.load(buffer, 1)).toBe(100);
-      expect(Atomics.load(buffer, 2)).toBe(200);
-      expect(Atomics.load(buffer, 3)).toBe(300);
-      expect(Atomics.load(buffer, 4)).toBe(400);
-      expect(Atomics.load(buffer, 5)).toBe(500);
-      expect(Atomics.load(buffer, 6)).toBe(600);
-      expect(Atomics.load(buffer, 7)).toBe(1);
-      expect(Atomics.load(buffer, 8)).toBe(0);
-
-      // Verify Atomics.add was called on index 9 for the counter
-      expect(Atomics.load(buffer, 9)).toBe(1);
+      expect(Atomics.load(buffer, 0)).toBe(1); // activeSlot is updated
+      const base = 10; // 1 + (slot 1) * 9
+      expect(Atomics.load(buffer, base + 0)).toBe(5);
+      expect(Atomics.load(buffer, base + 1)).toBe(100);
+      expect(Atomics.load(buffer, base + 2)).toBe(200);
+      expect(Atomics.load(buffer, base + 3)).toBe(300);
+      expect(Atomics.load(buffer, base + 4)).toBe(400);
+      expect(Atomics.load(buffer, base + 5)).toBe(500);
+      expect(Atomics.load(buffer, base + 6)).toBe(600);
+      expect(Atomics.load(buffer, base + 7)).toBe(1);
+      expect(Atomics.load(buffer, base + 8)).toBe(0);
     });
   });
 
   describe('LocalInputBufferReader', () => {
     it('should correctly read an InputAction from the Int32Array buffer', () => {
-      const buffer = new Int32Array(10);
+      const buffer = new Int32Array(40);
       const reader = new LocalInputBufferReader(buffer);
       const input = NewInputAction();
 
-      // Populate buffer based on current reader implementation in workerUtils.ts
-      // After fix, Action is at index 0, LXAxis at 1, etc.
-      Atomics.store(buffer, 0, 10 as any); // Action
-      Atomics.store(buffer, 1, 100); // LXAxis
-      Atomics.store(buffer, 2, 200); // LYAxis
-      Atomics.store(buffer, 3, 300); // RXAxis
-      Atomics.store(buffer, 4, 400); // RYAxis
-      Atomics.store(buffer, 5, 500); // LTVal
-      Atomics.store(buffer, 6, 600); // RTVal
-      Atomics.store(buffer, 7, 1); // Start
-      Atomics.store(buffer, 8, 1); // Select
+      const activeSlot = 1;
+      Atomics.store(buffer, 0, activeSlot); // Notify reader that slot 1 is ready
+      const base = 1 + activeSlot * 9;
+      Atomics.store(buffer, base + 0, 10 as any); // Action
+      Atomics.store(buffer, base + 1, 100); // LXAxis
+      Atomics.store(buffer, base + 2, 200); // LYAxis
+      Atomics.store(buffer, base + 3, 300); // RXAxis
+      Atomics.store(buffer, base + 4, 400); // RYAxis
+      Atomics.store(buffer, base + 5, 500); // LTVal
+      Atomics.store(buffer, base + 6, 600); // RTVal
+      Atomics.store(buffer, base + 7, 1); // Start
+      Atomics.store(buffer, base + 8, 1); // Select
 
       reader.Load(input);
 

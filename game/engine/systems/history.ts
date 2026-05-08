@@ -561,6 +561,9 @@ export class PlayerStateHistory
     write(buffer, flags, ptr++);
     //28
 
+    write(buffer, this.comp_shield.calcXRaw, ptr++);
+    write(buffer, this.comp_shield.calcYRaw, ptr++);
+
     // 3. Nested Arrays (Sensors, Bubbles, Diamonds)
     const sLength = this.sensors.length;
     for (let i = 0; i < sLength; i++) {
@@ -649,126 +652,138 @@ export class PlayerStateHistory
 
   public Deserialize(buffer: Int32Array, offset: number): boolean | number {
     let start = offset;
-    let ptr = offset;
-    // 1. Core Numerics
-    let seqStart = Atomics.load(buffer, ptr++);
-
-    if (seqStart % 2 !== 0) {
-      return false;
-    }
     const load = this.load;
-    const frameNumber = load(buffer, ptr++);
-    this.posXRaw = load(buffer, ptr++);
-    this.posYRaw = load(buffer, ptr++);
-    this.velXRaw = load(buffer, ptr++);
-    this.velYRaw = load(buffer, ptr++);
-    this.damageRaw = load(buffer, ptr++);
-    this.stateId = load(buffer, ptr++);
-    this.stateFrame = load(buffer, ptr++);
-    this.hitStopFrames = load(buffer, ptr++);
-    this.hitStunFrames = load(buffer, ptr++);
-    this.jumpCount = load(buffer, ptr++);
-    this.hitPauseFrames = load(buffer, ptr++);
-    this.intangabilityFrames = load(buffer, ptr++);
-    this.disablePlatformDetectionFrames = load(buffer, ptr++);
-    this.hitStunVxRaw = load(buffer, ptr++);
-    this.hitStunVyRaw = load(buffer, ptr++);
-    this.hitStunNextStateId = load(buffer, ptr++);
-    this.grabMeterRaw = load(buffer, ptr++);
-    this.shieldRadiusRaw = load(buffer, ptr++);
-    this.calcRadiusRaw = load(buffer, ptr++);
-    this.shieldTiltXRaw = load(buffer, ptr++);
-    this.shieldTiltYRaw = load(buffer, ptr++);
-    this.ldGrabCount = load(buffer, ptr++);
-    const grabId = load(buffer, ptr++);
-    this.grabId = grabId === -1 ? undefined : grabId;
-    const holdingPlayerId = load(buffer, ptr++);
-    this.holdingPlayerId = holdingPlayerId === -1 ? undefined : holdingPlayerId;
-    const atkId = load(buffer, ptr++);
-    this.atkId = atkId === -1 ? undefined : atkId;
+    let frameNumber = 0;
 
-    const flags = load(buffer, ptr++);
-    this.facingRight = (flags & (1 << 0)) !== 0;
-    this.fasFalling = (flags & (1 << 1)) !== 0;
-    this.velocityDecayActive = (flags & (1 << 2)) !== 0;
-    this.shieldJump = (flags & (1 << 3)) !== 0;
-    this.shieldActive = (flags & (1 << 4)) !== 0;
+    let retries = 0;
+    while (retries < 1000) {
+      retries++;
+      let seqStart = Atomics.load(buffer, start);
 
-    const sLength = this.sensors.length;
-    for (let i = 0; i < sLength; i++) {
-      const s = this.sensors[i];
-      s.xOffsetRaw = load(buffer, ptr++);
-      s.yOffsetRaw = load(buffer, ptr++);
-      s.radiusRaw = load(buffer, ptr++);
-      s.active = load(buffer, ptr++) === 1;
+      // Write in progress, spin
+      if (seqStart % 2 !== 0) {
+        continue;
+      }
+
+      let ptr = offset + 1;
+      frameNumber = load(buffer, ptr++);
+      this.posXRaw = load(buffer, ptr++);
+      this.posYRaw = load(buffer, ptr++);
+      this.velXRaw = load(buffer, ptr++);
+      this.velYRaw = load(buffer, ptr++);
+      this.damageRaw = load(buffer, ptr++);
+      this.stateId = load(buffer, ptr++);
+      this.stateFrame = load(buffer, ptr++);
+      this.hitStopFrames = load(buffer, ptr++);
+      this.hitStunFrames = load(buffer, ptr++);
+      this.jumpCount = load(buffer, ptr++);
+      this.hitPauseFrames = load(buffer, ptr++);
+      this.intangabilityFrames = load(buffer, ptr++);
+      this.disablePlatformDetectionFrames = load(buffer, ptr++);
+      this.hitStunVxRaw = load(buffer, ptr++);
+      this.hitStunVyRaw = load(buffer, ptr++);
+      this.hitStunNextStateId = load(buffer, ptr++);
+      this.grabMeterRaw = load(buffer, ptr++);
+      this.shieldRadiusRaw = load(buffer, ptr++);
+      this.calcRadiusRaw = load(buffer, ptr++);
+      this.shieldTiltXRaw = load(buffer, ptr++);
+      this.shieldTiltYRaw = load(buffer, ptr++);
+      this.ldGrabCount = load(buffer, ptr++);
+      const grabId = load(buffer, ptr++);
+      this.grabId = grabId === -1 ? undefined : grabId;
+      const holdingPlayerId = load(buffer, ptr++);
+      this.holdingPlayerId =
+        holdingPlayerId === -1 ? undefined : holdingPlayerId;
+      const atkId = load(buffer, ptr++);
+      this.atkId = atkId === -1 ? undefined : atkId;
+
+      const flags = load(buffer, ptr++);
+      this.facingRight = (flags & (1 << 0)) !== 0;
+      this.fasFalling = (flags & (1 << 1)) !== 0;
+      this.velocityDecayActive = (flags & (1 << 2)) !== 0;
+      this.shieldJump = (flags & (1 << 3)) !== 0;
+      this.shieldActive = (flags & (1 << 4)) !== 0;
+
+      this.comp_shield.calcXRaw = load(buffer, ptr++);
+      this.comp_shield.calcYRaw = load(buffer, ptr++);
+
+      const sLength = this.sensors.length;
+      for (let i = 0; i < sLength; i++) {
+        const s = this.sensors[i];
+        s.xOffsetRaw = load(buffer, ptr++);
+        s.yOffsetRaw = load(buffer, ptr++);
+        s.radiusRaw = load(buffer, ptr++);
+        s.active = load(buffer, ptr++) === 1;
+      }
+
+      const csLength = this.comp_sensors.length;
+      for (let i = 0; i < csLength; i++) {
+        const cs = this.comp_sensors[i];
+        cs.globalXRaw = load(buffer, ptr++);
+        cs.globalYRaw = load(buffer, ptr++);
+        cs.radiusRaw = load(buffer, ptr++);
+        cs.active = load(buffer, ptr++) === 1;
+      }
+
+      const eLength = this.comp_ecbDiamond.length;
+      for (let i = 0; i < eLength; i++) {
+        const p = this.comp_ecbDiamond[i];
+        p.xRaw = load(buffer, ptr++);
+        p.yRaw = load(buffer, ptr++);
+      }
+
+      const hcLength = this.comp_hurtCapsules.length;
+      for (let i = 0; i < hcLength; i++) {
+        const hc = this.comp_hurtCapsules[i];
+        hc.x1Raw = load(buffer, ptr++);
+        hc.y1Raw = load(buffer, ptr++);
+        hc.x2Raw = load(buffer, ptr++);
+        hc.y2Raw = load(buffer, ptr++);
+        hc.radiusRaw = load(buffer, ptr++);
+        hc.active = load(buffer, ptr++) === 1;
+      }
+
+      const aLength = this.comp_attackCircles.length;
+      for (let i = 0; i < aLength; i++) {
+        const ac = this.comp_attackCircles[i];
+        ac.xRaw = load(buffer, ptr++);
+        ac.yRaw = load(buffer, ptr++);
+        ac.radiusRaw = load(buffer, ptr++);
+        ac.active = load(buffer, ptr++) === 1;
+      }
+
+      const gLength = this.comp_grabCircles.length;
+      for (let i = 0; i < gLength; i++) {
+        const gc = this.comp_grabCircles[i];
+        gc.iD = load(buffer, ptr++);
+        gc.xRaw = load(buffer, ptr++);
+        gc.yRaw = load(buffer, ptr++);
+        gc.radiusRaw = load(buffer, ptr++);
+        gc.active = load(buffer, ptr++) === 1;
+      }
+
+      const ldlLength = this.comp_ledgeDetectorLeft.length;
+      for (let i = 0; i < ldlLength; i++) {
+        const p = this.comp_ledgeDetectorLeft[i];
+        p.xRaw = load(buffer, ptr++);
+        p.yRaw = load(buffer, ptr++);
+      }
+
+      const ldrLength = this.comp_ledgeDetectorRight.length;
+      for (let i = 0; i < ldrLength; i++) {
+        const p = this.comp_ledgeDetectorRight[i];
+        p.xRaw = load(buffer, ptr++);
+        p.yRaw = load(buffer, ptr++);
+      }
+
+      const seqEnd = Atomics.load(buffer, start);
+      // Check if data tore mid-read, else break loop and return successfully
+      if (seqStart === seqEnd) {
+        return frameNumber;
+      }
     }
 
-    const csLength = this.comp_sensors.length;
-    for (let i = 0; i < csLength; i++) {
-      const cs = this.comp_sensors[i];
-      cs.globalXRaw = load(buffer, ptr++);
-      cs.globalYRaw = load(buffer, ptr++);
-      cs.radiusRaw = load(buffer, ptr++);
-      cs.active = load(buffer, ptr++) === 1;
-    }
-
-    const eLength = this.comp_ecbDiamond.length;
-    for (let i = 0; i < eLength; i++) {
-      const p = this.comp_ecbDiamond[i];
-      p.xRaw = load(buffer, ptr++);
-      p.yRaw = load(buffer, ptr++);
-    }
-
-    const hcLength = this.comp_hurtCapsules.length;
-    for (let i = 0; i < hcLength; i++) {
-      const hc = this.comp_hurtCapsules[i];
-      hc.x1Raw = load(buffer, ptr++);
-      hc.y1Raw = load(buffer, ptr++);
-      hc.x2Raw = load(buffer, ptr++);
-      hc.y2Raw = load(buffer, ptr++);
-      hc.radiusRaw = load(buffer, ptr++);
-      hc.active = load(buffer, ptr++) === 1;
-    }
-
-    const aLength = this.comp_attackCircles.length;
-    for (let i = 0; i < aLength; i++) {
-      const ac = this.comp_attackCircles[i];
-      ac.xRaw = load(buffer, ptr++);
-      ac.yRaw = load(buffer, ptr++);
-      ac.radiusRaw = load(buffer, ptr++);
-      ac.active = load(buffer, ptr++) === 1;
-    }
-
-    const gLength = this.comp_grabCircles.length;
-    for (let i = 0; i < gLength; i++) {
-      const gc = this.comp_grabCircles[i];
-      gc.iD = load(buffer, ptr++);
-      gc.xRaw = load(buffer, ptr++);
-      gc.yRaw = load(buffer, ptr++);
-      gc.radiusRaw = load(buffer, ptr++);
-      gc.active = load(buffer, ptr++) === 1;
-    }
-
-    const ldlLength = this.comp_ledgeDetectorLeft.length;
-    for (let i = 0; i < ldlLength; i++) {
-      const p = this.comp_ledgeDetectorLeft[i];
-      p.xRaw = load(buffer, ptr++);
-      p.yRaw = load(buffer, ptr++);
-    }
-
-    const ldrLength = this.comp_ledgeDetectorRight.length;
-    for (let i = 0; i < ldrLength; i++) {
-      const p = this.comp_ledgeDetectorRight[i];
-      p.xRaw = load(buffer, ptr++);
-      p.yRaw = load(buffer, ptr++);
-    }
-
-    const seqEnd = Atomics.load(buffer, start);
-    if (seqStart !== seqEnd) {
-      return false;
-    }
-
-    return frameNumber;
+    return false; // Retries exhausted
   }
 
   static BufferSize() {
@@ -785,6 +800,8 @@ export class PlayerStateHistory
 
     // 2. Booleans (Packed into 1 Integer)
     stride += 1;
+
+    stride += 2; // comp_shield (calcXRaw, calcYRaw)
 
     // 3. Nested Arrays (Sensors, Bubbles, Diamonds)
     const maxSensors = envConfig.get('MaxSensorsPerPlayer') as number;

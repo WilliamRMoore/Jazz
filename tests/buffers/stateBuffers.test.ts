@@ -164,4 +164,171 @@ describe('PlayerStateHistory Serialization', () => {
     // The very last slot should have been utilized (overwritten)
     expect(buffer[elementCount - 1]).not.toBe(sentinel);
   });
+
+  it('should handle undefined ids mapping to -1 and back to undefined', () => {
+    const hist = new PlayerStateHistory();
+    hist.grabId = undefined;
+    hist.holdingPlayerId = undefined;
+    hist.atkId = undefined;
+
+    const buffer = new Int32Array(
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+    );
+    hist.Serialize(buffer, 0, 42);
+
+    const dest = new PlayerStateHistory();
+    dest.Deserialize(buffer, 0);
+
+    expect(dest.grabId).toBeUndefined();
+    expect(dest.holdingPlayerId).toBeUndefined();
+    expect(dest.atkId).toBeUndefined();
+  });
+
+  it('should handle 0 values for ids properly', () => {
+    const hist = new PlayerStateHistory();
+    hist.grabId = 0;
+    hist.holdingPlayerId = 0;
+    hist.atkId = 0;
+
+    const buffer = new Int32Array(
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+    );
+    hist.Serialize(buffer, 0, 42);
+
+    const dest = new PlayerStateHistory();
+    dest.Deserialize(buffer, 0);
+
+    expect(dest.grabId).toBe(0);
+    expect(dest.holdingPlayerId).toBe(0);
+    expect(dest.atkId).toBe(0);
+  });
+
+  it('should return false from Deserialize if the seqlock is odd (write in progress)', () => {
+    const buffer = new Int32Array(
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+    );
+
+    // Set the seqlock start integer (offset 0) to an odd number
+    buffer[0] = 3;
+
+    const dest = new PlayerStateHistory();
+    const result = dest.Deserialize(buffer, 0);
+
+    // Retries should exhaust completely and return false
+    expect(result).toBe(false);
+  });
+
+  it('should ensure no properties overlap by using distinct values across the entire struct', () => {
+    const source = new PlayerStateHistory();
+    let valCounter = 1;
+
+    // Set simple numeric properties
+    source.posXRaw = valCounter++;
+    source.posYRaw = valCounter++;
+    source.velXRaw = valCounter++;
+    source.velYRaw = valCounter++;
+    source.damageRaw = valCounter++;
+    source.stateId = valCounter++;
+    source.stateFrame = valCounter++;
+    source.hitStopFrames = valCounter++;
+    source.hitStunFrames = valCounter++;
+    source.jumpCount = valCounter++;
+    source.hitPauseFrames = valCounter++;
+    source.intangabilityFrames = valCounter++;
+    source.disablePlatformDetectionFrames = valCounter++;
+    source.hitStunVxRaw = valCounter++;
+    source.hitStunVyRaw = valCounter++;
+    source.hitStunNextStateId = valCounter++;
+    source.grabMeterRaw = valCounter++;
+    source.shieldRadiusRaw = valCounter++;
+    source.calcRadiusRaw = valCounter++;
+    source.shieldTiltXRaw = valCounter++;
+    source.shieldTiltYRaw = valCounter++;
+    source.ldGrabCount = valCounter++;
+    source.grabId = valCounter++;
+    source.holdingPlayerId = valCounter++;
+    source.atkId = valCounter++;
+
+    source.comp_shield.calcXRaw = valCounter++;
+    source.comp_shield.calcYRaw = valCounter++;
+
+    // Set nested arrays
+    for (let i = 0; i < source.sensors.length; i++) {
+      source.sensors[i].xOffsetRaw = valCounter++;
+      source.sensors[i].yOffsetRaw = valCounter++;
+      source.sensors[i].radiusRaw = valCounter++;
+      source.sensors[i].active = valCounter++ % 2 === 0;
+    }
+
+    for (let i = 0; i < source.comp_sensors.length; i++) {
+      source.comp_sensors[i].globalXRaw = valCounter++;
+      source.comp_sensors[i].globalYRaw = valCounter++;
+      source.comp_sensors[i].radiusRaw = valCounter++;
+      source.comp_sensors[i].active = valCounter++ % 2 === 0;
+    }
+
+    for (let i = 0; i < source.comp_ecbDiamond.length; i++) {
+      source.comp_ecbDiamond[i].xRaw = valCounter++;
+      source.comp_ecbDiamond[i].yRaw = valCounter++;
+    }
+
+    for (let i = 0; i < source.comp_hurtCapsules.length; i++) {
+      source.comp_hurtCapsules[i].x1Raw = valCounter++;
+      source.comp_hurtCapsules[i].y1Raw = valCounter++;
+      source.comp_hurtCapsules[i].x2Raw = valCounter++;
+      source.comp_hurtCapsules[i].y2Raw = valCounter++;
+      source.comp_hurtCapsules[i].radiusRaw = valCounter++;
+      source.comp_hurtCapsules[i].active = valCounter++ % 2 === 0;
+    }
+
+    for (let i = 0; i < source.comp_attackCircles.length; i++) {
+      source.comp_attackCircles[i].xRaw = valCounter++;
+      source.comp_attackCircles[i].yRaw = valCounter++;
+      source.comp_attackCircles[i].radiusRaw = valCounter++;
+      source.comp_attackCircles[i].active = valCounter++ % 2 === 0;
+    }
+
+    for (let i = 0; i < source.comp_grabCircles.length; i++) {
+      source.comp_grabCircles[i].iD = valCounter++;
+      source.comp_grabCircles[i].xRaw = valCounter++;
+      source.comp_grabCircles[i].yRaw = valCounter++;
+      source.comp_grabCircles[i].radiusRaw = valCounter++;
+      source.comp_grabCircles[i].active = valCounter++ % 2 === 0;
+    }
+
+    for (let i = 0; i < source.comp_ledgeDetectorLeft.length; i++) {
+      source.comp_ledgeDetectorLeft[i].xRaw = valCounter++;
+      source.comp_ledgeDetectorLeft[i].yRaw = valCounter++;
+    }
+
+    for (let i = 0; i < source.comp_ledgeDetectorRight.length; i++) {
+      source.comp_ledgeDetectorRight[i].xRaw = valCounter++;
+      source.comp_ledgeDetectorRight[i].yRaw = valCounter++;
+    }
+
+    const buffer = new Int32Array(
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+    );
+    const testFrame = 999;
+    source.Serialize(buffer, 0, testFrame);
+
+    const dest = new PlayerStateHistory();
+    const result = dest.Deserialize(buffer, 0);
+
+    expect(result).toBe(testFrame);
+
+    // Clean un-serialized properties for deep equality check
+    const fresh = new PlayerStateHistory();
+    const sourceCmp = { ...source };
+    sourceCmp.playersHit = fresh.playersHit;
+    sourceCmp.sensorReactor = fresh.sensorReactor;
+    sourceCmp.ldgGrbdLdg = fresh.ldgGrbdLdg;
+
+    const destCmp = { ...dest };
+    destCmp.playersHit = fresh.playersHit;
+    destCmp.sensorReactor = fresh.sensorReactor;
+    destCmp.ldgGrbdLdg = fresh.ldgGrbdLdg;
+
+    expect(destCmp).toEqual(sourceCmp);
+  });
 });
