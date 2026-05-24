@@ -233,7 +233,8 @@ function drawPlatforms(ctx: CanvasRenderingContext2D, plats?: Array<Line>) {
     ctx.stroke();
   }
 }
-
+// TODO: Update to include previous ECB, and interpolated state.
+// Reference debug-2d.ts
 function drawPlayerState(
   ctx: CanvasRenderingContext2D,
   state: PlayerStateHistory,
