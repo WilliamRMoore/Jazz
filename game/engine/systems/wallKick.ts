@@ -81,4 +81,3 @@ export function WallKick(w: World) {
     }
   }
 }
-//lastIa.LXAxis.Raw <= 0 && curIa.LXAxis.Raw > POINT_SEVEN

@@ -8,7 +8,6 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
 } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import { Attack } from '../../game/engine/entity/components/attack';
 
 describe('Gravity system tests', () => {
@@ -86,7 +85,11 @@ describe('Gravity system tests', () => {
 
     if (attackConf) {
       const newAttackConf = { ...attackConf, GravityActive: false };
-      const newAttack = new Attack(newAttackConf);
+      const newAttack = new Attack(
+        newAttackConf,
+        p.Position.Ref,
+        () => p.Flags.IsFacingRight,
+      );
 
       p.Attacks['_attacks'].set(ATTACK_IDS.N_GRND_ATK, newAttack);
       p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.ATTACK_GE);

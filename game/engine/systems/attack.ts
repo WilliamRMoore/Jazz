@@ -268,8 +268,6 @@ function PAvsPB(
   let prevXRaw = pAPrevState.posXRaw;
   let prevYRaw = pAPrevState.posYRaw;
 
-  const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
-  const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);
   const currentStateFrame = pAstateFrame;
   const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
   const pAFacingRight = pA.Flags.IsFacingRight;
@@ -292,9 +290,6 @@ function PAvsPB(
 
       const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
         vecPool,
-        pACurPositionDto.X,
-        pACurPositionDto.Y,
-        pAFacingRight,
         currentStateFrame,
       );
 
@@ -302,11 +297,13 @@ function PAvsPB(
         continue;
       }
 
+      //const prevAttackXRaw = pAPrevState.a
+
       const pAHitBubblePreviousPos =
-        pAHitBubble?.GetGlobalPosition(
+        pAHitBubble?.GetPreviousGlobalPosition(
           vecPool,
-          pAPrevPositionDto.X,
-          pAPrevPositionDto.Y,
+          prevXRaw,
+          prevYRaw,
           pAFacingRight,
           previousStateFrame,
         ) ??
@@ -361,9 +358,6 @@ function PAvsPB(
 
     const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
       vecPool,
-      pACurPositionDto.X,
-      pACurPositionDto.Y,
-      pAFacingRight,
       currentStateFrame,
     );
 
@@ -372,10 +366,10 @@ function PAvsPB(
     }
 
     const pAHitBubblePreviousPos =
-      pAHitBubble?.GetGlobalPosition(
+      pAHitBubble?.GetPreviousGlobalPosition(
         vecPool,
-        pAPrevPositionDto.X,
-        pAPrevPositionDto.Y,
+        prevXRaw,
+        prevYRaw,
         pAFacingRight,
         previousStateFrame,
       ) ??

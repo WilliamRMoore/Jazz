@@ -74,6 +74,8 @@ export class Player {
     this.HitStun = new HitStunComponent();
     this.HitStop = new HitStopComponent();
 
+    const isFacingRight = () => this.Flags.IsFacingRight;
+
     this.ECB = new ECBComponent(
       cc.ECBShapes,
       this.Position.Ref,
@@ -91,8 +93,12 @@ export class Player {
       cc.LedgeBoxYOffset,
     );
     this.Sensors = new SensorComponent();
-    this.Attacks = new AttackComponment(cc.Attacks);
-    this.Grabs = new GrabComponent(cc.Grabs);
+    this.Attacks = new AttackComponment(
+      cc.Attacks,
+      this.Position.Ref,
+      isFacingRight,
+    );
+    this.Grabs = new GrabComponent(cc.Grabs, this.Position.Ref, isFacingRight);
     this.GrabMeter = new GrabMeterComponent();
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
