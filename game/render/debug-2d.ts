@@ -268,7 +268,16 @@ function drawPlayer(
   const playerCount = world.PlayerData.PlayerCount;
 
   for (let i = 0; i < playerCount; i++) {
-    const lp = playerLerper.Lerp(world, i, alpha, world.LocalFrame - 1);
+    const pTable = world.HistoryData.PlayerHistoryDB[i];
+    const now = world.LocalFrame - 1 < 0 ? 0 : world.LocalFrame - 1;
+    const then = now < 1 ? 0 : now - 1;
+    const previousECBFrame = then < 1 ? 0 : then - 1;
+
+    const previousState = pTable.get(previousECBFrame);
+    const thenState = pTable.get(then);
+    const nowState = pTable.get(now);
+
+    const lp = playerLerper.Lerp(previousState, thenState, nowState, alpha);
     drawPrevEcb(ctx, lp.PreviousEcb);
     drawCurrentECB(ctx, lp.Ecb);
     drawHurtCircles(ctx, lp, world.LocalFrame);

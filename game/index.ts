@@ -12,6 +12,8 @@ import { ToFV } from './engine/utils';
 import { RawToNumber } from './engine/math/fixedPoint';
 import { defaultStage, Stage } from './engine/stage/stageMain';
 import { Line } from './engine/physics/vector';
+import { PlayerLerper, LerpedPlayer } from './render/render-utlis';
+import { envConfig } from './engine/config/main-config';
 
 document.addEventListener('DOMContentLoaded', () => {
   InitGamePage();
@@ -69,8 +71,8 @@ function startEngine(controllerInfo: playerControllerInfo) {
   const inputSab = new SharedArrayBuffer(40 * Int32Array.BYTES_PER_ELEMENT);
   const writeBackSab = new SharedArrayBuffer(40 * Int32Array.BYTES_PER_ELEMENT);
 
-  // Max players = 2, 3 frames each
-  const stateSabSize = 2 * 3 * PlayerStateHistory.BufferSize();
+  // Max players = 2, 1 frame each
+  const stateSabSize = 2 * 1 * PlayerStateHistory.BufferSize();
   const stateSab = new SharedArrayBuffer(stateSabSize);
 
   const frameSab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
@@ -138,14 +140,63 @@ function ECHO_RENDER_LOOP(
   const ctx = canvas.getContext('2d');
 
   const inputToRender = NewInputAction();
-  const stateHist = new PlayerStateHistory();
+
+  const history = [
+    new Map<number, PlayerStateHistory>(),
+    new Map<number, PlayerStateHistory>(),
+  ];
+  const stateHistoryPool: PlayerStateHistory[] = [];
+  const playerLerper = new PlayerLerper(envConfig);
+
+  let renderTime = -1;
+  let lastTimeStamp = performance.now();
+  const loopRate = 1000 / 60;
+  const stage = defaultStage();
 
   RENDERFPS60Loop((timeStamp: number) => {
     writeBackReader.Load(inputToRender);
-    const success = stateHist.Deserialize(stateBuffer, 0);
+    const delta = timeStamp - lastTimeStamp;
+    lastTimeStamp = timeStamp;
+
     const currentFrame = Atomics.load(frameBuffer, 0);
 
-    if (ctx) {
+    if (renderTime === -1 && currentFrame > 0) {
+      renderTime = currentFrame * loopRate;
+    }
+
+    if (renderTime !== -1) {
+      renderTime += delta;
+    }
+
+    let offset = 0;
+    const stride =
+      PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
+
+    for (let pIdx = 0; pIdx < 2; pIdx++) {
+      const stateHist = stateHistoryPool.pop() || new PlayerStateHistory();
+      const success = stateHist.Deserialize(stateBuffer, offset);
+      if (success !== false) {
+        const decodedFrame = success as number;
+        const existing = history[pIdx].get(decodedFrame);
+        if (existing && existing !== stateHist) {
+          stateHistoryPool.push(existing);
+        }
+        history[pIdx].set(decodedFrame, stateHist);
+        // keep only the last few frames
+        for (const key of history[pIdx].keys()) {
+          if (key < decodedFrame - 5) {
+            const oldHist = history[pIdx].get(key);
+            if (oldHist) stateHistoryPool.push(oldHist);
+            history[pIdx].delete(key);
+          }
+        }
+      } else {
+        stateHistoryPool.push(stateHist);
+      }
+      offset += stride;
+    }
+
+    if (ctx && renderTime !== -1) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'grey'; // Match original debug renderer
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -162,23 +213,54 @@ function ECHO_RENDER_LOOP(
       ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
       ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
 
-      if (success !== false) {
-        debugRenderer(ctx, stateHist, currentFrame);
+      // Find highest available frame to prevent rendering the future
+      let highestGlobal = -1;
+      for (const pHist of history) {
+        for (const key of pHist.keys()) {
+          if (key > highestGlobal) highestGlobal = key;
+        }
+      }
+
+      let renderFrameFloat = renderTime / loopRate;
+      if (highestGlobal !== -1 && renderFrameFloat > highestGlobal) {
+        renderFrameFloat = highestGlobal;
+      }
+
+      // Figure out which frames to interpolate
+      const thenFrame = Math.floor(renderFrameFloat);
+      const nowFrame = thenFrame + 1;
+      const alpha = renderFrameFloat - thenFrame;
+
+      drawStage(ctx, stage);
+      drawPlatforms(ctx, stage.Platforms);
+
+      playerLerper.Zero();
+
+      for (let pIdx = 0; pIdx < 2; pIdx++) {
+        const pHist = history[pIdx];
+
+        // Find closest available states for interpolation
+        let nowState = pHist.get(nowFrame);
+        let thenState = pHist.get(thenFrame);
+        let prevState = pHist.get(thenFrame - 1);
+
+        if (!nowState) nowState = thenState;
+        if (!thenState) thenState = nowState;
+        
+        if (!nowState && highestGlobal !== -1) {
+          nowState = pHist.get(highestGlobal);
+          thenState = nowState;
+        }
+        
+        if (!prevState) prevState = thenState;
+
+        if (nowState && thenState && prevState) {
+          const lp = playerLerper.Lerp(prevState, thenState, nowState, alpha);
+          drawPlayerState(ctx, lp, thenFrame);
+        }
       }
     }
   });
-}
-
-function debugRenderer(
-  ctx: CanvasRenderingContext2D,
-  state: PlayerStateHistory,
-  frame: number,
-) {
-  const stage = defaultStage();
-  drawStage(ctx, stage);
-  drawPlatforms(ctx, stage.Platforms);
-
-  drawPlayerState(ctx, state, frame);
 }
 
 function drawStage(ctx: CanvasRenderingContext2D, stage: Stage) {
@@ -233,41 +315,41 @@ function drawPlatforms(ctx: CanvasRenderingContext2D, plats?: Array<Line>) {
     ctx.stroke();
   }
 }
+
 // TODO: Update to include previous ECB, and interpolated state.
 // Reference debug-2d.ts
 function drawPlayerState(
   ctx: CanvasRenderingContext2D,
-  state: PlayerStateHistory,
+  lp: LerpedPlayer,
   frame: number,
 ) {
-  const r2n = RawToNumber;
+  // Previous ECB
+  ctx.fillStyle = 'red';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'black';
+  ctx.beginPath();
+  ctx.moveTo(lp.PreviousEcb.l.x, lp.PreviousEcb.l.y);
+  ctx.lineTo(lp.PreviousEcb.t.x, lp.PreviousEcb.t.y);
+  ctx.lineTo(lp.PreviousEcb.r.x, lp.PreviousEcb.r.y);
+  ctx.lineTo(lp.PreviousEcb.b.x, lp.PreviousEcb.b.y);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fill();
 
   // Current ECB
   ctx.fillStyle = 'orange';
   ctx.strokeStyle = 'black';
   ctx.beginPath();
-  ctx.moveTo(
-    r2n(state.comp_ecbDiamond[1].xRaw),
-    r2n(state.comp_ecbDiamond[1].yRaw),
-  ); // Left
-  ctx.lineTo(
-    r2n(state.comp_ecbDiamond[2].xRaw),
-    r2n(state.comp_ecbDiamond[2].yRaw),
-  ); // Top
-  ctx.lineTo(
-    r2n(state.comp_ecbDiamond[3].xRaw),
-    r2n(state.comp_ecbDiamond[3].yRaw),
-  ); // Right
-  ctx.lineTo(
-    r2n(state.comp_ecbDiamond[0].xRaw),
-    r2n(state.comp_ecbDiamond[0].yRaw),
-  ); // Bottom
+  ctx.moveTo(lp.Ecb.l.x, lp.Ecb.l.y); // Left
+  ctx.lineTo(lp.Ecb.t.x, lp.Ecb.t.y); // Top
+  ctx.lineTo(lp.Ecb.r.x, lp.Ecb.r.y); // Right
+  ctx.lineTo(lp.Ecb.b.x, lp.Ecb.b.y); // Bottom
   ctx.closePath();
   ctx.stroke();
   ctx.fill();
 
   // Hurtboxes
-  const intangible = state.intangabilityFrames > 0;
+  const intangible = lp.Flags.intangible;
   ctx.strokeStyle = intangible
     ? frame % 2 === 0
       ? 'lightgray'
@@ -280,22 +362,15 @@ function drawPlayerState(
     : 'yellow';
   ctx.lineWidth = 2;
   ctx.globalAlpha = 0.5;
-  for (const hc of state.comp_hurtCapsules) {
-    if (!hc.active) continue;
-    drawCapsule(
-      ctx,
-      r2n(hc.x1Raw),
-      r2n(hc.y1Raw),
-      r2n(hc.x2Raw),
-      r2n(hc.y2Raw),
-      r2n(hc.radiusRaw),
-    );
+  for (const hc of lp.HurtBubbles) {
+    if (!hc.a) continue;
+    drawCapsule(ctx, hc.x1, hc.y1, hc.x2, hc.y2, hc.r);
   }
   ctx.globalAlpha = 1.0;
 
   // Position Marker
-  const posX = r2n(state.posXRaw);
-  const posY = r2n(state.posYRaw);
+  const posX = lp.Position.X;
+  const posY = lp.Position.Y;
   ctx.lineWidth = 1;
   ctx.strokeStyle = 'blue';
   ctx.beginPath();
@@ -315,11 +390,11 @@ function drawPlayerState(
 
   // Direction Marker
   ctx.strokeStyle = 'white';
-  const rightX = r2n(state.comp_ecbDiamond[3].xRaw);
-  const leftX = r2n(state.comp_ecbDiamond[1].xRaw);
-  const centerY = r2n(state.comp_ecbDiamond[3].yRaw);
+  const rightX = lp.Ecb.r.x;
+  const leftX = lp.Ecb.l.x;
+  const centerY = lp.Ecb.r.y;
   ctx.beginPath();
-  if (state.facingRight) {
+  if (lp.Flags.FacingRight) {
     ctx.moveTo(rightX, centerY);
     ctx.lineTo(rightX + 10, centerY);
   } else {
@@ -330,18 +405,12 @@ function drawPlayerState(
   ctx.closePath();
 
   // Shield
-  if (state.shieldActive) {
+  if (lp.Shield.a) {
     ctx.strokeStyle = 'blue';
     ctx.fillStyle = 'blue';
     ctx.globalAlpha = 0.4;
     ctx.beginPath();
-    ctx.arc(
-      r2n(state.comp_shield.calcXRaw),
-      r2n(state.comp_shield.calcYRaw),
-      r2n(state.calcRadiusRaw),
-      0,
-      Math.PI * 2,
-    );
+    ctx.arc(lp.Shield.X, lp.Shield.Y, lp.Shield.radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -349,23 +418,23 @@ function drawPlayerState(
   }
 
   // Ledge Detectors
-  ctx.strokeStyle = state.facingRight ? 'blue' : 'red';
+  ctx.strokeStyle = lp.Flags.FacingRight ? 'blue' : 'red';
   ctx.beginPath();
-  const rdl = state.comp_ledgeDetectorRight;
-  ctx.moveTo(r2n(rdl[1].xRaw), r2n(rdl[1].yRaw)); // top-left
-  ctx.lineTo(r2n(rdl[2].xRaw), r2n(rdl[2].yRaw)); // top-right
-  ctx.lineTo(r2n(rdl[3].xRaw), r2n(rdl[3].yRaw)); // bottom-right
-  ctx.lineTo(r2n(rdl[0].xRaw), r2n(rdl[0].yRaw)); // bottom-left
+  const rdl = lp.LedgeDetectorRight;
+  ctx.moveTo(rdl.topLeftX, rdl.topLeftY); // top-left
+  ctx.lineTo(rdl.topRightX, rdl.topRightY); // top-right
+  ctx.lineTo(rdl.bottomRightX, rdl.bottomRightY); // bottom-right
+  ctx.lineTo(rdl.bottomLeftX, rdl.bottomLeftY); // bottom-left
   ctx.closePath();
   ctx.stroke();
 
-  ctx.strokeStyle = state.facingRight ? 'red' : 'blue';
+  ctx.strokeStyle = lp.Flags.FacingRight ? 'red' : 'blue';
   ctx.beginPath();
-  const ldl = state.comp_ledgeDetectorLeft;
-  ctx.moveTo(r2n(ldl[1].xRaw), r2n(ldl[1].yRaw));
-  ctx.lineTo(r2n(ldl[2].xRaw), r2n(ldl[2].yRaw));
-  ctx.lineTo(r2n(ldl[3].xRaw), r2n(ldl[3].yRaw));
-  ctx.lineTo(r2n(ldl[0].xRaw), r2n(ldl[0].yRaw));
+  const ldl = lp.LedgeDetectorLeft;
+  ctx.moveTo(ldl.topLeftX, ldl.topLeftY);
+  ctx.lineTo(ldl.topRightX, ldl.topRightY);
+  ctx.lineTo(ldl.bottomRightX, ldl.bottomRightY);
+  ctx.lineTo(ldl.bottomLeftX, ldl.bottomLeftY);
   ctx.closePath();
   ctx.stroke();
 
@@ -373,16 +442,10 @@ function drawPlayerState(
   ctx.strokeStyle = 'white';
   ctx.fillStyle = 'white';
   ctx.globalAlpha = 0.4;
-  for (const s of state.comp_sensors) {
-    if (!s.active) continue;
+  for (const s of lp.Sensors) {
+    if (!s.a) continue;
     ctx.beginPath();
-    ctx.arc(
-      r2n(s.globalXRaw),
-      r2n(s.globalYRaw),
-      r2n(s.radiusRaw),
-      0,
-      Math.PI * 2,
-    );
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -394,10 +457,10 @@ function drawPlayerState(
   ctx.fillStyle = 'purple';
   ctx.lineWidth = 2;
   ctx.globalAlpha = 0.4;
-  for (const g of state.comp_grabCircles) {
-    if (!g.active) continue;
+  for (const g of lp.GrabBubbles) {
+    if (!g.a) continue;
     ctx.beginPath();
-    ctx.arc(r2n(g.xRaw), r2n(g.yRaw), r2n(g.radiusRaw), 0, Math.PI * 2);
+    ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();
@@ -409,10 +472,10 @@ function drawPlayerState(
   ctx.fillStyle = 'red';
   ctx.lineWidth = 2;
   ctx.globalAlpha = 0.4;
-  for (const a of state.comp_attackCircles) {
-    if (!a.active) continue;
+  for (const a of lp.AttackBubbles) {
+    if (!a.a) continue;
     ctx.beginPath();
-    ctx.arc(r2n(a.xRaw), r2n(a.yRaw), r2n(a.radiusRaw), 0, Math.PI * 2);
+    ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.closePath();

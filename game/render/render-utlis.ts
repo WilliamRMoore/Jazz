@@ -3,6 +3,7 @@ import { Lerp } from '../engine/utils';
 import { frameNumber } from '../engine/entity/components/attack';
 import { MainConfig } from '../engine/config/main-config';
 import { RawToNumber } from '../engine/math/fixedPoint';
+import { PlayerStateHistory } from '../engine/systems/history';
 
 export class PlayerLerper {
   private pool: LerpedPlayer[] = [];
@@ -24,17 +25,13 @@ export class PlayerLerper {
   }
 
   public Lerp(
-    w: World,
-    pIndex: number,
+    previousState: PlayerStateHistory,
+    thenState: PlayerStateHistory,
+    nowState: PlayerStateHistory,
     alpha: number,
-    now: frameNumber,
-    then: frameNumber | undefined = undefined,
   ): LerpedPlayer {
     const dto = this.rent();
-    if (then === undefined) {
-      then = now < 1 ? 0 : now - 1;
-    }
-    LerpPlayer(then, now, alpha, pIndex, w, dto);
+    LerpPlayer(previousState, thenState, nowState, alpha, dto);
     return dto;
   }
 
@@ -230,18 +227,12 @@ const lerpAndConvert = (
 };
 
 function LerpPlayer(
-  then: frameNumber,
-  now: frameNumber,
+  previousState: PlayerStateHistory,
+  thenState: PlayerStateHistory,
+  nowState: PlayerStateHistory,
   alpha: number,
-  pIndex: number,
-  w: World,
   dto: LerpedPlayer,
 ) {
-  const pTable = w.HistoryData.PlayerHistoryDB[pIndex];
-  const previousECBFrame = then < 1 ? 0 : then - 1;
-  const previousState = pTable.get(previousECBFrame);
-  const thenState = pTable.get(then);
-  const nowState = pTable.get(now);
   const lp = dto;
   const lc = lerpAndConvert;
   lp.Position.X = lc(thenState.posXRaw, nowState.posXRaw, alpha);

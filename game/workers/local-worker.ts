@@ -109,15 +109,11 @@ function loop() {
 
         for (let pIdx = 0; pIdx < pCount; pIdx++) {
           const histDB = jazz.World.HistoryData.PlayerHistoryDB[pIdx];
-          for (let f = 0; f < 3; f++) {
-            let frameToFetch = currentFrame - f;
-            if (frameToFetch < 0) frameToFetch = 0;
-            const stateHist = histDB.get(frameToFetch);
-            if (stateHist) {
-              stateHist.Serialize(stateWriterBuffer, offset, frameToFetch);
-            }
-            offset += stride;
+          const stateHist = histDB.get(currentFrame);
+          if (stateHist) {
+            stateHist.Serialize(stateWriterBuffer, offset, currentFrame);
           }
+          offset += stride;
         }
       }
     }
