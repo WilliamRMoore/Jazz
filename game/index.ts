@@ -150,6 +150,7 @@ function ECHO_RENDER_LOOP(
 
   let renderTime = -1;
   let lastTimeStamp = performance.now();
+  let timeScale = 1.0;
   const loopRate = 1000 / 60;
   const stage = defaultStage();
 
@@ -160,12 +161,42 @@ function ECHO_RENDER_LOOP(
 
     const currentFrame = Atomics.load(frameBuffer, 0);
 
-    if (renderTime === -1 && currentFrame > 0) {
-      renderTime = currentFrame * loopRate;
+    let highestGlobal = -1;
+    for (const pHist of history) {
+      for (const key of pHist.keys()) {
+        if (key > highestGlobal) highestGlobal = key;
+      }
     }
 
-    if (renderTime !== -1) {
-      renderTime += delta;
+    if (renderTime === -1 && highestGlobal > 2) {
+      renderTime = (highestGlobal - 2) * loopRate;
+    }
+
+    if (renderTime !== -1 && highestGlobal !== -1) {
+      const delayFrames = highestGlobal - (renderTime / loopRate);
+      
+      // A logic tick jumps the delay forward by exactly 1.0 frame.
+      // This deadzone absorbs the step-function entirely without micro-corrections.
+      if (delayFrames < 1.2) {
+        timeScale -= 0.001; // Too close, slow down gently
+      } else if (delayFrames > 2.8) {
+        timeScale += 0.001; // Falling behind, speed up gently
+      } else {
+        // Soft pull towards neutral when inside the deadzone
+        timeScale += (1.0 - timeScale) * 0.05;
+      }
+      
+      // Hard limits to prevent visible slow-mo/fast-forward
+      if (timeScale < 0.95) timeScale = 0.95;
+      if (timeScale > 1.05) timeScale = 1.05;
+      
+      if (delayFrames < -1 || delayFrames > 6) {
+         // Lag spike or thread paused, hard snap
+         renderTime = (highestGlobal - 2) * loopRate;
+         timeScale = 1.0;
+      } else {
+         renderTime += delta * timeScale;
+      }
     }
 
     let offset = 0;
@@ -213,23 +244,16 @@ function ECHO_RENDER_LOOP(
       ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
       ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
 
-      // Find highest available frame to prevent rendering the future
-      let highestGlobal = -1;
-      for (const pHist of history) {
-        for (const key of pHist.keys()) {
-          if (key > highestGlobal) highestGlobal = key;
-        }
-      }
-
       let renderFrameFloat = renderTime / loopRate;
-      if (highestGlobal !== -1 && renderFrameFloat > highestGlobal) {
-        renderFrameFloat = highestGlobal;
-      }
+      let thenFrame = Math.floor(renderFrameFloat);
+      let nowFrame = thenFrame + 1;
+      let alpha = renderFrameFloat - thenFrame;
 
-      // Figure out which frames to interpolate
-      const thenFrame = Math.floor(renderFrameFloat);
-      const nowFrame = thenFrame + 1;
-      const alpha = renderFrameFloat - thenFrame;
+      // Strictly clamp alpha and frames to prevent any erratic geometry extrapolation
+      if (alpha > 1.0) alpha = 1.0;
+      if (alpha < 0.0) alpha = 0.0;
+      if (thenFrame < 0) thenFrame = 0;
+      if (nowFrame < 0) nowFrame = 0;
 
       drawStage(ctx, stage);
       drawPlatforms(ctx, stage.Platforms);
@@ -244,14 +268,8 @@ function ECHO_RENDER_LOOP(
         let thenState = pHist.get(thenFrame);
         let prevState = pHist.get(thenFrame - 1);
 
-        if (!nowState) nowState = thenState;
-        if (!thenState) thenState = nowState;
-        
-        if (!nowState && highestGlobal !== -1) {
-          nowState = pHist.get(highestGlobal);
-          thenState = nowState;
-        }
-        
+        if (!nowState) nowState = thenState || pHist.get(highestGlobal);
+        if (!thenState) thenState = nowState || pHist.get(highestGlobal);
         if (!prevState) prevState = thenState;
 
         if (nowState && thenState && prevState) {

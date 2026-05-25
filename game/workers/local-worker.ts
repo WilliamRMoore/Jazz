@@ -65,6 +65,9 @@ const loopRate = 1000 / 60;
 let lastTime = 0;
 let accumulator = 0;
 
+const zeroDelayChannel = new MessageChannel();
+zeroDelayChannel.port1.onmessage = loop;
+
 function loop() {
   const now = performance.now();
   let delta = now - lastTime;
@@ -120,5 +123,5 @@ function loop() {
   }
 
   // Yield control to the event loop so postMessages can be received
-  setTimeout(loop, 0);
+  zeroDelayChannel.port2.postMessage(null);
 }
