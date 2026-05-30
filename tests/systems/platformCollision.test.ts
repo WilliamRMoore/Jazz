@@ -10,6 +10,7 @@ import {
   NeutralFall,
 } from '../../game/engine/finite-state-machine/stateConfigurations/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
+import * as playerOrchestratorModule from '../../game/engine/entity/playerOrchestrator';
 import {
   Player,
   SetPlayerPosition,
@@ -80,7 +81,7 @@ describe('Platform Collision system tests', () => {
     const MOCK_Y_COORD = new FixedPoint(300);
     jest
       .spyOn(
-        require('../../game/engine/entity/playerOrchestrator'),
+        playerOrchestratorModule,
         'PlayerOnPlatsReturnsYCoord',
       )
       .mockReturnValue(MOCK_Y_COORD);

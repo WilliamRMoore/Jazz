@@ -206,6 +206,8 @@ type initCommand = {
   payload: {
     inputBuffers: SharedArrayBuffer[];
     stateBuffers: SharedArrayBuffer[];
+    writeBackBuffers?: SharedArrayBuffer[];
+    frameBuffer?: SharedArrayBuffer;
   };
 };
 
@@ -217,11 +219,16 @@ type testCommand = {
   };
 };
 
+type spawnAndAttackCommand = {
+  type: 'SPAWN_AND_ATTACK';
+};
+
 export type jMessage =
   | loadStageCommand
   | setPlayerCommand
   | initCommand
-  | testCommand;
+  | testCommand
+  | spawnAndAttackCommand;
 
 // INPUT Architechture
 /***

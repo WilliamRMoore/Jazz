@@ -14,6 +14,7 @@ import { defaultStage, Stage } from './engine/stage/stageMain';
 import { Line } from './engine/physics/vector';
 import { PlayerLerper, LerpedPlayer } from './render/render-utlis';
 import { envConfig } from './engine/config/main-config';
+import { GetStateName, GetGrabName, GetAttackName } from './engine/debug/debugUtils';
 
 document.addEventListener('DOMContentLoaded', () => {
   InitGamePage();
@@ -71,8 +72,8 @@ function startEngine(controllerInfo: playerControllerInfo) {
   const inputSab = new SharedArrayBuffer(40 * Int32Array.BYTES_PER_ELEMENT);
   const writeBackSab = new SharedArrayBuffer(40 * Int32Array.BYTES_PER_ELEMENT);
 
-  // Max players = 2, 1 frame each
-  const stateSabSize = 2 * 1 * PlayerStateHistory.BufferSize();
+  // Max players = 4, 1 frame each
+  const stateSabSize = 4 * 1 * PlayerStateHistory.BufferSize();
   const stateSab = new SharedArrayBuffer(stateSabSize);
 
   const frameSab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
@@ -92,9 +93,9 @@ function startEngine(controllerInfo: playerControllerInfo) {
   worker.postMessage({
     type: 'INIT',
     payload: {
-      inputBuffer: inputSab,
-      writeBackBuffer: writeBackSab,
-      stateBuffer: stateSab,
+      inputBuffers: [inputSab],
+      writeBackBuffers: [writeBackSab],
+      stateBuffers: [stateSab],
       frameBuffer: frameSab,
     },
   });
@@ -122,6 +123,12 @@ function startEngine(controllerInfo: playerControllerInfo) {
     const input = GetInput(controllerInfo.inputIndex);
     inputWriter.Store(input);
   }, 8);
+
+  window.addEventListener('keyup', (e) => {
+    if (e.key === '1') {
+      worker.postMessage({ type: 'SPAWN_AND_ATTACK' });
+    }
+  });
 
   ECHO_RENDER_LOOP(writeBackReader, stateBuffer, frameBuffer);
 }
@@ -170,11 +177,23 @@ function ECHO_RENDER_LOOP(
   canvas.width = 1920;
   canvas.height = 1080;
 
+  const dbCanvas = document.getElementById('debugInfo') as HTMLCanvasElement;
+  dbCanvas.width = 600;
+  dbCanvas.height = 1200;
+  const dbCtx = dbCanvas.getContext('2d');
+
+  let showDebugInfo = false;
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'd') {
+      showDebugInfo = !showDebugInfo;
+    }
+  });
+
   const ctx = canvas.getContext('2d');
 
   const inputToRender = NewInputAction();
 
-  const history = [new HistoryRingBuffer(16), new HistoryRingBuffer(16)];
+  const history = [new HistoryRingBuffer(16), new HistoryRingBuffer(16), new HistoryRingBuffer(16), new HistoryRingBuffer(16)];
 
   const stateHistoryPool: PlayerStateHistory[] = [];
   // Pre-allocate to prevent runtime object creation and GC pauses.
@@ -235,7 +254,7 @@ function ECHO_RENDER_LOOP(
     const stride =
       PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
 
-    for (let pIdx = 0; pIdx < 2; pIdx++) {
+    for (let pIdx = 0; pIdx < 4; pIdx++) {
       let stateHist = stateHistoryPool.pop();
       if (!stateHist) {
         stateHist = new PlayerStateHistory(); // Fallback
@@ -294,9 +313,17 @@ function ECHO_RENDER_LOOP(
       drawStage(ctx, stage);
       drawPlatforms(ctx, stage.Platforms);
 
+      if (dbCtx && showDebugInfo) {
+        dbCtx.fillStyle = 'black';
+        dbCtx.fillRect(0, 0, dbCanvas.width, dbCanvas.height);
+      }
+
       playerLerper.Zero();
 
-      for (let pIdx = 0; pIdx < 2; pIdx++) {
+      let dbX = 10;
+      const dbY = 30;
+
+      for (let pIdx = 0; pIdx < 4; pIdx++) {
         const pHist = history[pIdx];
 
         // Find closest available states for interpolation
@@ -311,6 +338,11 @@ function ECHO_RENDER_LOOP(
         if (nowState && thenState && prevState) {
           const lp = playerLerper.Lerp(prevState, thenState, nowState, alpha);
           drawPlayerState(ctx, lp, thenFrame);
+        }
+
+        if (nowState && dbCtx && showDebugInfo) {
+          PrintPlayerStateHistoryDirect(nowState, dbX, dbY, dbCtx);
+          dbX += 200;
         }
       }
     }
@@ -557,4 +589,112 @@ function drawCapsule(
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+}
+
+function printDataLine(ctx: CanvasRenderingContext2D, label: string, data: string | number, x: number, y: number) {
+  const originalStyle = ctx.fillStyle;
+  ctx.fillStyle = '#4bff14'; // Sage green
+  ctx.fillText(label, x, y);
+  const labelWidth = ctx.measureText(label).width;
+  ctx.fillStyle = 'white';
+  ctx.fillText(String(data), x + labelWidth + 5, y); // 5px padding
+  ctx.fillStyle = originalStyle;
+  return y + 13;
+}
+
+function printDataHeader(ctx: CanvasRenderingContext2D, label: string, x: number, y: number) {
+  const originalStyle = ctx.fillStyle;
+  ctx.fillStyle = 'cyan';
+  ctx.fillText(label, x, y);
+  ctx.fillStyle = originalStyle;
+  return y + 13;
+}
+
+function PrintPlayerStateHistoryDirect(ps: PlayerStateHistory, x: number, y: number, ctx: CanvasRenderingContext2D) {
+  const indent = 13;
+  let currY = y;
+  ctx.font = '10px Arial';
+
+  currY = printDataHeader(ctx, 'Player State:', x, currY);
+  
+  currY = printDataHeader(ctx, 'State:', x + indent, currY);
+  currY = printDataLine(ctx, 'State Id:', ps.stateId, x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Name:', GetStateName(ps.stateId), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Frame:', ps.stateFrame, x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Position:', x + indent, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.posXRaw), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.posYRaw), x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Velocity:', x + indent, currY);
+  currY = printDataLine(ctx, 'Vx:', RawToNumber(ps.velXRaw), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Vy:', RawToNumber(ps.velYRaw), x + indent * 2, currY);
+
+  currY = printDataLine(ctx, 'Direction:', ps.facingRight ? 'Right' : 'Left', x + indent, currY);
+
+  currY = printDataHeader(ctx, 'ECB:', x + indent, currY);
+  currY = printDataHeader(ctx, 'Top:', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[2].xRaw), x + indent * 3, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[2].yRaw), x + indent * 3, currY);
+  currY = printDataHeader(ctx, 'Bottom:', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[0].xRaw), x + indent * 3, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[0].yRaw), x + indent * 3, currY);
+  currY = printDataHeader(ctx, 'Left:', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[1].xRaw), x + indent * 3, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[1].yRaw), x + indent * 3, currY);
+  currY = printDataHeader(ctx, 'Right:', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[3].xRaw), x + indent * 3, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[3].yRaw), x + indent * 3, currY);
+
+  currY = printDataLine(ctx, 'Damage:', RawToNumber(ps.damageRaw), x + indent, currY);
+
+  currY = printDataHeader(ctx, 'HitStun:', x + indent, currY);
+  currY = printDataLine(ctx, 'Frame:', ps.hitStunFrames, x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Vx:', RawToNumber(ps.hitStunVxRaw), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Vy:', RawToNumber(ps.hitStunVyRaw), x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Flags:', x + indent, currY);
+  currY = printDataLine(ctx, 'FastFalling:', ps.fasFalling ? 'T' : 'F', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'VelocityDecay:', ps.velocityDecayActive ? 'T' : 'F', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'HitPauseFrames:', ps.hitPauseFrames, x + indent * 2, currY);
+  currY = printDataLine(ctx, 'IntangabilityFrames:', ps.intangabilityFrames, x + indent * 2, currY);
+  currY = printDataLine(ctx, 'PlatFormDetection:', ps.disablePlatformDetectionFrames, x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Jump:', x + indent, currY);
+  currY = printDataLine(ctx, 'Count:', ps.jumpCount, x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'LedgeDetector:', x + indent, currY);
+  currY = printDataLine(ctx, 'LedgeGrabCount:', ps.ldGrabCount, x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Shield:', x + indent, currY);
+  currY = printDataLine(ctx, 'CurrentRadius:', RawToNumber(ps.shieldRadiusRaw), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Active:', ps.shieldActive ? 'T' : 'F', x + indent * 2, currY);
+  currY = printDataHeader(ctx, 'Tilt:', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'X:', RawToNumber(ps.shieldTiltXRaw), x + indent * 3, currY);
+  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.shieldTiltYRaw), x + indent * 3, currY);
+
+  currY = printDataHeader(ctx, 'Grab:', x + indent, currY);
+  currY = printDataLine(ctx, 'GrabId:', ps.grabId ?? '', x + indent * 2, currY);
+  currY = printDataLine(ctx, 'GrabIdName:', ps.grabId === undefined ? '' : GetGrabName(ps.grabId), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'GrabConfigName:', ps.grabId === undefined ? '' : GetGrabName(ps.grabId), x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'GrabMeter:', x + indent, currY);
+  currY = printDataLine(ctx, 'Meter:', RawToNumber(ps.grabMeterRaw), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'HoldingPlayerId:', ps.holdingPlayerId ?? '', x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Attack:', x + indent, currY);
+  currY = printDataLine(ctx, 'AttackConfigName:', ps.atkId === undefined ? '' : GetAttackName(ps.atkId), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'AttackIdName:', ps.atkId === undefined ? '' : GetAttackName(ps.atkId), x + indent * 2, currY);
+  currY = printDataLine(ctx, 'Player Ids Hit:', Array.from(ps.playersHit).toString(), x + indent * 2, currY);
+
+  currY = printDataHeader(ctx, 'Sensors:', x + indent, currY);
+  const sensorsLength = ps.comp_sensors.length;
+  for (let i = 0; i < sensorsLength; i++) {
+    const s = ps.comp_sensors[i];
+    if (!s.active) continue;
+    currY = printDataHeader(ctx, i.toString(), x + indent * 2, currY);
+    currY = printDataLine(ctx, 'Radius:', RawToNumber(s.radiusRaw), x + indent * 3, currY);
+    currY = printDataLine(ctx, 'X:', RawToNumber(s.globalXRaw), x + indent * 3, currY);
+    currY = printDataLine(ctx, 'Y:', RawToNumber(s.globalYRaw), x + indent * 3, currY);
+  }
 }

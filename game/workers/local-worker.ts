@@ -5,30 +5,35 @@ import { defaultStage } from '../engine/stage/stageMain';
 import { PlayerStateHistory } from '../engine/systems/history';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
 import {
   jMessage,
   LocalInputBufferReader,
   LocalInputBufferWriter,
 } from './workerUtils';
 
-let inputReader: LocalInputBufferReader;
-let inputWriter: LocalInputBufferWriter;
-let stateWriterBuffer: Int32Array;
+let inputReaders: LocalInputBufferReader[] = [];
+let inputWriters: LocalInputBufferWriter[] = [];
+let stateWriterBuffers: Int32Array[] = [];
 let frameBuffer: Int32Array;
 const jazz = new JazzDebugger();
 
 self.onmessage = (event: MessageEvent) => {
-  if (event.data.type === 'INIT') {
-    const inputSab = event.data.payload.inputBuffer as SharedArrayBuffer;
-    const writeBackSab = event.data.payload
-      .writeBackBuffer as SharedArrayBuffer;
-    const stateSab = event.data.payload.stateBuffer as SharedArrayBuffer;
-    const frameSab = event.data.payload.frameBuffer as SharedArrayBuffer;
+  const message = event.data as jMessage;
+  if (message.type === 'INIT') {
+    const initPayload = message.payload;
+    const inputSabs = initPayload.inputBuffers;
+    const writeBackSabs = initPayload.writeBackBuffers || [];
+    const stateSabs = initPayload.stateBuffers;
+    const frameSab = initPayload.frameBuffer;
 
-    inputReader = new LocalInputBufferReader(new Int32Array(inputSab));
-    inputWriter = new LocalInputBufferWriter(new Int32Array(writeBackSab));
-    stateWriterBuffer = new Int32Array(stateSab);
-    frameBuffer = new Int32Array(frameSab);
+    inputReaders = inputSabs.map(sab => new LocalInputBufferReader(new Int32Array(sab)));
+    inputWriters = writeBackSabs.map(sab => new LocalInputBufferWriter(new Int32Array(sab)));
+    stateWriterBuffers = stateSabs.map(sab => new Int32Array(sab));
+    
+    if (frameSab) {
+      frameBuffer = new Int32Array(frameSab);
+    }
 
     // Initialize the engine with a default stage
     jazz.jazz.SetStage(defaultStage());
@@ -37,7 +42,6 @@ self.onmessage = (event: MessageEvent) => {
     lastTime = performance.now();
     loop();
   }
-  const message = event.data as jMessage;
   if (message.type == 'SET_PLAYER') {
     const pl = message.payload;
 
@@ -58,6 +62,11 @@ self.onmessage = (event: MessageEvent) => {
   }
   if (message.type == 'LOAD_STAGE') {
     jazz.jazz.SetStage(defaultStage());
+  }
+  if (message.type == 'SPAWN_AND_ATTACK') {
+    if (jazz.World.PlayerData.PlayerCount < 4) {
+      SpawnAndAttackWithNSpecial(jazz);
+    }
   }
 };
 
@@ -83,40 +92,54 @@ function loop() {
   while (accumulator >= loopRate) {
     accumulator -= loopRate;
 
-    if (inputReader && inputWriter) {
-      const inputToRead = NewInputAction();
-      inputReader.Load(inputToRead);
-
+    if (inputReaders.length > 0) {
+      const pCount = jazz.World.PlayerData.PlayerCount;
       // Only tick the engine if a player has been loaded
-      if (jazz.World.PlayerData.PlayerCount > 0) {
-        jazz.UpdateInputForCurrentFrame(inputToRead, 0);
-        jazz.Tick();
-      }
-
-      // "Echo" input back
-      inputWriter.Store(inputToRead);
-
-      if (frameBuffer && jazz.World.PlayerData.PlayerCount > 0) {
-        Atomics.store(frameBuffer, 0, jazz.World.LocalFrame);
-      }
-
-      if (stateWriterBuffer && jazz.World.PlayerData.PlayerCount > 0) {
-        const stride =
-          PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
-        const pCount = jazz.World.PlayerData.PlayerCount;
-        let offset = 0;
-
-        // The tick increments the frame, so the last executed frame is localFrame - 1
-        const currentFrame =
-          jazz.World.LocalFrame > 0 ? jazz.World.LocalFrame - 1 : 0;
-
-        for (let pIdx = 0; pIdx < pCount; pIdx++) {
-          const histDB = jazz.World.HistoryData.PlayerHistoryDB[pIdx];
-          const stateHist = histDB.get(currentFrame);
-          if (stateHist) {
-            stateHist.Serialize(stateWriterBuffer, offset, currentFrame);
+      if (pCount > 0) {
+        for (let i = 0; i < pCount; i++) {
+          if (i < inputReaders.length) {
+            const inputToRead = NewInputAction();
+            inputReaders[i].Load(inputToRead);
+            jazz.UpdateInputForCurrentFrame(inputToRead, i);
+            
+            // "Echo" input back if writer exists for this player
+            if (i < inputWriters.length) {
+              inputWriters[i].Store(inputToRead);
+            }
+          } else {
+            // Provide a default empty input for entities spawned without a reader
+            jazz.UpdateInputForCurrentFrame(NewInputAction(), i);
           }
-          offset += stride;
+        }
+        
+        jazz.Tick();
+
+        if (frameBuffer) {
+          Atomics.store(frameBuffer, 0, jazz.World.LocalFrame);
+        }
+
+        const currentFrame = jazz.World.LocalFrame > 0 ? jazz.World.LocalFrame - 1 : 0;
+        
+        // Write state back per player buffer if they exist
+        // Note: stateWriterBuffers was setup with length matching init
+        // If stateWriterBuffers has one element that handles all, or one per player?
+        // Wait, game/index.ts sent stateBuffers: [stateSab] where stateSab was size 4.
+        // Let's assume one buffer for all players for now, or array of buffers.
+        // The instruction says "We should be able to init the engine with multiple players."
+        // We will write into stateWriterBuffers[0] with stride, matching the previous logic.
+        if (stateWriterBuffers.length > 0 && stateWriterBuffers[0]) {
+          const stateWriterBuffer = stateWriterBuffers[0];
+          const stride = PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
+          let offset = 0;
+
+          for (let pIdx = 0; pIdx < pCount; pIdx++) {
+            const histDB = jazz.World.HistoryData.PlayerHistoryDB[pIdx];
+            const stateHist = histDB.get(currentFrame);
+            if (stateHist) {
+              stateHist.Serialize(stateWriterBuffer, offset, currentFrame);
+            }
+            offset += stride;
+          }
         }
       }
     }
