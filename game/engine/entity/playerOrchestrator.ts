@@ -26,6 +26,7 @@ import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
 import { PlayerStateHistory } from '../systems/history';
+import { HoldComponent } from './components/hold';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -47,6 +48,7 @@ export class Player {
   public readonly Attacks: AttackComponment;
   public readonly Grabs: GrabComponent;
   public readonly GrabMeter: GrabMeterComponent;
+  public readonly Hold: HoldComponent;
   public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
@@ -100,6 +102,7 @@ export class Player {
     );
     this.Grabs = new GrabComponent(cc.Grabs, this.Position.Ref, isFacingRight);
     this.GrabMeter = new GrabMeterComponent();
+    this.Hold = new HoldComponent();
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
 }

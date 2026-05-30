@@ -9,6 +9,7 @@ import { GrabHist } from '../entity/components/grab';
 import { GrabMetereHist } from '../entity/components/grabMeter';
 import { HitStopHist } from '../entity/components/hitStop';
 import { HitStunHist } from '../entity/components/hitStun';
+import { HoldHist } from '../entity/components/hold';
 import { JumpHist } from '../entity/components/jump';
 import { LedgeDetectorHist } from '../entity/components/ledgeDetector';
 import { PositionHist } from '../entity/components/position';
@@ -236,6 +237,7 @@ export class PlayerStateHistory
     FlagsHist,
     FSMInfoHist,
     GrabHist,
+    HoldHist,
     GrabMetereHist,
     HitStopHist,
     HitStunHist,
@@ -280,6 +282,7 @@ export class PlayerStateHistory
   // grabMeter
   grabMeterRaw = 0;
   holdingPlayerId: number | undefined = undefined;
+  heldPlayerId: number | undefined = undefined;
   // shield
   shieldActive = false;
   shieldRadiusRaw = 0;
@@ -434,6 +437,7 @@ export class PlayerStateHistory
     this.grabId = undefined;
     this.grabMeterRaw = 0;
     this.holdingPlayerId = undefined;
+    this.heldPlayerId = undefined;
     this.shieldActive = false;
     this.shieldRadiusRaw = 0;
     this.calcRadiusRaw = 0;
@@ -550,6 +554,7 @@ export class PlayerStateHistory
     write(buffer, this.ldGrabCount, ptr++);
     write(buffer, this.grabId ?? -1, ptr++);
     write(buffer, this.holdingPlayerId ?? -1, ptr++);
+    write(buffer, this.heldPlayerId ?? -1, ptr++);
     write(buffer, this.atkId ?? -1, ptr++);
     // 1 + 26
     //27
@@ -698,6 +703,8 @@ export class PlayerStateHistory
       const holdingPlayerId = load(buffer, ptr++);
       this.holdingPlayerId =
         holdingPlayerId === -1 ? undefined : holdingPlayerId;
+      const helpdPlayerId = load(buffer, ptr++);
+      this.heldPlayerId = helpdPlayerId === -1 ? undefined : helpdPlayerId;
       const atkId = load(buffer, ptr++);
       this.atkId = atkId === -1 ? undefined : atkId;
 
@@ -800,8 +807,8 @@ export class PlayerStateHistory
     // Sequence and Frame numbers
     stride += 2; // seq, frameNumber
 
-    // 1. Core Numerics (25 properties)
-    stride += 25;
+    // 1. Core Numerics (26 properties)
+    stride += 26;
 
     // 2. Booleans (Packed into 1 Integer)
     stride += 1;

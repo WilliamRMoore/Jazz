@@ -1397,6 +1397,14 @@ export const defaultDownChargeEx: condition = {
   StateId: STATE_IDS.DOWN_CHARGE_EX_S,
 };
 
+export const defaultHold: condition = {
+  Name: 'DefaultHold',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    return true;
+  },
+  StateId: STATE_IDS.GRAB_HOLD_S,
+};
+
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,

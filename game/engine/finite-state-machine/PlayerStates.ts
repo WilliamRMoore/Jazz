@@ -62,6 +62,7 @@ import {
   InitWallKickRelations,
   InitHitSlideRelations,
   InitHitFlinchRelations,
+  InitPummelRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -134,6 +135,7 @@ import {
   WallKick,
   HitSlide,
   HitFlinch,
+  Pummel,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -197,6 +199,7 @@ const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
 const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
 const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
 const WALL_KICK_RELATIONS = InitWallKickRelations();
+const PUMMEL_RELATIONS = InitPummelRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -268,7 +271,8 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
     SHIELD_BREAK_DIZZY_RELATIONS.stateId,
     SHIELD_BREAK_DIZZY_RELATIONS.mappings,
   )
-  .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings);
+  .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings)
+  .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -331,7 +335,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
   .set(ShieldBreakLand.StateId, ShieldBreakLand)
   .set(Dizzy.StateId, Dizzy)
-  .set(WallKick.StateId, WallKick);
+  .set(WallKick.StateId, WallKick)
+  .set(Pummel.StateId, Pummel);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
@@ -359,7 +364,8 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.S_SPCL_EX_AIR_GE, ATTACK_IDS.S_SPCL_EX_AIR_ATK)
   .set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK)
   .set(GAME_EVENT_IDS.D_SPCL_AIR_GE, ATTACK_IDS.D_SPCL_AIR_ATK)
-  .set(GAME_EVENT_IDS.UP_SPCL_GE, ATTACK_IDS.U_SPCL_ATK);
+  .set(GAME_EVENT_IDS.UP_SPCL_GE, ATTACK_IDS.U_SPCL_ATK)
+  .set(GAME_EVENT_IDS.PUMMEL_GE, ATTACK_IDS.PUMMEL_ATK);
 
 export const GrabGameEventMappings = new Map<GameEventId, GrabId>()
   .set(GAME_EVENT_IDS.GRAB_GE, GRAB_IDS.GRAB_G)

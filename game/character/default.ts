@@ -78,6 +78,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const dashAtk = GetDashAttack();
     const nSpecial = GetNSpecial();
     const grab = GetGrab();
+    const pummel = GetPummel();
     // runGrab
     // side throw
     // down throw
@@ -141,7 +142,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
       .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
       .set(STATE_IDS.WALL_KICK_S, 10)
-      .set(STATE_IDS.WALL_SLAM_S, 20);
+      .set(STATE_IDS.WALL_SLAM_S, 20)
+      .set(STATE_IDS.PUMMEL_S, pummel.TotalFrameLength);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -254,7 +256,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(sideSpecialAir.AttackId, sideSpecialAir)
       .set(sideSpecialExAir.AttackId, sideSpecialExAir)
       .set(dashAtk.AttackId, dashAtk)
-      .set(upSpecial.AttackId, upSpecial);
+      .set(upSpecial.AttackId, upSpecial)
+      .set(pummel.AttackId, pummel);
 
     this.Grabs.set(grab.GrabId, grab);
   }
@@ -1433,6 +1436,24 @@ function GetGrab() {
     .WithTotalFrames(totalFrames)
     .WithGrabBubble(radius, bubble1Offsets)
     .WithGrabId(GRAB_IDS.GRAB_G);
+
+  return bldr.Build();
+}
+
+function GetPummel() {
+  const totalFrames = 22;
+  const radius = 25;
+  const bubble1Offsets = new Map<frameNumber, ConfigVec>();
+  const cv = toCv(45, -40);
+  bubble1Offsets.set(4, cv).set(5, cv).set(6, cv);
+
+  const bldr = new AttackConfigBuilder('Pummel');
+
+  bldr
+    .WithAttackId(ATTACK_IDS.PUMMEL_ATK)
+    .WithInteruptableFrame(totalFrames)
+    .WithGravity(false)
+    .WithHitBubble(5, radius, 0, 0, bubble1Offsets);
 
   return bldr.Build();
 }

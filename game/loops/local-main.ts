@@ -1,5 +1,5 @@
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDER_MONITOR_FRAME_RATE } from './FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
 import { GetInput, NewInputAction } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';

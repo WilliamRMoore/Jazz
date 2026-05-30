@@ -127,6 +127,18 @@ function resolveHitResult(
   const playerData: PlayerData = w.PlayerData;
   const atkDamage = pAHitsPbResult.Damage;
   pB.Damage.AddDamage(atkDamage);
+  const hitStopRaw = CalculateHitStop(atkDamage);
+
+  const paIsHoldingPb =
+    pA.Hold.heldPlayerId !== undefined && pA.Hold.heldPlayerId === pB.ID;
+
+  if (paIsHoldingPb) {
+    pA.Flags.SetHitPauseFrames(Math.floor(RawToNumber(hitStopRaw)));
+
+    pB.Flags.SetHitPauseFrames(Math.floor(RawToNumber(hitStopRaw)));
+
+    return;
+  }
 
   const playerDamage = pB.Damage.Damage;
   const weight = pB.Weight.Value;
@@ -141,7 +153,6 @@ function resolveHitResult(
     baseKnockBack,
   );
 
-  const hitStopRaw = CalculateHitStop(atkDamage);
   const hitStunFrames = CalculateHitStun(kbRaw);
 
   let angleRaw = 0;

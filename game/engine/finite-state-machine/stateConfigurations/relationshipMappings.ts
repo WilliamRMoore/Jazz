@@ -66,6 +66,7 @@ import {
   HitSlideToIdle,
   HitStopToFlinch,
   FlinchToFall,
+  defaultHold,
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -1188,6 +1189,7 @@ export function InitHoldRelations(): StateRelation {
   holdMaps.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
     { geId: GAME_EVENT_IDS.GRAB_RELEASE_GE, sId: STATE_IDS.GRAB_RELEASE_S },
+    { geId: GAME_EVENT_IDS.ATTACK_GE, sId: STATE_IDS.PUMMEL_S },
   ]);
 
   const holdRelations = new StateRelation(STATE_IDS.GRAB_HOLD_S, holdMaps);
@@ -1203,6 +1205,17 @@ export function InitHeldRelations(): StateRelation {
   const heldRelations = new StateRelation(STATE_IDS.GRAB_HELD_S, heldMaps);
 
   return heldRelations;
+}
+
+export function InitPummelRelations(): StateRelation {
+  const pummelMaps = new ActionStateMappings();
+  pummelMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_RELEASE_GE, sId: STATE_IDS.GRAB_RELEASE_S },
+  ]);
+  pummelMaps.SetDefaults([defaultHold]);
+  const pummelRelations = new StateRelation(STATE_IDS.PUMMEL_S, pummelMaps);
+  return pummelRelations;
 }
 
 export function InitGrabReleaseRelations(): StateRelation {

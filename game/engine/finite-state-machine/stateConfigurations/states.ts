@@ -688,6 +688,18 @@ export const DownChargeEx: FSMState = {
   OnExit: attackOnExit,
 };
 
+export const Pummel: FSMState = {
+  StateName: 'Pummel',
+  StateId: STATE_IDS.PUMMEL_S,
+  OnEnter: (p: Player, w: World) => {
+    const geId = GAME_EVENT_IDS.PUMMEL_GE;
+    const stateId = STATE_IDS.PUMMEL_S;
+    attackOnEnter(p, w, geId, stateId);
+  },
+  OnUpdate: attackOnUpdate,
+  OnExit: attackOnExit,
+};
+
 export const NAerialAttack: FSMState = {
   StateName: 'AerialAttack',
   StateId: STATE_IDS.N_AIR_S,
@@ -912,6 +924,8 @@ export const Held: FSMState = {
   OnExit: (p: Player, w: World) => {
     const grabMeter = p.GrabMeter;
     grabMeter.Meter.Zero();
+    const holdingPlayer = w.PlayerData.Player(grabMeter.HoldingPlayerId!);
+    holdingPlayer.Hold.heldPlayerId = undefined;
     grabMeter.ZeroHoldingPlayerId();
   },
 };

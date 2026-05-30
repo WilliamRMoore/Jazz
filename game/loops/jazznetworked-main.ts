@@ -1,5 +1,5 @@
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDER_MONITOR_FRAME_RATE } from './FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
 import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
 import { DefaultCharacterConfig } from '../character/default';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';

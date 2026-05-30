@@ -1,15 +1,11 @@
 export class HoldComponent {
-  private heldPlayerId: number | undefined = undefined;
+  public heldPlayerId: number | undefined = undefined;
 
-  public SetHeldPlayerId(playerId: number) {
-    this.heldPlayerId = playerId;
-  }
-
-  public get HeldPlayerId(): number | undefined {
-    return this.heldPlayerId;
-  }
-
-  public ClearHeldPlayerId() {
-    this.heldPlayerId = undefined;
+  public set ComptState(history: HoldHist) {
+    this.heldPlayerId = history.heldPlayerId;
   }
 }
+
+export type HoldHist = {
+  heldPlayerId: number | undefined;
+};

@@ -5,7 +5,7 @@ import {
   LocalInputBufferReader,
   LocalInputBufferWriter,
 } from './workers/workerUtils';
-import { RENDER_MONITOR_FRAME_RATE } from './loops/FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './loops/animation-loop';
 import { PlayerStateHistory } from './engine/systems/history';
 import { DefaultCharacterConfig } from './character/default';
 import { ToFV } from './engine/utils';
@@ -14,7 +14,11 @@ import { defaultStage, Stage } from './engine/stage/stageMain';
 import { Line } from './engine/physics/vector';
 import { PlayerLerper, LerpedPlayer } from './render/render-utlis';
 import { envConfig } from './engine/config/main-config';
-import { GetStateName, GetGrabName, GetAttackName } from './engine/debug/debugUtils';
+import {
+  GetStateName,
+  GetGrabName,
+  GetAttackName,
+} from './engine/debug/debugUtils';
 
 document.addEventListener('DOMContentLoaded', () => {
   InitGamePage();
@@ -193,7 +197,12 @@ function ECHO_RENDER_LOOP(
 
   const inputToRender = NewInputAction();
 
-  const history = [new HistoryRingBuffer(16), new HistoryRingBuffer(16), new HistoryRingBuffer(16), new HistoryRingBuffer(16)];
+  const history = [
+    new HistoryRingBuffer(16),
+    new HistoryRingBuffer(16),
+    new HistoryRingBuffer(16),
+    new HistoryRingBuffer(16),
+  ];
 
   const stateHistoryPool: PlayerStateHistory[] = [];
   // Pre-allocate to prevent runtime object creation and GC pauses.
@@ -591,7 +600,13 @@ function drawCapsule(
   ctx.stroke();
 }
 
-function printDataLine(ctx: CanvasRenderingContext2D, label: string, data: string | number, x: number, y: number) {
+function printDataLine(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  data: string | number,
+  x: number,
+  y: number,
+) {
   const originalStyle = ctx.fillStyle;
   ctx.fillStyle = '#4bff14'; // Sage green
   ctx.fillText(label, x, y);
@@ -602,7 +617,12 @@ function printDataLine(ctx: CanvasRenderingContext2D, label: string, data: strin
   return y + 13;
 }
 
-function printDataHeader(ctx: CanvasRenderingContext2D, label: string, x: number, y: number) {
+function printDataHeader(
+  ctx: CanvasRenderingContext2D,
+  label: string,
+  x: number,
+  y: number,
+) {
   const originalStyle = ctx.fillStyle;
   ctx.fillStyle = 'cyan';
   ctx.fillText(label, x, y);
@@ -610,82 +630,291 @@ function printDataHeader(ctx: CanvasRenderingContext2D, label: string, x: number
   return y + 13;
 }
 
-function PrintPlayerStateHistoryDirect(ps: PlayerStateHistory, x: number, y: number, ctx: CanvasRenderingContext2D) {
+function PrintPlayerStateHistoryDirect(
+  ps: PlayerStateHistory,
+  x: number,
+  y: number,
+  ctx: CanvasRenderingContext2D,
+) {
   const indent = 13;
   let currY = y;
   ctx.font = '10px Arial';
 
   currY = printDataHeader(ctx, 'Player State:', x, currY);
-  
+
   currY = printDataHeader(ctx, 'State:', x + indent, currY);
   currY = printDataLine(ctx, 'State Id:', ps.stateId, x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Name:', GetStateName(ps.stateId), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'Name:',
+    GetStateName(ps.stateId),
+    x + indent * 2,
+    currY,
+  );
   currY = printDataLine(ctx, 'Frame:', ps.stateFrame, x + indent * 2, currY);
 
   currY = printDataHeader(ctx, 'Position:', x + indent, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.posXRaw), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.posYRaw), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.posXRaw),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.posYRaw),
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Velocity:', x + indent, currY);
-  currY = printDataLine(ctx, 'Vx:', RawToNumber(ps.velXRaw), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Vy:', RawToNumber(ps.velYRaw), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'Vx:',
+    RawToNumber(ps.velXRaw),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Vy:',
+    RawToNumber(ps.velYRaw),
+    x + indent * 2,
+    currY,
+  );
 
-  currY = printDataLine(ctx, 'Direction:', ps.facingRight ? 'Right' : 'Left', x + indent, currY);
+  currY = printDataLine(
+    ctx,
+    'Direction:',
+    ps.facingRight ? 'Right' : 'Left',
+    x + indent,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'ECB:', x + indent, currY);
   currY = printDataHeader(ctx, 'Top:', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[2].xRaw), x + indent * 3, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[2].yRaw), x + indent * 3, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.comp_ecbDiamond[2].xRaw),
+    x + indent * 3,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.comp_ecbDiamond[2].yRaw),
+    x + indent * 3,
+    currY,
+  );
   currY = printDataHeader(ctx, 'Bottom:', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[0].xRaw), x + indent * 3, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[0].yRaw), x + indent * 3, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.comp_ecbDiamond[0].xRaw),
+    x + indent * 3,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.comp_ecbDiamond[0].yRaw),
+    x + indent * 3,
+    currY,
+  );
   currY = printDataHeader(ctx, 'Left:', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[1].xRaw), x + indent * 3, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[1].yRaw), x + indent * 3, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.comp_ecbDiamond[1].xRaw),
+    x + indent * 3,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.comp_ecbDiamond[1].yRaw),
+    x + indent * 3,
+    currY,
+  );
   currY = printDataHeader(ctx, 'Right:', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.comp_ecbDiamond[3].xRaw), x + indent * 3, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.comp_ecbDiamond[3].yRaw), x + indent * 3, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.comp_ecbDiamond[3].xRaw),
+    x + indent * 3,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.comp_ecbDiamond[3].yRaw),
+    x + indent * 3,
+    currY,
+  );
 
-  currY = printDataLine(ctx, 'Damage:', RawToNumber(ps.damageRaw), x + indent, currY);
+  currY = printDataLine(
+    ctx,
+    'Damage:',
+    RawToNumber(ps.damageRaw),
+    x + indent,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'HitStun:', x + indent, currY);
   currY = printDataLine(ctx, 'Frame:', ps.hitStunFrames, x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Vx:', RawToNumber(ps.hitStunVxRaw), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Vy:', RawToNumber(ps.hitStunVyRaw), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'Vx:',
+    RawToNumber(ps.hitStunVxRaw),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Vy:',
+    RawToNumber(ps.hitStunVyRaw),
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Flags:', x + indent, currY);
-  currY = printDataLine(ctx, 'FastFalling:', ps.fasFalling ? 'T' : 'F', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'VelocityDecay:', ps.velocityDecayActive ? 'T' : 'F', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'HitPauseFrames:', ps.hitPauseFrames, x + indent * 2, currY);
-  currY = printDataLine(ctx, 'IntangabilityFrames:', ps.intangabilityFrames, x + indent * 2, currY);
-  currY = printDataLine(ctx, 'PlatFormDetection:', ps.disablePlatformDetectionFrames, x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'FastFalling:',
+    ps.fasFalling ? 'T' : 'F',
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'VelocityDecay:',
+    ps.velocityDecayActive ? 'T' : 'F',
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'HitPauseFrames:',
+    ps.hitPauseFrames,
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'IntangabilityFrames:',
+    ps.intangabilityFrames,
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'PlatFormDetection:',
+    ps.disablePlatformDetectionFrames,
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Jump:', x + indent, currY);
   currY = printDataLine(ctx, 'Count:', ps.jumpCount, x + indent * 2, currY);
 
   currY = printDataHeader(ctx, 'LedgeDetector:', x + indent, currY);
-  currY = printDataLine(ctx, 'LedgeGrabCount:', ps.ldGrabCount, x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'LedgeGrabCount:',
+    ps.ldGrabCount,
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Shield:', x + indent, currY);
-  currY = printDataLine(ctx, 'CurrentRadius:', RawToNumber(ps.shieldRadiusRaw), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Active:', ps.shieldActive ? 'T' : 'F', x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'CurrentRadius:',
+    RawToNumber(ps.shieldRadiusRaw),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Active:',
+    ps.shieldActive ? 'T' : 'F',
+    x + indent * 2,
+    currY,
+  );
   currY = printDataHeader(ctx, 'Tilt:', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'X:', RawToNumber(ps.shieldTiltXRaw), x + indent * 3, currY);
-  currY = printDataLine(ctx, 'Y:', RawToNumber(ps.shieldTiltYRaw), x + indent * 3, currY);
+  currY = printDataLine(
+    ctx,
+    'X:',
+    RawToNumber(ps.shieldTiltXRaw),
+    x + indent * 3,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Y:',
+    RawToNumber(ps.shieldTiltYRaw),
+    x + indent * 3,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Grab:', x + indent, currY);
   currY = printDataLine(ctx, 'GrabId:', ps.grabId ?? '', x + indent * 2, currY);
-  currY = printDataLine(ctx, 'GrabIdName:', ps.grabId === undefined ? '' : GetGrabName(ps.grabId), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'GrabConfigName:', ps.grabId === undefined ? '' : GetGrabName(ps.grabId), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'GrabIdName:',
+    ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'GrabConfigName:',
+    ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'GrabMeter:', x + indent, currY);
-  currY = printDataLine(ctx, 'Meter:', RawToNumber(ps.grabMeterRaw), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'HoldingPlayerId:', ps.holdingPlayerId ?? '', x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'Meter:',
+    RawToNumber(ps.grabMeterRaw),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'HoldingPlayerId:',
+    ps.holdingPlayerId ?? '',
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Attack:', x + indent, currY);
-  currY = printDataLine(ctx, 'AttackConfigName:', ps.atkId === undefined ? '' : GetAttackName(ps.atkId), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'AttackIdName:', ps.atkId === undefined ? '' : GetAttackName(ps.atkId), x + indent * 2, currY);
-  currY = printDataLine(ctx, 'Player Ids Hit:', Array.from(ps.playersHit).toString(), x + indent * 2, currY);
+  currY = printDataLine(
+    ctx,
+    'AttackConfigName:',
+    ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'AttackIdName:',
+    ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
+    x + indent * 2,
+    currY,
+  );
+  currY = printDataLine(
+    ctx,
+    'Player Ids Hit:',
+    Array.from(ps.playersHit).toString(),
+    x + indent * 2,
+    currY,
+  );
 
   currY = printDataHeader(ctx, 'Sensors:', x + indent, currY);
   const sensorsLength = ps.comp_sensors.length;
@@ -693,8 +922,26 @@ function PrintPlayerStateHistoryDirect(ps: PlayerStateHistory, x: number, y: num
     const s = ps.comp_sensors[i];
     if (!s.active) continue;
     currY = printDataHeader(ctx, i.toString(), x + indent * 2, currY);
-    currY = printDataLine(ctx, 'Radius:', RawToNumber(s.radiusRaw), x + indent * 3, currY);
-    currY = printDataLine(ctx, 'X:', RawToNumber(s.globalXRaw), x + indent * 3, currY);
-    currY = printDataLine(ctx, 'Y:', RawToNumber(s.globalYRaw), x + indent * 3, currY);
+    currY = printDataLine(
+      ctx,
+      'Radius:',
+      RawToNumber(s.radiusRaw),
+      x + indent * 3,
+      currY,
+    );
+    currY = printDataLine(
+      ctx,
+      'X:',
+      RawToNumber(s.globalXRaw),
+      x + indent * 3,
+      currY,
+    );
+    currY = printDataLine(
+      ctx,
+      'Y:',
+      RawToNumber(s.globalYRaw),
+      x + indent * 3,
+      currY,
+    );
   }
 }

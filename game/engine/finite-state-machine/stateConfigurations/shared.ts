@@ -50,6 +50,7 @@ class GAME_EVENTS {
   public readonly MOVE_FAST_GE = seq.Next as GameEventId;
   public readonly JUMP_GE = seq.Next as GameEventId;
   public readonly GRAB_GE = seq.Next as GameEventId;
+  public readonly PUMMEL_GE = seq.Next as GameEventId;
   public readonly RUN_GRAB_GE = seq.Next as GameEventId;
   public readonly SPCL_GRAB_GE = seq.Next as GameEventId;
   public readonly GUARD_GE = seq.Next as GameEventId;
@@ -138,6 +139,7 @@ class STATES {
   public readonly SPCL_GRAB_S = seq.Next as StateId;
   public readonly GRAB_HOLD_S = seq.Next as StateId;
   public readonly GRAB_HELD_S = seq.Next as StateId;
+  public readonly PUMMEL_S = seq.Next as StateId;
   public readonly GRAB_RELEASE_S = seq.Next as StateId;
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
   public readonly LEDGE_RECOVER_S = seq.Next as StateId;
@@ -189,6 +191,7 @@ class ATTACKS {
   public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
   public readonly LEDGE_GU_ATK = seq.Next as AttackId;
   public readonly LEDGE_ATK = seq.Next as AttackId;
+  public readonly PUMMEL_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();
