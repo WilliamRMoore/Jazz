@@ -5,7 +5,7 @@ import {
   LocalInputBufferReader,
   LocalInputBufferWriter,
 } from './workers/workerUtils';
-import { RENDERFPS60Loop } from './loops/FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './loops/FPS60LoopExecutor';
 import { PlayerStateHistory } from './engine/systems/history';
 import { DefaultCharacterConfig } from './character/default';
 import { ToFV } from './engine/utils';
@@ -146,7 +146,10 @@ class HistoryRingBuffer {
     return undefined;
   }
 
-  set(frame: number, stateHist: PlayerStateHistory): PlayerStateHistory | undefined {
+  set(
+    frame: number,
+    stateHist: PlayerStateHistory,
+  ): PlayerStateHistory | undefined {
     if (frame < 0) return undefined;
     const idx = frame % this.size;
     const oldHist = this.buffer[idx];
@@ -171,18 +174,15 @@ function ECHO_RENDER_LOOP(
 
   const inputToRender = NewInputAction();
 
-  const history = [
-    new HistoryRingBuffer(16),
-    new HistoryRingBuffer(16),
-  ];
-  
+  const history = [new HistoryRingBuffer(16), new HistoryRingBuffer(16)];
+
   const stateHistoryPool: PlayerStateHistory[] = [];
   // Pre-allocate to prevent runtime object creation and GC pauses.
   // We keep ~5 frames per player (10 active), so 20 is safely enough.
   for (let i = 0; i < 20; i++) {
     stateHistoryPool.push(new PlayerStateHistory());
   }
-  
+
   const playerLerper = new PlayerLerper(envConfig);
 
   let renderTime = -1;
@@ -193,7 +193,7 @@ function ECHO_RENDER_LOOP(
 
   let highestGlobal = -1;
 
-  RENDERFPS60Loop((timeStamp: number) => {
+  RENDER_MONITOR_FRAME_RATE((timeStamp: number) => {
     writeBackReader.Load(inputToRender);
     const delta = timeStamp - lastTimeStamp;
     lastTimeStamp = timeStamp;
@@ -240,14 +240,14 @@ function ECHO_RENDER_LOOP(
       if (!stateHist) {
         stateHist = new PlayerStateHistory(); // Fallback
       }
-      
+
       // Explicitly zero the object before use to clean up stale data
       stateHist.Zero();
 
       const success = stateHist.Deserialize(stateBuffer, offset);
       if (success !== false) {
         const decodedFrame = success as number;
-        
+
         // Update the max global frame tracked in O(1) time
         if (decodedFrame > highestGlobal) {
           highestGlobal = decodedFrame;

@@ -1,5 +1,5 @@
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDERFPS60Loop } from './FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './FPS60LoopExecutor';
 import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
 import { DefaultCharacterConfig } from '../character/default';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
@@ -122,7 +122,7 @@ function RENDER_LOOP(world: World) {
 
   const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
   SHOW_DEBUG_INFO(dbRenderer);
-  RENDERFPS60Loop((timeStamp: number) => {
+  RENDER_MONITOR_FRAME_RATE((timeStamp: number) => {
     dbRenderer.render(world, timeStamp);
   });
 }
