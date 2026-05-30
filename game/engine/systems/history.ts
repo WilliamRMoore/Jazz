@@ -336,6 +336,7 @@ export class PlayerStateHistory
     active: boolean;
   }>(envConfig.get('MaxGrabBubblesPerPlayer') as number);
   readonly comp_attackCircles = new Array<{
+    id: number;
     xRaw: number;
     yRaw: number;
     radiusRaw: number;
@@ -395,6 +396,7 @@ export class PlayerStateHistory
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       this.comp_attackCircles[i] = {
+        id: 0,
         xRaw: 0,
         yRaw: 0,
         radiusRaw: 0,
@@ -488,6 +490,7 @@ export class PlayerStateHistory
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       const ac = this.comp_attackCircles[i];
+      ac.id = 0;
       ac.xRaw = 0;
       ac.yRaw = 0;
       ac.radiusRaw = 0;
@@ -608,6 +611,7 @@ export class PlayerStateHistory
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       const ac = this.comp_attackCircles[i];
+      write(buffer, ac.id, ptr++);
       write(buffer, ac.xRaw, ptr++);
       write(buffer, ac.yRaw, ptr++);
       write(buffer, ac.radiusRaw, ptr++);
@@ -746,6 +750,7 @@ export class PlayerStateHistory
       const aLength = this.comp_attackCircles.length;
       for (let i = 0; i < aLength; i++) {
         const ac = this.comp_attackCircles[i];
+        ac.id = load(buffer, ptr++);
         ac.xRaw = load(buffer, ptr++);
         ac.yRaw = load(buffer, ptr++);
         ac.radiusRaw = load(buffer, ptr++);
@@ -813,7 +818,7 @@ export class PlayerStateHistory
     stride += maxSensors * 4; // comp_sensors array (x, y, r, active)
     stride += 4 * 2; // comp_ecbDiamond (4 points * 2 coords)
     stride += maxHurt * 6; // comp_hurtCapsules (x1, y1, x2, y2, r, active)
-    stride += maxAtk * 4; // comp_attackCircles (x, y, r, active)
+    stride += maxAtk * 5; // comp_attackCircles (id, x, y, r, active)
     stride += maxGrab * 5; // comp_grabCircles (id, x, y, r, active)
     stride += 4 * 2; // comp_ledgeDetectorLeft (4 points * 2 coords)
     stride += 4 * 2; // comp_ledgeDetectorRight (4 points * 2 coords)

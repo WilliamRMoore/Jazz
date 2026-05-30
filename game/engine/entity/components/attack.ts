@@ -135,6 +135,21 @@ export class Attack {
     const hbs = conf.HitBubbles.map(
       (hbc) => new HitBubble(hbc, posRef, facingRight),
     );
+    hbs.sort((a, b) => a.BubbleId - b.BubbleId);
+
+    let lastBubbleId = -1;
+
+    for (let i = 0; i < hbs.length; i++) {
+      const hb = hbs[i];
+
+      if (hb.BubbleId === lastBubbleId) {
+        throw new Error(
+          'Duplicate BubbleId found in HitBubbles. BubbleId must be unique.',
+        );
+      }
+      lastBubbleId = hb.BubbleId;
+    }
+
     this.HitBubbles = hbs.sort((a, b) => a.Priority - b.Priority);
 
     if (conf.Impulses !== undefined) {

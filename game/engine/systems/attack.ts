@@ -299,15 +299,30 @@ function PAvsPB(
 
       //const prevAttackXRaw = pAPrevState.a
 
-      const pAHitBubblePreviousPos =
-        pAHitBubble?.GetPreviousGlobalPosition(
-          vecPool,
-          prevXRaw,
-          prevYRaw,
-          pAFacingRight,
-          previousStateFrame,
-        ) ??
-        vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+      let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
+      const hitBubbleId = pAHitBubble.BubbleId;
+      for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
+        const previousHitBubble = pAPrevState.comp_attackCircles[i];
+        if (hitBubbleId === previousHitBubble.id && previousHitBubble.active) {
+          pAHitBubblePreviousPos = vecPool
+            .Rent()
+            .SetXYRaw(previousHitBubble.xRaw, previousHitBubble.yRaw);
+        }
+      }
+
+      if (pAHitBubblePreviousPos === undefined) {
+        pAHitBubblePreviousPos = vecPool
+          .Rent()
+          .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+      }
+      // pAHitBubble?.GetPreviousGlobalPosition(
+      //   vecPool,
+      //   prevXRaw,
+      //   prevYRaw,
+      //   pAFacingRight,
+      //   previousStateFrame,
+      // ) ??
+      //vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
       const closestPoints = ClosestPointsBetweenSegments(
         shieldPos,

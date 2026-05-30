@@ -126,6 +126,36 @@ function startEngine(controllerInfo: playerControllerInfo) {
   ECHO_RENDER_LOOP(writeBackReader, stateBuffer, frameBuffer);
 }
 
+class HistoryRingBuffer {
+  private buffer: (PlayerStateHistory | undefined)[];
+  private frames: number[];
+  private size: number;
+
+  constructor(size: number) {
+    this.size = size;
+    this.buffer = new Array(size).fill(undefined);
+    this.frames = new Array(size).fill(-1);
+  }
+
+  get(frame: number): PlayerStateHistory | undefined {
+    if (frame < 0) return undefined;
+    const idx = frame % this.size;
+    if (this.frames[idx] === frame) {
+      return this.buffer[idx];
+    }
+    return undefined;
+  }
+
+  set(frame: number, stateHist: PlayerStateHistory): PlayerStateHistory | undefined {
+    if (frame < 0) return undefined;
+    const idx = frame % this.size;
+    const oldHist = this.buffer[idx];
+    this.buffer[idx] = stateHist;
+    this.frames[idx] = frame;
+    return oldHist;
+  }
+}
+
 function ECHO_RENDER_LOOP(
   writeBackReader: LocalInputBufferReader,
   stateBuffer: Int32Array,
@@ -142,10 +172,17 @@ function ECHO_RENDER_LOOP(
   const inputToRender = NewInputAction();
 
   const history = [
-    new Map<number, PlayerStateHistory>(),
-    new Map<number, PlayerStateHistory>(),
+    new HistoryRingBuffer(16),
+    new HistoryRingBuffer(16),
   ];
+  
   const stateHistoryPool: PlayerStateHistory[] = [];
+  // Pre-allocate to prevent runtime object creation and GC pauses.
+  // We keep ~5 frames per player (10 active), so 20 is safely enough.
+  for (let i = 0; i < 20; i++) {
+    stateHistoryPool.push(new PlayerStateHistory());
+  }
+  
   const playerLerper = new PlayerLerper(envConfig);
 
   let renderTime = -1;
@@ -154,6 +191,8 @@ function ECHO_RENDER_LOOP(
   const loopRate = 1000 / 60;
   const stage = defaultStage();
 
+  let highestGlobal = -1;
+
   RENDERFPS60Loop((timeStamp: number) => {
     writeBackReader.Load(inputToRender);
     const delta = timeStamp - lastTimeStamp;
@@ -161,20 +200,13 @@ function ECHO_RENDER_LOOP(
 
     const currentFrame = Atomics.load(frameBuffer, 0);
 
-    let highestGlobal = -1;
-    for (const pHist of history) {
-      for (const key of pHist.keys()) {
-        if (key > highestGlobal) highestGlobal = key;
-      }
-    }
-
     if (renderTime === -1 && highestGlobal > 2) {
       renderTime = (highestGlobal - 2) * loopRate;
     }
 
     if (renderTime !== -1 && highestGlobal !== -1) {
-      const delayFrames = highestGlobal - (renderTime / loopRate);
-      
+      const delayFrames = highestGlobal - renderTime / loopRate;
+
       // A logic tick jumps the delay forward by exactly 1.0 frame.
       // This deadzone absorbs the step-function entirely without micro-corrections.
       if (delayFrames < 1.2) {
@@ -185,17 +217,17 @@ function ECHO_RENDER_LOOP(
         // Soft pull towards neutral when inside the deadzone
         timeScale += (1.0 - timeScale) * 0.05;
       }
-      
+
       // Hard limits to prevent visible slow-mo/fast-forward
       if (timeScale < 0.95) timeScale = 0.95;
       if (timeScale > 1.05) timeScale = 1.05;
-      
+
       if (delayFrames < -1 || delayFrames > 6) {
-         // Lag spike or thread paused, hard snap
-         renderTime = (highestGlobal - 2) * loopRate;
-         timeScale = 1.0;
+        // Lag spike or thread paused, hard snap
+        renderTime = (highestGlobal - 2) * loopRate;
+        timeScale = 1.0;
       } else {
-         renderTime += delta * timeScale;
+        renderTime += delta * timeScale;
       }
     }
 
@@ -204,22 +236,26 @@ function ECHO_RENDER_LOOP(
       PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
 
     for (let pIdx = 0; pIdx < 2; pIdx++) {
-      const stateHist = stateHistoryPool.pop() || new PlayerStateHistory();
+      let stateHist = stateHistoryPool.pop();
+      if (!stateHist) {
+        stateHist = new PlayerStateHistory(); // Fallback
+      }
+      
+      // Explicitly zero the object before use to clean up stale data
+      stateHist.Zero();
+
       const success = stateHist.Deserialize(stateBuffer, offset);
       if (success !== false) {
         const decodedFrame = success as number;
-        const existing = history[pIdx].get(decodedFrame);
-        if (existing && existing !== stateHist) {
-          stateHistoryPool.push(existing);
+        
+        // Update the max global frame tracked in O(1) time
+        if (decodedFrame > highestGlobal) {
+          highestGlobal = decodedFrame;
         }
-        history[pIdx].set(decodedFrame, stateHist);
-        // keep only the last few frames
-        for (const key of history[pIdx].keys()) {
-          if (key < decodedFrame - 5) {
-            const oldHist = history[pIdx].get(key);
-            if (oldHist) stateHistoryPool.push(oldHist);
-            history[pIdx].delete(key);
-          }
+
+        const oldHist = history[pIdx].set(decodedFrame, stateHist);
+        if (oldHist && oldHist !== stateHist) {
+          stateHistoryPool.push(oldHist);
         }
       } else {
         stateHistoryPool.push(stateHist);

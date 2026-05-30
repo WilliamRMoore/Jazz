@@ -89,9 +89,10 @@ describe('PlayerStateHistory Serialization', () => {
       active: true,
     };
     sourceHistory.comp_attackCircles[0] = {
-      xRaw: 1,
-      yRaw: 2,
-      radiusRaw: 3,
+      id: 1,
+      xRaw: 2,
+      yRaw: 3,
+      radiusRaw: 4,
       active: true,
     };
     sourceHistory.comp_grabCircles[0] = {
