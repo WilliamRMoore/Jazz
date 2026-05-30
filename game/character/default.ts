@@ -1165,8 +1165,8 @@ function GetSideSpecialExtension() {
   const hb1Offsets = new Map<frameNumber, ConfigVec>();
   const damage = 16;
   const radius = 40;
-  const baseKnockBack = 30;
-  const knockBackScaling = 45;
+  const baseKnockBack = 80;
+  const knockBackScaling = 350;
 
   hb1Offsets
     .set(3, toCv(80, -50))

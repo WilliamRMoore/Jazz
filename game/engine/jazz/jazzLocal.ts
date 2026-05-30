@@ -1,11 +1,12 @@
 import { CharacterConfig } from '../../character/shared';
+import { LocalInputBufferReader } from '../../workers/workerUtils';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { InputAction } from '../input/Input';
+import { InputAction, NewInputAction } from '../input/Input';
 import { FlatVec } from '../physics/vector';
-import { defaultStage, WallStage } from '../stage/stageMain';
+import { defaultStage, Stage, WallStage } from '../stage/stageMain';
 import { World } from '../world/world';
 import { DefaultGameLoop } from './jazzGameLoops';
 
@@ -29,6 +30,16 @@ export class JazzLocal implements IJazzLocal {
 
   public get World(): World {
     return this.world;
+  }
+
+  public SetPlayer(cc: CharacterConfig, pos: FlatVec) {
+    const p = new Player(this.World.PlayerData.PlayerCount, cc);
+    SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
+    this.World.SetPlayer(p);
+  }
+
+  public SetStage(s: Stage) {
+    this.World.SetStage(s);
   }
 
   public Init(

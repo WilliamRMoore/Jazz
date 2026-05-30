@@ -1,5 +1,5 @@
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDERFPS60Loop } from './FPS60LoopExecutor';
+import { RENDER_MONITOR_FRAME_RATE } from './FPS60LoopExecutor';
 import { GetInput, NewInputAction } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
@@ -11,6 +11,8 @@ import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlaye
 import { IJazzLocal } from '../engine/jazz/jazzLocal';
 
 const frameInterval = 1000 / 60;
+let accumulator = 0;
+let lastTime = performance.now();
 
 export type GamePadIndexes = Array<number>;
 
@@ -76,9 +78,11 @@ export function start(playerInfo: Array<playerControllerInfo>) {
 }
 
 function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
+  accumulator = 0;
+  lastTime = performance.now();
   const logicLoopHandle = setInterval(() => {
     logicStep(engine, gpInfo);
-  }, frameInterval);
+  }, 16);
 }
 
 function RENDER_LOOP(jazzDebugger: JazzDebugger) {
@@ -97,30 +101,38 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
 
   const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
   SHOW_DEBUG_INFO(dbRenderer);
-  RENDERFPS60Loop((timeStamp: number) => {
+  RENDER_MONITOR_FRAME_RATE((timeStamp: number) => {
     dbRenderer.render(jazzDebugger.World, timeStamp);
   });
 }
 
+const loopRate = 1000 / 60; //60 hrz
 function logicStep(
   engine: IJazzLocal,
   gamePadInfo: Array<playerControllerInfo>,
 ) {
-  //const gamePadCount = gamePadInfo.length;
-  const w = engine.World;
-  const playerCount = w?.PlayerData.PlayerCount!;
+  const now = performance.now();
+  const delta = now - lastTime;
+  lastTime = now;
+  accumulator += delta;
+  while (accumulator >= loopRate) {
+    accumulator -= loopRate;
+    //const gamePadCount = gamePadInfo.length;
+    const w = engine.World;
+    const playerCount = w?.PlayerData.PlayerCount!;
 
-  for (let i = 0; i < playerCount; i++) {
-    const info = gamePadInfo[i];
-    if (info === undefined) {
-      const dbInput = NewInputAction();
-      engine.UpdateInputForCurrentFrame(dbInput, i);
-      continue;
+    for (let i = 0; i < playerCount; i++) {
+      const info = gamePadInfo[i];
+      if (info === undefined) {
+        const dbInput = NewInputAction();
+        engine.UpdateInputForCurrentFrame(dbInput, i);
+        continue;
+      }
+      const gpI = info.inputIndex;
+      const pi = info.playerIndex;
+      const input = GetInput(gpI);
+      engine.UpdateInputForCurrentFrame(input, pi);
     }
-    const gpI = info.inputIndex;
-    const pi = info.playerIndex;
-    const input = GetInput(gpI);
-    engine.UpdateInputForCurrentFrame(input, pi);
+    engine.Tick();
   }
-  engine.Tick();
 }

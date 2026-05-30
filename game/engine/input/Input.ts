@@ -7,13 +7,8 @@ import { ToFp } from '../utils';
 import { World } from '../world/world';
 
 export type NetworkInput = {
-  Action: GameEventId;
-  LXAxisRaw: number;
-  LYAxisRaw: number;
-  RXAxisRaw: number;
-  RYAxisRaw: number;
-  LTValRaw: number;
-  RTValRaw: number;
+  Input: InputAction;
+  PlayerId: number;
   Frame: number;
   FrameAdvantage: number;
 };
@@ -330,4 +325,13 @@ export function NewInputAction() {
       return this.RTVal.Raw;
     },
   } as InputAction;
+}
+
+export function NewNetworkInput(): NetworkInput {
+  return {
+    Input: NewInputAction(),
+    PlayerId: 0,
+    Frame: 0,
+    FrameAdvantage: 0,
+  };
 }

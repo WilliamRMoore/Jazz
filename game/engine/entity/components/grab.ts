@@ -15,12 +15,20 @@ import { frameNumber } from './attack';
 type bubbleId = number;
 
 export class GrabBubble {
+  private readonly posRef: FlatVec;
+  private readonly facingRight: () => boolean;
   public readonly BubbleId: bubbleId;
   public readonly Radius: FixedPoint;
   public readonly activeFrames = new Set<number>();
   public readonly frameOffsets = new Map<frameNumber, FlatVec>();
 
-  constructor(gbc: GrabBubbleConfig) {
+  constructor(
+    gbc: GrabBubbleConfig,
+    posRef: FlatVec,
+    directionGetter: () => boolean,
+  ) {
+    this.posRef = posRef;
+    this.facingRight = directionGetter;
     this.BubbleId = gbc.BubbleId;
     this.Radius = new FixedPoint(gbc.Radius);
     for (const [k, v] of gbc.frameOffsets) {
@@ -41,38 +49,37 @@ export class GrabBubble {
 
   public GetGlobalPosition(
     vecPool: Pool<PooledVector>,
-    playerX: FixedPoint,
-    playerY: FixedPoint,
-    facinRight: boolean,
     grabFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
       return undefined;
     }
-    const xRaw = playerX.Raw;
-    const yRaw = playerY.Raw;
+    const xRaw = this.posRef.X.Raw;
+    const yRaw = this.posRef.Y.Raw;
 
-    const globalXRaw = facinRight ? xRaw + offset.X.Raw : xRaw - offset.X.Raw;
+    const globalXRaw = this.facingRight()
+      ? xRaw + offset.X.Raw
+      : xRaw - offset.X.Raw;
     const globalYRaw = yRaw + offset.Y.Raw;
     return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
 
-  public GetGlobalPositionRaw(
+  public GetPreviousGlobalPosition(
     vecPool: Pool<PooledVector>,
-    playerXRaw: number,
-    playerYRaw: number,
-    facinRight: boolean,
+    prevPlayerXRaw: number,
+    prevPlayerYRaw: number,
+    prevFacinRight: boolean,
     grabFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
       return undefined;
     }
-    const globalXRaw = facinRight
-      ? playerXRaw + offset.X.Raw
-      : playerXRaw - offset.X.Raw;
-    const globalYRaw = playerYRaw + offset.Y.Raw;
+    const globalXRaw = prevFacinRight
+      ? prevPlayerXRaw + offset.X.Raw
+      : prevPlayerXRaw - offset.X.Raw;
+    const globalYRaw = prevPlayerYRaw + offset.Y.Raw;
     return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
 }
@@ -84,10 +91,16 @@ export class Grab {
   public readonly Impulses: Map<frameNumber, FlatVec> | undefined;
   public readonly GrabBubbles: Array<GrabBubble>;
 
-  constructor(conf: GrabConfig) {
+  constructor(
+    conf: GrabConfig,
+    posRef: FlatVec,
+    directionGetter: () => boolean,
+  ) {
     this.Name = conf.Name;
     this.GrabId = conf.GrabId;
-    const gbs = conf.GrabBubbles.map((gbc) => new GrabBubble(gbc));
+    const gbs = conf.GrabBubbles.map(
+      (gbc) => new GrabBubble(gbc, posRef, directionGetter),
+    );
     this.GrabBubbles = gbs.sort((a, b) => a.BubbleId - b.BubbleId);
     if (conf.Impulses !== undefined) {
       this.ImpulseClamp = new FixedPoint(conf.ImpulseClamp!);
@@ -127,9 +140,13 @@ export class GrabComponent {
   private grabs: Map<GrabId, Grab> = new Map();
   private currentGrab: Grab | undefined = undefined;
 
-  public constructor(grabConfigs: Map<GrabId, GrabConfig>) {
+  public constructor(
+    grabConfigs: Map<GrabId, GrabConfig>,
+    posRef: FlatVec,
+    directionGetter: () => boolean,
+  ) {
     for (const [k, v] of grabConfigs) {
-      this.grabs.set(k, new Grab(v));
+      this.grabs.set(k, new Grab(v, posRef, directionGetter));
     }
   }
 

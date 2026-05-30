@@ -6,8 +6,9 @@
   "scripts": {
     "test": "jest",
     "build": "node esbuild.config.js",
-    "start": "esbuild game/index.ts --bundle --outfile=public/index.js --servedir=public --watch",
-    "deploy": "npm run build && esbuild public/index.js --minify --allow-overwrite --outfile=public/index.js && gh-pages -d public"
+    "build:worker": "node esbuild.config.js --worker",
+    "start": "node server.js",
+    "deploy": "npm run build && esbuild public/*.js --minify --allow-overwrite --outdir=public && gh-pages -d public"
   },
   "repository": {
     "type": "git",

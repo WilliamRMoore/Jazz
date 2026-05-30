@@ -175,24 +175,14 @@ function PAvsPB(
     for (let grabIndex = 0; grabIndex < grabBubblesLength; grabIndex++) {
       const grabBubble = grabBubbles.AtIndex(grabIndex)!;
 
-      const grabBubCurPos = grabBubble.GetGlobalPosition(
-        vecPool,
-        pAPosition.X,
-        pAPosition.Y,
-        pAFacingRight,
-        pAStateFrame,
-      );
+      const grabBubCurPos = grabBubble.GetGlobalPosition(vecPool, pAStateFrame);
 
       if (grabBubCurPos === undefined) {
         continue;
       }
 
-      // const prevGrab = prevState.comp_grabCircles[grabIndex];
-      // const grabPrevPos = prevGrab.active
-      //   ? vecPool.Rent().SetXYRaw(prevGrab.xRaw, prevGrab.yRaw)
-      //   : grabBubCurPos;
       const grabPrevPos =
-        grabBubble.GetGlobalPositionRaw(
+        grabBubble.GetPreviousGlobalPosition(
           vecPool,
           prevXRaw,
           prevYRaw,

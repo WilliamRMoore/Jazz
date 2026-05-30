@@ -17,7 +17,7 @@ export interface IJazzDebugger extends IJazzLocal {
 
 export class JazzDebugger implements IJazzDebugger {
   readonly playerDebuggers = new Array<PlayerDebugAdapter>();
-  private jazz: JazzLocal;
+  public readonly jazz: JazzLocal;
   private world: World;
   private paused: boolean = false;
   private previousInput: InputAction | undefined = undefined;

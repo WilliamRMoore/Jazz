@@ -268,8 +268,6 @@ function PAvsPB(
   let prevXRaw = pAPrevState.posXRaw;
   let prevYRaw = pAPrevState.posYRaw;
 
-  const pAPrevPositionDto = vecPool.Rent().SetXYRaw(prevXRaw, prevYRaw);
-  const pACurPositionDto = vecPool.Rent().SetXY(pA.Position.X, pA.Position.Y);
   const currentStateFrame = pAstateFrame;
   const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
   const pAFacingRight = pA.Flags.IsFacingRight;
@@ -292,9 +290,6 @@ function PAvsPB(
 
       const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
         vecPool,
-        pACurPositionDto.X,
-        pACurPositionDto.Y,
-        pAFacingRight,
         currentStateFrame,
       );
 
@@ -302,15 +297,32 @@ function PAvsPB(
         continue;
       }
 
-      const pAHitBubblePreviousPos =
-        pAHitBubble?.GetGlobalPosition(
-          vecPool,
-          pAPrevPositionDto.X,
-          pAPrevPositionDto.Y,
-          pAFacingRight,
-          previousStateFrame,
-        ) ??
-        vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+      //const prevAttackXRaw = pAPrevState.a
+
+      let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
+      const hitBubbleId = pAHitBubble.BubbleId;
+      for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
+        const previousHitBubble = pAPrevState.comp_attackCircles[i];
+        if (hitBubbleId === previousHitBubble.id && previousHitBubble.active) {
+          pAHitBubblePreviousPos = vecPool
+            .Rent()
+            .SetXYRaw(previousHitBubble.xRaw, previousHitBubble.yRaw);
+        }
+      }
+
+      if (pAHitBubblePreviousPos === undefined) {
+        pAHitBubblePreviousPos = vecPool
+          .Rent()
+          .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+      }
+      // pAHitBubble?.GetPreviousGlobalPosition(
+      //   vecPool,
+      //   prevXRaw,
+      //   prevYRaw,
+      //   pAFacingRight,
+      //   previousStateFrame,
+      // ) ??
+      //vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
       const closestPoints = ClosestPointsBetweenSegments(
         shieldPos,
@@ -361,9 +373,6 @@ function PAvsPB(
 
     const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
       vecPool,
-      pACurPositionDto.X,
-      pACurPositionDto.Y,
-      pAFacingRight,
       currentStateFrame,
     );
 
@@ -372,10 +381,10 @@ function PAvsPB(
     }
 
     const pAHitBubblePreviousPos =
-      pAHitBubble?.GetGlobalPosition(
+      pAHitBubble?.GetPreviousGlobalPosition(
         vecPool,
-        pAPrevPositionDto.X,
-        pAPrevPositionDto.Y,
+        prevXRaw,
+        prevYRaw,
         pAFacingRight,
         previousStateFrame,
       ) ??

@@ -16,6 +16,8 @@ type bubbleId = number;
 export type frameNumber = number;
 
 export class HitBubble {
+  private readonly posRef: FlatVec;
+  private readonly facingRight: () => boolean;
   public readonly BubbleId: bubbleId;
   public readonly Damage = new FixedPoint(0);
   public readonly Priority: number;
@@ -25,7 +27,13 @@ export class HitBubble {
   public readonly frameOffsets = new Map<frameNumber, FlatVec>();
   public readonly ThresholdAngle: boolean;
 
-  constructor(hbc: HitBubblesConifg) {
+  constructor(
+    hbc: HitBubblesConifg,
+    posRef: FlatVec,
+    facingRight: () => boolean,
+  ) {
+    this.posRef = posRef;
+    this.facingRight = facingRight;
     this.BubbleId = hbc.BubbleId;
     this.Damage.SetFromNumber(hbc.Damage);
     this.Priority = hbc.Priority;
@@ -50,9 +58,6 @@ export class HitBubble {
 
   public GetGlobalPosition(
     vecPool: Pool<PooledVector>,
-    playerX: FixedPoint,
-    playerY: FixedPoint,
-    facinRight: boolean,
     attackFrameNumber: frameNumber,
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(attackFrameNumber);
@@ -61,11 +66,34 @@ export class HitBubble {
       return undefined;
     }
 
-    const xRaw = playerX.Raw;
-    const yRaw = playerY.Raw;
+    const xRaw = this.posRef.X.Raw;
+    const yRaw = this.posRef.Y.Raw;
 
-    const globalXRaw = facinRight ? xRaw + offset.X.Raw : xRaw - offset.X.Raw;
+    const globalXRaw = this.facingRight()
+      ? xRaw + offset.X.Raw
+      : xRaw - offset.X.Raw;
     const globalYRaw = yRaw + offset.Y.Raw;
+
+    return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
+  }
+
+  public GetPreviousGlobalPosition(
+    vecPool: Pool<PooledVector>,
+    prevPosXRaw: number,
+    prevPosYRaw: number,
+    prevFaingRight: boolean,
+    attackFrameNumber: frameNumber,
+  ): PooledVector | undefined {
+    const offset = this.frameOffsets.get(attackFrameNumber);
+
+    if (offset === undefined) {
+      return undefined;
+    }
+
+    const globalXRaw = prevFaingRight
+      ? prevPosXRaw + offset.X.Raw
+      : prevPosXRaw - offset.X.Raw;
+    const globalYRaw = prevPosYRaw + offset.Y.Raw;
 
     return vecPool.Rent().SetXYRaw(globalXRaw, globalYRaw);
   }
@@ -89,7 +117,7 @@ export class Attack {
   public readonly onUpdateCommands = new Map<number, Array<Command>>();
   public readonly onExitCommands: Array<Command> = [];
 
-  constructor(conf: AttackConfig) {
+  constructor(conf: AttackConfig, posRef: FlatVec, facingRight: () => boolean) {
     this.AttackId = conf.AttackId;
     this.Name = conf.Name;
     this.TotalFrameLength = conf.TotalFrameLength;
@@ -104,7 +132,24 @@ export class Attack {
       this.ImpulseClamp = new FixedPoint().SetFromNumber(conf.ImpulseClamp);
     }
 
-    const hbs = conf.HitBubbles.map((hbc) => new HitBubble(hbc));
+    const hbs = conf.HitBubbles.map(
+      (hbc) => new HitBubble(hbc, posRef, facingRight),
+    );
+    hbs.sort((a, b) => a.BubbleId - b.BubbleId);
+
+    let lastBubbleId = -1;
+
+    for (let i = 0; i < hbs.length; i++) {
+      const hb = hbs[i];
+
+      if (hb.BubbleId === lastBubbleId) {
+        throw new Error(
+          'Duplicate BubbleId found in HitBubbles. BubbleId must be unique.',
+        );
+      }
+      lastBubbleId = hb.BubbleId;
+    }
+
     this.HitBubbles = hbs.sort((a, b) => a.Priority - b.Priority);
 
     if (conf.Impulses !== undefined) {
@@ -157,10 +202,14 @@ export class AttackComponment {
   private currentAttack: Attack | undefined = undefined;
   public readonly PlayerIdsHit = new Set<number>();
 
-  public constructor(attacksConfigs: Map<AttackId, AttackConfig>) {
+  public constructor(
+    attacksConfigs: Map<AttackId, AttackConfig>,
+    posRef: FlatVec,
+    facingRight: () => boolean,
+  ) {
     const attacks = new Map<AttackId, Attack>();
     attacksConfigs.forEach((ac) => {
-      const atk = new Attack(ac);
+      const atk = new Attack(ac, posRef, facingRight);
       attacks.set(ac.AttackId, atk);
     });
     this.attacks = attacks;
