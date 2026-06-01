@@ -89,10 +89,17 @@ export class StateMachine {
     }
 
     const conditionalsLength = conditions.length;
-
+    const playerInput = world.PlayerData.InputStore(
+      this.player.ID,
+    ).GetInputForFrame(world.LocalFrame);
     // Loop through all conditionals, if one returns a stateId, change it and return true, otherwise return false
     for (let i = 0; i < conditionalsLength; i++) {
-      const stateId = RunCondition(conditions[i], world, this.player.ID);
+      const stateId = RunCondition(
+        conditions[i],
+        world,
+        this.player,
+        playerInput,
+      );
 
       // Condition returned a stateId, check it
       if (stateId !== undefined) {
@@ -184,11 +191,14 @@ export class StateMachine {
     }
 
     const defaultConditionsLength = defaultStateConditions.length;
+    const playerInput = w.PlayerData.InputStore(
+      this.player.ID,
+    ).GetInputForFrame(w.LocalFrame);
 
     for (let i = 0; i < defaultConditionsLength; i++) {
       const condition = defaultStateConditions[i];
 
-      const stateId = RunCondition(condition, w, this.player.ID);
+      const stateId = RunCondition(condition, w, this.player, playerInput);
 
       if (stateId !== undefined) {
         return this.states.get(stateId);
@@ -200,6 +210,7 @@ export class StateMachine {
 
   private changeState(state: FSMState, fsmInfo: FSMInfoComponent): void {
     fsmInfo.CurrentState.OnExit(this.player, this.world);
+    this.player.ECB.ResetECBShape();
     fsmInfo.SetCurrentState(state);
 
     if (this.stateMappings.get(state.StateId) === undefined) {
@@ -208,6 +219,7 @@ export class StateMachine {
     }
 
     fsmInfo.SetStateFrameToZero();
+    this.player.ECB.SetECBShape(fsmInfo.CurrentState.StateId);
     fsmInfo.CurrentState.OnEnter(this.player, this.world);
   }
 

@@ -173,7 +173,6 @@ export const JumpSquat: FSMState = {
   StateName: 'JUMPSQUAT',
   StateId: STATE_IDS.JUMP_SQUAT_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.JUMP_SQUAT_S);
     const pHist = w.HistoryData.PlayerHistoryDB[p.ID].get(w.PreviousFrame); //w.GetComponentHistory(p.ID);
     const lastState = pHist.stateId;
     if (lastState === STATE_IDS.SHIELD_S) {
@@ -181,9 +180,7 @@ export const JumpSquat: FSMState = {
     }
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const Jump: FSMState = {
@@ -193,14 +190,11 @@ export const Jump: FSMState = {
     const jumpComp = p.Jump;
     p.Flags.FastFallOff();
     jumpComp.IncrementJumps();
-    p.ECB.SetECBShape(STATE_IDS.JUMP_S);
     AddToPlayerYPositionRaw(p, -p.ECB.YOffset.Raw);
     p.Velocity.Y.SetFromRaw(-p.Jump.JumpVelocity.Raw);
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const NeutralFall: FSMState = {
@@ -210,14 +204,11 @@ export const NeutralFall: FSMState = {
     if (p.Jump.JumpCountIsZero()) {
       p.Jump.IncrementJumps();
     }
-    p.ECB.SetECBShape(STATE_IDS.N_FALL_S);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
   },
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const Land: FSMState = {
@@ -228,12 +219,9 @@ export const Land: FSMState = {
     p.Jump.ResetJumps();
     p.Velocity.Y.Zero();
     p.LedgeDetector.ZeroLedgeGrabCount();
-    p.ECB.SetECBShape(STATE_IDS.LAND_S);
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const SoftLand: FSMState = {
@@ -244,12 +232,9 @@ export const SoftLand: FSMState = {
     p.Jump.ResetJumps();
     p.Velocity.Y.Zero();
     p.LedgeDetector.ZeroLedgeGrabCount();
-    p.ECB.SetECBShape(STATE_IDS.SOFT_LAND_S);
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const LedgeGrab: FSMState = {
@@ -264,12 +249,10 @@ export const LedgeGrab: FSMState = {
     jumpComp.ResetJumps();
     jumpComp.IncrementJumps();
     ledgeDetectorComp.IncrementLedgeGrabs();
-    p.ECB.SetECBShape(STATE_IDS.LEDGE_GRAB_S);
     p.Flags.SetIntangabilityFrames(30);
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
     p.LedgeDetector.ReleaseLedge();
   },
 };
@@ -281,7 +264,6 @@ export const AirDodge: FSMState = {
     p.Flags.FastFallOff();
     p.Flags.ZeroDisablePlatDetection();
     const pVel = p.Velocity;
-    const ecb = p.ECB;
     const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.LocalFrame;
     const ia = inputStore.GetInputForFrame(curFrame);
@@ -292,7 +274,6 @@ export const AirDodge: FSMState = {
     }
     pVel.X.SetFromRaw(MultiplyRaw(COS_LUT[angleIndexRaw], speed));
     pVel.Y.SetFromRaw(MultiplyRaw(-SIN_LUT[angleIndexRaw], speed));
-    ecb.SetECBShape(STATE_IDS.AIR_DODGE_S);
     p.Flags.VelocityDecayOff();
   },
   OnUpdate: (p: Player, w: World) => {
@@ -314,7 +295,6 @@ export const AirDodge: FSMState = {
     }
   },
   OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
     p.Flags.VelocityDecayOn();
     p.Flags.ZeroIntangabilityFrames();
   },
@@ -404,13 +384,9 @@ export const Tumble: FSMState = {
 export const Crouch: FSMState = {
   StateName: 'Crouch',
   StateId: STATE_IDS.CROUCH_S,
-  OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.CROUCH_S);
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const ShieldRaise: FSMState = {
@@ -500,7 +476,6 @@ export const RollDodge: FSMState = {
     }
     p.Flags.SetIntangabilityFrames(20);
     p.Flags.VelocityDecayOff();
-    p.ECB.SetECBShape(STATE_IDS.ROLL_DODGE_S);
   },
   OnUpdate: (p: Player, w: World) => {
     const fsmInfo = p.FSMInfo;
@@ -520,7 +495,6 @@ export const RollDodge: FSMState = {
     );
   },
   OnExit: (p, w) => {
-    p.ECB.ResetECBShape();
     p.Flags.VelocityDecayOn();
     p.Flags.ZeroIntangabilityFrames();
     p.Velocity.X.Zero();
@@ -962,49 +936,35 @@ export const ShieldBreak: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.Velocity.X.Zero();
     p.Velocity.Y.SetFromNumber(-30);
-    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_S);
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const ShieldBreakTumble: FSMState = {
   StateName: 'ShieldBreakTumble',
   StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S,
-  OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_TUMBLE_S);
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const ShieldBreakLand: FSMState = {
   StateName: 'ShieldBreakLand',
   StateId: STATE_IDS.SHIELD_BREAK_LAND_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.SHIELD_BREAK_LAND_S);
     p.Velocity.Y.Zero();
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const Dizzy: FSMState = {
   StateName: 'Dizzy',
   StateId: STATE_IDS.DIZZY_S,
-  OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.DIZZY_S);
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 // export const legdeGetUp: FSMState = {
@@ -1054,7 +1014,6 @@ export const WallKick: FSMState = {
   StateName: 'WallSlide',
   StateId: STATE_IDS.WALL_KICK_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.WALL_KICK_S);
     p.Flags.FastFallOff();
     p.Velocity.Y.SetFromRaw(0);
     p.Velocity.X.SetFromRaw(0);
@@ -1070,9 +1029,7 @@ export const WallKick: FSMState = {
       p.Velocity.Y.SetFromRaw(-p.Speeds.WallKickVelocityYRaw);
     }
   },
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const HitSlide: FSMState = {
@@ -1083,14 +1040,11 @@ export const HitSlide: FSMState = {
     const hitStun = p.HitStun;
     pVel.X = hitStun.VX;
     pVel.Y = hitStun.VY;
-    p.ECB.SetECBShape(STATE_IDS.HIT_SLIDE_S);
   },
   OnUpdate: (p: Player, w: World) => {
     p.HitStun.DecrementHitStun();
   },
-  OnExit: (p: Player, w: World) => {
-    p.HitStun.Zero();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const HitFlinch: FSMState = {
@@ -1101,7 +1055,6 @@ export const HitFlinch: FSMState = {
     const hitStun = p.HitStun;
     pVel.X = hitStun.VX;
     pVel.Y = hitStun.VY;
-    p.ECB.SetECBShape(STATE_IDS.HIT_FLINCH_S);
   },
   OnUpdate: (p: Player, w: World) => {
     p.HitStun.DecrementHitStun();
@@ -1146,40 +1099,29 @@ export const DownThrow: FSMState = {
 export const GroundSlam: FSMState = {
   StateName: 'GroundSlam',
   StateId: STATE_IDS.GRND_SLAM_S,
-  OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.GRND_SLAM_S);
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const WallSlam: FSMState = {
   StateName: 'WallSlam',
   StateId: STATE_IDS.WALL_SLAM_S,
-  OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.WALL_SLAM_S);
-  },
+  OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 export const TechInPlace: FSMState = {
   StateName: 'TechInPlace',
   StateId: STATE_IDS.TECH_IN_PLACE_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.TECH_IN_PLACE_S);
     p.Flags.SetIntangabilityFrames(20);
     p.Velocity.X.Zero();
     p.Velocity.Y.Zero();
   },
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
-  },
+  OnExit: (p: Player, w: World) => {},
 };
 
 /**
@@ -1234,7 +1176,6 @@ function attackOnEnter(
   if (atk === undefined) {
     return;
   }
-  p.ECB.SetECBShape(stateId);
   const onEnterCommands = atk.onEnterCommands;
   const onEnterEventCount = onEnterCommands.length;
   for (let i = 0; i < onEnterEventCount; i++) {
@@ -1297,7 +1238,6 @@ function attackOnExit(p: Player, w: World) {
     HandleCommand(w, p, onExitCommand);
   }
   attackComp.ZeroCurrentAttack();
-  p.ECB.ResetECBShape();
 }
 
 function ShouldFastFall(
@@ -1325,7 +1265,6 @@ function grabOnEnter(p: Player, gameEventId: GameEventId, stateId: StateId) {
   if (grab === undefined) {
     return;
   }
-  p.ECB.SetECBShape(stateId);
 }
 
 function grabOnUpdate(p: Player, w: World) {
@@ -1350,7 +1289,6 @@ function grabOnExit(p: Player, w: World) {
     return;
   }
   grabComp.ZeroCurrentGrab();
-  p.ECB.ResetECBShape();
 }
 
 function addGrabImpulseToPlayer(p: Player, impulse: FlatVec, grab: Grab) {
