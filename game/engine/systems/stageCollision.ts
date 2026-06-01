@@ -34,8 +34,13 @@ import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, StageData, Pools } from '../world/stateModules';
 import { World } from '../world/world';
+import { InputAction } from '../input/Input';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;
+
+const didTech = (ia: InputAction, frameNumber: number) => {
+  return ia.LTVal.Raw > 0 || ia.RTVal.Raw > 0;
+};
 
 export function StageCollisionDetection(world: World): void {
   const playerData: PlayerData = world.PlayerData;
@@ -105,6 +110,16 @@ export function StageCollisionDetection(world: World): void {
     }
 
     if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
+      const is = playerData.InputStore(p.ID);
+      const to = world.LocalFrame;
+      const from = to - 7;
+      const eigthInput = is.GetInputForFrame(from - 1);
+      const teched =
+        eigthInput.LTVal.Raw === 0 &&
+        eigthInput.RTVal.Raw === 0 &&
+        is.FindInput(from, to, didTech);
+
+      // Transition state to tech if teched.
       const normY = firstCollisionResult!.NormY;
       // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
       if (normY.Raw > POINT_SEVEN) {

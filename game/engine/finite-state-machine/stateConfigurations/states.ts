@@ -1111,6 +1111,38 @@ export const HitFlinch: FSMState = {
   },
 };
 
+export const ForwardThrow: FSMState = {
+  StateName: 'ForwardThrow',
+  StateId: STATE_IDS.FORWARD_THROW_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
+export const BackThrow: FSMState = {
+  StateName: 'BackThrow',
+  StateId: STATE_IDS.BACK_THROW_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
+export const UpThrow: FSMState = {
+  StateName: 'UpThrow',
+  StateId: STATE_IDS.UP_THROW_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
+export const DownThrow: FSMState = {
+  StateName: 'DownThrow',
+  StateId: STATE_IDS.DOWN_THROW_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+};
+
 export const GroundSlam: FSMState = {
   StateName: 'GroundSlam',
   StateId: STATE_IDS.GRND_SLAM_S,
@@ -1152,7 +1184,6 @@ export const TechInPlace: FSMState = {
 
 /**
  * Attack Grabs:
- * pummel
  * forward throw
  * up throw
  * back throw
@@ -1164,13 +1195,11 @@ export const TechInPlace: FSMState = {
  * neutralSpecial EX
  * upSpecial EX
  * tech
- * wallKick
  * dirtNap
  * groundRecover
  * ledgeRecover
  * getUpAttack
  * ledgeGetupAttack
- * flinch
  * clang
  */
 

@@ -26,6 +26,7 @@ import {
   GrabConfig,
   GrabConfigBuilder,
   HurtCapsuleConfig,
+  ThrowConfig,
 } from './shared';
 
 export class DefaultCharacterConfig implements CharacterConfig {
@@ -61,6 +62,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public FastFallSpeed: number;
   public FallSpeed: number;
   public Gravity: number;
+  public Throws: ThrowConfig[] = [];
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -80,7 +82,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const grab = GetGrab();
     const pummel = GetPummel();
     // runGrab
-    // side throw
+    // forward throw
+    // back throw
     // down throw
     // up throw
     const sideSpecial = GetSideSpecial();

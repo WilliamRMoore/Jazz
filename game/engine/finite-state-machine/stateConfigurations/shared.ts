@@ -57,6 +57,10 @@ class GAME_EVENTS {
   public readonly UP_GE = seq.Next as GameEventId;
   public readonly DOWN_GE = seq.Next as GameEventId;
   public readonly WALL_KICK_GE = seq.Next as GameEventId;
+  public readonly F_THROW = seq.Next as GameEventId;
+  public readonly B_THROW = seq.Next as GameEventId;
+  public readonly U_THROW = seq.Next as GameEventId;
+  public readonly D_THROW = seq.Next as GameEventId;
   // End of GameEvents that can be sourced from player input
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
@@ -153,6 +157,10 @@ class STATES {
   public readonly TECH_IN_PLACE_S = seq.Next as StateId;
   public readonly ROLL_TECH_S = seq.Next as StateId;
   public readonly WALL_TECH_S = seq.Next as StateId;
+  public readonly FORWARD_THROW_S = seq.Next as StateId;
+  public readonly BACK_THROW_S = seq.Next as StateId;
+  public readonly UP_THROW_S = seq.Next as StateId;
+  public readonly DOWN_THROW_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();

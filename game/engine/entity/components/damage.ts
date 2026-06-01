@@ -9,6 +9,10 @@ export class PlayerDamageComponent {
     this.damagePoints.Add(number);
   }
 
+  public AddDamageRaw(number: number): void {
+    this.damagePoints.AddRaw(number);
+  }
+
   public SubtractDamage(number: FixedPoint): void {
     this.damagePoints.Subtract(number);
   }

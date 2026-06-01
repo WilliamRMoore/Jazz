@@ -61,6 +61,7 @@ export type CharacterConfig = {
   LedgeBoxYOffset: number;
   Attacks: Map<AttackId, AttackConfig>;
   Grabs: Map<GrabId, GrabConfig>;
+  Throws: ThrowConfig[];
   Weight: number;
   ShieldRadius: number;
   ShieldYOffset: number;
@@ -106,6 +107,18 @@ export type AttackConfig = {
   onEnterCommands: Array<Command>;
   onUpdateCommands: Map<number, Array<Command>>;
   onExitCommands: Array<Command>;
+};
+
+export type ThrowConfig = {
+  Name: string;
+  StateId: number;
+  MoveOps: Array<ConfigVec>;
+  LaunchAngle: number;
+  BaseKnockBack: number;
+  knockBackScaling: number;
+  TotalFrames: number;
+  Damage: number;
+  ReleaseFrame: number;
 };
 
 export class AttackConfigBuilder {

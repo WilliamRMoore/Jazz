@@ -126,13 +126,13 @@ function resolveHitResult(
 ): void {
   const playerData: PlayerData = w.PlayerData;
   const atkDamage = pAHitsPbResult.Damage;
-  pB.Damage.AddDamage(atkDamage);
   const hitStopRaw = CalculateHitStop(atkDamage);
 
   const paIsHoldingPb =
     pA.Hold.heldPlayerId !== undefined && pA.Hold.heldPlayerId === pB.ID;
 
   if (paIsHoldingPb) {
+    pB.Damage.AddDamage(atkDamage);
     pA.Flags.SetHitPauseFrames(Math.floor(RawToNumber(hitStopRaw)));
 
     pB.Flags.SetHitPauseFrames(Math.floor(RawToNumber(hitStopRaw)));
@@ -154,7 +154,6 @@ function resolveHitResult(
   );
 
   const hitStunFrames = CalculateHitStun(kbRaw);
-
   let angleRaw = 0;
   let nextStateId: StateId = STATE_IDS.LAUNCH_S;
 
@@ -211,7 +210,7 @@ function resolveHitResult(
   pB.HitStop.SetHitStop(Math.floor(RawToNumber(hitStopRaw)));
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
   pB.HitStun.NextStateId = nextStateId;
-
+  pB.Damage.AddDamage(atkDamage);
   const pBSm = playerData.StateMachine(pB.ID);
 
   pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
@@ -274,14 +273,7 @@ function PAvsPB(
   const pAStateHist = componentHistories[pA.ID];
   const previousWorldFrame = currentFrame > 0 ? currentFrame - 1 : 0;
   const pAPrevState = pAStateHist.get(previousWorldFrame);
-  //const prevPosRes = pAPCompHist.PositionHistory[previousWorldFrame];
-
-  let prevXRaw = pAPrevState.posXRaw;
-  let prevYRaw = pAPrevState.posYRaw;
-
   const currentStateFrame = pAstateFrame;
-  const previousStateFrame = currentStateFrame > 0 ? currentStateFrame - 1 : 0;
-  const pAFacingRight = pA.Flags.IsFacingRight;
   const pBIa = pBInputStore.GetInputForFrame(currentFrame);
 
   if (pB.Shield.Active) {
@@ -308,8 +300,6 @@ function PAvsPB(
         continue;
       }
 
-      //const prevAttackXRaw = pAPrevState.a
-
       let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
       const hitBubbleId = pAHitBubble.BubbleId;
       for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
@@ -326,14 +316,6 @@ function PAvsPB(
           .Rent()
           .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
       }
-      // pAHitBubble?.GetPreviousGlobalPosition(
-      //   vecPool,
-      //   prevXRaw,
-      //   prevYRaw,
-      //   pAFacingRight,
-      //   previousStateFrame,
-      // ) ??
-      //vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
 
       const closestPoints = ClosestPointsBetweenSegments(
         shieldPos,
@@ -391,15 +373,22 @@ function PAvsPB(
       continue;
     }
 
-    const pAHitBubblePreviousPos =
-      pAHitBubble?.GetPreviousGlobalPosition(
-        vecPool,
-        prevXRaw,
-        prevYRaw,
-        pAFacingRight,
-        previousStateFrame,
-      ) ??
-      vecPool.Rent().SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+    let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
+    const hitBubbleId = pAHitBubble.BubbleId;
+    for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
+      const previousHitBubble = pAPrevState.comp_attackCircles[i];
+      if (hitBubbleId === previousHitBubble.id && previousHitBubble.active) {
+        pAHitBubblePreviousPos = vecPool
+          .Rent()
+          .SetXYRaw(previousHitBubble.xRaw, previousHitBubble.yRaw);
+      }
+    }
+
+    if (pAHitBubblePreviousPos === undefined) {
+      pAHitBubblePreviousPos = vecPool
+        .Rent()
+        .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+    }
 
     for (let hurtIndex = 0; hurtIndex < hurtLength; hurtIndex++) {
       const pBHurtBubble = pBHurtBubbles[hurtIndex];
@@ -518,7 +507,7 @@ export function CalculateKnockback(
   return CalculateKnockbackRaw(p.Raw, d.Raw, w.Raw, s.Raw, b.Raw);
 }
 
-function CalculateKnockbackRaw(
+export function CalculateKnockbackRaw(
   pRaw: number,
   dRaw: number,
   wRaw: number,

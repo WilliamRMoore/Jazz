@@ -16,11 +16,32 @@ export class InputStore implements IInputStore {
     frame = frame >= 0 ? frame : 0;
     return this.store[frame];
   }
+
+  FindInput(
+    from: number,
+    to: number,
+    predicate: (input: InputAction, frame: number) => boolean,
+  ): InputAction | undefined {
+    from = from >= 0 ? from : 0;
+    to = to >= 0 ? to : 0;
+    for (let i = from; i <= to; i++) {
+      const input = this.GetInputForFrame(i);
+      if (predicate(input, i)) {
+        return input;
+      }
+    }
+    return undefined;
+  }
 }
 
 export interface IInputStore {
   StoreInputForFrame(frame: number, input: InputAction): void;
   GetInputForFrame(frame: number): InputAction;
+  FindInput(
+    from: number,
+    to: number,
+    predicate: (input: InputAction, frame: number) => boolean,
+  ): InputAction | undefined;
 }
 
 export class RemoteInputManager implements IInputStore {
@@ -40,8 +61,10 @@ export class RemoteInputManager implements IInputStore {
     }
   }
 
-  public GetInputForFrame: (frame: number) => InputAction = (frame: number) =>
-    this.getInputForFrame(frame);
+  public GetInputForFrame: (frame: number) => InputAction = (frame: number) => {
+    frame = frame >= 0 ? frame : 0;
+    return this.getInputForFrame(frame);
+  };
 
   private getInputForFrame(frame: number): InputAction {
     const realInput = this.store.GetInputForFrame(frame);
@@ -93,6 +116,22 @@ export class RemoteInputManager implements IInputStore {
       }
     }
     return -1;
+  }
+
+  FindInput(
+    from: number,
+    to: number,
+    predicate: (input: InputAction, frame: number) => boolean,
+  ): InputAction | undefined {
+    from = from >= 0 ? from : 0;
+    to = to >= 0 ? to : 0;
+    for (let i = from; i <= to; i++) {
+      const input = this.GetInputForFrame(i);
+      if (predicate(input, i)) {
+        return input;
+      }
+    }
+    return undefined;
   }
 
   public get LastRemoteFrame(): number {

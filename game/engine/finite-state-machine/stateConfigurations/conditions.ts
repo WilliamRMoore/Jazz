@@ -1254,6 +1254,95 @@ export const ToRollDodge: condition = {
   StateId: STATE_IDS.ROLL_DODGE_S,
 };
 
+export const ToForwardThrow: condition = {
+  Name: 'ToForwardThrow',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const pd = w.PlayerData;
+    const p = pd.Player(playerIndex);
+    const ips = pd.InputStore(playerIndex);
+    const ia = ips.GetInputForFrame(w.LocalFrame);
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    const forwardIsRight = p.Flags.IsFacingRight;
+    const mult = forwardIsRight ? 1 : -1;
+    const currentLx = ia.LXAxisRaw * mult;
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (forwardIsRight && currentLx > 0 && prevIa.LXAxisRaw <= 0) {
+      return true;
+    }
+    if (!forwardIsRight && currentLx < 0 && prevIa.LXAxisRaw >= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.FORWARD_THROW_S,
+};
+
+export const ToBackThrow: condition = {
+  Name: 'ToBackThrow',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const pd = w.PlayerData;
+    const p = pd.Player(playerIndex);
+    const ips = pd.InputStore(playerIndex);
+    const ia = ips.GetInputForFrame(w.LocalFrame);
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    const forwardIsRight = p.Flags.IsFacingRight;
+    const mult = forwardIsRight ? 1 : -1;
+    const currentLx = ia.LXAxisRaw * mult;
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (forwardIsRight && currentLx < 0 && prevIa.LXAxisRaw >= 0) {
+      return true;
+    }
+    if (!forwardIsRight && currentLx > 0 && prevIa.LXAxisRaw <= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.BACK_THROW_S,
+};
+
+export const ToUpThrow: condition = {
+  Name: 'ToUpThrow',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(playerIndex);
+    const ia = ips.GetInputForFrame(w.LocalFrame);
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (moreHorzThanVirt) {
+      return false;
+    }
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    if (ia.RYAxisRaw > 0 && prevIa.RYAxisRaw <= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.UP_THROW_S,
+};
+
+export const ToDownThrow: condition = {
+  Name: 'ToDownThrow',
+  ConditionFunc: (w: World, playerIndex: number) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(playerIndex);
+    const ia = ips.GetInputForFrame(w.LocalFrame);
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (moreHorzThanVirt) {
+      return false;
+    }
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    if (ia.RYAxisRaw < 0 && prevIa.RYAxisRaw >= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.DOWN_THROW_S,
+};
 // export const ToTechInPlace: condition = {
 //   Name: 'ToTechInPlace',
 //   ConditionFunc: (w: World, playerIndex: number) => {
