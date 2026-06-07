@@ -67,6 +67,12 @@ import {
   HitStopToFlinch,
   FlinchToFall,
   defaultHold,
+  ToForwardThrow,
+  ToBackThrow,
+  ToUpThrow,
+  ToDownThrow,
+  defaultDirtNap,
+  defaultToGetUp,
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -1090,6 +1096,42 @@ export function InitLaunchRelations(): StateRelation {
   return launchRelations;
 }
 
+export function InitGroundSlamRelations(): StateRelation {
+  const grndmap = new ActionStateMappings();
+  grndmap.SetMappings([
+    {geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S},
+  ])
+
+  grndmap.SetDefaults([defaultDirtNap]);
+
+  const translations = new StateRelation(STATE_IDS.GRND_SLAM_S, grndmap);
+  return translations;
+}
+
+export function InitDirtNapRelations(): StateRelation {
+  const dnmap = new ActionStateMappings();
+  dnmap.SetMappings([{geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S},
+    {geId: GAME_EVENT_IDS.GETUP_ATTACK_GE, sId: STATE_IDS.GETUP_ATTACK_S},
+    {geId: GAME_EVENT_IDS.GETUP_GE, sId: STATE_IDS.GETUP_S}
+  ]);
+  dnmap.SetDefaults([defaultToGetUp]);
+  const translations = new StateRelation(STATE_IDS.DIRT_NAP_S, dnmap);
+  return translations;
+}
+
+export function InitGetUpRelations(): StateRelation {
+  const gMap = new ActionStateMappings();
+  gMap.SetMappings([
+    {geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S},
+    {geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S},
+  ]);
+
+  gMap.SetDefaults([defaultIdle]);
+
+  const relations = new StateRelation(STATE_IDS.GETUP_S, gMap);
+  return relations;
+}
+
 export function InitCrouchRelations(): StateRelation {
   const crouchTranslations = new ActionStateMappings();
 
@@ -1191,6 +1233,7 @@ export function InitHoldRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_RELEASE_GE, sId: STATE_IDS.GRAB_RELEASE_S },
     { geId: GAME_EVENT_IDS.ATTACK_GE, sId: STATE_IDS.PUMMEL_S },
   ]);
+  holdMaps.SetConditions([ToForwardThrow, ToBackThrow, ToUpThrow, ToDownThrow]);
 
   const holdRelations = new StateRelation(STATE_IDS.GRAB_HOLD_S, holdMaps);
 
@@ -1201,6 +1244,7 @@ export function InitHeldRelations(): StateRelation {
   const heldMaps = new ActionStateMappings();
   heldMaps.SetMappings([
     { geId: GAME_EVENT_IDS.GRAB_ESCAPE_GE, sId: STATE_IDS.GRAB_ESCAPE_S },
+    { geId: GAME_EVENT_IDS.LAUNCH_GE, sId: STATE_IDS.LAUNCH_S },
   ]);
   const heldRelations = new StateRelation(STATE_IDS.GRAB_HELD_S, heldMaps);
 
@@ -1243,6 +1287,55 @@ export function InitGrabEscapeRelations(): StateRelation {
   );
 
   return grabEscapeRelations;
+}
+
+export function InitForwardThrowRelations(): StateRelation {
+  const forwardThrowMaps = new ActionStateMappings();
+  forwardThrowMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+  forwardThrowMaps.SetDefaults([defaultIdle]);
+  const forwardThrowRelations = new StateRelation(
+    STATE_IDS.FORWARD_THROW_S,
+    forwardThrowMaps,
+  );
+  return forwardThrowRelations;
+}
+
+export function InitBackThrowRelations(): StateRelation {
+  const backThrowMaps = new ActionStateMappings();
+  backThrowMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+  backThrowMaps.SetDefaults([defaultIdle]);
+  const backThrowRelations = new StateRelation(
+    STATE_IDS.BACK_THROW_S,
+    backThrowMaps,
+  );
+  return backThrowRelations;
+}
+
+export function InitDownThrowRelations(): StateRelation {
+  const downThrowMaps = new ActionStateMappings();
+  downThrowMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+  downThrowMaps.SetDefaults([defaultIdle]);
+  const downThrowRelations = new StateRelation(
+    STATE_IDS.DOWN_THROW_S,
+    downThrowMaps,
+  );
+  return downThrowRelations;
+}
+
+export function InitUpThrowRelations(): StateRelation {
+  const upThrowMaps = new ActionStateMappings();
+  upThrowMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+  ]);
+  upThrowMaps.SetDefaults([defaultIdle]);
+  const upThrowRelations = new StateRelation(STATE_IDS.UP_THROW_S, upThrowMaps);
+  return upThrowRelations;
 }
 
 export function InitWallKickRelations(): StateRelation {

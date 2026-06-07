@@ -22,10 +22,10 @@ export class PlayerThrow {
     });
     this.LaucnhAngle = NumberToRaw(config.LaunchAngle);
     this.baseKnockBack = NumberToRaw(config.BaseKnockBack);
-    this.knockBackScaling = NumberToRaw(config.knockBackScaling);
-    this.TotalFrames = NumberToRaw(config.TotalFrames);
+    this.knockBackScaling = NumberToRaw(config.KnockBackScaling);
+    this.TotalFrames = config.TotalFrames;
     this.Damage = NumberToRaw(config.Damage);
-    this.ReleaseFrame = NumberToRaw(config.ReleaseFrame);
+    this.ReleaseFrame = config.ReleaseFrame;
   }
 
   public GetMoveOpForFrame(frame: number): FlatVec | undefined {

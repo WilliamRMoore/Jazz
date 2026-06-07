@@ -115,7 +115,7 @@ export type ThrowConfig = {
   MoveOps: Array<ConfigVec>;
   LaunchAngle: number;
   BaseKnockBack: number;
-  knockBackScaling: number;
+  KnockBackScaling: number;
   TotalFrames: number;
   Damage: number;
   ReleaseFrame: number;

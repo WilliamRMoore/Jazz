@@ -122,7 +122,7 @@ export function StageCollisionDetection(world: World): void {
       // Transition state to tech if teched.
       const normY = firstCollisionResult!.NormY;
       // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
-      if (normY.Raw > POINT_SEVEN) {
+      if (normY.Raw > POINT_SEVEN && p.Velocity.Y.Raw > 0) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
       } else {
         sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);

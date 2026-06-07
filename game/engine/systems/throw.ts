@@ -11,7 +11,7 @@ import {
   CalculateLaunchVector,
 } from './attack';
 
-export function playerThrows(w: World) {
+export function PlayerThrows(w: World) {
   // throw player
   const pd = w.PlayerData;
   const playerCount = pd.PlayerCount;
@@ -19,10 +19,10 @@ export function playerThrows(w: World) {
     const player = pd.Player(playerIndex);
     const currentStateId = player.FSMInfo.CurrentStateId;
     if (
-      currentStateId !== STATE_IDS.UP_THROW_S ||
-      currentStateId !== STATE_IDS.DOWN_THROW_S ||
-      currentStateId !== STATE_IDS.BACK_THROW_S ||
-      currentStateId !== STATE_IDS.DOWN_THROW_S ||
+      (currentStateId !== STATE_IDS.UP_THROW_S &&
+        currentStateId !== STATE_IDS.DOWN_THROW_S &&
+        currentStateId !== STATE_IDS.BACK_THROW_S &&
+        currentStateId !== STATE_IDS.FORWARD_THROW_S) ||
       player.Flags.IsInHitPause
     ) {
       continue;
@@ -30,8 +30,11 @@ export function playerThrows(w: World) {
     const stateFrame = player.FSMInfo.CurrentStateFrame;
     const pThrow = player.Throw.GetThrowForState(currentStateId)!;
     const releaseFrame = pThrow.ReleaseFrame;
-    if (stateFrame >= releaseFrame) {
+    if (stateFrame === releaseFrame) {
       handleRelease(player, pThrow, w);
+      continue;
+    }
+    if(stateFrame > releaseFrame) {
       continue;
     }
     const moveOp = pThrow.GetMoveOpForFrame(stateFrame);
@@ -42,9 +45,12 @@ export function playerThrows(w: World) {
     if (thrownPlayer === undefined) {
       continue;
     }
+    const isThrowerFacingRight = player.Flags.IsFacingRight;
     const throwerX = player.Position.X.Raw;
     const throwerY = player.Position.Y.Raw;
-    const moveToX = throwerX + moveOp.X.Raw;
+    const moveToX = isThrowerFacingRight
+      ? throwerX + moveOp.X.Raw
+      : throwerX - moveOp.X.Raw;
     const moveToY = throwerY + moveOp.Y.Raw;
     thrownPlayer.Position.X.SetFromRaw(moveToX);
     thrownPlayer.Position.Y.SetFromRaw(moveToY);
@@ -70,7 +76,14 @@ function handleRelease(thrower: Player, pThrow: PlayerThrow, w: World) {
   const throweeSm = w.PlayerData.StateMachine(throwee.ID);
   const vecPool = w.Pools.VecPool;
   const throwerFacingRight = thrower.Flags.IsFacingRight;
+  if (throwerFacingRight) {
+    throwee.Flags.FaceLeft();
+  } else {
+    throwee.Flags.FaceRight();
+  }
   const lv = CalculateLaunchVector(vecPool, tAngle, throwerFacingRight, kbRaw);
+  lv.Y.Negate();
   throwee.HitStun.SetHitStun(histStunFrames, lv.X, lv.Y);
+  throwee.Damage.AddDamageRaw(tDam);
   throweeSm.UpdateFromWorld(GAME_EVENT_IDS.LAUNCH_GE);
 }

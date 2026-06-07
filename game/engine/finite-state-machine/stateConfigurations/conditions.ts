@@ -1015,8 +1015,7 @@ export const ToForwardThrow: condition = {
     const ips = pd.InputStore(p.ID);
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
     const forwardIsRight = p.Flags.IsFacingRight;
-    const mult = forwardIsRight ? 1 : -1;
-    const currentLx = ia.LXAxisRaw * mult;
+    const currentLx = ia.LXAxisRaw;
     const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
     if (!moreHorzThanVirt) {
       return false;
@@ -1039,8 +1038,7 @@ export const ToBackThrow: condition = {
     const ips = pd.InputStore(p.ID);
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
     const forwardIsRight = p.Flags.IsFacingRight;
-    const mult = forwardIsRight ? 1 : -1;
-    const currentLx = ia.LXAxisRaw * mult;
+    const currentLx = ia.LXAxisRaw;
     const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
     if (!moreHorzThanVirt) {
       return false;
@@ -1066,7 +1064,7 @@ export const ToUpThrow: condition = {
       return false;
     }
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
-    if (ia.RYAxisRaw > 0 && prevIa.RYAxisRaw <= 0) {
+    if (ia.LYAxisRaw > 0 && prevIa.LYAxisRaw <= 0) {
       return true;
     }
     return false;
@@ -1084,7 +1082,7 @@ export const ToDownThrow: condition = {
       return false;
     }
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
-    if (ia.RYAxisRaw < 0 && prevIa.RYAxisRaw >= 0) {
+    if (ia.LYAxisRaw < 0 && prevIa.LYAxisRaw >= 0) {
       return true;
     }
     return false;
@@ -1235,6 +1233,22 @@ export const defaultHold: condition = {
   },
   StateId: STATE_IDS.GRAB_HOLD_S,
 };
+
+export const defaultDirtNap: condition = {
+  Name: 'DefaultDirtNap',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    return true;
+  },
+  StateId: STATE_IDS.DIRT_NAP_S,
+};
+
+export const defaultToGetUp: condition = {
+  Name: 'DefaultToGetUp',
+  ConditionFunc: (w: World, p:Player, ia: InputAction) => {
+    return true;
+  },
+  StateId: STATE_IDS.GETUP_S
+}
 
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,

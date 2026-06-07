@@ -1,7 +1,7 @@
 import { hydrateCharacterConfig } from '../character/configSerializer';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { NewInputAction } from '../engine/input/Input';
-import { defaultStage } from '../engine/stage/stageMain';
+import { defaultStage, WallStage } from '../engine/stage/stageMain';
 import { PlayerStateHistory } from '../engine/systems/history';
 import { FlatVec } from '../engine/physics/vector';
 import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
@@ -27,16 +27,21 @@ self.onmessage = (event: MessageEvent) => {
     const stateSabs = initPayload.stateBuffers;
     const frameSab = initPayload.frameBuffer;
 
-    inputReaders = inputSabs.map(sab => new LocalInputBufferReader(new Int32Array(sab)));
-    inputWriters = writeBackSabs.map(sab => new LocalInputBufferWriter(new Int32Array(sab)));
-    stateWriterBuffers = stateSabs.map(sab => new Int32Array(sab));
-    
+    inputReaders = inputSabs.map(
+      (sab) => new LocalInputBufferReader(new Int32Array(sab)),
+    );
+    inputWriters = writeBackSabs.map(
+      (sab) => new LocalInputBufferWriter(new Int32Array(sab)),
+    );
+    stateWriterBuffers = stateSabs.map((sab) => new Int32Array(sab));
+
     if (frameSab) {
       frameBuffer = new Int32Array(frameSab);
     }
 
     // Initialize the engine with a default stage
     jazz.jazz.SetStage(defaultStage());
+    jazz.jazz.SetStage(WallStage());
 
     // Start greedy loop
     lastTime = performance.now();
@@ -62,6 +67,7 @@ self.onmessage = (event: MessageEvent) => {
   }
   if (message.type == 'LOAD_STAGE') {
     jazz.jazz.SetStage(defaultStage());
+    jazz.jazz.SetStage(WallStage());
   }
   if (message.type == 'SPAWN_AND_ATTACK') {
     if (jazz.World.PlayerData.PlayerCount < 4) {
@@ -101,7 +107,7 @@ function loop() {
             const inputToRead = NewInputAction();
             inputReaders[i].Load(inputToRead);
             jazz.UpdateInputForCurrentFrame(inputToRead, i);
-            
+
             // "Echo" input back if writer exists for this player
             if (i < inputWriters.length) {
               inputWriters[i].Store(inputToRead);
@@ -111,15 +117,13 @@ function loop() {
             jazz.UpdateInputForCurrentFrame(NewInputAction(), i);
           }
         }
-        
+
+        const tickStart = performance.now();
         jazz.Tick();
 
-        if (frameBuffer) {
-          Atomics.store(frameBuffer, 0, jazz.World.LocalFrame);
-        }
+        const currentFrame =
+          jazz.World.LocalFrame > 0 ? jazz.World.LocalFrame - 1 : 0;
 
-        const currentFrame = jazz.World.LocalFrame > 0 ? jazz.World.LocalFrame - 1 : 0;
-        
         // Write state back per player buffer if they exist
         // Note: stateWriterBuffers was setup with length matching init
         // If stateWriterBuffers has one element that handles all, or one per player?
@@ -129,7 +133,8 @@ function loop() {
         // We will write into stateWriterBuffers[0] with stride, matching the previous logic.
         if (stateWriterBuffers.length > 0 && stateWriterBuffers[0]) {
           const stateWriterBuffer = stateWriterBuffers[0];
-          const stride = PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
+          const stride =
+            PlayerStateHistory.BufferSize() / Int32Array.BYTES_PER_ELEMENT;
           let offset = 0;
 
           for (let pIdx = 0; pIdx < pCount; pIdx++) {
@@ -140,6 +145,17 @@ function loop() {
             }
             offset += stride;
           }
+        }
+
+        const tickEnd = performance.now();
+
+        if (frameBuffer) {
+          Atomics.store(frameBuffer, 0, jazz.World.LocalFrame);
+          Atomics.store(
+            frameBuffer,
+            1,
+            Math.round((tickEnd - tickStart) * 1000),
+          );
         }
       }
     }

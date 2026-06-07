@@ -10,7 +10,7 @@ import { PlayerStateHistory } from './engine/systems/history';
 import { DefaultCharacterConfig } from './character/default';
 import { ToFV } from './engine/utils';
 import { RawToNumber } from './engine/math/fixedPoint';
-import { defaultStage, Stage } from './engine/stage/stageMain';
+import { defaultStage, Stage, WallStage } from './engine/stage/stageMain';
 import { Line } from './engine/physics/vector';
 import { PlayerLerper, LerpedPlayer } from './render/render-utlis';
 import { envConfig } from './engine/config/main-config';
@@ -80,7 +80,7 @@ function startEngine(controllerInfo: playerControllerInfo) {
   const stateSabSize = 4 * 1 * PlayerStateHistory.BufferSize();
   const stateSab = new SharedArrayBuffer(stateSabSize);
 
-  const frameSab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
+  const frameSab = new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT);
 
   const inputBuffer = new Int32Array(inputSab);
   const writeBackBuffer = new Int32Array(writeBackSab);
@@ -217,7 +217,7 @@ function ECHO_RENDER_LOOP(
   let lastTimeStamp = performance.now();
   let timeScale = 1.0;
   const loopRate = 1000 / 60;
-  const stage = defaultStage();
+  const stages = [defaultStage(), WallStage()];
 
   let highestGlobal = -1;
 
@@ -227,6 +227,7 @@ function ECHO_RENDER_LOOP(
     lastTimeStamp = timeStamp;
 
     const currentFrame = Atomics.load(frameBuffer, 0);
+    const tickTimeMs = Atomics.load(frameBuffer, 1) / 1000;
 
     if (renderTime === -1 && highestGlobal > 2) {
       renderTime = (highestGlobal - 2) * loopRate;
@@ -307,6 +308,7 @@ function ECHO_RENDER_LOOP(
       ctx.fillText(`Start: ${inputToRender.Start}`, 50, 260);
       ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
       ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
+      ctx.fillText(`Tick Time: ${tickTimeMs.toFixed(2)} ms`, 50, 350);
 
       let renderFrameFloat = renderTime / loopRate;
       let thenFrame = Math.floor(renderFrameFloat);
@@ -319,8 +321,10 @@ function ECHO_RENDER_LOOP(
       if (thenFrame < 0) thenFrame = 0;
       if (nowFrame < 0) nowFrame = 0;
 
-      drawStage(ctx, stage);
-      drawPlatforms(ctx, stage.Platforms);
+      stages.forEach((stg) => {
+        drawStage(ctx, stg);
+        drawPlatforms(ctx, stg.Platforms);
+      });
 
       if (dbCtx && showDebugInfo) {
         dbCtx.fillStyle = 'black';

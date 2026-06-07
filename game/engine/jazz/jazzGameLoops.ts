@@ -17,6 +17,7 @@ import { GrabMeter } from '../systems/grabMeter';
 import { WallKick } from '../systems/wallKick';
 import { World } from '../world/world';
 import { GameLoop } from './jazzLocal';
+import { PlayerThrows } from '../systems/throw';
 
 export const DefaultGameLoop: GameLoop = (w: World) => {
   Flags(w);
@@ -30,6 +31,7 @@ export const DefaultGameLoop: GameLoop = (w: World) => {
   WallKick(w);
   LedgeGrabDetection(w);
   PlayerSensors(w);
+  PlayerThrows(w);
   PlayerAttacks(w);
   ShieldRegen(w);
   GrabMeter(w);

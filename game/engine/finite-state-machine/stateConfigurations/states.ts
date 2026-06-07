@@ -17,6 +17,7 @@ import { FSMState } from '../PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
 import { Grab } from '../../entity/components/grab';
+import { TEN } from '../../math/numberConstants';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
 const POINT_ONE_FIVE = NumberToRaw(0.15);
@@ -352,6 +353,8 @@ export const Launch: FSMState = {
     if (p.Jump.OnFirstJump()) {
       p.Jump.IncrementJumps();
     }
+    const pos = p.Position;
+    pos.Y.AddRaw(-TEN);
   },
   OnUpdate: (p: Player, w: World) => {
     if (p) p.HitStun.DecrementHitStun();
@@ -1124,13 +1127,21 @@ export const TechInPlace: FSMState = {
   OnExit: (p: Player, w: World) => {},
 };
 
-/**
- * Attack Grabs:
- * forward throw
- * up throw
- * back throw
- * down throw
- */
+export const DirtNap: FSMState = {
+  StateName: 'DirtNap',
+  StateId: STATE_IDS.DIRT_NAP_S,
+  OnEnter: (p: Player, w: World) => {},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+}
+
+export const GetUp: FSMState = {
+  StateName: 'GetUp',
+  StateId: STATE_IDS.GETUP_S,
+  OnEnter: (p: Player, w: World) =>{},
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {},
+}
 
 /**
  * TODO

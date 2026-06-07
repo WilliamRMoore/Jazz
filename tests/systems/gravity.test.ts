@@ -119,4 +119,20 @@ describe('Gravity system tests', () => {
     // use toBeCloseTo because of fixed point arithmetic
     expect(p.Velocity.Y.Raw).toBeCloseTo(expectedVel);
   });
+
+  test('Gravity does not snap velocity down if already exceeding terminal velocity', () => {
+    p.Position.Y.SetFromNumber(-100);
+    p.Position.X.SetFromNumber(0);
+    p.ECB.Update();
+    
+    // Simulate getting hit by a downward spike (DAir)
+    const spikeVelocity = 20; 
+    p.Velocity.Y.SetFromNumber(spikeVelocity); 
+    
+    Gravity(w);
+
+    // Gravity shouldn't reduce the velocity to fallSpeed. It should just let it be.
+    // The bug currently snaps it down to fallSpeed.
+    expect(p.Velocity.Y.Raw).toBeGreaterThanOrEqual(spikeVelocity);
+  });
 });

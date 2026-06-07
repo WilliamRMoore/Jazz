@@ -183,22 +183,6 @@ function resolveHitResult(
     Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE))),
   );
 
-  // const victimToTheLeft = pA.Position.X.Raw > pB.Position.X.Raw;
-  // const attackerFacingRight = pA.Flags.IsFacingRight;
-  // const victimToTheRight = !victimToTheLeft;
-  // const attackerFacingLeft = !attackerFacingRight;
-
-  // const isVictimBehindAttackCenter =
-  //   victimToTheLeft && attackerFacingRight
-  //     ? true
-  //     : victimToTheRight && attackerFacingLeft
-  //       ? true
-  //       : false;
-
-  // if (isVictimBehindAttackCenter) {
-  //   launchVec.X.Negate();
-  // }
-
   if (pA.Position.X > pB.Position.X) {
     pB.Flags.FaceRight();
   } else {
@@ -211,6 +195,14 @@ function resolveHitResult(
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
   pB.HitStun.NextStateId = nextStateId;
   pB.Damage.AddDamage(atkDamage);
+
+  const holdingPlayerId = pB.GrabMeter.HoldingPlayerId;
+
+  if (holdingPlayerId !== undefined) {
+    const holdingPlayer = playerData.Player(holdingPlayerId);
+    holdingPlayer.Flags.SetHitPauseFrames(RawToNumber(hitStopRaw))
+  }
+
   const pBSm = playerData.StateMachine(pB.ID);
 
   pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);

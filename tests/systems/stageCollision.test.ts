@@ -120,4 +120,33 @@ describe('Stage Collision system tests', () => {
     expect(p.ECB.Bottom.Y.AsNumber).toBeCloseTo(650, 0);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LAND_S);
   });
+
+  test('Player transitions to GroundSlam when colliding with ground in Launch state, and advances to GetUp', () => {
+    // Stage ground is at y=650
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
+    p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.Y.SetFromNumber(25); // fast downward velocity
+
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity(); // p.Position.y becomes 660. Intersects ground
+    
+    // Impact with the ground should cause transition to GRND_SLAM_S
+    StageCollisionDetection(w);
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
+    
+    // Simulate updating the state machine to reach the end of GroundSlam (20 frames)
+    const sm = w.PlayerData.StateMachine(0);
+    const ia = NewInputAction();
+    for(let i = 0; i < 20; i++) {
+      sm.UpdateFromInput(ia, w);
+    }
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.DIRT_NAP_S);
+    
+    // Simulate updating the state machine to reach the end of DirtNap (480 frames)
+    for(let i = 0; i < 480; i++) {
+      sm.UpdateFromInput(ia, w);
+    }
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GETUP_S);
+  });
 });

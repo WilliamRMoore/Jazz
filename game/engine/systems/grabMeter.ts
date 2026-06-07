@@ -26,6 +26,15 @@ export function GrabMeter(w: World) {
       continue;
     }
     const grabMeterComp = p.GrabMeter;
+    const holdingPlayerId = grabMeterComp.HoldingPlayerId!;
+    const holdingPlayer = pd.Player(holdingPlayerId);
+    const hPSId = holdingPlayer.FSMInfo.CurrentStateId;
+    if (hPSId === STATE_IDS.FORWARD_THROW_S ||
+      hPSId === STATE_IDS.BACK_THROW_S ||
+      hPSId === STATE_IDS.UP_THROW_S ||
+      hPSId === STATE_IDS.DOWN_THROW_S) {
+      return;
+    }
     const baseDecay = grabMeterComp.BaseDecayRate;
     const damage = p.Damage.Damage;
     const currentMeter = grabMeterComp.Meter;

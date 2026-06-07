@@ -82,10 +82,6 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const grab = GetGrab();
     const pummel = GetPummel();
     // runGrab
-    // forward throw
-    // back throw
-    // down throw
-    // up throw
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
     const sideSpecialAir = GetSideSpecialAir();
@@ -99,6 +95,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const uAir = GetUAir();
     const bAir = GetBAir();
     const dAir = GetDAir();
+
+    const backThrow = GetBackThrow();
+    const forwardThrow = GetForThrow();
+    const upThrow = GetUpThrow();
+    const downThrow = GetDownThrow();
 
     this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
       .set(STATE_IDS.SHIELD_DROP_S, 6)
@@ -146,7 +147,14 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
       .set(STATE_IDS.WALL_KICK_S, 10)
       .set(STATE_IDS.WALL_SLAM_S, 20)
-      .set(STATE_IDS.PUMMEL_S, pummel.TotalFrameLength);
+      .set(STATE_IDS.PUMMEL_S, pummel.TotalFrameLength)
+      .set(STATE_IDS.DOWN_THROW_S, downThrow.TotalFrames)
+      .set(STATE_IDS.BACK_THROW_S, backThrow.TotalFrames)
+      .set(STATE_IDS.UP_THROW_S, upThrow.TotalFrames)
+      .set(STATE_IDS.FORWARD_THROW_S, forwardThrow.TotalFrames)
+      .set(STATE_IDS.GRND_SLAM_S, 20)
+      .set(STATE_IDS.DIRT_NAP_S, 480)
+      .set(STATE_IDS.GETUP_S, 25);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -195,6 +203,21 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.WALL_SLAM_S, {
         height: 100,
         width: 40,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.GRND_SLAM_S, {
+        height: 40,
+        width: 100,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.DIRT_NAP_S, {
+        height: 40,
+        width: 100,
+        yOffset: 0,
+      })
+      .set(STATE_IDS.GETUP_S, {
+        height: 70,
+        width: 70,
         yOffset: 0,
       });
 
@@ -263,6 +286,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(pummel.AttackId, pummel);
 
     this.Grabs.set(grab.GrabId, grab);
+
+    this.Throws.push(GetForThrow());
+    this.Throws.push(GetBackThrow());
+    this.Throws.push(GetDownThrow());
+    this.Throws.push(GetUpThrow());
   }
 
   private populateHurtCircles() {
@@ -1222,10 +1250,10 @@ function GetSideSpecialAir() {
   };
 
   const setSensorReactorToSwicthStateOnDetection: SetPlayerSensorDetectCommand =
-    {
-      commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-      payload: setPlayerStateToSideSpclAirEx,
-    };
+  {
+    commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
+    payload: setPlayerStateToSideSpclAirEx,
+  };
 
   const activateSensor1: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
@@ -1482,4 +1510,67 @@ function generateArcBubbleOffsets(
     offsets.set(frameStart + i, toCv(x, invertY ? -y : y));
   }
   return offsets;
+}
+
+function GetForThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'ForThrow',
+    StateId: STATE_IDS.FORWARD_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 60,
+    BaseKnockBack: 500,
+    KnockBackScaling: 350,
+    TotalFrames: 90,
+    Damage: 14,
+    ReleaseFrame: 65,
+  };
+
+  return tc;
+}
+
+function GetBackThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'BackThrow',
+    StateId: STATE_IDS.BACK_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 130,
+    BaseKnockBack: 500,
+    KnockBackScaling: 290,
+    TotalFrames: 60,
+    Damage: 13,
+    ReleaseFrame: 48,
+  };
+
+  return tc;
+}
+
+function GetDownThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'DownThrow',
+    StateId: STATE_IDS.DOWN_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 150,
+    BaseKnockBack: 375,
+    KnockBackScaling: 325,
+    TotalFrames: 50,
+    ReleaseFrame: 40,
+    Damage: 15,
+  };
+
+  return tc;
+}
+
+function GetUpThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'UpThrow',
+    StateId: STATE_IDS.UP_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 90,
+    BaseKnockBack: 475,
+    KnockBackScaling: 300,
+    TotalFrames: 60,
+    ReleaseFrame: 30,
+    Damage: 11,
+  };
+  return tc;
 }

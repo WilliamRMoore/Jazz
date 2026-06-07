@@ -63,6 +63,13 @@ import {
   InitHitSlideRelations,
   InitHitFlinchRelations,
   InitPummelRelations,
+  InitForwardThrowRelations,
+  InitBackThrowRelations,
+  InitDownThrowRelations,
+  InitUpThrowRelations,
+  InitGroundSlamRelations,
+  InitDirtNapRelations,
+  InitGetUpRelations,
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -136,6 +143,13 @@ import {
   HitSlide,
   HitFlinch,
   Pummel,
+  ForwardThrow,
+  BackThrow,
+  DownThrow,
+  UpThrow,
+  GroundSlam,
+  DirtNap,
+  GetUp,
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -194,12 +208,19 @@ const GRAB_HOLD_RELATIONS = InitHoldRelations();
 const GRAB_HELD_RELATIONS = InitHeldRelations();
 const GRAB_RELEASE_RELATIONS = InitGrabReleaseRelations();
 const GRAB_ESCAPE_RELATIONS = InitGrabEscapeRelations();
+const FOR_THROW_RELATIONS = InitForwardThrowRelations();
+const BACK_THROW_RELATIONS = InitBackThrowRelations();
+const DOWN_THROW_RELATIONS = InitDownThrowRelations();
+const UP_THROW_RELATIONS = InitUpThrowRelations();
 const SHIELD_BREAK_RELATIONS = InitShieldBreakRelations();
 const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
 const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
 const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
 const WALL_KICK_RELATIONS = InitWallKickRelations();
 const PUMMEL_RELATIONS = InitPummelRelations();
+const GROUND_SLAM_RELATIONS = InitGroundSlamRelations();
+const DIRT_NAP_RELATIONS = InitDirtNapRelations();
+const GETUP_RELATIONS = InitGetUpRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -258,6 +279,10 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(GRAB_HELD_RELATIONS.stateId, GRAB_HELD_RELATIONS.mappings)
   .set(GRAB_RELEASE_RELATIONS.stateId, GRAB_RELEASE_RELATIONS.mappings)
   .set(GRAB_ESCAPE_RELATIONS.stateId, GRAB_ESCAPE_RELATIONS.mappings)
+  .set(FOR_THROW_RELATIONS.stateId, FOR_THROW_RELATIONS.mappings)
+  .set(BACK_THROW_RELATIONS.stateId, BACK_THROW_RELATIONS.mappings)
+  .set(DOWN_THROW_RELATIONS.stateId, DOWN_THROW_RELATIONS.mappings)
+  .set(UP_THROW_RELATIONS.stateId, UP_THROW_RELATIONS.mappings)
   .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
   .set(
     SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
@@ -272,7 +297,10 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
     SHIELD_BREAK_DIZZY_RELATIONS.mappings,
   )
   .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings)
-  .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings);
+  .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings)
+  .set(GROUND_SLAM_RELATIONS.stateId, GROUND_SLAM_RELATIONS.mappings)
+  .set(DIRT_NAP_RELATIONS.stateId, DIRT_NAP_RELATIONS.mappings)
+  .set(GETUP_RELATIONS.stateId, GETUP_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -331,12 +359,19 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(Held.StateId, Held)
   .set(GrabRelease.StateId, GrabRelease)
   .set(GrabEscape.StateId, GrabEscape)
+  .set(ForwardThrow.StateId, ForwardThrow)
+  .set(BackThrow.StateId, BackThrow)
+  .set(UpThrow.StateId, UpThrow)
+  .set(DownThrow.StateId, DownThrow)
   .set(ShieldBreak.StateId, ShieldBreak)
   .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
   .set(ShieldBreakLand.StateId, ShieldBreakLand)
   .set(Dizzy.StateId, Dizzy)
   .set(WallKick.StateId, WallKick)
-  .set(Pummel.StateId, Pummel);
+  .set(Pummel.StateId, Pummel)
+  .set(GroundSlam.StateId, GroundSlam)
+  .set(DirtNap.StateId, DirtNap)
+  .set(GetUp.StateId, GetUp);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
