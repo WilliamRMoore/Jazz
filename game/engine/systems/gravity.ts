@@ -9,12 +9,15 @@ export function Gravity(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
+
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const stage = stageData.Stages;
+
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
+
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
@@ -22,7 +25,7 @@ export function Gravity(world: World): void {
     const gravMutliplier = isFF ? TWO : ONE;
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
-      MultiplyRaw(grav, gravMutliplier),
+      MultiplyRaw(grav, gravMutliplier)
     );
   }
 }
@@ -37,13 +40,17 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
     default:
       break;
   }
+
   if (p.Flags.IsInHitPause) {
     return false;
   }
+
   const attack = p.Attacks.GetAttack();
+
   if (attack === undefined) {
     const stagesLength = stage.length;
     let playerOnPlatsOrStage = false;
+
     for (let i = 0; i < stagesLength; i++) {
       const stagePiece = stage[i];
       const pps = PlayerOnStageOrPlats(stagePiece, p);
@@ -62,9 +69,11 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   // if player on stage, no gravity, if off stage, gravity
   const stagesLength = stage.length;
   let playerOnPlatsOrStage = false;
+
   for (let i = 0; i < stagesLength; i++) {
     const stagePiece = stage[i];
     const pps = PlayerOnStageOrPlats(stagePiece, p);
+
     if (pps) {
       playerOnPlatsOrStage = true;
       break;

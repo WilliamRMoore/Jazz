@@ -5,6 +5,8 @@ export class SpeedsComponent {
   public readonly AerialVelocityDecayRaw: number;
   public readonly AirDogeSpeedRaw: number;
   public readonly DodeRollSpeedRaw: number;
+  public readonly GetUpRollForwardSpeedRaw: number;
+  public readonly GetUpRollBackSpeedRaw: number;
   public readonly ArielVelocityMultiplierRaw: number;
   public readonly AerialSpeedInpulseLimitRaw: number;
   public readonly MaxWalkSpeedRaw: number;
@@ -28,6 +30,8 @@ export class SpeedsComponent {
     aerialVelocityMultiplier: FixedPoint,
     airDodgeSpeed: FixedPoint,
     dodgeRollSpeed: FixedPoint,
+    getUpRollRightSpeed: FixedPoint,
+    getUpRollLeftSpeed: FixedPoint,
     maxWalkSpeed: FixedPoint,
     maxRunSpeed: FixedPoint,
     walkSpeedMultiplier: FixedPoint,
@@ -38,7 +42,7 @@ export class SpeedsComponent {
     maxDashSpeed: FixedPoint,
     gravity: FixedPoint,
     wallKickVelocityX: FixedPoint,
-    wallKickVelocityY: FixedPoint,
+    wallKickVelocityY: FixedPoint
   ) {
     this.GroundedVelocityDecayRaw = grndSpeedVelDecay.Raw;
     this.AerialVelocityDecayRaw = aerialVelocityDecay.Raw;
@@ -46,6 +50,8 @@ export class SpeedsComponent {
     this.ArielVelocityMultiplierRaw = aerialVelocityMultiplier.Raw;
     this.AirDogeSpeedRaw = airDodgeSpeed.Raw;
     this.DodeRollSpeedRaw = dodgeRollSpeed.Raw;
+    this.GetUpRollForwardSpeedRaw = getUpRollRightSpeed.Raw;
+    this.GetUpRollBackSpeedRaw = getUpRollLeftSpeed.Raw;
     this.MaxWalkSpeedRaw = maxWalkSpeed.Raw;
     this.MaxRunSpeedRaw = maxRunSpeed.Raw;
     this.WalkSpeedMulitplierRaw = walkSpeedMultiplier.Raw;
@@ -67,6 +73,8 @@ export class SpeedsComponentConfigBuilder {
   private readonly aerialSpeedMultiplier: FixedPoint = new FixedPoint();
   private readonly airDodgeSpeed: FixedPoint = new FixedPoint();
   private readonly dodgeRollSpeed: FixedPoint = new FixedPoint();
+  private readonly getUpRollForwardSpeed: FixedPoint = new FixedPoint();
+  private readonly getUpRollBackSpeed: FixedPoint = new FixedPoint();
   private readonly maxWalkSpeed: FixedPoint = new FixedPoint();
   private readonly maxRunSpeed: FixedPoint = new FixedPoint();
   private readonly dashMutiplier: FixedPoint = new FixedPoint();
@@ -84,7 +92,7 @@ export class SpeedsComponentConfigBuilder {
   SetAerialSpeeds(
     aerialVelocityDecay: number,
     aerialSpeedImpulseLimit: number,
-    aerialSpeedMultiplier: number,
+    aerialSpeedMultiplier: number
   ) {
     this.aerialVelocityDecay.SetFromNumber(aerialVelocityDecay);
     this.aerialSpeedInpulseLimit.SetFromNumber(aerialSpeedImpulseLimit);
@@ -96,6 +104,14 @@ export class SpeedsComponentConfigBuilder {
     this.dodgeRollSpeed.SetFromNumber(dodgeRollSpeed);
   }
 
+  SetGetUpRollSpeeds(
+    getUpRollForwardSpeed: number,
+    getUpRollBackSpeed: number
+  ): void {
+    this.getUpRollForwardSpeed.SetFromNumber(getUpRollForwardSpeed);
+    this.getUpRollBackSpeed.SetFromNumber(getUpRollBackSpeed);
+  }
+
   SetWallKickVelocity(x: number, y: number): void {
     this.wallKcikVelocityX.SetFromNumber(x);
     this.wallKcikVelocityY.SetFromNumber(y);
@@ -104,7 +120,7 @@ export class SpeedsComponentConfigBuilder {
   SetFallSpeeds(
     fastFallSpeed: number,
     fallSpeed: number,
-    gravity: number = 1,
+    gravity: number = 1
   ): void {
     this.fallSpeed.SetFromNumber(fallSpeed);
     this.fastFallSpeed.SetFromNumber(fastFallSpeed);
@@ -138,6 +154,8 @@ export class SpeedsComponentConfigBuilder {
       this.aerialSpeedMultiplier,
       this.airDodgeSpeed,
       this.dodgeRollSpeed,
+      this.getUpRollForwardSpeed,
+      this.getUpRollBackSpeed,
       this.maxWalkSpeed,
       this.maxRunSpeed,
       this.walkSpeedMulitplier,
@@ -148,7 +166,7 @@ export class SpeedsComponentConfigBuilder {
       this.maxDashSpeed,
       this.gravity,
       this.wallKcikVelocityX,
-      this.wallKcikVelocityY,
+      this.wallKcikVelocityY
     );
   }
 }

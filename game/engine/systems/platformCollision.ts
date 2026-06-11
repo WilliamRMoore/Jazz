@@ -2,9 +2,9 @@ import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import {
   GAME_EVENT_IDS,
   STATE_IDS,
-  CanStateWalkOffLedge,
+  CanStateWalkOffLedge
 } from '../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint, NumberToRaw } from '../math/fixedPoint';
+import { FixedPoint } from '../math/fixedPoint';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {
   PlayerOnPlats,
@@ -12,7 +12,7 @@ import {
   PlayerOnPlatsReturnsYCoord,
   SetPlayerPositionRaw,
   Player,
-  PlayerOnPlatsReturnsPlatform,
+  PlayerOnPlatsReturnsPlatform
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { ShouldSoftlandRaw } from './shared';
@@ -20,7 +20,7 @@ import { CreateDiamondFromHistory } from '../entity/components/ecb';
 import {
   CORRECTION_DEPTH_RAW,
   POINT_EIGHT,
-  POINT_FIVE,
+  POINT_FIVE
 } from '../math/numberConstants';
 
 const NEG_ZERO_POINT_EIGHT = -POINT_EIGHT;
@@ -79,13 +79,13 @@ export function PlatformDetection(world: World): void {
         previousECBShape,
         prevState.posXRaw,
         prevState.posYRaw,
-        dPool,
+        dPool
       );
 
       const playerPlat = PlayerOnPlatsReturnsPlatform(
         stage,
         preEcb.Bottom,
-        ecb.SensorDepth,
+        ecb.SensorDepth
       );
 
       const wasOnPlat = playerPlat !== undefined;
@@ -121,14 +121,14 @@ export function PlatformDetection(world: World): void {
             SetPlayerPositionRaw(
               p,
               playerPlat.X1.Raw + CORRECTION_DEPTH_RAW,
-              playerPlat.Y1.Raw - yPosRaw,
+              playerPlat.Y1.Raw - yPosRaw
             );
           } else if (p.Position.X.Raw > playerPlat.X2.Raw) {
             // Player fell off the right edge.
             SetPlayerPositionRaw(
               p,
               playerPlat.X2.Raw - CORRECTION_DEPTH_RAW,
-              playerPlat.Y2.Raw - yPosRaw,
+              playerPlat.Y2.Raw - yPosRaw
             );
           }
           playerData
@@ -141,7 +141,7 @@ export function PlatformDetection(world: World): void {
       const landingYCoord = PlayerOnPlatsReturnsYCoord(
         stage,
         ecb.Bottom,
-        ecb.SensorDepth,
+        ecb.SensorDepth
       );
 
       const inputStore = playerData.InputStore(playerIndex);
@@ -195,7 +195,7 @@ export function PlatformDetection(world: World): void {
           plat.X1,
           plat.Y1,
           plat.X2,
-          plat.Y2,
+          plat.Y2
         );
 
         if (intersected === false) {
@@ -210,7 +210,7 @@ export function PlatformDetection(world: World): void {
             p,
             playerData.StateMachine(playerIndex),
             plat.Y1,
-            plat.X2,
+            plat.X2
           );
           break;
         }
@@ -220,7 +220,7 @@ export function PlatformDetection(world: World): void {
             p,
             playerData.StateMachine(playerIndex),
             plat.Y1,
-            plat.X1,
+            plat.X1
           );
           break;
         }
@@ -229,7 +229,7 @@ export function PlatformDetection(world: World): void {
           p,
           playerData.StateMachine(playerIndex),
           plat.Y2,
-          currentBottom.X,
+          currentBottom.X
         );
       }
     }
@@ -240,7 +240,7 @@ function handlePlatformLanding(
   p: Player,
   sm: StateMachine,
   yCoord: FixedPoint,
-  xCoord: FixedPoint,
+  xCoord: FixedPoint
 ) {
   const landId = ShouldSoftlandRaw(p.Velocity.Y.Raw)
     ? GAME_EVENT_IDS.SOFT_LAND_GE
@@ -250,6 +250,6 @@ function handlePlatformLanding(
   SetPlayerPositionRaw(
     p,
     xCoord.Raw,
-    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw,
+    yCoord.Raw + CORRECTION_DEPTH_RAW - newYOffset.Raw
   );
 }

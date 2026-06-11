@@ -69,7 +69,7 @@ import {
   InitUpThrowRelations,
   InitGroundSlamRelations,
   InitDirtNapRelations,
-  InitGetUpRelations,
+  InitGetUpRelations
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -78,7 +78,7 @@ import {
   GAME_EVENT_IDS,
   ATTACK_IDS,
   GrabId,
-  GRAB_IDS,
+  GRAB_IDS
 } from './stateConfigurations/shared';
 import {
   Idle,
@@ -149,7 +149,7 @@ import {
   UpThrow,
   GroundSlam,
   DirtNap,
-  GetUp,
+  GetUp
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -286,15 +286,15 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
   .set(
     SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
-    SHIELD_BREAK_TUMBLE_RELATIONS.mappings,
+    SHIELD_BREAK_TUMBLE_RELATIONS.mappings
   )
   .set(
     SHIELD_BREAK_LAND_RELATIONS.stateId,
-    SHIELD_BREAK_LAND_RELATIONS.mappings,
+    SHIELD_BREAK_LAND_RELATIONS.mappings
   )
   .set(
     SHIELD_BREAK_DIZZY_RELATIONS.stateId,
-    SHIELD_BREAK_DIZZY_RELATIONS.mappings,
+    SHIELD_BREAK_DIZZY_RELATIONS.mappings
   )
   .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings)
   .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings)

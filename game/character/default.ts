@@ -13,7 +13,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   GrabId,
-  GRAB_IDS,
+  GRAB_IDS
 } from '../engine/finite-state-machine/stateConfigurations/shared';
 
 import {
@@ -26,7 +26,7 @@ import {
   GrabConfig,
   GrabConfigBuilder,
   HurtCapsuleConfig,
-  ThrowConfig,
+  ThrowConfig
 } from './shared';
 
 export class DefaultCharacterConfig implements CharacterConfig {
@@ -53,6 +53,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public AerialSpeedMultiplier: number;
   public AirDodgeSpeed: number;
   public DodgeRollSpeed: number;
+  public GetUpRollForwardSpeed: number;
+  public GetUpRollBackSpeed: number;
   public MaxWalkSpeed: number;
   public MaxRunSpeed: number;
   public DashMutiplier: number;
@@ -159,7 +161,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
       width: 70,
-      yOffset: -25,
+      yOffset: -25
     })
       .set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 })
       .set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 })
@@ -188,37 +190,37 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
         height: 60,
         width: 60,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.SHIELD_BREAK_LAND_S, {
         height: 40,
         width: 100,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.DIZZY_S, {
         height: 70,
         width: 70,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.WALL_SLAM_S, {
         height: 100,
         width: 40,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.GRND_SLAM_S, {
         height: 40,
         width: 100,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.DIRT_NAP_S, {
         height: 40,
         width: 100,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.GETUP_S, {
         height: 70,
         width: 70,
-        yOffset: 0,
+        yOffset: 0
       });
 
     this.ShieldRadius = 75; //new FixedPoint(75);
@@ -238,6 +240,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.MaxDashSpeed = 7;
     this.AirDodgeSpeed = 11.5;
     this.DodgeRollSpeed = 11;
+    this.GetUpRollBackSpeed = 10;
+    this.GetUpRollForwardSpeed = 10;
     this.GroundedVelocityDecay = 0.4;
 
     this.ECBOffset = 0;
@@ -299,14 +303,14 @@ export class DefaultCharacterConfig implements CharacterConfig {
       y1: -40,
       x2: 0,
       y2: -50,
-      radius: 40,
+      radius: 40
     };
     const head: HurtCapsuleConfig = {
       x1: 0,
       y1: -105,
       x2: 0,
       y2: -125,
-      radius: 14,
+      radius: 14
     };
     this.HurtCapsules.push(head);
     this.HurtCapsules.push(body);
@@ -475,7 +479,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     160,
-    20,
+    20
   );
 
   const bubble2Offsets = generateArcBubbleOffsets(
@@ -483,7 +487,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     140,
-    20,
+    20
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -491,7 +495,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     110,
-    20,
+    20
   );
 
   const uAirAttack = new AttackConfigBuilder('UAir')
@@ -508,7 +512,7 @@ function GetUAir() {
       uairRadius,
       0,
       toeOfNoLaunchAngle,
-      bubble3Offsets,
+      bubble3Offsets
     )
     .Build();
 
@@ -534,7 +538,7 @@ function GetFAir() {
     155, // distance from player center
     130, // retract inwards by 10px at end
     12,
-    false,
+    false
   );
 
   // Bubble 2: further from player, stacked above, same rotation
@@ -545,7 +549,7 @@ function GetFAir() {
     130,
     110,
     12,
-    false,
+    false
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -555,7 +559,7 @@ function GetFAir() {
     100,
     100,
     12,
-    false,
+    false
   );
 
   // Build the FAir attack using AttackBuilder
@@ -900,7 +904,7 @@ function GetUpTilt() {
     120,
     0,
     50,
-    true,
+    true
   );
 
   const hitBubbleOffsets2 = new Map<frameNumber, ConfigVec>();
@@ -921,7 +925,7 @@ function GetUpTilt() {
       explosiveRadius,
       1,
       launchAngle,
-      hitBubbleOffsets2,
+      hitBubbleOffsets2
     );
 
   return bldr.Build();
@@ -955,7 +959,7 @@ function GetUpchargeExt() {
     6,
     105,
     0,
-    21,
+    21
   );
 
   h1offset.forEach((v, k) => {
@@ -1120,20 +1124,20 @@ function GetSideSpecial() {
 
   const switchStateCommand: SwitchPlayerStateCommand = {
     commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-    payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
+    payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE
   };
 
   const sensorReactorChangeStateOnDetection: SetPlayerSensorDetectCommand = {
     commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-    payload: switchStateCommand,
+    payload: switchStateCommand
   };
 
   const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const sensor1: ActivateSensorCommand = {
@@ -1141,31 +1145,31 @@ function GetSideSpecial() {
     payload: {
       x: 45,
       y: -15,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const sensor2: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -50,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const sensor3: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -85,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
 
   const frameActivate = 15;
 
   const deactivateSensor: DeactivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
-    payload: undefined,
+    payload: undefined
   };
 
   const frameDeactivate = 40;
@@ -1213,8 +1217,8 @@ function GetSideSpecialExtension() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const bldr = new AttackConfigBuilder('SideSpecialExtension');
@@ -1240,49 +1244,49 @@ function GetSideSpecialAir() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const setPlayerStateToSideSpclAirEx: SwitchPlayerStateCommand = {
     commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-    payload: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE,
+    payload: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE
   };
 
   const setSensorReactorToSwicthStateOnDetection: SetPlayerSensorDetectCommand =
-  {
-    commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-    payload: setPlayerStateToSideSpclAirEx,
-  };
+    {
+      commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
+      payload: setPlayerStateToSideSpclAirEx
+    };
 
   const activateSensor1: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -15,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const activateSensor2: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -50,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const activateSensor3: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -85,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
 
   const deactivateSensor: DeactivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
-    payload: undefined,
+    payload: undefined
   };
 
   for (let i = 14; i < 35; i++) {
@@ -1327,8 +1331,8 @@ function GetSideSpecialExtensionAir() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const bldr = new AttackConfigBuilder('SideSpecialExtensionAir');
@@ -1399,13 +1403,13 @@ function GetDownSpecialAerial() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const setJumpToOne: SetJumpCountCommand = {
     commandName: COMMAND_NAMES.SET_JUMP_COUNT,
-    payload: 1,
+    payload: 1
   };
 
   const blrd = new AttackConfigBuilder('DSpecialAir');
@@ -1440,8 +1444,8 @@ function GetUpSpecial() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   bldr
@@ -1496,7 +1500,7 @@ function generateArcBubbleOffsets(
   distance: number,
   inwardRetract: number,
   frameStart: number = 12,
-  invertY: boolean = true,
+  invertY: boolean = true
 ): Map<number, ConfigVec> {
   const offsets = new Map<number, ConfigVec>();
 
@@ -1522,7 +1526,7 @@ function GetForThrow(): ThrowConfig {
     KnockBackScaling: 350,
     TotalFrames: 90,
     Damage: 14,
-    ReleaseFrame: 65,
+    ReleaseFrame: 65
   };
 
   return tc;
@@ -1538,7 +1542,7 @@ function GetBackThrow(): ThrowConfig {
     KnockBackScaling: 290,
     TotalFrames: 60,
     Damage: 13,
-    ReleaseFrame: 48,
+    ReleaseFrame: 48
   };
 
   return tc;
@@ -1554,7 +1558,7 @@ function GetDownThrow(): ThrowConfig {
     KnockBackScaling: 325,
     TotalFrames: 50,
     ReleaseFrame: 40,
-    Damage: 15,
+    Damage: 15
   };
 
   return tc;
@@ -1570,7 +1574,7 @@ function GetUpThrow(): ThrowConfig {
     KnockBackScaling: 300,
     TotalFrames: 60,
     ReleaseFrame: 30,
-    Damage: 11,
+    Damage: 11
   };
   return tc;
 }

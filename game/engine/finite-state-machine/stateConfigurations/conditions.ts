@@ -26,7 +26,7 @@ export function RunCondition(
   c: condition,
   w: World,
   p: Player,
-  ia: InputAction,
+  ia: InputAction
 ): StateId | undefined {
   if (c.ConditionFunc(w, p, ia) === true) {
     return c.StateId;
@@ -46,7 +46,7 @@ export const IdleToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 const STICK_JUMP_THRESHOLD = NumberToRaw(0.4);
@@ -66,7 +66,7 @@ export const ToStickJumpSquat: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.JUMP_SQUAT_S,
+  StateId: STATE_IDS.JUMP_SQUAT_S
 };
 
 export const ToStickJump: condition = {
@@ -85,7 +85,7 @@ export const ToStickJump: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const IdleToDash: condition = {
@@ -111,7 +111,7 @@ export const IdleToDash: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const IdleToDashTurn: condition = {
@@ -136,7 +136,7 @@ export const IdleToDashTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_TURN_S,
+  StateId: STATE_IDS.DASH_TURN_S
 };
 
 export const shieldToShieldDrop: condition = {
@@ -147,7 +147,7 @@ export const shieldToShieldDrop: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.SHIELD_DROP_S,
+  StateId: STATE_IDS.SHIELD_DROP_S
 };
 
 export const WalkToDash: condition = {
@@ -180,7 +180,7 @@ export const WalkToDash: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const WalkToTurn: condition = {
@@ -209,7 +209,7 @@ export const WalkToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 export const RunToRunStopByGuard: condition = {
@@ -220,7 +220,7 @@ export const RunToRunStopByGuard: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.STOP_RUN_S,
+  StateId: STATE_IDS.STOP_RUN_S
 };
 
 export const RunToTurn: condition = {
@@ -249,7 +249,7 @@ export const RunToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.RUN_TURN_S,
+  StateId: STATE_IDS.RUN_TURN_S
 };
 
 export const DashToTurn: condition = {
@@ -281,7 +281,7 @@ export const DashToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_TURN_S,
+  StateId: STATE_IDS.DASH_TURN_S
 };
 
 export const ToJump: condition = {
@@ -300,7 +300,7 @@ export const ToJump: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const ToAirDodge: condition = {
@@ -313,7 +313,7 @@ export const ToAirDodge: condition = {
     }
     return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
-  StateId: STATE_IDS.AIR_DODGE_S,
+  StateId: STATE_IDS.AIR_DODGE_S
 };
 
 export const DashDefaultRun: condition = {
@@ -328,7 +328,7 @@ export const DashDefaultRun: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.RUN_S,
+  StateId: STATE_IDS.RUN_S
 };
 
 export const DashDefaultIdle: condition = {
@@ -339,7 +339,7 @@ export const DashDefaultIdle: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const TurnDefaultWalk: condition = {
@@ -354,7 +354,7 @@ export const TurnDefaultWalk: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const TurnToDash: condition = {
@@ -374,12 +374,12 @@ export const TurnToDash: condition = {
       return inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.MOVE_FAST_GE,
         ia,
-        prevIa,
+        prevIa
       );
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const ToNair: condition = {
@@ -391,10 +391,10 @@ export const ToNair: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.N_AIR_S,
+  StateId: STATE_IDS.N_AIR_S
 };
 
 export const ToFAir: condition = {
@@ -434,7 +434,7 @@ export const ToFAir: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.F_AIR_S,
+  StateId: STATE_IDS.F_AIR_S
 };
 
 export const ToBAir: condition = {
@@ -456,7 +456,7 @@ export const ToBAir: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.B_AIR_S,
+  StateId: STATE_IDS.B_AIR_S
 };
 
 export const ToUAir: condition = {
@@ -468,10 +468,10 @@ export const ToUAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.U_AIR_S,
+  StateId: STATE_IDS.U_AIR_S
 };
 
 export const ToDAir: condition = {
@@ -483,10 +483,10 @@ export const ToDAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.D_AIR_S,
+  StateId: STATE_IDS.D_AIR_S
 };
 
 export const SideTiltToWalk: condition = {
@@ -507,7 +507,7 @@ export const SideTiltToWalk: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const LandToIdle: condition = {
@@ -518,7 +518,7 @@ export const LandToIdle: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const LandToWalk: condition = {
@@ -533,7 +533,7 @@ export const LandToWalk: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const LandToTurn: condition = {
@@ -548,7 +548,7 @@ export const LandToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 export const DefaultDownTiltToCrouch: condition = {
@@ -559,7 +559,7 @@ export const DefaultDownTiltToCrouch: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.CROUCH_S,
+  StateId: STATE_IDS.CROUCH_S
 };
 
 export const RunStopToTurn: condition = {
@@ -574,7 +574,7 @@ export const RunStopToTurn: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.RUN_TURN_S,
+  StateId: STATE_IDS.RUN_TURN_S
 };
 
 export const IdleToAttack: condition = {
@@ -586,10 +586,10 @@ export const IdleToAttack: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.ATTACK_S,
+  StateId: STATE_IDS.ATTACK_S
 };
 
 export const ToSideCharge: condition = {
@@ -602,7 +602,7 @@ export const ToSideCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
@@ -613,7 +613,7 @@ export const ToSideCharge: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_S,
+  StateId: STATE_IDS.SIDE_CHARGE_S
 };
 
 export const IdleToUpTilt: condition = {
@@ -626,7 +626,7 @@ export const IdleToUpTilt: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
@@ -636,7 +636,7 @@ export const IdleToUpTilt: condition = {
     }
     return true;
   },
-  StateId: STATE_IDS.UP_TILT_S,
+  StateId: STATE_IDS.UP_TILT_S
 };
 
 export const ToUpCharge: condition = {
@@ -649,7 +649,7 @@ export const ToUpCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
@@ -659,7 +659,7 @@ export const ToUpCharge: condition = {
     }
     return true;
   },
-  StateId: STATE_IDS.UP_CHARGE_S,
+  StateId: STATE_IDS.UP_CHARGE_S
 };
 
 export const ToDownCharge: condition = {
@@ -672,7 +672,7 @@ export const ToDownCharge: condition = {
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
@@ -686,7 +686,7 @@ export const ToDownCharge: condition = {
 
     return true;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_S,
+  StateId: STATE_IDS.DOWN_CHARGE_S
 };
 
 export const RunToDashAttack: condition = {
@@ -706,7 +706,7 @@ export const RunToDashAttack: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_ATTACK_S,
+  StateId: STATE_IDS.DASH_ATTACK_S
 };
 
 export const ToSideTilt: condition = {
@@ -727,7 +727,7 @@ export const ToSideTilt: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.SIDE_TILT_S,
+  StateId: STATE_IDS.SIDE_TILT_S
 };
 
 export const ToNSpecial: condition = {
@@ -739,10 +739,10 @@ export const ToNSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SPCL_S,
+  StateId: STATE_IDS.SPCL_S
 };
 
 export const ToSideSpecial: condition = {
@@ -754,10 +754,10 @@ export const ToSideSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SIDE_SPCL_S,
+  StateId: STATE_IDS.SIDE_SPCL_S
 };
 
 export const ToSideSpecialAir: condition = {
@@ -769,10 +769,10 @@ export const ToSideSpecialAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SIDE_SPCL_AIR_S,
+  StateId: STATE_IDS.SIDE_SPCL_AIR_S
 };
 
 export const ToDownSpecial: condition = {
@@ -784,10 +784,10 @@ export const ToDownSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_SPCL_S,
+  StateId: STATE_IDS.DOWN_SPCL_S
 };
 
 export const ToDownSpecialAir: condition = {
@@ -799,10 +799,10 @@ export const ToDownSpecialAir: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
+  StateId: STATE_IDS.DOWN_SPCL_AIR_S
 };
 
 export const ToUpSpecial: condition = {
@@ -814,10 +814,10 @@ export const ToUpSpecial: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.UP_SPCL_S,
+  StateId: STATE_IDS.UP_SPCL_S
 };
 
 export const ToDownTilt: condition = {
@@ -829,10 +829,10 @@ export const ToDownTilt: condition = {
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_TILT_S,
+  StateId: STATE_IDS.DOWN_TILT_S
 };
 
 export const HitStopToFlinch: condition = {
@@ -846,7 +846,7 @@ export const HitStopToFlinch: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.HIT_FLINCH_S,
+  StateId: STATE_IDS.HIT_FLINCH_S
 };
 
 export const HitStopToHitSlide: condition = {
@@ -860,7 +860,7 @@ export const HitStopToHitSlide: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.HIT_SLIDE_S,
+  StateId: STATE_IDS.HIT_SLIDE_S
 };
 
 export const HitStopToLaunch: condition = {
@@ -874,7 +874,7 @@ export const HitStopToLaunch: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.LAUNCH_S,
+  StateId: STATE_IDS.LAUNCH_S
 };
 
 export const HitSlideToIdle: condition = {
@@ -885,7 +885,7 @@ export const HitSlideToIdle: condition = {
     }
     return true;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const FlinchToFall: condition = {
@@ -896,7 +896,7 @@ export const FlinchToFall: condition = {
     }
     return true;
   },
-  StateId: STATE_IDS.N_FALL_S,
+  StateId: STATE_IDS.N_FALL_S
 };
 
 export const LaunchToTumble: condition = {
@@ -907,7 +907,7 @@ export const LaunchToTumble: condition = {
     }
     return true;
   },
-  StateId: STATE_IDS.TUMBLE_S,
+  StateId: STATE_IDS.TUMBLE_S
 };
 
 export const SideChargeToEx: condition = {
@@ -925,7 +925,7 @@ export const SideChargeToEx: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S
 };
 
 export const UpChargeToEx: condition = {
@@ -940,7 +940,7 @@ export const UpChargeToEx: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
+  StateId: STATE_IDS.UP_CHARGE_EX_S
 };
 
 export const DownChargeToEx: condition = {
@@ -956,7 +956,7 @@ export const DownChargeToEx: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S
 };
 
 export const ToSpotDodge: condition = {
@@ -977,7 +977,7 @@ export const ToSpotDodge: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.SPOT_DODGE_S,
+  StateId: STATE_IDS.SPOT_DODGE_S
 };
 
 export const ToRollDodge: condition = {
@@ -1005,7 +1005,7 @@ export const ToRollDodge: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.ROLL_DODGE_S,
+  StateId: STATE_IDS.ROLL_DODGE_S
 };
 
 export const ToForwardThrow: condition = {
@@ -1028,7 +1028,7 @@ export const ToForwardThrow: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.FORWARD_THROW_S,
+  StateId: STATE_IDS.FORWARD_THROW_S
 };
 
 export const ToBackThrow: condition = {
@@ -1051,7 +1051,7 @@ export const ToBackThrow: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.BACK_THROW_S,
+  StateId: STATE_IDS.BACK_THROW_S
 };
 
 export const ToUpThrow: condition = {
@@ -1069,7 +1069,7 @@ export const ToUpThrow: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.UP_THROW_S,
+  StateId: STATE_IDS.UP_THROW_S
 };
 
 export const ToDownThrow: condition = {
@@ -1087,7 +1087,43 @@ export const ToDownThrow: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DOWN_THROW_S,
+  StateId: STATE_IDS.DOWN_THROW_S
+};
+
+export const toGetUpRollForward: condition = {
+  Name: 'toGetUpRollForward',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (p.Flags.IsFacingRight && ia.LXAxisRaw > 0) {
+      return true;
+    }
+    if (!p.Flags.IsFacingRight && ia.LXAxisRaw < 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_ROLL_FORWARD_S
+};
+
+export const toGetUpRollBack: condition = {
+  Name: 'toGetUpRollBack',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (p.Flags.IsFacingRight && ia.LXAxisRaw < 0) {
+      return true;
+    }
+    if (!p.Flags.IsFacingRight && ia.LXAxisRaw > 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_ROLL_BACK_S
 };
 // export const ToTechInPlace: condition = {
 //   Name: 'ToTechInPlace',
@@ -1104,7 +1140,7 @@ export const shieldBreakDefaultShieldTumble: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S,
+  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S
 };
 
 export const shieldBreakLandDefaultToDizzy: condition = {
@@ -1112,7 +1148,7 @@ export const shieldBreakLandDefaultToDizzy: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DIZZY_S,
+  StateId: STATE_IDS.DIZZY_S
 };
 
 export const defaultWalk: condition = {
@@ -1120,7 +1156,7 @@ export const defaultWalk: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const defaultTrunRunToIdle: condition = {
@@ -1135,7 +1171,7 @@ export const defaultTrunRunToIdle: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const defaultRun: condition = {
@@ -1143,7 +1179,7 @@ export const defaultRun: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.RUN_S,
+  StateId: STATE_IDS.RUN_S
 };
 
 export const defaultIdle: condition = {
@@ -1151,7 +1187,7 @@ export const defaultIdle: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const defaultDash: condition = {
@@ -1159,7 +1195,7 @@ export const defaultDash: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const defaultJump: condition = {
@@ -1167,7 +1203,7 @@ export const defaultJump: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const defaultShield: condition = {
@@ -1175,7 +1211,7 @@ export const defaultShield: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SHIELD_S,
+  StateId: STATE_IDS.SHIELD_S
 };
 
 export const defaultNFall: condition = {
@@ -1183,7 +1219,7 @@ export const defaultNFall: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.N_FALL_S,
+  StateId: STATE_IDS.N_FALL_S
 };
 
 export const defaultHelpess: condition = {
@@ -1191,7 +1227,7 @@ export const defaultHelpess: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.HELPLESS_S,
+  StateId: STATE_IDS.HELPLESS_S
 };
 
 export const defaultTumble: condition = {
@@ -1199,7 +1235,7 @@ export const defaultTumble: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.TUMBLE_S,
+  StateId: STATE_IDS.TUMBLE_S
 };
 
 export const defaultSideChargeEx: condition = {
@@ -1207,7 +1243,7 @@ export const defaultSideChargeEx: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S
 };
 
 export const defaultUpChargeEx: condition = {
@@ -1215,7 +1251,7 @@ export const defaultUpChargeEx: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
+  StateId: STATE_IDS.UP_CHARGE_EX_S
 };
 
 export const defaultDownChargeEx: condition = {
@@ -1223,7 +1259,7 @@ export const defaultDownChargeEx: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S
 };
 
 export const defaultHold: condition = {
@@ -1231,7 +1267,7 @@ export const defaultHold: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.GRAB_HOLD_S,
+  StateId: STATE_IDS.GRAB_HOLD_S
 };
 
 export const defaultDirtNap: condition = {
@@ -1239,21 +1275,21 @@ export const defaultDirtNap: condition = {
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DIRT_NAP_S,
+  StateId: STATE_IDS.DIRT_NAP_S
 };
 
 export const defaultToGetUp: condition = {
   Name: 'DefaultToGetUp',
-  ConditionFunc: (w: World, p:Player, ia: InputAction) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
   StateId: STATE_IDS.GETUP_S
-}
+};
 
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,
-  prevIa: InputAction | undefined,
+  prevIa: InputAction | undefined
 ) {
   if (ia.Action !== targetGeId) {
     return false;
@@ -1271,7 +1307,7 @@ function isBufferedInput(
   inputStore: IInputStore,
   currentFrame: number,
   bufferFrames: number,
-  targetGameEvent: GameEventId,
+  targetGameEvent: GameEventId
 ): boolean {
   for (let i = 0; i < bufferFrames; i++) {
     const ia = inputStore.GetInputForFrame(currentFrame - i);

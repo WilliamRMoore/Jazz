@@ -1,13 +1,13 @@
 import {
   STATE_IDS,
-  GAME_EVENT_IDS,
+  GAME_EVENT_IDS
 } from '../finite-state-machine/stateConfigurations/shared';
 import { DivideRaw } from '../math/fixedPoint';
 
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnStageOrPlats,
-  SetPlayerPositionRaw,
+  SetPlayerPositionRaw
 } from '../entity/playerOrchestrator';
 import { FlatVec } from '../physics/vector';
 import { TWO } from '../math/numberConstants';
@@ -75,12 +75,12 @@ export function LedgeGrabDetection(world: World): void {
       const bottomRightY = lastBottomHeightRaw;
 
       combinedVerts.push(
-        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
+        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY)
       );
       combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
       combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
       combinedVerts.push(
-        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
+        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY)
       );
     } else {
       const bottomLeftX = lastMiddleXRaw - widthRaw;
@@ -93,12 +93,12 @@ export function LedgeGrabDetection(world: World): void {
       const bottomRightY = bottomLeftY;
 
       combinedVerts.push(
-        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY),
+        pools.VecPool.Rent().SetXYRaw(bottomLeftX, bottomLeftY)
       );
       combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topLeftX, topLeftY));
       combinedVerts.push(pools.VecPool.Rent().SetXYRaw(topRightX, topRightY));
       combinedVerts.push(
-        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY),
+        pools.VecPool.Rent().SetXYRaw(bottomRightX, bottomRightY)
       );
     }
 
@@ -126,7 +126,7 @@ export function LedgeGrabDetection(world: World): void {
           hull,
           pools.VecPool,
           pools.ColResPool,
-          pools.ProjResPool,
+          pools.ProjResPool
         );
 
         if (intersectsLeftLedge.Collision) {
@@ -135,7 +135,7 @@ export function LedgeGrabDetection(world: World): void {
           SetPlayerPositionRaw(
             p,
             leftLedge[0].X.Raw - DivideRaw(ecb.Width.Raw, TWO),
-            p.Position.Y.Raw,
+            p.Position.Y.Raw
           );
           break;
         }
@@ -149,7 +149,7 @@ export function LedgeGrabDetection(world: World): void {
           hull,
           pools.VecPool,
           pools.ColResPool,
-          pools.ProjResPool,
+          pools.ProjResPool
         );
 
         if (intersectsRightLedge.Collision) {
@@ -158,7 +158,7 @@ export function LedgeGrabDetection(world: World): void {
           SetPlayerPositionRaw(
             p,
             rightLedge[0].X.Raw + DivideRaw(ecb.Width.Raw, TWO),
-            p.Position.Y.Raw,
+            p.Position.Y.Raw
           );
           break;
         }
@@ -169,6 +169,7 @@ export function LedgeGrabDetection(world: World): void {
 
 function LedgeOccupied(ledge: FlatVec[], pd: PlayerData): boolean {
   const pc = pd.PlayerCount;
+
   for (let i = 0; i < pc; i++) {
     const p = pd.Player(i);
     const ld = p.LedgeDetector;

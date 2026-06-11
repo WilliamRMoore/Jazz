@@ -1,7 +1,7 @@
 import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
-  STATE_IDS,
+  STATE_IDS
 } from '../finite-state-machine/stateConfigurations/shared';
 import { DivideRaw } from '../math/fixedPoint';
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
@@ -13,19 +13,20 @@ import {
   SetPlayerPositionRaw,
   AddToPlayerXPostionRaw,
   AddToPlayerYPositionRaw,
-  Player,
+  Player
 } from '../entity/playerOrchestrator';
 import { isPlayerOnAnyStage, ShouldSoftlandRaw } from './shared';
 import {
   CreateDiamondFromHistory,
   ECBComponent,
-  EcbHistoryDTO,
+  EcbHistoryDTO
 } from '../entity/components/ecb';
 import { FlatVec } from '../physics/vector';
 import {
   CORRECTION_DEPTH_RAW,
   POINT_SEVEN,
-  TWO,
+  TEN,
+  TWO
 } from '../math/numberConstants';
 import { Stage } from '../stage/stageMain';
 import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
@@ -77,7 +78,7 @@ export function StageCollisionDetection(world: World): void {
       prevEcbShape,
       preXRaw,
       preYRaw,
-      pools.DiamondPool,
+      pools.DiamondPool
     );
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
@@ -97,7 +98,7 @@ export function StageCollisionDetection(world: World): void {
         stageVerts,
         pools.VecPool,
         pools.ColResPool,
-        pools.ProjResPool,
+        pools.ProjResPool
       );
 
       if (collisionResult.Collision) {
@@ -121,11 +122,20 @@ export function StageCollisionDetection(world: World): void {
 
       // Transition state to tech if teched.
       const normY = firstCollisionResult!.NormY;
+      const normX = firstCollisionResult!.NormX;
       // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
       if (normY.Raw > POINT_SEVEN && p.Velocity.Y.Raw > 0) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
-      } else {
+        p.Velocity.Y.SetFromRaw(-10);
+      } else if (Math.abs(normX.Raw) > POINT_SEVEN) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);
+        if (normX.Raw > 0) {
+          p.Flags.FaceLeft();
+          p.Velocity.X.SetFromRaw(-TEN);
+        } else if (normX.Raw < 0) {
+          p.Flags.FaceRight();
+          p.Velocity.X.SetFromRaw(TEN);
+        }
       }
       continue;
     }
@@ -177,7 +187,7 @@ export function StageCollisionDetection(world: World): void {
       sm.UpdateFromWorld(
         ShouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE
-          : GAME_EVENT_IDS.LAND_GE,
+          : GAME_EVENT_IDS.LAND_GE
       );
     }
 
@@ -226,7 +236,7 @@ function handleWalkOff(
   p: Player,
   previousStage: Stage,
   sm: StateMachine,
-  pools: Pools,
+  pools: Pools
 ) {
   const stageGround = previousStage.StageVerticies.GetGround();
   if (stageGround.length > 0) {
@@ -234,11 +244,11 @@ function handleWalkOff(
     const rightMostPiece = stageGround[stageGround.length - 1];
     const leftStagePoint = pools.VecPool.Rent().SetXY(
       leftMostPiece.X1,
-      leftMostPiece.Y1,
+      leftMostPiece.Y1
     );
     const rightStagePoint = pools.VecPool.Rent().SetXY(
       rightMostPiece.X2,
-      rightMostPiece.Y2,
+      rightMostPiece.Y2
     );
 
     let shouldSnapBack = false;
@@ -268,13 +278,13 @@ function handleWalkOff(
         SetPlayerPositionRaw(
           p,
           leftStagePoint.X.Raw + CORRECTION_DEPTH_RAW,
-          leftStagePoint.Y.Raw - yPosRaw,
+          leftStagePoint.Y.Raw - yPosRaw
         );
       } else {
         SetPlayerPositionRaw(
           p,
           rightStagePoint.X.Raw - CORRECTION_DEPTH_RAW,
-          rightStagePoint.Y.Raw - yPosRaw,
+          rightStagePoint.Y.Raw - yPosRaw
         );
       }
       sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
@@ -290,11 +300,11 @@ function handleJitter(p: Player, stage: Stage, pools: Pools): boolean {
   const rightMostPiece = stageGround[stageGround.length - 1];
   const leftStagePoint = pools.VecPool.Rent().SetXY(
     leftMostPiece.X1,
-    leftMostPiece.Y1,
+    leftMostPiece.Y1
   );
   const rightStagePoint = pools.VecPool.Rent().SetXY(
     rightMostPiece.X2,
-    rightMostPiece.Y2,
+    rightMostPiece.Y2
   );
 
   const standingOnLeftLedge =
@@ -308,7 +318,7 @@ function handleJitter(p: Player, stage: Stage, pools: Pools): boolean {
     SetPlayerPositionRaw(
       p,
       leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
-      p.Position.Y.Raw,
+      p.Position.Y.Raw
     );
     return true;
   }
@@ -316,7 +326,7 @@ function handleJitter(p: Player, stage: Stage, pools: Pools): boolean {
     SetPlayerPositionRaw(
       p,
       rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
-      p.Position.Y.Raw,
+      p.Position.Y.Raw
     );
     return true;
   }
@@ -340,7 +350,7 @@ function getECBHull(prevEcb: EcbHistoryDTO, curEcb: ECBComponent) {
 function resolveCollision(
   p: Player,
   collisionResult: ICollisionResult,
-  vecPool: Pool<PooledVector>,
+  vecPool: Pool<PooledVector>
 ) {
   const normalXRaw = collisionResult.NormX.Raw;
   const normalYRaw = collisionResult.NormY.Raw;
