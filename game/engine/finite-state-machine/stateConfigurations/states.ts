@@ -273,22 +273,28 @@ export const LedgeGetUp: FSMState = {
 
     let minTargetDistSq = Infinity;
     for (let i = 0; i < stage.length; i++) {
-        const ledges = stage[i].Ledges;
-        const ledge = isFacingRight ? ledges.GetLeftLedge() : ledges.GetRightLedge();
-        if (ledge && ledge.length > 0) {
-            const cornerX = ledge[0].X.Raw;
-            const cornerY = ledge[0].Y.Raw;
-            const distSq = Math.abs(cornerX - p.Position.X.Raw) + Math.abs(cornerY - p.Position.Y.Raw);
-            if (distSq < minTargetDistSq) {
-                minTargetDistSq = distSq;
-                targetXRaw = cornerX;
-                targetYRaw = cornerY - p.ECB.YOffset.Raw;
-            }
+      const ledges = stage[i].Ledges;
+      const ledge = isFacingRight
+        ? ledges.GetLeftLedge()
+        : ledges.GetRightLedge();
+      if (ledge && ledge.length > 0) {
+        const cornerX = ledge[0].X.Raw;
+        const cornerY = ledge[0].Y.Raw;
+        const distSq =
+          Math.abs(cornerX - p.Position.X.Raw) +
+          Math.abs(cornerY - p.Position.Y.Raw);
+        if (distSq < minTargetDistSq) {
+          minTargetDistSq = distSq;
+          targetXRaw = cornerX;
+          targetYRaw = cornerY - p.ECB.YOffset.Raw;
         }
+      }
     }
 
     const halfWidthRaw = DivideRaw(p.ECB.Width.Raw, TWO);
-    targetXRaw = isFacingRight ? targetXRaw + halfWidthRaw : targetXRaw - halfWidthRaw;
+    targetXRaw = isFacingRight
+      ? targetXRaw + halfWidthRaw
+      : targetXRaw - halfWidthRaw;
 
     const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
     const framesToStageRaw = NumberToRaw(framesToStage);
@@ -1020,49 +1026,6 @@ export const Dizzy: FSMState = {
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {}
 };
-
-// export const legdeGetUp: FSMState = {
-//   StateName: 'LedgeGetUp',
-//   StateId: STATE_IDS.LEDGE_GUA_S,
-//   OnEnter: (p: Player, w: World) => {
-//     p.ECB.SetECBShape(STATE_IDS.LEDGE_GUA_S);
-//     p.Velocity.X.Zero();
-//     p.Velocity.Y.Zero();
-//   },
-//   OnUpdate: (p: Player, w: World) => {
-//     const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
-//     const currentFrame = p.FSMInfo.CurrentStateFrame;
-//     const remainingFrames = framesToStage - currentFrame;
-
-//     const stage = w.StageData.Stages;
-//     const ground = stage.StageVerticies.GetGround();
-//     let targetXRaw = 0;
-//     let targetYRaw = 0;
-
-//     if (p.Flags.IsFacingRight) {
-//       const leftCorner = ground[0];
-//       targetXRaw = leftCorner.X1.Raw;
-//       targetYRaw = leftCorner.Y1.Raw;
-//     } else {
-//       const rightCorner = ground[ground.length - 1];
-//       targetXRaw = rightCorner.X2.Raw;
-//       targetYRaw = rightCorner.Y2.Raw;
-//     }
-
-//     const diffXRaw = targetXRaw - p.Position.X.Raw;
-//     const diffYRaw = targetYRaw - p.Position.Y.Raw;
-//     const remainingFramesRaw = NumberToRaw(remainingFrames);
-
-//     const stepXRaw = DivideRaw(diffXRaw, remainingFramesRaw);
-//     const stepYRaw = DivideRaw(diffYRaw, remainingFramesRaw);
-
-//     AddToPlayerXPostionRaw(p, stepXRaw);
-//     AddToPlayerYPositionRaw(p, stepYRaw);
-//   },
-//   OnExit: (p: Player, w: World) => {
-//     p.ECB.ResetECBShape();
-//   },
-// };
 
 export const WallKick: FSMState = {
   StateName: 'WallSlide',
