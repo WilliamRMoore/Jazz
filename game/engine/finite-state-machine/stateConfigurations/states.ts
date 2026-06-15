@@ -1223,9 +1223,12 @@ export const GetUpRollBack: FSMState = {
  * TODO
  * neutralSpecial EX
  * upSpecial EX
- * tech
- * ledgeRecover
+ * tech ground
+ * tech roll forward
+ * tech roll back
+ * wall tech
  * getUpAttack
+ * ledgeRoll
  * ledgeGetupAttack
  * clang
  */

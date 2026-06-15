@@ -156,9 +156,6 @@ class STATES {
   public readonly GRND_SLAM_S = seq.Next as StateId;
   public readonly WALL_SLAM_S = seq.Next as StateId;
   public readonly DIRT_NAP_S = seq.Next as StateId;
-  public readonly TECH_IN_PLACE_S = seq.Next as StateId;
-  public readonly ROLL_TECH_S = seq.Next as StateId;
-  public readonly WALL_TECH_S = seq.Next as StateId;
   public readonly FORWARD_THROW_S = seq.Next as StateId;
   public readonly BACK_THROW_S = seq.Next as StateId;
   public readonly UP_THROW_S = seq.Next as StateId;
@@ -166,6 +163,10 @@ class STATES {
   public readonly GETUP_S = seq.Next as StateId;
   public readonly GETUP_ROLL_FORWARD_S = seq.Next as StateId;
   public readonly GETUP_ROLL_BACK_S = seq.Next as StateId;
+  public readonly TECH_IN_PLACE_S = seq.Next as StateId;
+  public readonly ROLL_F_TECH_S = seq.Next as StateId;
+  public readonly ROLL_B_TECH_S = seq.Next as StateId;
+  public readonly WALL_TECH_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
