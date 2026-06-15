@@ -1340,3 +1340,26 @@ function isBufferedInput(
   }
   return false;
 }
+
+export const LedgeGrabToGetUp: condition = {
+  Name: 'LedgeGrabToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    // Jump button
+    if (ia.Action === GAME_EVENT_IDS.JUMP_GE) {
+      return true;
+    }
+    // Up on the left stick
+    if (ia.LYAxis.Raw > NumberToRaw(0.25)) {
+      return true;
+    }
+    // Push towards stage on left stick
+    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > NumberToRaw(0.25)) {
+      return true;
+    }
+    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < NumberToRaw(-0.25)) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_GETUP_S
+};

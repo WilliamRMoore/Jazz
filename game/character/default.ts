@@ -158,7 +158,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DIRT_NAP_S, 480)
       .set(STATE_IDS.GETUP_S, 25)
       .set(STATE_IDS.GETUP_ROLL_FORWARD_S, 38)
-      .set(STATE_IDS.GETUP_ROLL_BACK_S, 40);
+      .set(STATE_IDS.GETUP_ROLL_BACK_S, 40)
+      .set(STATE_IDS.LEDGE_GETUP_S, 30);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
@@ -220,6 +221,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
         yOffset: 0
       })
       .set(STATE_IDS.GETUP_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.LEDGE_GETUP_S, {
         height: 70,
         width: 70,
         yOffset: 0

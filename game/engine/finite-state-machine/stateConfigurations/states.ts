@@ -258,6 +258,57 @@ export const LedgeGrab: FSMState = {
   }
 };
 
+export const LedgeGetUp: FSMState = {
+  StateName: 'LedgeGetUp',
+  StateId: STATE_IDS.LEDGE_GETUP_S,
+  OnEnter: (p: Player, w: World) => {
+    p.ECB.SetECBShape(STATE_IDS.LEDGE_GETUP_S);
+    p.Flags.FastFallOff();
+    p.Flags.SetIntangabilityFrames(30);
+
+    const stage = w.StageData.Stages;
+    let targetXRaw = p.Position.X.Raw;
+    let targetYRaw = p.Position.Y.Raw;
+    const isFacingRight = p.Flags.IsFacingRight;
+
+    let minTargetDistSq = Infinity;
+    for (let i = 0; i < stage.length; i++) {
+        const ledges = stage[i].Ledges;
+        const ledge = isFacingRight ? ledges.GetLeftLedge() : ledges.GetRightLedge();
+        if (ledge && ledge.length > 0) {
+            const cornerX = ledge[0].X.Raw;
+            const cornerY = ledge[0].Y.Raw;
+            const distSq = Math.abs(cornerX - p.Position.X.Raw) + Math.abs(cornerY - p.Position.Y.Raw);
+            if (distSq < minTargetDistSq) {
+                minTargetDistSq = distSq;
+                targetXRaw = cornerX;
+                targetYRaw = cornerY - p.ECB.YOffset.Raw;
+            }
+        }
+    }
+
+    const halfWidthRaw = DivideRaw(p.ECB.Width.Raw, TWO);
+    targetXRaw = isFacingRight ? targetXRaw + halfWidthRaw : targetXRaw - halfWidthRaw;
+
+    const framesToStage = p.FSMInfo.GetCurrentStateFrameLength()!;
+    const framesToStageRaw = NumberToRaw(framesToStage);
+    const diffXRaw = targetXRaw - p.Position.X.Raw;
+    const diffYRaw = targetYRaw - p.Position.Y.Raw;
+
+    p.Velocity.X.SetFromRaw(DivideRaw(diffXRaw, framesToStageRaw));
+    p.Velocity.Y.SetFromRaw(DivideRaw(diffYRaw, framesToStageRaw));
+    p.Flags.VelocityDecayOff();
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {
+    p.ECB.ResetECBShape();
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+    p.Flags.VelocityDecayOn();
+    p.LedgeDetector.ZeroLedgeGrabCount();
+  }
+};
+
 export const AirDodge: FSMState = {
   StateName: 'AirDodge',
   StateId: STATE_IDS.AIR_DODGE_S,
@@ -1132,7 +1183,9 @@ export const DirtNap: FSMState = {
   StateId: STATE_IDS.DIRT_NAP_S,
   OnEnter: (p: Player, w: World) => {},
   OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {}
+  OnExit: (p: Player, w: World) => {
+    p.LedgeDetector.ZeroLedgeGrabCount();
+  }
 };
 
 export const GetUp: FSMState = {

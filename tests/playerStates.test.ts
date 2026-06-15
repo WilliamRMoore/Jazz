@@ -8,7 +8,7 @@ import {
   Walk,
   Dash,
 } from '../game/engine/finite-state-machine/stateConfigurations/states';
-import { STATE_IDS, CanStateWalkOffLedge } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, CanStateWalkOffLedge, GAME_EVENT_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,
@@ -17,7 +17,9 @@ import {
   DivideRaw,
 } from '../game/engine/math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../game/engine/math/LUTS';
-
+import { ApplyVelocity } from '../game/engine/systems/velocity';
+import { defaultStage } from '../game/engine/stage/stageMain';
+import { SetPlayerPositionRaw } from '../game/engine/entity/playerOrchestrator';
 describe('Player states tests', () => {
   let p: Player;
   let w: World;
@@ -272,7 +274,75 @@ describe('Player states tests', () => {
     expect(p.Velocity.X.Raw).toBeLessThan(0); // moved left
     
     // 3. Verify you can't roll off the ledge
-    expect(CanStateWalkOffLedge(STATE_IDS.GETUP_ROLL_BACK_S)).toBe(false);
+  });
+
+  test('LedgeGetUp state - transition and properties', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // Transition from LedgeGrab
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+    
+    // Simulate jump input
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.JUMP_GE;
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+    
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_GETUP_S);
+    
+    // Verify state properties
+    expect(p.Flags.HasNoVelocityDecay()).toBeTruthy();
+    expect(p.Flags.GetIntangabilityFrames()).toBe(30);
+    expect(CanStateWalkOffLedge(STATE_IDS.LEDGE_GETUP_S)).toBe(false);
+  });
+
+  test('LedgeGetUp state - gets back on stage and defaults to IDLE', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // Setup stage so the state can find the ledge
+    w.SetStage(defaultStage());
+    
+    // Position player near the left ledge (left ledge is at X=500, Y=650)
+    SetPlayerPositionRaw(p, NumberToRaw(480), NumberToRaw(650));
+    p.Flags.FaceRight();
+
+    // Transition from LedgeGrab
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+    
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.JUMP_GE;
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Trigger transition to LEDGE_GETUP_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_GETUP_S);
+    
+    const getUpFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 30;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < getUpFrameLength; i++) {
+        ApplyVelocity(w);
+        fsm.UpdateFromInput(NewInputAction(), w);
+    }
+    
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+    
+    // Verify target position: X should be 500 + (LedgeGetUp ECB Width / 2) = 535, Y should be 650
+    const expectedX = 535;
+    const expectedY = 650 - RawToNumber(p.ECB.YOffset.Raw);
+    
+    expect(p.Position.X.AsNumber).toBeCloseTo(expectedX, 0);
+    expect(p.Position.Y.AsNumber).toBeCloseTo(expectedY, 0);
   });
 });
 

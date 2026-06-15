@@ -149,6 +149,7 @@ class STATES {
   public readonly PUMMEL_S = seq.Next as StateId;
   public readonly GRAB_RELEASE_S = seq.Next as StateId;
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
+  public readonly LEDGE_GETUP_S = seq.Next as StateId;
   public readonly WALL_KICK_S = seq.Next as StateId;
   public readonly HIT_SLIDE_S = seq.Next as StateId;
   public readonly HIT_FLINCH_S = seq.Next as StateId;
@@ -262,6 +263,7 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.GETUP_S:
     case STATE_IDS.GETUP_ROLL_FORWARD_S:
     case STATE_IDS.GETUP_ROLL_BACK_S:
+    case STATE_IDS.LEDGE_GETUP_S:
       return false;
     default:
       return true;

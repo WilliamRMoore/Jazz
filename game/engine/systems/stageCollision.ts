@@ -106,7 +106,9 @@ export function StageCollisionDetection(world: World): void {
           firstCollisionResult = collisionResult;
         }
         overallCollision = true;
-        resolveCollision(p, collisionResult, pools.VecPool);
+        if (preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S) {
+          resolveCollision(p, collisionResult, pools.VecPool);
+        }
       }
     }
 
@@ -177,13 +179,18 @@ export function StageCollisionDetection(world: World): void {
 
     if (
       isGroundedAfterJitter === false &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GRAB_S
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GRAB_S &&
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S
     ) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
       continue;
     }
 
-    if (isGroundedAfterJitter === true && overallCollision) {
+    if (
+      isGroundedAfterJitter === true &&
+      overallCollision &&
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S
+    ) {
       sm.UpdateFromWorld(
         ShouldSoftlandRaw(p.Velocity.Y.Raw)
           ? GAME_EVENT_IDS.SOFT_LAND_GE

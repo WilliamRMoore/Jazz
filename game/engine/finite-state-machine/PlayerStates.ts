@@ -71,7 +71,8 @@ import {
   InitDirtNapRelations,
   InitGetUpRelations,
   InitGetUpBackRollRelations,
-  InitGetUpForwardRollRelations
+  InitGetUpForwardRollRelations,
+  InitLedgeGetUpRelations
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -153,7 +154,8 @@ import {
   DirtNap,
   GetUp,
   GetUpRollBack,
-  GetUpRollForward
+  GetUpRollForward,
+  LedgeGetUp
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -227,6 +229,7 @@ const DIRT_NAP_RELATIONS = InitDirtNapRelations();
 const GETUP_RELATIONS = InitGetUpRelations();
 const GETUP_ROLL_FORWARD_RELATIONS = InitGetUpForwardRollRelations();
 const GETUP_ROLL_BACK_RELATIONS = InitGetUpBackRollRelations();
+const LEDGE_GETUP_RELATIONS = InitLedgeGetUpRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -311,7 +314,8 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
     GETUP_ROLL_FORWARD_RELATIONS.stateId,
     GETUP_ROLL_FORWARD_RELATIONS.mappings
   )
-  .set(GETUP_ROLL_BACK_RELATIONS.stateId, GETUP_ROLL_BACK_RELATIONS.mappings);
+  .set(GETUP_ROLL_BACK_RELATIONS.stateId, GETUP_ROLL_BACK_RELATIONS.mappings)
+  .set(LEDGE_GETUP_RELATIONS.stateId, LEDGE_GETUP_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -384,7 +388,8 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(DirtNap.StateId, DirtNap)
   .set(GetUp.StateId, GetUp)
   .set(GetUpRollForward.StateId, GetUpRollForward)
-  .set(GetUpRollBack.StateId, GetUpRollBack);
+  .set(GetUpRollBack.StateId, GetUpRollBack)
+  .set(LedgeGetUp.StateId, LedgeGetUp);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
