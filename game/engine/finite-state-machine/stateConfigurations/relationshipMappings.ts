@@ -74,7 +74,8 @@ import {
   defaultDirtNap,
   defaultToGetUp,
   toGetUpRollForward,
-  toGetUpRollBack
+  toGetUpRollBack,
+  toGetUp
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -1126,9 +1127,9 @@ export function InitDirtNapRelations(): StateRelation {
   const dnmap = new ActionStateMappings();
   dnmap.SetMappings([
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
-    { geId: GAME_EVENT_IDS.GETUP_ATTACK_GE, sId: STATE_IDS.GETUP_ATTACK_S }
+    { geId: GAME_EVENT_IDS.ATTACK_GE, sId: STATE_IDS.GETUP_ATTACK_S }
   ]);
-  dnmap.SetConditions([toGetUpRollForward, toGetUpRollBack]);
+  dnmap.SetConditions([toGetUp, toGetUpRollForward, toGetUpRollBack]);
   dnmap.SetDefaults([defaultToGetUp]);
   const translations = new StateRelation(STATE_IDS.DIRT_NAP_S, dnmap);
   return translations;
@@ -1145,6 +1146,29 @@ export function InitGetUpRelations(): StateRelation {
 
   const relations = new StateRelation(STATE_IDS.GETUP_S, gMap);
   return relations;
+}
+
+export function InitGetUpForwardRollRelations(): StateRelation {
+  const gufrMap = new ActionStateMappings();
+  gufrMap.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+  gufrMap.SetDefaults([defaultIdle]);
+  const gufrRelations = new StateRelation(
+    STATE_IDS.GETUP_ROLL_FORWARD_S,
+    gufrMap
+  );
+  return gufrRelations;
+}
+
+export function InitGetUpBackRollRelations(): StateRelation {
+  const gubrMap = new ActionStateMappings();
+  gubrMap.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+  gubrMap.SetDefaults([defaultIdle]);
+  const gubrRelations = new StateRelation(STATE_IDS.GETUP_ROLL_BACK_S, gubrMap);
+  return gubrRelations;
 }
 
 export function InitCrouchRelations(): StateRelation {

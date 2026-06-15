@@ -1,4 +1,5 @@
 import { CharacterConfig } from '../character/shared';
+import { StateId } from '../engine/finite-state-machine/stateConfigurations/shared';
 import { InputAction, NetworkInput } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 
@@ -95,7 +96,7 @@ export class NetworkInputBufferWriter {
   public WriteNetWorkInput(
     input: InputAction,
     forFrame: number,
-    FrameAdvantage: number,
+    FrameAdvantage: number
   ): void {
     const load = this.load;
     let writePtr = load(0);
@@ -201,6 +202,14 @@ type setPlayerCommand = {
   };
 };
 
+type setPlayerStateId = {
+  type: 'SET_PLAYER_STATE_ID';
+  payload: {
+    playerId: number;
+    stateId: StateId;
+  };
+};
+
 type initCommand = {
   type: 'INIT';
   payload: {
@@ -226,6 +235,7 @@ type spawnAndAttackCommand = {
 export type jMessage =
   | loadStageCommand
   | setPlayerCommand
+  | setPlayerStateId
   | initCommand
   | testCommand
   | spawnAndAttackCommand;

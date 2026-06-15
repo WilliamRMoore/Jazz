@@ -9,8 +9,9 @@ import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlaye
 import {
   jMessage,
   LocalInputBufferReader,
-  LocalInputBufferWriter,
+  LocalInputBufferWriter
 } from './workerUtils';
+import { SetPlayerToStateId } from '../engine/debug/scenarios/setPlayerStateId';
 
 let inputReaders: LocalInputBufferReader[] = [];
 let inputWriters: LocalInputBufferWriter[] = [];
@@ -28,10 +29,10 @@ self.onmessage = (event: MessageEvent) => {
     const frameSab = initPayload.frameBuffer;
 
     inputReaders = inputSabs.map(
-      (sab) => new LocalInputBufferReader(new Int32Array(sab)),
+      (sab) => new LocalInputBufferReader(new Int32Array(sab))
     );
     inputWriters = writeBackSabs.map(
-      (sab) => new LocalInputBufferWriter(new Int32Array(sab)),
+      (sab) => new LocalInputBufferWriter(new Int32Array(sab))
     );
     stateWriterBuffers = stateSabs.map((sab) => new Int32Array(sab));
 
@@ -55,7 +56,7 @@ self.onmessage = (event: MessageEvent) => {
     const posYRaw = (pl.pos.Y as any)._rawValue;
     jazz.AddPlayerEntity(
       hydrateCharacterConfig(pl.ccJson),
-      FlatVec.FromRaw(posXRaw, posYRaw),
+      FlatVec.FromRaw(posXRaw, posYRaw)
     );
 
     // Initialize the state machine to start falling so gravity applies immediately
@@ -73,6 +74,9 @@ self.onmessage = (event: MessageEvent) => {
     if (jazz.World.PlayerData.PlayerCount < 4) {
       SpawnAndAttackWithNSpecial(jazz);
     }
+  }
+  if (message.type == 'SET_PLAYER_STATE_ID') {
+    SetPlayerToStateId(jazz, message.payload.playerId, message.payload.stateId);
   }
 };
 
@@ -154,7 +158,7 @@ function loop() {
           Atomics.store(
             frameBuffer,
             1,
-            Math.round((tickEnd - tickStart) * 1000),
+            Math.round((tickEnd - tickStart) * 1000)
           );
         }
       }

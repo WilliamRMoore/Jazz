@@ -8,7 +8,7 @@ import {
   Walk,
   Dash,
 } from '../game/engine/finite-state-machine/stateConfigurations/states';
-import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, CanStateWalkOffLedge } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,
@@ -212,4 +212,67 @@ describe('Player states tests', () => {
     );
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelocityXLeft);
   });
+
+  test('GetUpRollForward state', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // 1. Transition from dirt nap
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+    p.Flags.FaceRight();
+    
+    // Create input for roll forward (pressing right while facing right)
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.LXAxis.SetFromNumber(0.8);
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+    
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ROLL_FORWARD_S);
+    
+    // 2. Verify it moves the character
+    p.Velocity.X.SetFromNumber(0);
+    fsm.UpdateFromInput(input, w);
+    
+    expect(p.Velocity.X.Raw).toBeGreaterThan(0); // moved right
+    
+    // 3. Verify you can't roll off the ledge
+    expect(CanStateWalkOffLedge(STATE_IDS.GETUP_ROLL_FORWARD_S)).toBe(false);
+  });
+
+  test('GetUpRollBack state', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // 1. Transition from dirt nap
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+    p.Flags.FaceRight();
+    
+    // Create input for roll backward (pressing left while facing right)
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.LXAxis.SetFromNumber(-0.8);
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+    
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ROLL_BACK_S);
+    
+    // 2. Verify it moves the character
+    p.Velocity.X.SetFromNumber(0);
+    fsm.UpdateFromInput(input, w);
+    
+    expect(p.Velocity.X.Raw).toBeLessThan(0); // moved left
+    
+    // 3. Verify you can't roll off the ledge
+    expect(CanStateWalkOffLedge(STATE_IDS.GETUP_ROLL_BACK_S)).toBe(false);
+  });
 });
+

@@ -156,7 +156,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.FORWARD_THROW_S, forwardThrow.TotalFrames)
       .set(STATE_IDS.GRND_SLAM_S, 20)
       .set(STATE_IDS.DIRT_NAP_S, 480)
-      .set(STATE_IDS.GETUP_S, 25);
+      .set(STATE_IDS.GETUP_S, 25)
+      .set(STATE_IDS.GETUP_ROLL_FORWARD_S, 38)
+      .set(STATE_IDS.GETUP_ROLL_BACK_S, 40);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,

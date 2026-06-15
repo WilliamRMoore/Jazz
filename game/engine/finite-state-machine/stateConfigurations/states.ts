@@ -1167,7 +1167,10 @@ export const GetUpRollForward: FSMState = {
     }
     p.Velocity.X.SetFromRaw(moveRaw);
   },
-  OnExit: (p: Player, w: World) => {}
+  OnExit: (p: Player, w: World) => {
+    p.Flags.SetIntangabilityFrames(0);
+    p.Flags.VelocityDecayOn();
+  }
 };
 
 export const GetUpRollBack: FSMState = {
@@ -1189,12 +1192,15 @@ export const GetUpRollBack: FSMState = {
     const clampedNormalizedTimeRaw = Math.min(normalizedTimeRaw, ONE);
     const easeRaw = EaseInRaw(clampedNormalizedTimeRaw);
     let moveRaw = MultiplyRaw(rollRightSpeed, ONE - easeRaw);
-    if (!p.Flags.IsFacingRight) {
+    if (p.Flags.IsFacingRight) {
       moveRaw = -moveRaw;
     }
     p.Velocity.X.SetFromRaw(moveRaw);
   },
-  OnExit: (p: Player, w: World) => {}
+  OnExit: (p: Player, w: World) => {
+    p.Flags.SetIntangabilityFrames(0);
+    p.Flags.VelocityDecayOn();
+  }
 };
 
 /**

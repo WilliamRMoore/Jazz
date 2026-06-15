@@ -69,7 +69,9 @@ import {
   InitUpThrowRelations,
   InitGroundSlamRelations,
   InitDirtNapRelations,
-  InitGetUpRelations
+  InitGetUpRelations,
+  InitGetUpBackRollRelations,
+  InitGetUpForwardRollRelations
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -149,7 +151,9 @@ import {
   UpThrow,
   GroundSlam,
   DirtNap,
-  GetUp
+  GetUp,
+  GetUpRollBack,
+  GetUpRollForward
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -221,6 +225,8 @@ const PUMMEL_RELATIONS = InitPummelRelations();
 const GROUND_SLAM_RELATIONS = InitGroundSlamRelations();
 const DIRT_NAP_RELATIONS = InitDirtNapRelations();
 const GETUP_RELATIONS = InitGetUpRelations();
+const GETUP_ROLL_FORWARD_RELATIONS = InitGetUpForwardRollRelations();
+const GETUP_ROLL_BACK_RELATIONS = InitGetUpBackRollRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -300,7 +306,12 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings)
   .set(GROUND_SLAM_RELATIONS.stateId, GROUND_SLAM_RELATIONS.mappings)
   .set(DIRT_NAP_RELATIONS.stateId, DIRT_NAP_RELATIONS.mappings)
-  .set(GETUP_RELATIONS.stateId, GETUP_RELATIONS.mappings);
+  .set(GETUP_RELATIONS.stateId, GETUP_RELATIONS.mappings)
+  .set(
+    GETUP_ROLL_FORWARD_RELATIONS.stateId,
+    GETUP_ROLL_FORWARD_RELATIONS.mappings
+  )
+  .set(GETUP_ROLL_BACK_RELATIONS.stateId, GETUP_ROLL_BACK_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -371,7 +382,9 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(Pummel.StateId, Pummel)
   .set(GroundSlam.StateId, GroundSlam)
   .set(DirtNap.StateId, DirtNap)
-  .set(GetUp.StateId, GetUp);
+  .set(GetUp.StateId, GetUp)
+  .set(GetUpRollForward.StateId, GetUpRollForward)
+  .set(GetUpRollBack.StateId, GetUpRollBack);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)

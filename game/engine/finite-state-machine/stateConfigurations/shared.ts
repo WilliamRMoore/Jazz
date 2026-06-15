@@ -263,6 +263,9 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.DASH_S:
     case STATE_IDS.DOWN_CHARGE_S:
     case STATE_IDS.DOWN_CHARGE_EX_S:
+    case STATE_IDS.GETUP_S:
+    case STATE_IDS.GETUP_ROLL_FORWARD_S:
+    case STATE_IDS.GETUP_ROLL_BACK_S:
       return false;
     default:
       return true;

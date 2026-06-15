@@ -1090,6 +1090,24 @@ export const ToDownThrow: condition = {
   StateId: STATE_IDS.DOWN_THROW_S
 };
 
+export const toGetUp: condition = {
+  Name: 'ToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreVertThanHorz = Math.abs(ia.LXAxisRaw) < Math.abs(ia.LYAxisRaw);
+    if (!moreVertThanHorz) {
+      return false;
+    }
+    if (ia.LYAxisRaw > 0) {
+      return true;
+    }
+    if (ia.Action === GAME_EVENT_IDS.JUMP_GE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_S
+};
+
 export const toGetUpRollForward: condition = {
   Name: 'toGetUpRollForward',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {

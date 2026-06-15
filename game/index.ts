@@ -3,7 +3,7 @@ import { playerControllerInfo, start } from './loops/local-main';
 import { InitGamePage } from './ui/game-page';
 import {
   LocalInputBufferReader,
-  LocalInputBufferWriter,
+  LocalInputBufferWriter
 } from './workers/workerUtils';
 import { RENDER_MONITOR_FRAME_RATE } from './loops/animation-loop';
 import { PlayerStateHistory } from './engine/systems/history';
@@ -17,19 +17,20 @@ import { envConfig } from './engine/config/main-config';
 import {
   GetStateName,
   GetGrabName,
-  GetAttackName,
+  GetAttackName
 } from './engine/debug/debugUtils';
+import { STATE_IDS } from './engine/finite-state-machine/stateConfigurations/shared';
 
 document.addEventListener('DOMContentLoaded', () => {
   InitGamePage();
 });
 
 const p1GamePadSelect = document.getElementById(
-  'p1-gamepad-select',
+  'p1-gamepad-select'
 ) as HTMLSelectElement;
 
 const p2GamePadSelect = document.getElementById(
-  'p2-gamepad-select',
+  'p2-gamepad-select'
 ) as HTMLSelectElement;
 
 const modeSelect = document.getElementById('mode-select') as HTMLSelectElement;
@@ -47,7 +48,7 @@ starBtn.addEventListener('click', () => {
   if (mode == '1') {
     const controllerInfo = {
       playerIndex: 0,
-      inputIndex: p1GamePad,
+      inputIndex: p1GamePad
     } as playerControllerInfo;
     start([controllerInfo]);
   }
@@ -56,7 +57,7 @@ starBtn.addEventListener('click', () => {
     const p2GamePad = Number.parseInt(p2GamePadSelect.value);
     const controllerInfo = [
       { playerIndex: 0, inputIndex: p1GamePad },
-      { playerIndex: 1, inputIndex: p2GamePad },
+      { playerIndex: 1, inputIndex: p2GamePad }
     ] as Array<playerControllerInfo>;
     start(controllerInfo);
   }
@@ -65,7 +66,7 @@ starBtn.addEventListener('click', () => {
   if (mode == '3') {
     const controllerInfo = {
       playerIndex: 0,
-      inputIndex: p1GamePad,
+      inputIndex: p1GamePad
     } as playerControllerInfo;
     startEngine(controllerInfo);
   }
@@ -91,7 +92,7 @@ function startEngine(controllerInfo: playerControllerInfo) {
   const writeBackReader = new LocalInputBufferReader(writeBackBuffer);
 
   const worker = new Worker(new URL('./local-worker.js', import.meta.url), {
-    type: 'module',
+    type: 'module'
   });
 
   worker.postMessage({
@@ -100,15 +101,15 @@ function startEngine(controllerInfo: playerControllerInfo) {
       inputBuffers: [inputSab],
       writeBackBuffers: [writeBackSab],
       stateBuffers: [stateSab],
-      frameBuffer: frameSab,
-    },
+      frameBuffer: frameSab
+    }
   });
 
   const mapReplacer = (key: string, value: any) => {
     if (value instanceof Map) {
       return {
         __dataType: 'Map',
-        value: Array.from(value.entries()),
+        value: Array.from(value.entries())
       };
     }
     return value;
@@ -118,8 +119,8 @@ function startEngine(controllerInfo: playerControllerInfo) {
     type: 'SET_PLAYER',
     payload: {
       ccJson: JSON.stringify(new DefaultCharacterConfig(), mapReplacer),
-      pos: ToFV(610, 100),
-    },
+      pos: ToFV(610, 100)
+    }
   });
 
   // Write input every 8 ms
@@ -131,6 +132,17 @@ function startEngine(controllerInfo: playerControllerInfo) {
   window.addEventListener('keyup', (e) => {
     if (e.key === '1') {
       worker.postMessage({ type: 'SPAWN_AND_ATTACK' });
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === '2') {
+      worker.postMessage({
+        type: 'SET_PLAYER_STATE_ID',
+        payload: {
+          playerId: 0,
+          stateId: STATE_IDS.DIRT_NAP_S
+        }
+      });
     }
   });
 
@@ -159,7 +171,7 @@ class HistoryRingBuffer {
 
   set(
     frame: number,
-    stateHist: PlayerStateHistory,
+    stateHist: PlayerStateHistory
   ): PlayerStateHistory | undefined {
     if (frame < 0) return undefined;
     const idx = frame % this.size;
@@ -173,7 +185,7 @@ class HistoryRingBuffer {
 function ECHO_RENDER_LOOP(
   writeBackReader: LocalInputBufferReader,
   stateBuffer: Int32Array,
-  frameBuffer: Int32Array,
+  frameBuffer: Int32Array
 ) {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
 
@@ -201,7 +213,7 @@ function ECHO_RENDER_LOOP(
     new HistoryRingBuffer(16),
     new HistoryRingBuffer(16),
     new HistoryRingBuffer(16),
-    new HistoryRingBuffer(16),
+    new HistoryRingBuffer(16)
   ];
 
   const stateHistoryPool: PlayerStateHistory[] = [];
@@ -251,12 +263,16 @@ function ECHO_RENDER_LOOP(
       if (timeScale < 0.95) timeScale = 0.95;
       if (timeScale > 1.05) timeScale = 1.05;
 
-      if (delayFrames < -1 || delayFrames > 6) {
-        // Lag spike or thread paused, hard snap
+      if (delayFrames > 6) {
+        // Lag spike, hard snap to catch up
         renderTime = (highestGlobal - 2) * loopRate;
         timeScale = 1.0;
       } else {
         renderTime += delta * timeScale;
+        // If paused or catching up too fast, don't render past the highest known frame
+        if (renderTime > highestGlobal * loopRate) {
+          renderTime = highestGlobal * loopRate;
+        }
       }
     }
 
@@ -420,7 +436,7 @@ function drawPlatforms(ctx: CanvasRenderingContext2D, plats?: Array<Line>) {
 function drawPlayerState(
   ctx: CanvasRenderingContext2D,
   lp: LerpedPlayer,
-  frame: number,
+  frame: number
 ) {
   // Previous ECB
   ctx.fillStyle = 'red';
@@ -588,7 +604,7 @@ function drawCapsule(
   y1: number,
   x2: number,
   y2: number,
-  radius: number,
+  radius: number
 ) {
   const angle = Math.atan2(y2 - y1, x2 - x1);
   const offsetX = Math.sin(angle) * radius;
@@ -609,7 +625,7 @@ function printDataLine(
   label: string,
   data: string | number,
   x: number,
-  y: number,
+  y: number
 ) {
   const originalStyle = ctx.fillStyle;
   ctx.fillStyle = '#4bff14'; // Sage green
@@ -625,7 +641,7 @@ function printDataHeader(
   ctx: CanvasRenderingContext2D,
   label: string,
   x: number,
-  y: number,
+  y: number
 ) {
   const originalStyle = ctx.fillStyle;
   ctx.fillStyle = 'cyan';
@@ -638,7 +654,7 @@ function PrintPlayerStateHistoryDirect(
   ps: PlayerStateHistory,
   x: number,
   y: number,
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D
 ) {
   const indent = 13;
   let currY = y;
@@ -653,7 +669,7 @@ function PrintPlayerStateHistoryDirect(
     'Name:',
     GetStateName(ps.stateId),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(ctx, 'Frame:', ps.stateFrame, x + indent * 2, currY);
 
@@ -663,14 +679,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.posXRaw),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.posYRaw),
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Velocity:', x + indent, currY);
@@ -679,14 +695,14 @@ function PrintPlayerStateHistoryDirect(
     'Vx:',
     RawToNumber(ps.velXRaw),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Vy:',
     RawToNumber(ps.velYRaw),
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataLine(
@@ -694,7 +710,7 @@ function PrintPlayerStateHistoryDirect(
     'Direction:',
     ps.facingRight ? 'Right' : 'Left',
     x + indent,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'ECB:', x + indent, currY);
@@ -704,14 +720,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.comp_ecbDiamond[2].xRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.comp_ecbDiamond[2].yRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataHeader(ctx, 'Bottom:', x + indent * 2, currY);
   currY = printDataLine(
@@ -719,14 +735,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.comp_ecbDiamond[0].xRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.comp_ecbDiamond[0].yRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataHeader(ctx, 'Left:', x + indent * 2, currY);
   currY = printDataLine(
@@ -734,14 +750,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.comp_ecbDiamond[1].xRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.comp_ecbDiamond[1].yRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataHeader(ctx, 'Right:', x + indent * 2, currY);
   currY = printDataLine(
@@ -749,14 +765,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.comp_ecbDiamond[3].xRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.comp_ecbDiamond[3].yRaw),
     x + indent * 3,
-    currY,
+    currY
   );
 
   currY = printDataLine(
@@ -764,7 +780,7 @@ function PrintPlayerStateHistoryDirect(
     'Damage:',
     RawToNumber(ps.damageRaw),
     x + indent,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'HitStun:', x + indent, currY);
@@ -774,14 +790,14 @@ function PrintPlayerStateHistoryDirect(
     'Vx:',
     RawToNumber(ps.hitStunVxRaw),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Vy:',
     RawToNumber(ps.hitStunVyRaw),
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Flags:', x + indent, currY);
@@ -790,35 +806,35 @@ function PrintPlayerStateHistoryDirect(
     'FastFalling:',
     ps.fasFalling ? 'T' : 'F',
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'VelocityDecay:',
     ps.velocityDecayActive ? 'T' : 'F',
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'HitPauseFrames:',
     ps.hitPauseFrames,
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'IntangabilityFrames:',
     ps.intangabilityFrames,
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'PlatFormDetection:',
     ps.disablePlatformDetectionFrames,
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Jump:', x + indent, currY);
@@ -830,7 +846,7 @@ function PrintPlayerStateHistoryDirect(
     'LedgeGrabCount:',
     ps.ldGrabCount,
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Shield:', x + indent, currY);
@@ -839,14 +855,14 @@ function PrintPlayerStateHistoryDirect(
     'CurrentRadius:',
     RawToNumber(ps.shieldRadiusRaw),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Active:',
     ps.shieldActive ? 'T' : 'F',
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataHeader(ctx, 'Tilt:', x + indent * 2, currY);
   currY = printDataLine(
@@ -854,14 +870,14 @@ function PrintPlayerStateHistoryDirect(
     'X:',
     RawToNumber(ps.shieldTiltXRaw),
     x + indent * 3,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Y:',
     RawToNumber(ps.shieldTiltYRaw),
     x + indent * 3,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Grab:', x + indent, currY);
@@ -871,14 +887,14 @@ function PrintPlayerStateHistoryDirect(
     'GrabIdName:',
     ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'GrabConfigName:',
     ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'GrabMeter:', x + indent, currY);
@@ -887,14 +903,14 @@ function PrintPlayerStateHistoryDirect(
     'Meter:',
     RawToNumber(ps.grabMeterRaw),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'HoldingPlayerId:',
     ps.holdingPlayerId ?? '',
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Attack:', x + indent, currY);
@@ -903,21 +919,21 @@ function PrintPlayerStateHistoryDirect(
     'AttackConfigName:',
     ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'AttackIdName:',
     ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
     x + indent * 2,
-    currY,
+    currY
   );
   currY = printDataLine(
     ctx,
     'Player Ids Hit:',
     Array.from(ps.playersHit).toString(),
     x + indent * 2,
-    currY,
+    currY
   );
 
   currY = printDataHeader(ctx, 'Sensors:', x + indent, currY);
@@ -931,21 +947,21 @@ function PrintPlayerStateHistoryDirect(
       'Radius:',
       RawToNumber(s.radiusRaw),
       x + indent * 3,
-      currY,
+      currY
     );
     currY = printDataLine(
       ctx,
       'X:',
       RawToNumber(s.globalXRaw),
       x + indent * 3,
-      currY,
+      currY
     );
     currY = printDataLine(
       ctx,
       'Y:',
       RawToNumber(s.globalYRaw),
       x + indent * 3,
-      currY,
+      currY
     );
   }
 }
