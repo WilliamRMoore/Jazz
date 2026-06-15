@@ -1,7 +1,6 @@
 import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { InputAction } from '../input/Input';
-
 import { ActionMappings, FSMStates } from './PlayerStates';
 import { RunCondition } from './stateConfigurations/conditions';
 import { ActionStateMappings } from './stateConfigurations/relationshipMappings';
@@ -90,7 +89,7 @@ export class StateMachine {
 
     const conditionalsLength = conditions.length;
     const playerInput = world.PlayerData.InputStore(
-      this.player.ID,
+      this.player.ID
     ).GetInputForFrame(world.LocalFrame);
     // Loop through all conditionals, if one returns a stateId, change it and return true, otherwise return false
     for (let i = 0; i < conditionalsLength; i++) {
@@ -98,7 +97,7 @@ export class StateMachine {
         conditions[i],
         world,
         this.player,
-        playerInput,
+        playerInput
       );
 
       // Condition returned a stateId, check it
@@ -125,7 +124,7 @@ export class StateMachine {
 
   private runNext(
     inputAction: InputAction,
-    fsmInfo: FSMInfoComponent,
+    fsmInfo: FSMInfoComponent
   ): boolean {
     const state = this.getTranslation(inputAction.Action);
 
@@ -147,7 +146,7 @@ export class StateMachine {
 
     const defaultTransition = this.getDefaultState(
       this.player.FSMInfo.CurrentStateId,
-      w,
+      w
     );
 
     // No default transition resolved, return false
@@ -164,7 +163,7 @@ export class StateMachine {
 
   private getTranslation(gameEventId: GameEventId): FSMState | undefined {
     const stateMappings = this.stateMappings.get(
-      this.player.FSMInfo.CurrentStateId,
+      this.player.FSMInfo.CurrentStateId
     );
 
     const nextStateId = stateMappings?.GetMapping(gameEventId);
@@ -192,7 +191,7 @@ export class StateMachine {
 
     const defaultConditionsLength = defaultStateConditions.length;
     const playerInput = w.PlayerData.InputStore(
-      this.player.ID,
+      this.player.ID
     ).GetInputForFrame(w.LocalFrame);
 
     for (let i = 0; i < defaultConditionsLength; i++) {
