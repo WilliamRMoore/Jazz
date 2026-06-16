@@ -100,10 +100,21 @@ describe('Stage Collision system tests', () => {
     expect(p.ECB.Top.Y.AsNumber).toBeCloseTo(700, 0);
   });
 
-  test.skip('Player should transition to wall slam', () => {
+  test('Player should transition to wall slam', () => {
     w.SetStage(WallStage());
-    SetPlayerPosition(p, ToFp(550), ToFp(600));
+    // WallStage has a left facing wall at x=350. 
+    // We place the player to the left of it (x=310) and move them right.
+    SetPlayerPosition(p, ToFp(310), ToFp(400));
     p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.X.SetFromNumber(20); 
+    p.Velocity.Y.SetFromNumber(0); 
+
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity(); 
+    StageCollisionDetection(w);
+
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.WALL_SLAM_S);
   });
 
   test.skip('Player should collide with a bottom-left corner', () => {
@@ -148,5 +159,107 @@ describe('Stage Collision system tests', () => {
       sm.UpdateFromInput(ia, w);
     }
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GETUP_S);
+  });
+
+  test('Player transitions to TechInPlace when trigger pressed within 20 frames before ground collision', () => {
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
+    p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.Y.SetFromNumber(25);
+
+    const is = w.PlayerData.InputStore(0);
+    const prevIa = NewInputAction();
+    prevIa.LTVal.SetFromNumber(0);
+    is.StoreInputForFrame(49, prevIa);
+
+    const techIa = NewInputAction();
+    techIa.LTVal.SetFromNumber(1); 
+    techIa.LXAxis.SetFromNumber(0); 
+    is.StoreInputForFrame(50, techIa);
+
+    w.LocalFrame = 50;
+    RecordHistory(w);
+    Launch.OnUpdate(p, w); 
+
+    applyVelocity(); 
+    StageCollisionDetection(w);
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.TECH_IN_PLACE_S);
+  });
+
+  test('Player transitions to Roll Tech when trigger pressed and stick held', () => {
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
+    p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.Y.SetFromNumber(25); 
+
+    const is = w.PlayerData.InputStore(0);
+    is.StoreInputForFrame(49, NewInputAction());
+
+    const techIa = NewInputAction();
+    techIa.LTVal.SetFromNumber(1); 
+    techIa.LXAxis.SetFromNumber(-1); // Left roll
+    is.StoreInputForFrame(50, techIa);
+
+    w.LocalFrame = 50;
+    RecordHistory(w);
+    Launch.OnUpdate(p, w); 
+
+    applyVelocity(); 
+    StageCollisionDetection(w);
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.ROLL_TECH_S);
+    expect(p.Flags.IsFacingRight).toBe(true); 
+  });
+
+  test('Player fails to tech if trigger was pressed more than 20 frames before ground collision', () => {
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
+    p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.Y.SetFromNumber(25); 
+
+    const is = w.PlayerData.InputStore(0);
+    is.StoreInputForFrame(49, NewInputAction());
+
+    const techIa = NewInputAction();
+    techIa.LTVal.SetFromNumber(1); 
+    is.StoreInputForFrame(50, techIa);
+
+    w.LocalFrame = 50;
+    Launch.OnUpdate(p, w); 
+
+    w.LocalFrame = 71;
+    RecordHistory(w);
+    is.StoreInputForFrame(71, NewInputAction());
+
+    applyVelocity(); 
+    StageCollisionDetection(w);
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
+  });
+
+  test('Player fails to tech and is locked out if tech attempted again within 40 frames', () => {
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
+    p.FSMInfo.SetCurrentState(Launch);
+    p.Velocity.Y.SetFromNumber(25);
+
+    const is = w.PlayerData.InputStore(0);
+    
+    is.StoreInputForFrame(49, NewInputAction());
+    const earlyTechIa = NewInputAction(); earlyTechIa.LTVal.SetFromNumber(1);
+    is.StoreInputForFrame(50, earlyTechIa);
+    
+    w.LocalFrame = 50;
+    Launch.OnUpdate(p, w);
+    expect(p.Flags.LastTechFrame).toBe(50);
+
+    is.StoreInputForFrame(73, NewInputAction());
+    const laterTechIa = NewInputAction(); laterTechIa.LTVal.SetFromNumber(1);
+    is.StoreInputForFrame(74, laterTechIa);
+
+    w.LocalFrame = 74;
+    Launch.OnUpdate(p, w);
+    
+    expect(p.Flags.LastTechFrame).toBe(50);
+
+    RecordHistory(w);
+    applyVelocity(); 
+    StageCollisionDetection(w);
+
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
   });
 });

@@ -17,7 +17,8 @@ import { FSMState } from '../PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
 import { Grab } from '../../entity/components/grab';
-import { TEN } from '../../math/numberConstants';
+import { POINT_FIVE, POINT_TWO_FIVE, TEN } from '../../math/numberConstants';
+import { InputAction } from '../../input/Input';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
 const POINT_ONE_FIVE = NumberToRaw(0.15);
@@ -414,6 +415,20 @@ export const Launch: FSMState = {
     pos.Y.AddRaw(-TEN);
   },
   OnUpdate: (p: Player, w: World) => {
+    const lastTechFrame = p.Flags.LastTechFrame;
+    const currentFrame = w.LocalFrame;
+    if (currentFrame - lastTechFrame >= 40) {
+      const is = w.PlayerData.InputStore(p.ID);
+      const ia = is.GetInputForFrame(currentFrame);
+      const lastIa = is.GetInputForFrame(w.PreviousFrame);
+      if (
+        (ia.LTValRaw >= POINT_FIVE || ia.RTValRaw >= POINT_FIVE) &&
+        lastIa.LTValRaw < POINT_TWO_FIVE &&
+        lastIa.RTValRaw < POINT_TWO_FIVE
+      ) {
+        p.Flags.SetLastTechFrame(currentFrame);
+      }
+    }
     if (p) p.HitStun.DecrementHitStun();
   },
   OnExit: (p, w) => {
@@ -1129,18 +1144,6 @@ export const WallSlam: FSMState = {
   OnExit: (p: Player, w: World) => {}
 };
 
-export const TechInPlace: FSMState = {
-  StateName: 'TechInPlace',
-  StateId: STATE_IDS.TECH_IN_PLACE_S,
-  OnEnter: (p: Player, w: World) => {
-    p.Flags.SetIntangabilityFrames(20);
-    p.Velocity.X.Zero();
-    p.Velocity.Y.Zero();
-  },
-  OnUpdate: (p: Player, w: World) => {},
-  OnExit: (p: Player, w: World) => {}
-};
-
 export const DirtNap: FSMState = {
   StateName: 'DirtNap',
   StateId: STATE_IDS.DIRT_NAP_S,
@@ -1219,13 +1222,72 @@ export const GetUpRollBack: FSMState = {
   }
 };
 
+export const TechInPlace: FSMState = {
+  StateName: 'TechInPlace',
+  StateId: STATE_IDS.TECH_IN_PLACE_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Flags.SetIntangabilityFrames(20);
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+  },
+  OnUpdate: (p: Player, w: World) => {},
+  OnExit: (p: Player, w: World) => {}
+};
+
+export const RollTech: FSMState = {
+  StateName: 'RollTech',
+  StateId: STATE_IDS.ROLL_TECH_S,
+  OnEnter: (p: Player, w: World) => {
+    const pd = w.PlayerData;
+    const inputStore = pd.InputStore(p.ID);
+    const curFrame = w.LocalFrame;
+    const ia = inputStore.GetInputForFrame(curFrame);
+    if (ia.LXAxis.Raw > 0) {
+      p.Flags.FaceLeft();
+    } else if (ia.LXAxis.Raw < 0) {
+      p.Flags.FaceRight();
+    }
+    p.Flags.SetIntangabilityFrames(20);
+    p.Flags.VelocityDecayOff();
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+  },
+  OnUpdate: (p: Player, w: World) => {
+    const fsmInfo = p.FSMInfo;
+    const totalFrames = fsmInfo.GetFrameLengthForState(STATE_IDS.ROLL_TECH_S)!;
+    const currentFrameRaw = NumberToRaw(fsmInfo.CurrentStateFrame);
+    const normalizedTimeRaw = DivideRaw(
+      currentFrameRaw,
+      NumberToRaw(totalFrames)
+    );
+    const clampedNormalizedTimeRaw = Math.min(normalizedTimeRaw, ONE);
+    const easeRaw = EaseInRaw(clampedNormalizedTimeRaw);
+    const maxSpeedRaw = p.Speeds.DodeRollSpeedRaw;
+    const oneMinusEaseRaw = ONE - easeRaw;
+    const direction = p.Flags.IsFacingRight ? NumberToRaw(-1) : NumberToRaw(1);
+    p.Velocity.X.SetFromRaw(
+      MultiplyRaw(direction, MultiplyRaw(maxSpeedRaw, oneMinusEaseRaw))
+    );
+  },
+  OnExit: (p, w) => {
+    p.Flags.VelocityDecayOn();
+    p.Flags.ZeroIntangabilityFrames();
+    p.Velocity.X.Zero();
+  }
+};
+
+export const WallTech: FSMState = {
+  StateName: 'WallTech',
+  StateId: STATE_IDS.WALL_TECH_S,
+  OnEnter: () => {},
+  OnUpdate: () => {},
+  OnExit: () => {}
+};
+
 /**
  * TODO
  * neutralSpecial EX
  * upSpecial EX
- * tech ground
- * tech roll forward
- * tech roll back
  * wall tech
  * getUpAttack
  * ledgeRoll
@@ -1233,7 +1295,7 @@ export const GetUpRollBack: FSMState = {
  * clang
  */
 
-// ~72ish states
+// ~90ish states
 
 //==================== Utils =====================
 

@@ -12,6 +12,7 @@ import {
   LocalInputBufferWriter
 } from './workerUtils';
 import { SetPlayerToStateId } from '../engine/debug/scenarios/setPlayerStateId';
+import { LaunchPlayerDownward } from '../engine/debug/scenarios/launchPlayerDownward';
 
 let inputReaders: LocalInputBufferReader[] = [];
 let inputWriters: LocalInputBufferWriter[] = [];
@@ -77,6 +78,9 @@ self.onmessage = (event: MessageEvent) => {
   }
   if (message.type == 'SET_PLAYER_STATE_ID') {
     SetPlayerToStateId(jazz, message.payload.playerId, message.payload.stateId);
+  }
+  if (message.type == 'LAUNCH_DOWN_WARD') {
+    LaunchPlayerDownward(jazz, message.payload.playerId);
   }
 };
 

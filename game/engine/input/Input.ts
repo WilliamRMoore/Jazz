@@ -4,7 +4,6 @@ import {
 } from '../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../math/fixedPoint';
 import { ToFp } from '../utils';
-import { World } from '../world/world';
 
 export type NetworkInput = {
   Input: InputAction;

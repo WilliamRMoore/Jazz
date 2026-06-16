@@ -6,6 +6,7 @@ export class PlayerFlagsComponent {
   private disablePlatformDetection: number = 0;
   private velocityDecayActive: boolean = true;
   private shieldJump: boolean = false;
+  private lastTechFrame: number = 0;
 
   public FaceRight(): void {
     this.facingRight = true;
@@ -79,6 +80,14 @@ export class PlayerFlagsComponent {
     this.shieldJump = false;
   }
 
+  public SetLastTechFrame(frame: number): void {
+    (this, (this.lastTechFrame = frame));
+  }
+
+  public ZeroTechLockOut(): void {
+    this.lastTechFrame = 0;
+  }
+
   public get IsFastFalling(): boolean {
     return this.fastFalling;
   }
@@ -123,6 +132,10 @@ export class PlayerFlagsComponent {
     return this.intangabilityFrames;
   }
 
+  public get LastTechFrame(): number {
+    return this.lastTechFrame;
+  }
+
   public HasNoVelocityDecay(): boolean {
     return !this.velocityDecayActive;
   }
@@ -135,6 +148,7 @@ export class PlayerFlagsComponent {
     this.disablePlatformDetection = history.disablePlatformDetectionFrames;
     this.velocityDecayActive = history.velocityDecayActive;
     this.shieldJump = history.shieldJump;
+    this.lastTechFrame = history.lastTechFrame;
   }
 }
 
@@ -146,4 +160,5 @@ export type FlagsHist = {
   disablePlatformDetectionFrames: number;
   velocityDecayActive: boolean;
   shieldJump: boolean;
+  lastTechFrame: number;
 };

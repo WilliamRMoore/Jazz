@@ -63,7 +63,6 @@ class GAME_EVENTS {
   public readonly U_THROW = seq.Next as GameEventId;
   public readonly D_THROW = seq.Next as GameEventId;
   public readonly GETUP_GE = seq.Next as GameEventId;
-  // End of GameEvents that can be sourced from player input
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
   public readonly FALL_GE = seq.Next as GameEventId;
@@ -78,6 +77,8 @@ class GAME_EVENTS {
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
   public readonly WALL_SLAM_GE = seq.Next as GameEventId;
   public readonly GRND_SLAM_GE = seq.Next as GameEventId;
+  public readonly TECH_IN_PLACE_GE = seq.Next as GameEventId;
+  public readonly ROLL_TECH_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -164,8 +165,7 @@ class STATES {
   public readonly GETUP_ROLL_FORWARD_S = seq.Next as StateId;
   public readonly GETUP_ROLL_BACK_S = seq.Next as StateId;
   public readonly TECH_IN_PLACE_S = seq.Next as StateId;
-  public readonly ROLL_F_TECH_S = seq.Next as StateId;
-  public readonly ROLL_B_TECH_S = seq.Next as StateId;
+  public readonly ROLL_TECH_S = seq.Next as StateId;
   public readonly WALL_TECH_S = seq.Next as StateId;
 }
 
@@ -265,6 +265,8 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.GETUP_ROLL_FORWARD_S:
     case STATE_IDS.GETUP_ROLL_BACK_S:
     case STATE_IDS.LEDGE_GETUP_S:
+    case STATE_IDS.TECH_IN_PLACE_S:
+    case STATE_IDS.ROLL_TECH_S:
       return false;
     default:
       return true;

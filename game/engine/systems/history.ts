@@ -20,7 +20,7 @@ import { Player } from '../entity/playerOrchestrator';
 import {
   AttackId,
   GrabId,
-  STATE_IDS,
+  STATE_IDS
 } from '../finite-state-machine/stateConfigurations/shared';
 import { FlatVec } from '../physics/vector';
 import { PlayerHistoryTable } from '../world/stateModules';
@@ -49,7 +49,7 @@ export function RecordHistory(w: World) {
 export function record(
   p: Player,
   pTable: PlayerHistoryTable,
-  frameNumber: frameNumber,
+  frameNumber: frameNumber
 ) {
   const r = pTable.get(frameNumber);
   RecordIntoHistory(p, r);
@@ -85,6 +85,7 @@ export function RecordIntoHistory(p: Player, r: PlayerStateHistory) {
   r.hitPauseFrames = flags.HitPauseFrames;
   r.intangabilityFrames = flags.GetIntangabilityFrames();
   r.disablePlatformDetectionFrames = flags.DisablePlatDetectionFrames;
+  r.lastTechFrame = flags.LastTechFrame;
   r.velocityDecayActive = flags.IsVelocityDecayActive;
   r.shieldJump = flags.JumpedFromShield;
   r.jumpCount = jump.JumpCount;
@@ -265,6 +266,7 @@ export class PlayerStateHistory
   disablePlatformDetectionFrames = 0;
   velocityDecayActive = true;
   shieldJump = false;
+  lastTechFrame = 0;
   // jump
   jumpCount = 0;
   // FSM
@@ -314,7 +316,7 @@ export class PlayerStateHistory
   // computed values
   readonly comp_shield = {
     calcXRaw: 0,
-    calcYRaw: 0,
+    calcYRaw: 0
   };
   readonly comp_sensors = new Array<{
     globalXRaw: number;
@@ -346,10 +348,10 @@ export class PlayerStateHistory
     active: boolean;
   }>(envConfig.get('MaxAtkBubblesPerPlayer') as number);
   readonly comp_ledgeDetectorLeft = new Array<{ xRaw: number; yRaw: number }>(
-    4,
+    4
   );
   readonly comp_ledgeDetectorRight = new Array<{ xRaw: number; yRaw: number }>(
-    4,
+    4
   );
 
   constructor() {
@@ -359,7 +361,7 @@ export class PlayerStateHistory
         xOffsetRaw: 0,
         yOffsetRaw: 0,
         radiusRaw: 0,
-        active: false,
+        active: false
       };
     }
     const csLength = this.comp_sensors.length;
@@ -368,7 +370,7 @@ export class PlayerStateHistory
         globalXRaw: 0,
         globalYRaw: 0,
         radiusRaw: 0,
-        active: false,
+        active: false
       };
     }
     const eLength = this.comp_ecbDiamond.length;
@@ -383,7 +385,7 @@ export class PlayerStateHistory
         x2Raw: 0,
         y2Raw: 0,
         radiusRaw: 0,
-        active: false,
+        active: false
       };
     }
     const gLength = this.comp_grabCircles.length;
@@ -393,7 +395,7 @@ export class PlayerStateHistory
         xRaw: 0,
         yRaw: 0,
         radiusRaw: 0,
-        active: false,
+        active: false
       };
     }
     const aLength = this.comp_attackCircles.length;
@@ -403,7 +405,7 @@ export class PlayerStateHistory
         xRaw: 0,
         yRaw: 0,
         radiusRaw: 0,
-        active: false,
+        active: false
       };
     }
     const ldlLength = 4;
@@ -426,6 +428,7 @@ export class PlayerStateHistory
     this.disablePlatformDetectionFrames = 0;
     this.velocityDecayActive = true;
     this.shieldJump = false;
+    this.lastTechFrame = 0;
     this.jumpCount = 0;
     this.stateId = STATE_IDS.IDLE_S;
     this.stateFrame = 0;
@@ -521,7 +524,7 @@ export class PlayerStateHistory
   public Serialize(
     buffer: Int32Array,
     offset: number,
-    frameNumber: number,
+    frameNumber: number
   ): number {
     let ptr = offset;
     // This method's logic MUST be kept in sync with the static BufferSize() method.
@@ -543,6 +546,7 @@ export class PlayerStateHistory
     write(buffer, this.hitPauseFrames, ptr++);
     write(buffer, this.intangabilityFrames, ptr++);
     write(buffer, this.disablePlatformDetectionFrames, ptr++);
+    write(buffer, this.lastTechFrame, ptr++);
     write(buffer, this.hitStunVxRaw, ptr++);
     write(buffer, this.hitStunVyRaw, ptr++);
     write(buffer, this.hitStunNextStateId, ptr++);
@@ -556,8 +560,8 @@ export class PlayerStateHistory
     write(buffer, this.holdingPlayerId ?? -1, ptr++);
     write(buffer, this.heldPlayerId ?? -1, ptr++);
     write(buffer, this.atkId ?? -1, ptr++);
-    // 1 + 26
-    //27
+    // 1 + 27
+    //28
 
     // 2. Booleans (Packed into 1 Integer)
     let flags = 0;
@@ -567,7 +571,7 @@ export class PlayerStateHistory
     if (this.shieldJump) flags |= 1 << 3;
     if (this.shieldActive) flags |= 1 << 4;
     write(buffer, flags, ptr++);
-    //28
+    //29
 
     write(buffer, this.comp_shield.calcXRaw, ptr++);
     write(buffer, this.comp_shield.calcYRaw, ptr++);
@@ -582,7 +586,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 128
+    // 129
     const csLength = this.comp_sensors.length;
     for (let i = 0; i < csLength; i++) {
       const s = this.comp_sensors[i];
@@ -592,7 +596,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 x 25 = 100
-    // 228
+    // 229
     const eLength = this.comp_ecbDiamond.length;
     for (let i = 0; i < eLength; i++) {
       const p = this.comp_ecbDiamond[i];
@@ -600,7 +604,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 236
+    // 237
     const hcLength = this.comp_hurtCapsules.length;
     for (let i = 0; i < hcLength; i++) {
       const hc = this.comp_hurtCapsules[i];
@@ -612,7 +616,7 @@ export class PlayerStateHistory
       write(buffer, hc.active ? 1 : 0, ptr++);
     }
     // 6 X 25 = 150
-    // 386
+    // 387
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       const ac = this.comp_attackCircles[i];
@@ -623,7 +627,7 @@ export class PlayerStateHistory
       write(buffer, ac.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 486
+    // 487
     const gLength = this.comp_grabCircles.length;
     for (let i = 0; i < gLength; i++) {
       const gc = this.comp_grabCircles[i];
@@ -634,7 +638,7 @@ export class PlayerStateHistory
       write(buffer, gc.active ? 1 : 0, ptr++);
     }
     // 5 X 25 = 125
-    // 611
+    // 612
     const ldlLength = this.comp_ledgeDetectorLeft.length;
     for (let i = 0; i < ldlLength; i++) {
       const p = this.comp_ledgeDetectorLeft[i];
@@ -642,7 +646,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 619
+    // 620
     const ldrLength = this.comp_ledgeDetectorRight.length;
     for (let i = 0; i < ldrLength; i++) {
       const p = this.comp_ledgeDetectorRight[i];
@@ -650,7 +654,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 627
+    // 628
     Atomics.add(buffer, offset, 1);
     return ptr - offset; // Stride size
   }
@@ -689,6 +693,7 @@ export class PlayerStateHistory
       this.hitPauseFrames = load(buffer, ptr++);
       this.intangabilityFrames = load(buffer, ptr++);
       this.disablePlatformDetectionFrames = load(buffer, ptr++);
+      this.lastTechFrame = load(buffer, ptr++);
       this.hitStunVxRaw = load(buffer, ptr++);
       this.hitStunVyRaw = load(buffer, ptr++);
       this.hitStunNextStateId = load(buffer, ptr++);
@@ -807,8 +812,8 @@ export class PlayerStateHistory
     // Sequence and Frame numbers
     stride += 2; // seq, frameNumber
 
-    // 1. Core Numerics (26 properties)
-    stride += 26;
+    // 1. Core Numerics (27 properties)
+    stride += 27;
 
     // 2. Booleans (Packed into 1 Integer)
     stride += 1;

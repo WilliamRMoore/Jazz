@@ -1,6 +1,6 @@
 import {
   STATE_IDS,
-  StateId,
+  StateId
 } from '../finite-state-machine/stateConfigurations/shared';
 import { World } from '../world/world';
 

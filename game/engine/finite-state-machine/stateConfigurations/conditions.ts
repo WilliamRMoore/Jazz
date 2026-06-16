@@ -900,7 +900,7 @@ export const FlinchToFall: condition = {
 };
 
 export const LaunchToTumble: condition = {
-  Name: 'LaunchToHitStun',
+  Name: 'LaunchToTumble',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStun.Frames > 0) {
       return false;

@@ -20,7 +20,7 @@ export class InputStore implements IInputStore {
   FindInput(
     from: number,
     to: number,
-    predicate: (input: InputAction, frame: number) => boolean,
+    predicate: (input: InputAction, frame: number) => boolean
   ): InputAction | undefined {
     from = from >= 0 ? from : 0;
     to = to >= 0 ? to : 0;
@@ -41,6 +41,7 @@ export interface IInputStore {
     from: number,
     to: number,
     predicate: (input: InputAction, frame: number) => boolean,
+    idxOut: undefined | { val: number }
   ): InputAction | undefined;
 }
 
@@ -121,7 +122,7 @@ export class RemoteInputManager implements IInputStore {
   FindInput(
     from: number,
     to: number,
-    predicate: (input: InputAction, frame: number) => boolean,
+    predicate: (input: InputAction, frame: number) => boolean
   ): InputAction | undefined {
     from = from >= 0 ? from : 0;
     to = to >= 0 ? to : 0;

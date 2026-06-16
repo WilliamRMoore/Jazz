@@ -2,6 +2,7 @@ import { GetInput, NewInputAction } from './engine/input/Input';
 import { playerControllerInfo, start } from './loops/local-main';
 import { InitGamePage } from './ui/game-page';
 import {
+  jMessage,
   LocalInputBufferReader,
   LocalInputBufferWriter
 } from './workers/workerUtils';
@@ -123,11 +124,11 @@ function startEngine(controllerInfo: playerControllerInfo) {
     }
   });
 
-  // Write input every 8 ms
+  // Write input every 4 ms
   setInterval(() => {
     const input = GetInput(controllerInfo.inputIndex);
     inputWriter.Store(input);
-  }, 8);
+  }, 0);
 
   window.addEventListener('keyup', (e) => {
     if (e.key === '1') {
@@ -143,6 +144,16 @@ function startEngine(controllerInfo: playerControllerInfo) {
           stateId: STATE_IDS.DIRT_NAP_S
         }
       });
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === '3') {
+      worker.postMessage({
+        type: 'LAUNCH_DOWN_WARD',
+        payload: {
+          playerId: 0
+        }
+      } as jMessage);
     }
   });
 

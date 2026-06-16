@@ -25,6 +25,8 @@ import { FlatVec } from '../physics/vector';
 import {
   CORRECTION_DEPTH_RAW,
   POINT_SEVEN,
+  POINT_TWO,
+  POINT_TWO_FIVE,
   TEN,
   TWO
 } from '../math/numberConstants';
@@ -113,21 +115,30 @@ export function StageCollisionDetection(world: World): void {
     }
 
     if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
-      const is = playerData.InputStore(p.ID);
-      const to = world.LocalFrame;
-      const from = to - 7;
-      const eigthInput = is.GetInputForFrame(from - 1);
-      const teched =
-        eigthInput.LTVal.Raw === 0 &&
-        eigthInput.RTVal.Raw === 0 &&
-        is.FindInput(from, to, didTech);
-
       // Transition state to tech if teched.
       const normY = firstCollisionResult!.NormY;
       const normX = firstCollisionResult!.NormX;
+      const ltf = p.Flags.LastTechFrame;
+      const teched = ltf > 0 && ltf > world.LocalFrame - 20;
+      const is = playerData.InputStore(p.ID);
+      const ia = is.GetInputForFrame(world.LocalFrame);
+      const rollRight = ia.LXAxisRaw >= POINT_TWO;
+      const rolllLeft = ia.LXAxisRaw <= -POINT_TWO;
       // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
       if (normY.Raw > POINT_SEVEN && p.Velocity.Y.Raw > 0) {
-        sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
+        if (teched) {
+          if (rollRight) {
+            p.Flags.FaceLeft();
+            sm.UpdateFromWorld(GAME_EVENT_IDS.ROLL_TECH_GE);
+          } else if (rolllLeft) {
+            p.Flags.FaceRight();
+            sm.UpdateFromWorld(GAME_EVENT_IDS.ROLL_TECH_GE);
+          } else {
+            sm.UpdateFromWorld(GAME_EVENT_IDS.TECH_IN_PLACE_GE);
+          }
+        } else {
+          sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
+        }
         p.Velocity.Y.SetFromRaw(-10);
       } else if (Math.abs(normX.Raw) > POINT_SEVEN) {
         sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);

@@ -1100,6 +1100,8 @@ export function InitLaunchRelations(): StateRelation {
   launchTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.TECH_IN_PLACE_GE, sId: STATE_IDS.TECH_IN_PLACE_S },
+    { geId: GAME_EVENT_IDS.ROLL_TECH_GE, sId: STATE_IDS.ROLL_TECH_S },
     { geId: GAME_EVENT_IDS.WALL_SLAM_GE, sId: STATE_IDS.WALL_SLAM_S },
     { geId: GAME_EVENT_IDS.GRND_SLAM_GE, sId: STATE_IDS.GRND_SLAM_S }
   ]);
@@ -1406,4 +1408,24 @@ export function InitWallKickRelations(): StateRelation {
     wallKickMaps
   );
   return wallKickRelations;
+}
+
+export function InitTechInPlaceRelations(): StateRelation {
+  const tipMaps = new ActionStateMappings();
+  tipMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+  tipMaps.SetDefaults([defaultIdle]);
+  const tipRelations = new StateRelation(STATE_IDS.TECH_IN_PLACE_S, tipMaps);
+  return tipRelations;
+}
+
+export function InitRollTechRelations(): StateRelation {
+  const rtMaps = new ActionStateMappings();
+  rtMaps.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+  rtMaps.SetDefaults([defaultIdle]);
+  const rtRelations = new StateRelation(STATE_IDS.ROLL_TECH_S, rtMaps);
+  return rtRelations;
 }

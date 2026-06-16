@@ -232,13 +232,21 @@ type spawnAndAttackCommand = {
   type: 'SPAWN_AND_ATTACK';
 };
 
+type launchDownWard = {
+  type: 'LAUNCH_DOWN_WARD';
+  payload: {
+    playerId: number;
+  };
+};
+
 export type jMessage =
   | loadStageCommand
   | setPlayerCommand
   | setPlayerStateId
   | initCommand
   | testCommand
-  | spawnAndAttackCommand;
+  | spawnAndAttackCommand
+  | launchDownWard;
 
 // INPUT Architechture
 /***
