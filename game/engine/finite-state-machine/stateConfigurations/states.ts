@@ -1389,9 +1389,8 @@ export const WallTech: FSMState = {
  * neutralSpecial EX
  * upSpecial EX
  * wall tech
- * getUpAttack
- * ledgeRoll
  * ledgeGetupAttack
+ * ledgeJump
  * clang
  */
 
