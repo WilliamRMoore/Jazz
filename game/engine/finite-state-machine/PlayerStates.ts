@@ -73,9 +73,11 @@ import {
   InitGetUpBackRollRelations,
   InitGetUpForwardRollRelations,
   InitLedgeGetUpRelations,
+  InitLedgeRollRelations,
   InitTechInPlaceRelations,
   InitRollTechRelations,
-  InitWallSlamRelations
+  InitWallSlamRelations,
+  InitGetUpAttackRelations
 } from './stateConfigurations/relationshipMappings';
 import {
   StateId,
@@ -159,9 +161,11 @@ import {
   GetUpRollBack,
   GetUpRollForward,
   LedgeGetUp,
+  LedgeRoll,
   TechInPlace,
   RollTech,
-  WallSlam
+  WallSlam,
+  GetUpAttack
 } from './stateConfigurations/states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
@@ -237,8 +241,10 @@ const GETUP_RELATIONS = InitGetUpRelations();
 const GETUP_ROLL_FORWARD_RELATIONS = InitGetUpForwardRollRelations();
 const GETUP_ROLL_BACK_RELATIONS = InitGetUpBackRollRelations();
 const LEDGE_GETUP_RELATIONS = InitLedgeGetUpRelations();
+const LEDGE_ROLL_RELATIONS = InitLedgeRollRelations();
 const TECH_IN_PLACE_RELATIONS = InitTechInPlaceRelations();
 const TECH_ROLL_RELATIONS = InitRollTechRelations();
+const GETUP_ATTACK_RELATIONS = InitGetUpAttackRelations();
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>()
   .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
@@ -325,9 +331,11 @@ export const ActionMappings = new Map<StateId, ActionStateMappings>()
   )
   .set(GETUP_ROLL_BACK_RELATIONS.stateId, GETUP_ROLL_BACK_RELATIONS.mappings)
   .set(LEDGE_GETUP_RELATIONS.stateId, LEDGE_GETUP_RELATIONS.mappings)
+  .set(LEDGE_ROLL_RELATIONS.stateId, LEDGE_ROLL_RELATIONS.mappings)
   .set(TECH_IN_PLACE_RELATIONS.stateId, TECH_IN_PLACE_RELATIONS.mappings)
   .set(TECH_ROLL_RELATIONS.stateId, TECH_ROLL_RELATIONS.mappings)
-  .set(WALL_SLAM_RELATIONS.stateId, WALL_SLAM_RELATIONS.mappings);
+  .set(WALL_SLAM_RELATIONS.stateId, WALL_SLAM_RELATIONS.mappings)
+  .set(GETUP_ATTACK_RELATIONS.stateId, GETUP_ATTACK_RELATIONS.mappings);
 
 export const FSMStates = new Map<StateId, FSMState>()
   .set(Idle.StateId, Idle)
@@ -403,8 +411,10 @@ export const FSMStates = new Map<StateId, FSMState>()
   .set(GetUpRollForward.StateId, GetUpRollForward)
   .set(GetUpRollBack.StateId, GetUpRollBack)
   .set(LedgeGetUp.StateId, LedgeGetUp)
+  .set(LedgeRoll.StateId, LedgeRoll)
   .set(TechInPlace.StateId, TechInPlace)
-  .set(RollTech.StateId, RollTech);
+  .set(RollTech.StateId, RollTech)
+  .set(GetUpAttack.StateId, GetUpAttack);
 
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
@@ -433,7 +443,8 @@ export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.DOWN_SPCL_GE, ATTACK_IDS.D_SPCL_ATK)
   .set(GAME_EVENT_IDS.D_SPCL_AIR_GE, ATTACK_IDS.D_SPCL_AIR_ATK)
   .set(GAME_EVENT_IDS.UP_SPCL_GE, ATTACK_IDS.U_SPCL_ATK)
-  .set(GAME_EVENT_IDS.PUMMEL_GE, ATTACK_IDS.PUMMEL_ATK);
+  .set(GAME_EVENT_IDS.PUMMEL_GE, ATTACK_IDS.PUMMEL_ATK)
+  .set(GAME_EVENT_IDS.GETUP_ATTACK_GE, ATTACK_IDS.GETUP_ATTACK_ATK);
 
 export const GrabGameEventMappings = new Map<GameEventId, GrabId>()
   .set(GAME_EVENT_IDS.GRAB_GE, GRAB_IDS.GRAB_G)

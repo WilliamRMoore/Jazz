@@ -1345,9 +1345,6 @@ export const LedgeGrabToGetUp: condition = {
   Name: 'LedgeGrabToGetUp',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     // Jump button
-    if (ia.Action === GAME_EVENT_IDS.JUMP_GE) {
-      return true;
-    }
     // Up on the left stick
     if (ia.LYAxis.Raw > NumberToRaw(0.25)) {
       return true;
@@ -1362,4 +1359,18 @@ export const LedgeGrabToGetUp: condition = {
     return false;
   },
   StateId: STATE_IDS.LEDGE_GETUP_S
+};
+
+export const LedgeGrabToLedgeRoll: condition = {
+  Name: 'LedgeGrabToLedgeRoll',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > NumberToRaw(0.25)) {
+      return true;
+    }
+    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < NumberToRaw(-0.25)) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_ROLL_S
 };

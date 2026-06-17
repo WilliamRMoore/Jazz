@@ -26,6 +26,7 @@ import {
   LandToWalk,
   LaunchToTumble,
   LedgeGrabToGetUp,
+  LedgeGrabToLedgeRoll,
   RunStopToTurn,
   RunToDashAttack,
   RunToRunStopByGuard,
@@ -582,6 +583,8 @@ export function InitLedgeGrabRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.LEDGE_GETUP_S }
   ]);
 
+  LedgeGrabTranslations.SetConditions([LedgeGrabToLedgeRoll]);
+
   LedgeGrabTranslations.SetDefaults([LedgeGrabToGetUp]);
 
   const LedgeGrabRelations = new StateRelation(
@@ -602,6 +605,13 @@ export function InitLedgeGetUpRelations(): StateRelation {
   );
 
   return LedgeGetUpRelations;
+}
+
+export function InitLedgeRollRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+  translations.SetDefaults([defaultIdle]);
+
+  return new StateRelation(STATE_IDS.LEDGE_ROLL_S, translations);
 }
 
 export function InitAirDodgeRelations(): StateRelation {
@@ -1150,6 +1160,16 @@ export function InitDirtNapRelations(): StateRelation {
   dnmap.SetDefaults([defaultToGetUp]);
   const translations = new StateRelation(STATE_IDS.DIRT_NAP_S, dnmap);
   return translations;
+}
+
+export function InitGetUpAttackRelations(): StateRelation {
+  const guamp = new ActionStateMappings();
+  guamp.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+  guamp.SetDefaults([defaultIdle]);
+  const guampRelations = new StateRelation(STATE_IDS.GETUP_ATTACK_S, guamp);
+  return guampRelations;
 }
 
 export function InitGetUpRelations(): StateRelation {

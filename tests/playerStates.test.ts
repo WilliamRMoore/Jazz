@@ -8,7 +8,7 @@ import {
   Walk,
   Dash,
 } from '../game/engine/finite-state-machine/stateConfigurations/states';
-import { STATE_IDS, CanStateWalkOffLedge, GAME_EVENT_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, CanStateWalkOffLedge, GAME_EVENT_IDS, ATTACK_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,
@@ -343,6 +343,64 @@ describe('Player states tests', () => {
     
     expect(p.Position.X.AsNumber).toBeCloseTo(expectedX, 0);
     expect(p.Position.Y.AsNumber).toBeCloseTo(expectedY, 0);
+  });
+
+  test('GetUpAttack state - transitions from DirtNap and executes fully', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    SetPlayerPositionRaw(p, NumberToRaw(1000), NumberToRaw(650));
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+    
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.ATTACK_GE;
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Trigger transition to GETUP_ATTACK_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ATTACK_S);
+    expect(p.Attacks.GetAttack()?.AttackId).toBe(ATTACK_IDS.GETUP_ATTACK_ATK);
+    
+    const getUpAtkFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 55;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < getUpAtkFrameLength; i++) {
+        fsm.UpdateFromInput(NewInputAction(), w);
+    }
+    
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+  });
+  
+  test('LedgeRoll transition and behavior', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    SetPlayerPositionRaw(p, NumberToRaw(1000), NumberToRaw(650));
+    p.Flags.FaceRight();
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+    
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.LXAxis.SetFromRaw(NumberToRaw(0.5)); // Push towards stage
+    inputStore.StoreInputForFrame(frame, input);
+    
+    // Trigger transition to LEDGE_ROLL_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_ROLL_S);
+    
+    const rollFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 43;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < rollFrameLength; i++) {
+        fsm.UpdateFromInput(NewInputAction(), w);
+    }
+    
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
   });
 });
 

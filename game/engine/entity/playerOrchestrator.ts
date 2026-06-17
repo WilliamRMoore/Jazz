@@ -65,7 +65,7 @@ export class Player {
       cc.AerialSpeedMultiplier
     );
     sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
-    sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
+    sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed, cc.LedgeRollSpeed);
     sB.SetGetUpRollSpeeds(cc.GetUpRollForwardSpeed, cc.GetUpRollBackSpeed);
     sB.SetGroundedVelocityDecay(cc.GroundedVelocityDecay);
     sB.SetWallKickVelocity(cc.WallKickVelocity.x, cc.WallKickVelocity.y);
@@ -95,7 +95,8 @@ export class Player {
       this.Position.Ref,
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
-      cc.LedgeBoxYOffset
+      cc.LedgeBoxYOffset,
+      cc.LedgeRollFrames
     );
     this.Sensors = new SensorComponent();
     this.Attacks = new AttackComponment(

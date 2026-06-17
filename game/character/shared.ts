@@ -35,6 +35,7 @@ export type SpeedsComponentConfig = {
   aerialSpeedMultiplier: number;
   airDodgeSpeed: number;
   dodgeRollSpeed: number;
+  ledgeRollSpeed: number;
   getUpRollRightSpeed: number;
   getUpRollLeftSpeed: number;
   maxWalkSpeed: number;
@@ -61,6 +62,7 @@ export type CharacterConfig = {
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
   LedgeBoxYOffset: number;
+  LedgeRollFrames: { ledgeGetUpFrames: number, ledgeRollFrames: [number, number] };
   Attacks: Map<AttackId, AttackConfig>;
   Grabs: Map<GrabId, GrabConfig>;
   Throws: ThrowConfig[];
@@ -73,6 +75,7 @@ export type CharacterConfig = {
   AerialSpeedMultiplier: number;
   AirDodgeSpeed: number;
   DodgeRollSpeed: number;
+  LedgeRollSpeed: number;
   GetUpRollForwardSpeed: number;
   GetUpRollBackSpeed: number;
   MaxWalkSpeed: number;

@@ -26,7 +26,6 @@ import {
   CORRECTION_DEPTH_RAW,
   POINT_SEVEN,
   POINT_TWO,
-  POINT_TWO_FIVE,
   TEN,
   TWO
 } from '../math/numberConstants';
@@ -37,13 +36,8 @@ import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, StageData, Pools } from '../world/stateModules';
 import { World } from '../world/world';
-import { InputAction } from '../input/Input';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;
-
-const didTech = (ia: InputAction, frameNumber: number) => {
-  return ia.LTVal.Raw > 0 || ia.RTVal.Raw > 0;
-};
 
 export function StageCollisionDetection(world: World): void {
   const playerData: PlayerData = world.PlayerData;
@@ -108,7 +102,10 @@ export function StageCollisionDetection(world: World): void {
           firstCollisionResult = collisionResult;
         }
         overallCollision = true;
-        if (preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S) {
+        if (
+          preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S &&
+          preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S
+        ) {
           resolveCollision(p, collisionResult, pools.VecPool);
         }
       }
@@ -191,7 +188,8 @@ export function StageCollisionDetection(world: World): void {
     if (
       isGroundedAfterJitter === false &&
       p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GRAB_S &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S &&
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_ROLL_S
     ) {
       sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
       continue;
@@ -200,7 +198,8 @@ export function StageCollisionDetection(world: World): void {
     if (
       isGroundedAfterJitter === true &&
       overallCollision &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S &&
+      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_ROLL_S
     ) {
       sm.UpdateFromWorld(
         ShouldSoftlandRaw(p.Velocity.Y.Raw)

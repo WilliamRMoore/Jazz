@@ -5,6 +5,7 @@ export class SpeedsComponent {
   public readonly AerialVelocityDecayRaw: number;
   public readonly AirDogeSpeedRaw: number;
   public readonly DodeRollSpeedRaw: number;
+  public readonly LedgeRollSpeedRaw: number;
   public readonly GetUpRollForwardSpeedRaw: number;
   public readonly GetUpRollBackSpeedRaw: number;
   public readonly ArielVelocityMultiplierRaw: number;
@@ -30,6 +31,7 @@ export class SpeedsComponent {
     aerialVelocityMultiplier: FixedPoint,
     airDodgeSpeed: FixedPoint,
     dodgeRollSpeed: FixedPoint,
+    ledgeRollSpeed: FixedPoint,
     getUpRollRightSpeed: FixedPoint,
     getUpRollLeftSpeed: FixedPoint,
     maxWalkSpeed: FixedPoint,
@@ -50,6 +52,7 @@ export class SpeedsComponent {
     this.ArielVelocityMultiplierRaw = aerialVelocityMultiplier.Raw;
     this.AirDogeSpeedRaw = airDodgeSpeed.Raw;
     this.DodeRollSpeedRaw = dodgeRollSpeed.Raw;
+    this.LedgeRollSpeedRaw = ledgeRollSpeed.Raw;
     this.GetUpRollForwardSpeedRaw = getUpRollRightSpeed.Raw;
     this.GetUpRollBackSpeedRaw = getUpRollLeftSpeed.Raw;
     this.MaxWalkSpeedRaw = maxWalkSpeed.Raw;
@@ -73,6 +76,7 @@ export class SpeedsComponentConfigBuilder {
   private readonly aerialSpeedMultiplier: FixedPoint = new FixedPoint();
   private readonly airDodgeSpeed: FixedPoint = new FixedPoint();
   private readonly dodgeRollSpeed: FixedPoint = new FixedPoint();
+  private readonly ledgeRollSpeed: FixedPoint = new FixedPoint();
   private readonly getUpRollForwardSpeed: FixedPoint = new FixedPoint();
   private readonly getUpRollBackSpeed: FixedPoint = new FixedPoint();
   private readonly maxWalkSpeed: FixedPoint = new FixedPoint();
@@ -99,9 +103,10 @@ export class SpeedsComponentConfigBuilder {
     this.aerialSpeedMultiplier.SetFromNumber(aerialSpeedMultiplier);
   }
 
-  SetDodgeSpeeds(airDodgeSpeed: number, dodgeRollSpeed: number): void {
+  SetDodgeSpeeds(airDodgeSpeed: number, dodgeRollSpeed: number, ledgeRollSpeed: number): void {
     this.airDodgeSpeed.SetFromNumber(airDodgeSpeed);
     this.dodgeRollSpeed.SetFromNumber(dodgeRollSpeed);
+    this.ledgeRollSpeed.SetFromNumber(ledgeRollSpeed);
   }
 
   SetGetUpRollSpeeds(
@@ -154,6 +159,7 @@ export class SpeedsComponentConfigBuilder {
       this.aerialSpeedMultiplier,
       this.airDodgeSpeed,
       this.dodgeRollSpeed,
+      this.ledgeRollSpeed,
       this.getUpRollForwardSpeed,
       this.getUpRollBackSpeed,
       this.maxWalkSpeed,

@@ -35,6 +35,7 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
     case STATE_IDS.LEDGE_GETUP_S:
+    case STATE_IDS.LEDGE_ROLL_S:
     case STATE_IDS.HIT_STOP_S:
     case STATE_IDS.WALL_KICK_S:
       return false;

@@ -42,6 +42,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
   public LedgeBoxYOffset = 0;
+  public LedgeRollFrames = { ledgeGetUpFrames: 15, ledgeRollFrames: [16, 43] as [number, number] };
   public Attacks = new Map<AttackId, AttackConfig>();
   public Grabs = new Map<GrabId, GrabConfig>();
   public Weight = 0;
@@ -53,6 +54,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public AerialSpeedMultiplier: number;
   public AirDodgeSpeed: number;
   public DodgeRollSpeed: number;
+  public LedgeRollSpeed: number;
   public GetUpRollForwardSpeed: number;
   public GetUpRollBackSpeed: number;
   public MaxWalkSpeed: number;
@@ -83,6 +85,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const nSpecial = GetNSpecial();
     const grab = GetGrab();
     const pummel = GetPummel();
+    const getUpAttack = GetGetUpAttack();
     // runGrab
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
@@ -146,6 +149,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
+      .set(STATE_IDS.GETUP_ATTACK_S, getUpAttack.TotalFrameLength)
       .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
       .set(STATE_IDS.WALL_KICK_S, 10)
       .set(STATE_IDS.WALL_SLAM_S, 20)
@@ -160,6 +164,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.GETUP_ROLL_FORWARD_S, 38)
       .set(STATE_IDS.GETUP_ROLL_BACK_S, 40)
       .set(STATE_IDS.LEDGE_GETUP_S, 30)
+      .set(STATE_IDS.LEDGE_ROLL_S, 43)
       .set(STATE_IDS.TECH_IN_PLACE_S, 25)
       .set(STATE_IDS.ROLL_TECH_S, 31);
 
@@ -232,6 +237,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
         width: 70,
         yOffset: 0
       })
+      .set(STATE_IDS.LEDGE_ROLL_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
       .set(STATE_IDS.TECH_IN_PLACE_S, {
         height: 70,
         width: 85,
@@ -260,6 +270,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.MaxDashSpeed = 7;
     this.AirDodgeSpeed = 11.5;
     this.DodgeRollSpeed = 11;
+    this.LedgeRollSpeed = 11;
     this.GetUpRollBackSpeed = 10;
     this.GetUpRollForwardSpeed = 10;
     this.GroundedVelocityDecay = 0.4;
@@ -307,7 +318,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(sideSpecialExAir.AttackId, sideSpecialExAir)
       .set(dashAtk.AttackId, dashAtk)
       .set(upSpecial.AttackId, upSpecial)
-      .set(pummel.AttackId, pummel);
+      .set(pummel.AttackId, pummel)
+      .set(getUpAttack.AttackId, getUpAttack);
 
     this.Grabs.set(grab.GrabId, grab);
 
@@ -1509,6 +1521,42 @@ function GetPummel() {
     .WithInteruptableFrame(totalFrames)
     .WithGravity(false)
     .WithHitBubble(5, radius, 0, 0, bubble1Offsets);
+
+  return bldr.Build();
+}
+
+function GetGetUpAttack() {
+  const totalFrames = 55;
+  const radius = 25;
+  const bub1Offset = new Map<frameNumber, ConfigVec>();
+  const bub2Offset = new Map<frameNumber, ConfigVec>();
+  const bub3Offset = new Map<frameNumber, ConfigVec>();
+  const bub4Offset = new Map<frameNumber, ConfigVec>();
+  const bub5Offset = new Map<frameNumber, ConfigVec>();
+  const bub6Offset = new Map<frameNumber, ConfigVec>();
+
+  for (let frame = 15; frame < 18; frame++) {
+    bub1Offset.set(frame, toCv(40, -60));
+    bub2Offset.set(frame, toCv(55, -60));
+    bub3Offset.set(frame, toCv(70, -60));
+    bub4Offset.set(frame, toCv(-40, -60));
+    bub5Offset.set(frame, toCv(-55, -60));
+    bub6Offset.set(frame, toCv(-70, -60));
+  }
+
+  const bldr = new AttackConfigBuilder('GetUpAttack');
+
+  bldr
+    .WithAttackId(ATTACK_IDS.GETUP_ATTACK_ATK)
+    .WithTotalFrames(totalFrames)
+    .WithInteruptableFrame(totalFrames)
+    .WithGravity(false)
+    .WithHitBubble(7, radius, 0, 0, bub1Offset)
+    .WithHitBubble(6, radius, 1, 0, bub2Offset)
+    .WithHitBubble(6, radius, 2, 0, bub3Offset)
+    .WithHitBubble(7, radius, 3, 0, bub4Offset)
+    .WithHitBubble(6, radius, 4, 0, bub5Offset)
+    .WithHitBubble(6, radius, 5, 0, bub6Offset);
 
   return bldr.Build();
 }

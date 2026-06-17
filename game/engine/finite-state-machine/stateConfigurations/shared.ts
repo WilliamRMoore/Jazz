@@ -151,6 +151,9 @@ class STATES {
   public readonly GRAB_RELEASE_S = seq.Next as StateId;
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
   public readonly LEDGE_GETUP_S = seq.Next as StateId;
+  public readonly LEDGE_JUMP_S = seq.Next as StateId;
+  public readonly LEDGE_ROLL_S = seq.Next as StateId;
+  public readonly LEDGE_ATTACK_S = seq.Next as StateId;
   public readonly WALL_KICK_S = seq.Next as StateId;
   public readonly HIT_SLIDE_S = seq.Next as StateId;
   public readonly HIT_FLINCH_S = seq.Next as StateId;
@@ -204,6 +207,7 @@ class ATTACKS {
   public readonly D_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
   public readonly PUMMEL_ATK = seq.Next as AttackId;
+  public readonly GETUP_ATTACK_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();
@@ -265,6 +269,7 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.GETUP_ROLL_FORWARD_S:
     case STATE_IDS.GETUP_ROLL_BACK_S:
     case STATE_IDS.LEDGE_GETUP_S:
+    case STATE_IDS.LEDGE_ROLL_S:
     case STATE_IDS.TECH_IN_PLACE_S:
     case STATE_IDS.ROLL_TECH_S:
       return false;
