@@ -18,7 +18,6 @@ import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
 import { Grab } from '../../entity/components/grab';
 import { POINT_FIVE, POINT_TWO_FIVE, TEN } from '../../math/numberConstants';
-import { InputAction } from '../../input/Input';
 
 const POINT_THREE_THREE = NumberToRaw(0.33);
 const POINT_ONE_FIVE = NumberToRaw(0.15);

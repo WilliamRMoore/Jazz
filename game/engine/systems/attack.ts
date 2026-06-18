@@ -183,7 +183,7 @@ function resolveHitResult(
     Math.floor(RawToNumber(MultiplyRaw(hitStopRaw, POINT_SEVEN_FIVE)))
   );
 
-  if (pA.Position.X > pB.Position.X) {
+  if (pA.Position.X.Raw > pB.Position.X.Raw) {
     pB.Flags.FaceRight();
   } else {
     pB.Flags.FaceLeft();
