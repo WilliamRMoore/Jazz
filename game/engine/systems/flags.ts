@@ -19,6 +19,9 @@ export function Flags(world: World): void {
     if (flags.IsPlatDetectDisabled) {
       flags.DecrementDisablePlatDetection();
     }
+    if (flags.IsLedgeDetectDisabled) {
+      flags.DecrementDisableLedgeDetection();
+    }
     if (flags.JumpedFromShield) {
       const curFrame = world.LocalFrame;
       const is = playerData.InputStore(playerIndex);

@@ -249,7 +249,6 @@ export class PlayerStateHistory
     ShieldHist,
     VelocityHist
 {
-  static readonly stride = 1000;
   // pos
   posXRaw = 0;
   posYRaw = 0;
@@ -264,6 +263,7 @@ export class PlayerStateHistory
   hitPauseFrames = 0;
   intangabilityFrames = 0;
   disablePlatformDetectionFrames = 0;
+  disableLedgeDetectionFrames = 0;
   velocityDecayActive = true;
   shieldJump = false;
   lastTechFrame = 0;
@@ -426,6 +426,7 @@ export class PlayerStateHistory
     this.hitPauseFrames = 0;
     this.intangabilityFrames = 0;
     this.disablePlatformDetectionFrames = 0;
+    this.disableLedgeDetectionFrames = 0;
     this.velocityDecayActive = true;
     this.shieldJump = false;
     this.lastTechFrame = 0;
@@ -546,6 +547,7 @@ export class PlayerStateHistory
     write(buffer, this.hitPauseFrames, ptr++);
     write(buffer, this.intangabilityFrames, ptr++);
     write(buffer, this.disablePlatformDetectionFrames, ptr++);
+    write(buffer, this.disableLedgeDetectionFrames, ptr++);
     write(buffer, this.lastTechFrame, ptr++);
     write(buffer, this.hitStunVxRaw, ptr++);
     write(buffer, this.hitStunVyRaw, ptr++);
@@ -560,8 +562,8 @@ export class PlayerStateHistory
     write(buffer, this.holdingPlayerId ?? -1, ptr++);
     write(buffer, this.heldPlayerId ?? -1, ptr++);
     write(buffer, this.atkId ?? -1, ptr++);
-    // 1 + 27
-    //28
+    // 1 + 28
+    //29
 
     // 2. Booleans (Packed into 1 Integer)
     let flags = 0;
@@ -571,7 +573,7 @@ export class PlayerStateHistory
     if (this.shieldJump) flags |= 1 << 3;
     if (this.shieldActive) flags |= 1 << 4;
     write(buffer, flags, ptr++);
-    //29
+    //30
 
     write(buffer, this.comp_shield.calcXRaw, ptr++);
     write(buffer, this.comp_shield.calcYRaw, ptr++);
@@ -586,7 +588,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 129
+    // 130
     const csLength = this.comp_sensors.length;
     for (let i = 0; i < csLength; i++) {
       const s = this.comp_sensors[i];
@@ -596,7 +598,7 @@ export class PlayerStateHistory
       write(buffer, s.active ? 1 : 0, ptr++);
     }
     // 4 x 25 = 100
-    // 229
+    // 230
     const eLength = this.comp_ecbDiamond.length;
     for (let i = 0; i < eLength; i++) {
       const p = this.comp_ecbDiamond[i];
@@ -604,7 +606,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 237
+    // 238
     const hcLength = this.comp_hurtCapsules.length;
     for (let i = 0; i < hcLength; i++) {
       const hc = this.comp_hurtCapsules[i];
@@ -616,7 +618,7 @@ export class PlayerStateHistory
       write(buffer, hc.active ? 1 : 0, ptr++);
     }
     // 6 X 25 = 150
-    // 387
+    // 388
     const aLength = this.comp_attackCircles.length;
     for (let i = 0; i < aLength; i++) {
       const ac = this.comp_attackCircles[i];
@@ -627,7 +629,7 @@ export class PlayerStateHistory
       write(buffer, ac.active ? 1 : 0, ptr++);
     }
     // 4 X 25 = 100
-    // 487
+    // 488
     const gLength = this.comp_grabCircles.length;
     for (let i = 0; i < gLength; i++) {
       const gc = this.comp_grabCircles[i];
@@ -638,7 +640,7 @@ export class PlayerStateHistory
       write(buffer, gc.active ? 1 : 0, ptr++);
     }
     // 5 X 25 = 125
-    // 612
+    // 613
     const ldlLength = this.comp_ledgeDetectorLeft.length;
     for (let i = 0; i < ldlLength; i++) {
       const p = this.comp_ledgeDetectorLeft[i];
@@ -646,7 +648,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 620
+    // 621
     const ldrLength = this.comp_ledgeDetectorRight.length;
     for (let i = 0; i < ldrLength; i++) {
       const p = this.comp_ledgeDetectorRight[i];
@@ -654,7 +656,7 @@ export class PlayerStateHistory
       write(buffer, p.yRaw, ptr++);
     }
     // 2 X 4 = 8
-    // 628
+    // 629
     Atomics.add(buffer, offset, 1);
     return ptr - offset; // Stride size
   }
@@ -693,6 +695,7 @@ export class PlayerStateHistory
       this.hitPauseFrames = load(buffer, ptr++);
       this.intangabilityFrames = load(buffer, ptr++);
       this.disablePlatformDetectionFrames = load(buffer, ptr++);
+      this.disableLedgeDetectionFrames = load(buffer, ptr++);
       this.lastTechFrame = load(buffer, ptr++);
       this.hitStunVxRaw = load(buffer, ptr++);
       this.hitStunVyRaw = load(buffer, ptr++);
@@ -812,8 +815,8 @@ export class PlayerStateHistory
     // Sequence and Frame numbers
     stride += 2; // seq, frameNumber
 
-    // 1. Core Numerics (27 properties)
-    stride += 27;
+    // 1. Core Numerics (29 properties)
+    stride += 28;
 
     // 2. Booleans (Packed into 1 Integer)
     stride += 1;

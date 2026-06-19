@@ -262,4 +262,28 @@ describe('Stage Collision system tests', () => {
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
   });
+
+  test('Player should not be pushed down by stage collision when in LEDGE_GRAB_S', () => {
+    // Stage ground is at y=650
+    w.SetStage(defaultStage());
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+    
+    // Position the player so they intersect the stage slightly
+    // Player ECB for LEDGE_GRAB_S is height 110, yOffset 0. 
+    // Top is pos.y. Bottom is pos.y + 110.
+    // If we set pos.y to 640, bottom is 750, intersecting the ground (650).
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(640));
+    p.ECB.Update();
+    const initialY = p.Position.Y.AsNumber;
+    
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity();
+    StageCollisionDetection(w);
+
+    // Player should not have been moved by stage collision because LEDGE_GRAB_S is excluded
+    expect(p.Position.Y.AsNumber).toBe(initialY);
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
+  });
 });

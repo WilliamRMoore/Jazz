@@ -77,7 +77,8 @@ import {
   defaultToGetUp,
   toGetUpRollForward,
   toGetUpRollBack,
-  toGetUp
+  toGetUp,
+  LedgeGrabDrop
 } from './conditions';
 import { StateId, GameEventId, GAME_EVENT_IDS, STATE_IDS } from './shared';
 
@@ -585,9 +586,13 @@ export function InitLedgeGrabRelations(): StateRelation {
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
   ]);
 
-  LedgeGrabTranslations.SetConditions([LedgeGrabToLedgeRoll]);
+  LedgeGrabTranslations.SetConditions([
+    LedgeGrabDrop,
+    LedgeGrabToGetUp,
+    LedgeGrabToLedgeRoll
+  ]);
 
-  LedgeGrabTranslations.SetDefaults([LedgeGrabToGetUp]);
+  LedgeGrabTranslations.SetDefaults([defaultNFall]);
 
   const LedgeGrabRelations = new StateRelation(
     STATE_IDS.LEDGE_GRAB_S,

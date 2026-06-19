@@ -286,6 +286,7 @@ describe('Player states tests', () => {
     // Simulate jump input
     const frame = 10;
     w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
     const input = NewInputAction();
     input.Action = GAME_EVENT_IDS.JUMP_GE;
     inputStore.StoreInputForFrame(frame, input);
@@ -318,6 +319,7 @@ describe('Player states tests', () => {
     
     const frame = 10;
     w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
     const input = NewInputAction();
     input.Action = GAME_EVENT_IDS.JUMP_GE;
     inputStore.StoreInputForFrame(frame, input);
@@ -384,8 +386,9 @@ describe('Player states tests', () => {
     
     const frame = 10;
     w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
     const input = NewInputAction();
-    input.LXAxis.SetFromRaw(NumberToRaw(0.5)); // Push towards stage
+    input.Action = GAME_EVENT_IDS.GUARD_GE;
     inputStore.StoreInputForFrame(frame, input);
     
     // Trigger transition to LEDGE_ROLL_S

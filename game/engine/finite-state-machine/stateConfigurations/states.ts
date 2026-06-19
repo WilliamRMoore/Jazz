@@ -193,6 +193,7 @@ export const Jump: FSMState = {
     jumpComp.IncrementJumps();
     AddToPlayerYPositionRaw(p, -p.ECB.YOffset.Raw);
     p.Velocity.Y.SetFromRaw(-p.Jump.JumpVelocity.Raw);
+    p.Flags.ZeroDisableLedgeDetection();
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {}
@@ -255,6 +256,7 @@ export const LedgeGrab: FSMState = {
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
     p.LedgeDetector.ReleaseLedge();
+    p.Flags.SetDisableLedgeDetectionFrames(15);
   }
 };
 

@@ -104,7 +104,8 @@ export function StageCollisionDetection(world: World): void {
         overallCollision = true;
         if (
           preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S &&
-          preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S
+          preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S &&
+          preResolutionStateId !== STATE_IDS.LEDGE_GRAB_S
         ) {
           resolveCollision(p, collisionResult, pools.VecPool);
         }

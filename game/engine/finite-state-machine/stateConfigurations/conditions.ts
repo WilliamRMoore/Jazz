@@ -2,6 +2,11 @@ import { Player } from '../../entity/playerOrchestrator';
 import { InputAction } from '../../input/Input';
 import { IInputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
+import {
+  POINT_FIVE,
+  POINT_FOUR,
+  POINT_TWO_FIVE
+} from '../../math/numberConstants';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 
@@ -54,7 +59,6 @@ export const ToStickJumpSquat: condition = {
   Name: 'StickJump',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const is = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
     const lastFrame = w.PreviousFrame;
     const lastIa = is.GetInputForFrame(lastFrame);
     if (ia.LYAxis.Raw <= 0) {
@@ -73,7 +77,6 @@ export const ToStickJump: condition = {
   Name: 'StickJump',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const is = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
     const lastFrame = w.PreviousFrame;
     const lastIa = is.GetInputForFrame(lastFrame);
     if (ia.LYAxis.Raw <= 0) {
@@ -92,7 +95,6 @@ export const IdleToDash: condition = {
   Name: 'IdleToDash',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
@@ -1143,15 +1145,56 @@ export const toGetUpRollBack: condition = {
   },
   StateId: STATE_IDS.GETUP_ROLL_BACK_S
 };
-// export const ToTechInPlace: condition = {
-//   Name: 'ToTechInPlace',
-//   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
-//     const ips = w.PlayerData.InputStore(p.ID);
-//     const curFrame = w.LocalFrame;
-//     const bufferFrames = 7;
-//   },
-//   StateId: STATE_IDS.TECH_IN_PLACE_S,
-// };
+
+export const LedgeGrabToGetUp: condition = {
+  Name: 'LedgeGrabToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    // Jump button
+    // Up on the left stick
+    if (ia.LYAxis.Raw > POINT_TWO_FIVE) {
+      return true;
+    }
+    // Push towards stage on left stick
+    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > POINT_TWO_FIVE) {
+      return true;
+    }
+    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < -POINT_TWO_FIVE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_GETUP_S
+};
+
+export const LedgeGrabToLedgeRoll: condition = {
+  Name: 'LedgeGrabToLedgeRoll',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_ROLL_S
+};
+
+export const LedgeGrabDrop: condition = {
+  Name: 'LedgeGrabDrop',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const prevlY = w.PlayerData.InputStore(p.ID).GetInputForFrame(
+      w.PreviousFrame
+    ).LYAxis.Raw;
+    const currentStateFrame = p.FSMInfo.CurrentStateFrame;
+    if (
+      ia.LYAxis.Raw < -POINT_FIVE &&
+      prevlY > -POINT_FOUR &&
+      currentStateFrame > 3
+    ) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.N_FALL_S
+};
 
 export const shieldBreakDefaultShieldTumble: condition = {
   Name: 'ShieldBreakToShieldLaunch',
@@ -1340,37 +1383,3 @@ function isBufferedInput(
   }
   return false;
 }
-
-export const LedgeGrabToGetUp: condition = {
-  Name: 'LedgeGrabToGetUp',
-  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
-    // Jump button
-    // Up on the left stick
-    if (ia.LYAxis.Raw > NumberToRaw(0.25)) {
-      return true;
-    }
-    // Push towards stage on left stick
-    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > NumberToRaw(0.25)) {
-      return true;
-    }
-    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < NumberToRaw(-0.25)) {
-      return true;
-    }
-    return false;
-  },
-  StateId: STATE_IDS.LEDGE_GETUP_S
-};
-
-export const LedgeGrabToLedgeRoll: condition = {
-  Name: 'LedgeGrabToLedgeRoll',
-  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
-    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > NumberToRaw(0.25)) {
-      return true;
-    }
-    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < NumberToRaw(-0.25)) {
-      return true;
-    }
-    return false;
-  },
-  StateId: STATE_IDS.LEDGE_ROLL_S
-};

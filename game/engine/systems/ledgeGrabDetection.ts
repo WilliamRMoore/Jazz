@@ -29,6 +29,7 @@ export function LedgeGrabDetection(world: World): void {
     const currentStateId = p.FSMInfo.CurrentStateId;
     if (
       p.Flags.IsInHitPause ||
+      p.Flags.IsLedgeDetectDisabled ||
       currentStateId === STATE_IDS.LEDGE_GRAB_S ||
       currentStateId === STATE_IDS.JUMP_S ||
       p.Velocity.Y.Raw < 0

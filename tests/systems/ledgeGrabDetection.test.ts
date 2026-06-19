@@ -182,4 +182,20 @@ describe('Ledge Grab Detection system tests', () => {
       w.StageData.Stages[0].Ledges.GetRightLedge(),
     );
   });
+
+  test('Player does not grab ledge when IsLedgeDetectDisabled is true', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    fsm.ForceState(STATE_IDS.N_FALL_S); // Set state to falling
+    p.Velocity.Y.SetFromNumber(10); // Set downward velocity
+    p.Flags.FaceLeft(); // Face the ledge
+    
+    // Disable ledge detection
+    p.Flags.SetDisableLedgeDetectionFrames(15);
+
+    SetPlayerPositionRaw(p, NumberToRaw(1650), NumberToRaw(750));
+
+    LedgeGrabDetection(w);
+
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.N_FALL_S);
+  });
 });
