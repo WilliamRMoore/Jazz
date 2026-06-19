@@ -79,6 +79,7 @@ class GAME_EVENTS {
   public readonly GRND_SLAM_GE = seq.Next as GameEventId;
   public readonly TECH_IN_PLACE_GE = seq.Next as GameEventId;
   public readonly ROLL_TECH_GE = seq.Next as GameEventId;
+  public readonly TEETER_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -170,6 +171,7 @@ class STATES {
   public readonly TECH_IN_PLACE_S = seq.Next as StateId;
   public readonly ROLL_TECH_S = seq.Next as StateId;
   public readonly WALL_TECH_S = seq.Next as StateId;
+  public readonly TEETER_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -272,6 +274,7 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.LEDGE_ROLL_S:
     case STATE_IDS.TECH_IN_PLACE_S:
     case STATE_IDS.ROLL_TECH_S:
+    case STATE_IDS.TEETER_S:
       return false;
     default:
       return true;

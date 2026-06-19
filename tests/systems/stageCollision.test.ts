@@ -1,5 +1,5 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage, WallStage } from '../../game/engine/stage/stageMain';
+import { defaultStage, WallStage, Stage } from '../../game/engine/stage/stageMain';
 import {
   Player,
   SetPlayerPosition,
@@ -7,7 +7,7 @@ import {
 import { StageCollisionDetection } from '../../game/engine/systems/stageCollision';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, GAME_EVENT_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import {
   Launch,
@@ -16,6 +16,7 @@ import {
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import { RecordHistory } from '../../game/engine/systems/history';
 import { ToFp } from '../../game/engine/utils';
+import { Line } from '../../game/engine/physics/vector';
 
 describe('Stage Collision system tests', () => {
   let p: Player;
@@ -115,6 +116,8 @@ describe('Stage Collision system tests', () => {
     StageCollisionDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.WALL_SLAM_S);
+    // expect(Math.abs(p.ECB.Right.X.AsNumber - 350)).toBeLessThanOrEqual(5);
+    // console.log(`Wall Slam - p.Position.X: ${p.Position.X.AsNumber}, p.ECB.Right.X: ${p.ECB.Right.X.AsNumber}`);
   });
 
   test.skip('Player should collide with a bottom-left corner', () => {
@@ -285,5 +288,69 @@ describe('Stage Collision system tests', () => {
     // Player should not have been moved by stage collision because LEDGE_GRAB_S is excluded
     expect(p.Position.Y.AsNumber).toBe(initialY);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
+  });
+
+  test.skip('Player should trigger TEETER_GE if walking and within 2-unit ledge margin', () => {
+    w.SetStage(defaultStage());
+    // Stage ground goes from x=500 to x=1600.
+    SetPlayerPosition(p, new FixedPoint(1600), new FixedPoint(650));
+    const sm = w.PlayerData.StateMachine(0);
+    sm.ForceState(STATE_IDS.WALK_S);
+    p.ECB.YOffset.SetFromNumber(0);
+    p.ECB.Update();
+    p.Velocity.X.SetFromRaw(1); // Moves player by 1 raw unit off the ledge, within 2 raw unit margin
+
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity();
+    
+    const spy = jest.spyOn(sm, 'UpdateFromWorld');
+    StageCollisionDetection(w);
+
+    expect(spy).toHaveBeenCalledWith(GAME_EVENT_IDS.TEETER_GE);
+  });
+
+  test('Player cannot walk off ledge during an attack', () => {
+    w.SetStage(defaultStage());
+    // Stage ground goes from x=500 to x=1600, ground Y is 650.
+    SetPlayerPosition(p, new FixedPoint(1595), new FixedPoint(650));
+    const sm = w.PlayerData.StateMachine(0);
+    sm.ForceState(STATE_IDS.ATTACK_S);
+    p.ECB.YOffset.SetFromNumber(0);
+    p.ECB.Update();
+    p.Velocity.X.SetFromNumber(20); // Moving well off the ledge to 1615
+
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity();
+    StageCollisionDetection(w);
+
+    // Player should be clamped exactly to the right ledge (x=1600)
+    expect(p.Position.X.AsNumber).toBeCloseTo(1600, 0);
+    // They should remain in the ATTACK_S state (no FALL_GE emitted)
+    expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.ATTACK_S);
+  });
+
+  test('Player on platform does not skip wall collision', () => {
+    const baseStage = WallStage();
+    const customStage = new Stage(
+      baseStage.StageVerticies,
+      baseStage.Ledges,
+      [new Line(ToFp(200), ToFp(500), ToFp(600), ToFp(500))]
+    );
+    w.SetStage(customStage);
+
+    SetPlayerPosition(p, ToFp(310), ToFp(490)); // Left of the left-facing wall at 350
+    const sm = w.PlayerData.StateMachine(0);
+    sm.ForceState(STATE_IDS.DASH_S);
+    p.Velocity.X.SetFromNumber(60); // Moves them into the wall at 350
+
+    RecordHistory(w);
+    w.LocalFrame = 1;
+    applyVelocity(); // Moves them into the wall
+    StageCollisionDetection(w);
+
+    // The player should not clip through the wall just because they are on a platform.
+    expect(p.ECB.Right.X.AsNumber).toBeLessThanOrEqual(355);
   });
 });

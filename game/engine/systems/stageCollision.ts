@@ -13,9 +13,10 @@ import {
   SetPlayerPositionRaw,
   AddToPlayerXPostionRaw,
   AddToPlayerYPositionRaw,
-  Player
+  Player,
+  PlayerOnStageOrPlats
 } from '../entity/playerOrchestrator';
-import { isPlayerOnAnyStage, ShouldSoftlandRaw } from './shared';
+import { ShouldSoftlandRaw } from './shared';
 import {
   CreateDiamondFromHistory,
   ECBComponent,
@@ -30,7 +31,6 @@ import {
   TWO
 } from '../math/numberConstants';
 import { Stage } from '../stage/stageMain';
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
 import { ICollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
@@ -52,18 +52,6 @@ export function StageCollisionDetection(world: World): void {
     const p = playerData.Player(playerIndex);
     const ecb = p.ECB;
 
-    let isPlayerOnAnyPlatform = false;
-    for (let i = 0; i < stagesLength; i++) {
-      const stage = stages[i];
-      if (PlayerOnPlats(stage, ecb.Bottom, ecb.SensorDepth)) {
-        isPlayerOnAnyPlatform = true;
-        break;
-      }
-    }
-    if (isPlayerOnAnyPlatform) {
-      continue;
-    }
-
     const pDb = playerHistories[playerIndex];
     const prevState = pDb.get(world.PreviousFrame);
     const prevEcbShape =
@@ -79,13 +67,17 @@ export function StageCollisionDetection(world: World): void {
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStateId;
-    // Store properties of the ECB before any changes
+    
     const oldEcbHeightRaw = ecb.Height.Raw;
     const oldEcbWidthRaw = ecb.Width.Raw;
     const oldEcbYOffsetRaw = ecb.YOffset.Raw;
 
+    // ==========================================
+    // PHASE 1: PHYSICS RESOLUTION
+    // ==========================================
     let overallCollision = false;
     let firstCollisionResult: ICollisionResult | undefined;
+    
     for (let i = 0; i < stagesLength; i++) {
       const stageVerts = stages[i].StageVerticies.GetVerts();
       const playerVerts = getECBHull(preEcb, p.ECB);
@@ -112,23 +104,67 @@ export function StageCollisionDetection(world: World): void {
       }
     }
 
+    // ==========================================
+    // PHASE 2: SENSOR EVALUATION
+    // ==========================================
+    let isGrounded = false;
+    let isTeetering = false;
+    
+    for (let i = 0; i < stagesLength; i++) {
+      const stage = stages[i];
+      if (PlayerOnStageOrPlats(stage, p)) {
+        isGrounded = true;
+        break;
+      }
+      if (CheckLedgeMargin(p, stage)) {
+        isGrounded = true;
+        isTeetering = true;
+        break;
+      }
+    }
+
+    // Determine Previous Groundedness
+    let prvGrnd = false;
+    let previousStage: Stage | undefined;
+    for (let i = 0; i < stagesLength; i++) {
+      const stage = stages[i];
+      if (PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth) || 
+         (!p.Flags.IsPlatDetectDisabled && PlayerOnPlats(stage, preEcb.Bottom, p.ECB.SensorDepth))) {
+        prvGrnd = true;
+        previousStage = stage;
+        break;
+      }
+    }
+
+    if (prvGrnd && !isGrounded && previousStage) {
+      if (handleWalkOff(p, previousStage)) {
+        isGrounded = true;
+        isTeetering = true;
+      }
+    }
+
+    // ==========================================
+    // PHASE 3: STATE REACTIONS & SHAPE MUTATIONS
+    // ==========================================
+    let handledLaunchOverride = false;
+    
     if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
-      // Transition state to tech if teched.
-      const normY = firstCollisionResult!.NormY;
-      const normX = firstCollisionResult!.NormX;
+      const normYRaw = firstCollisionResult!.NormY.Raw;
+      const normXRaw = firstCollisionResult!.NormX.Raw;
       const ltf = p.Flags.LastTechFrame;
       const teched = ltf > 0 && ltf > world.LocalFrame - 20;
       const is = playerData.InputStore(p.ID);
       const ia = is.GetInputForFrame(world.LocalFrame);
       const rollRight = ia.LXAxisRaw >= POINT_TWO;
-      const rolllLeft = ia.LXAxisRaw <= -POINT_TWO;
-      // Using 0.7 as a threshold to distinguish vertical from horizontal collisions
-      if (normY.Raw > POINT_SEVEN && p.Velocity.Y.Raw > 0) {
+      const rollLeft = ia.LXAxisRaw <= -POINT_TWO;
+
+      if (normYRaw > POINT_SEVEN && p.Velocity.Y.Raw > 0) {
+        handledLaunchOverride = true;
         if (teched) {
           if (rollRight) {
             p.Flags.FaceLeft();
             sm.UpdateFromWorld(GAME_EVENT_IDS.ROLL_TECH_GE);
-          } else if (rolllLeft) {
+          } else if (rollLeft) {
             p.Flags.FaceRight();
             sm.UpdateFromWorld(GAME_EVENT_IDS.ROLL_TECH_GE);
           } else {
@@ -138,111 +174,67 @@ export function StageCollisionDetection(world: World): void {
           sm.UpdateFromWorld(GAME_EVENT_IDS.GRND_SLAM_GE);
         }
         p.Velocity.Y.SetFromRaw(-10);
-      } else if (Math.abs(normX.Raw) > POINT_SEVEN) {
+      } else if (Math.abs(normXRaw) > POINT_SEVEN) {
+        handledLaunchOverride = true;
         sm.UpdateFromWorld(GAME_EVENT_IDS.WALL_SLAM_GE);
-        if (normX.Raw > 0) {
+        if (normXRaw > 0) {
           p.Flags.FaceLeft();
           p.Velocity.X.SetFromRaw(-TEN);
-        } else if (normX.Raw < 0) {
+        } else if (normXRaw < 0) {
           p.Flags.FaceRight();
           p.Velocity.X.SetFromRaw(TEN);
         }
       }
-      continue;
     }
 
-    const sensorDepth = p.ECB.SensorDepth;
-    const grnd = isPlayerOnAnyStage(p.ECB.Bottom, stages, sensorDepth);
-    const prvGrnd = isPlayerOnAnyStage(preEcb.Bottom, stages, sensorDepth);
-    let stillGrounded = grnd;
-
-    if (prvGrnd && !grnd) {
-      let previousStage: Stage | undefined;
-      for (let i = 0; i < stagesLength; i++) {
-        const stage = stages[i];
-        if (PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth)) {
-          previousStage = stage;
-          break;
+    if (!handledLaunchOverride) {
+      if (
+        !isGrounded &&
+        preResolutionStateId !== STATE_IDS.LEDGE_GRAB_S &&
+        preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S &&
+        preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S
+      ) {
+        sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
+      } else if (isGrounded) {
+        if (isTeetering && !CanStateWalkOffLedge(p.FSMInfo.CurrentStateId)) {
+          sm.UpdateFromWorld(GAME_EVENT_IDS.TEETER_GE);
+        } else if (
+          overallCollision &&
+          preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S &&
+          preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S
+        ) {
+          sm.UpdateFromWorld(
+            ShouldSoftlandRaw(p.Velocity.Y.Raw)
+              ? GAME_EVENT_IDS.SOFT_LAND_GE
+              : GAME_EVENT_IDS.LAND_GE
+          );
         }
       }
-
-      if (previousStage) {
-        handleWalkOff(p, previousStage, sm, pools);
-        if (p.FSMInfo.CurrentStateId === STATE_IDS.LAND_S) {
-          continue;
-        }
-      }
-    }
-
-    for (let i = 0; i < stagesLength; i++) {
-      const stage = stages[i];
-      if (PlayerOnStage(stage, p.ECB.Bottom, p.ECB.SensorDepth)) {
-        stillGrounded = true;
-        if (handleJitter(p, stage, pools)) {
-          break;
-        }
-      }
-    }
-
-    const isGroundedAfterJitter = stillGrounded;
-
-    if (
-      isGroundedAfterJitter === false &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GRAB_S &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_ROLL_S
-    ) {
-      sm.UpdateFromWorld(GAME_EVENT_IDS.FALL_GE);
-      continue;
-    }
-
-    if (
-      isGroundedAfterJitter === true &&
-      overallCollision &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_GETUP_S &&
-      p.FSMInfo.CurrentStateId !== STATE_IDS.LEDGE_ROLL_S
-    ) {
-      sm.UpdateFromWorld(
-        ShouldSoftlandRaw(p.Velocity.Y.Raw)
-          ? GAME_EVENT_IDS.SOFT_LAND_GE
-          : GAME_EVENT_IDS.LAND_GE
-      );
     }
 
     const postResolutionStateId = fsmInfo.CurrentStateId;
 
-    if (overallCollision && preResolutionStateId !== postResolutionStateId) {
-      // ECB shape has been updated by the state change's OnEnter method.
+    if (overallCollision && preResolutionStateId !== postResolutionStateId && firstCollisionResult) {
       const newEcbHeightRaw = ecb.Height.Raw;
       const newEcbWidthRaw = ecb.Width.Raw;
       const newEcbYOffsetRaw = ecb.YOffset.Raw;
 
-      const normXRaw = firstCollisionResult!.NormX.Raw;
-      const normYRaw = firstCollisionResult!.NormY.Raw;
+      const normXRaw = firstCollisionResult.NormX.Raw;
+      const normYRaw = firstCollisionResult.NormY.Raw;
 
-      // Y-axis correction for ground/ceiling collisions
       if (Math.abs(normYRaw) > POINT_SEVEN) {
-        // Correct for change in vertical offset/size
         let yCorrectionRaw = oldEcbYOffsetRaw - newEcbYOffsetRaw;
         if (normYRaw < 0) {
-          // Ceiling collision, normal points down. Account for height change.
           yCorrectionRaw -= oldEcbHeightRaw - newEcbHeightRaw;
         }
         AddToPlayerYPositionRaw(p, yCorrectionRaw);
       }
 
-      // X-axis correction for wall collisions
       if (Math.abs(normXRaw) > POINT_SEVEN) {
-        // Correct for change in horizontal size
         const xCorrectionRaw = DivideRaw(oldEcbWidthRaw - newEcbWidthRaw, TWO);
-
         if (normXRaw > 0) {
-          // Hit a wall on player's left (e.g. stage's right wall), normal points right.
-          // Player was pushed right. We need to adjust for width change.
           AddToPlayerXPostionRaw(p, -xCorrectionRaw);
         } else {
-          // Hit a wall on player's right (e.g. stage's left wall), normal points left.
-          // Player was pushed left.
           AddToPlayerXPostionRaw(p, xCorrectionRaw);
         }
       }
@@ -250,102 +242,68 @@ export function StageCollisionDetection(world: World): void {
   }
 }
 
-function handleWalkOff(
-  p: Player,
-  previousStage: Stage,
-  sm: StateMachine,
-  pools: Pools
-) {
-  const stageGround = previousStage.StageVerticies.GetGround();
-  if (stageGround.length > 0) {
-    const leftMostPiece = stageGround[0];
-    const rightMostPiece = stageGround[stageGround.length - 1];
-    const leftStagePoint = pools.VecPool.Rent().SetXY(
-      leftMostPiece.X1,
-      leftMostPiece.Y1
-    );
-    const rightStagePoint = pools.VecPool.Rent().SetXY(
-      rightMostPiece.X2,
-      rightMostPiece.Y2
-    );
-
-    let shouldSnapBack = false;
-
-    if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
-      const fellOffLeftLedge = p.Position.X.Raw < leftStagePoint.X.Raw;
-      const fellOffRightLedge = p.Position.X.Raw > rightStagePoint.X.Raw;
-      const isFacingRight = p.Flags.IsFacingRight;
-
-      if (
-        (fellOffLeftLedge && isFacingRight) ||
-        (fellOffRightLedge && !isFacingRight)
-      ) {
-        shouldSnapBack = true;
-      }
-    } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStateId) === false) {
-      shouldSnapBack = true;
-    }
-
-    if (shouldSnapBack) {
-      const position = p.Position;
-      const yPosRaw = p.ECB.YOffset.Raw - CORRECTION_DEPTH_RAW;
-      if (
-        Math.abs(position.X.Raw - leftStagePoint.X.Raw) <
-        Math.abs(position.X.Raw - rightStagePoint.X.Raw)
-      ) {
-        SetPlayerPositionRaw(
-          p,
-          leftStagePoint.X.Raw + CORRECTION_DEPTH_RAW,
-          leftStagePoint.Y.Raw - yPosRaw
-        );
-      } else {
-        SetPlayerPositionRaw(
-          p,
-          rightStagePoint.X.Raw - CORRECTION_DEPTH_RAW,
-          rightStagePoint.Y.Raw - yPosRaw
-        );
-      }
-      sm.UpdateFromWorld(GAME_EVENT_IDS.LAND_GE);
-    }
-  }
-}
-
-function handleJitter(p: Player, stage: Stage, pools: Pools): boolean {
+function CheckLedgeMargin(p: Player, stage: Stage): boolean {
   const stageGround = stage.StageVerticies.GetGround();
   if (stageGround.length === 0) return false;
 
   const leftMostPiece = stageGround[0];
   const rightMostPiece = stageGround[stageGround.length - 1];
-  const leftStagePoint = pools.VecPool.Rent().SetXY(
-    leftMostPiece.X1,
-    leftMostPiece.Y1
-  );
-  const rightStagePoint = pools.VecPool.Rent().SetXY(
-    rightMostPiece.X2,
-    rightMostPiece.Y2
-  );
+  
+  const bottomXRaw = p.ECB.Bottom.X.Raw;
+  const bottomYRaw = p.ECB.Bottom.Y.Raw;
+  const sensorDepthRaw = p.ECB.SensorDepth.Raw;
 
-  const standingOnLeftLedge =
-    Math.abs(p.Position.X.Raw - leftStagePoint.X.Raw) <=
-    CORNER_JITTER_CORRECTION_RAW;
-  const standingOnRightLedge =
-    Math.abs(p.Position.X.Raw - rightStagePoint.X.Raw) <=
-    CORNER_JITTER_CORRECTION_RAW;
-
-  if (standingOnLeftLedge) {
-    SetPlayerPositionRaw(
-      p,
-      leftStagePoint.X.Raw + CORNER_JITTER_CORRECTION_RAW,
-      p.Position.Y.Raw
-    );
-    return true;
+  if (bottomXRaw < leftMostPiece.X1.Raw && Math.abs(bottomXRaw - leftMostPiece.X1.Raw) <= CORNER_JITTER_CORRECTION_RAW) {
+    if (bottomYRaw >= leftMostPiece.Y1.Raw && (bottomYRaw - sensorDepthRaw) <= leftMostPiece.Y1.Raw) {
+      return true;
+    }
   }
-  if (standingOnRightLedge) {
-    SetPlayerPositionRaw(
-      p,
-      rightStagePoint.X.Raw - CORNER_JITTER_CORRECTION_RAW,
-      p.Position.Y.Raw
-    );
+
+  if (bottomXRaw > rightMostPiece.X2.Raw && Math.abs(bottomXRaw - rightMostPiece.X2.Raw) <= CORNER_JITTER_CORRECTION_RAW) {
+    if (bottomYRaw >= rightMostPiece.Y2.Raw && (bottomYRaw - sensorDepthRaw) <= rightMostPiece.Y2.Raw) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function handleWalkOff(p: Player, previousStage: Stage): boolean {
+  const stageGround = previousStage.StageVerticies.GetGround();
+  if (stageGround.length === 0) return false;
+
+  const leftMostPiece = stageGround[0];
+  const rightMostPiece = stageGround[stageGround.length - 1];
+
+  let shouldSnapBack = false;
+
+  if (CanOnlyFallOffLedgeWhenFacingAwayFromIt(p)) {
+    const fellOffLeftLedge = p.Position.X.Raw < leftMostPiece.X1.Raw;
+    const fellOffRightLedge = p.Position.X.Raw > rightMostPiece.X2.Raw;
+    const isFacingRight = p.Flags.IsFacingRight;
+
+    if ((fellOffLeftLedge && isFacingRight) || (fellOffRightLedge && !isFacingRight)) {
+      shouldSnapBack = true;
+    }
+  } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStateId) === false) {
+    shouldSnapBack = true;
+  }
+
+  if (shouldSnapBack) {
+    const yPosRaw = p.ECB.YOffset.Raw;
+    if (Math.abs(p.Position.X.Raw - leftMostPiece.X1.Raw) < Math.abs(p.Position.X.Raw - rightMostPiece.X2.Raw)) {
+      SetPlayerPositionRaw(
+        p,
+        leftMostPiece.X1.Raw,
+        leftMostPiece.Y1.Raw - yPosRaw
+      );
+    } else {
+      SetPlayerPositionRaw(
+        p,
+        rightMostPiece.X2.Raw,
+        rightMostPiece.Y2.Raw - yPosRaw
+      );
+    }
     return true;
   }
   return false;
@@ -361,8 +319,7 @@ function getECBHull(prevEcb: EcbHistoryDTO, curEcb: ECBComponent) {
   for (let i = 0; i < 4; i++) {
     combinedEcbVerts.push(curEcb.GetActiveVerts()[i]);
   }
-  const hull = CreateConvexHull(combinedEcbVerts);
-  return hull;
+  return CreateConvexHull(combinedEcbVerts);
 }
 
 function resolveCollision(
