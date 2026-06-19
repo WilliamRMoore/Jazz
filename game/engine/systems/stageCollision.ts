@@ -72,15 +72,28 @@ export function StageCollisionDetection(world: World): void {
     const oldEcbWidthRaw = ecb.Width.Raw;
     const oldEcbYOffsetRaw = ecb.YOffset.Raw;
 
+    const playerMinXRaw = Math.min(preEcb.Left.X.Raw, p.ECB.Left.X.Raw);
+    const playerMaxXRaw = Math.max(preEcb.Right.X.Raw, p.ECB.Right.X.Raw);
+    const playerMinYRaw = Math.min(preEcb.Top.Y.Raw, p.ECB.Top.Y.Raw);
+    const playerMaxYRaw = Math.max(preEcb.Bottom.Y.Raw, p.ECB.Bottom.Y.Raw);
+    const playerWidthRaw = playerMaxXRaw - playerMinXRaw;
+    const playerHeightRaw = playerMaxYRaw - playerMinYRaw;
+
     // ==========================================
     // PHASE 1: PHYSICS RESOLUTION
     // ==========================================
     let overallCollision = false;
     let firstCollisionResult: ICollisionResult | undefined;
     
+    const playerVerts = getECBHull(preEcb, p.ECB);
+
     for (let i = 0; i < stagesLength; i++) {
-      const stageVerts = stages[i].StageVerticies.GetVerts();
-      const playerVerts = getECBHull(preEcb, p.ECB);
+      const stage = stages[i];
+      if (!stage.AABBInterSectCheck(playerMinXRaw, playerMinYRaw, playerWidthRaw, playerHeightRaw)) {
+        continue;
+      }
+      
+      const stageVerts = stage.StageVerticies.GetVerts();
       const collisionResult = IntersectsPolygons(
         playerVerts,
         stageVerts,
@@ -110,8 +123,16 @@ export function StageCollisionDetection(world: World): void {
     let isGrounded = false;
     let isTeetering = false;
     
+    const sensorXRaw = p.ECB.Bottom.X.Raw;
+    const sensorMinYRaw = Math.min(p.ECB.Bottom.Y.Raw, p.ECB.Bottom.Y.Raw - p.ECB.SensorDepth.Raw);
+    const sensorHeightRaw = p.ECB.SensorDepth.Raw;
+
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
+      if (!stage.AABBInterSectCheck(sensorXRaw, sensorMinYRaw, 0, sensorHeightRaw)) {
+        continue;
+      }
+
       if (PlayerOnStageOrPlats(stage, p)) {
         isGrounded = true;
         break;
@@ -126,8 +147,17 @@ export function StageCollisionDetection(world: World): void {
     // Determine Previous Groundedness
     let prvGrnd = false;
     let previousStage: Stage | undefined;
+    
+    const preSensorXRaw = preEcb.Bottom.X.Raw;
+    const preSensorMinYRaw = Math.min(preEcb.Bottom.Y.Raw, preEcb.Bottom.Y.Raw - p.ECB.SensorDepth.Raw);
+    const preSensorHeightRaw = p.ECB.SensorDepth.Raw;
+
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
+      if (!stage.AABBInterSectCheck(preSensorXRaw, preSensorMinYRaw, 0, preSensorHeightRaw)) {
+        continue;
+      }
+
       if (PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth) || 
          (!p.Flags.IsPlatDetectDisabled && PlayerOnPlats(stage, preEcb.Bottom, p.ECB.SensorDepth))) {
         prvGrnd = true;

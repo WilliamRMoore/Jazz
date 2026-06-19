@@ -197,6 +197,22 @@ export function PlayerOnStage(
 
   for (let i = 0; i < grndLoopLength; i++) {
     const gP = grnd[i];
+    
+    let minX = gP.X1.Raw;
+    let maxX = gP.X2.Raw;
+    if (minX > maxX) { minX = gP.X2.Raw; maxX = gP.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = gP.Y1.Raw;
+    let maxY = gP.Y2.Raw;
+    if (minY > maxY) { minY = gP.Y2.Raw; maxY = gP.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         gP.X1.Raw,
@@ -206,7 +222,7 @@ export function PlayerOnStage(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw
+        sensorBottomY
       )
     ) {
       return true;
@@ -229,12 +245,28 @@ export function PlayerOnPlats(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
@@ -260,12 +292,28 @@ export function PlayerOnPlatsReturnsYCoord(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
@@ -291,12 +339,28 @@ export function PlayerOnPlatsReturnsPlatform(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
