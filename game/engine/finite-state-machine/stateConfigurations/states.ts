@@ -309,7 +309,69 @@ export const LedgeGetUp: FSMState = {
   },
   OnUpdate: (p: Player, w: World) => {},
   OnExit: (p: Player, w: World) => {
-    p.ECB.ResetECBShape();
+    p.Velocity.X.Zero();
+    p.Velocity.Y.Zero();
+    p.Flags.VelocityDecayOn();
+    p.LedgeDetector.ZeroLedgeGrabCount();
+  }
+};
+
+export const LedgeAttack: FSMState = {
+  StateName: 'LedgeAttack',
+  StateId: STATE_IDS.LEDGE_ATTACK_S,
+  OnEnter: (p: Player, w: World) => {
+    p.Flags.FastFallOff();
+    p.Flags.SetIntangabilityFrames(30);
+
+    const stage = w.StageData.Stages;
+    let targetXRaw = p.Position.X.Raw;
+    let targetYRaw = p.Position.Y.Raw;
+    const isFacingRight = p.Flags.IsFacingRight;
+
+    let minTargetDistSq = Infinity;
+    for (let i = 0; i < stage.length; i++) {
+      const ledges = stage[i].Ledges;
+      const ledge = isFacingRight
+        ? ledges.GetLeftLedge()
+        : ledges.GetRightLedge();
+      if (ledge && ledge.length > 0) {
+        const cornerX = ledge[0].X.Raw;
+        const cornerY = ledge[0].Y.Raw;
+        const distSq =
+          Math.abs(cornerX - p.Position.X.Raw) +
+          Math.abs(cornerY - p.Position.Y.Raw);
+        if (distSq < minTargetDistSq) {
+          minTargetDistSq = distSq;
+          targetXRaw = cornerX;
+          targetYRaw = cornerY - p.ECB.YOffset.Raw;
+        }
+      }
+    }
+
+    const halfWidthRaw = DivideRaw(p.ECB.Width.Raw, TWO);
+    targetXRaw = isFacingRight
+      ? targetXRaw + halfWidthRaw
+      : targetXRaw - halfWidthRaw;
+
+    const framesToStage = 10; //p.FSMInfo.GetCurrentStateFrameLength()!;
+    const framesToStageRaw = NumberToRaw(framesToStage);
+    const diffXRaw = targetXRaw - p.Position.X.Raw;
+    const diffYRaw = targetYRaw - p.Position.Y.Raw;
+
+    p.Velocity.X.SetFromRaw(DivideRaw(diffXRaw, framesToStageRaw));
+    p.Velocity.Y.SetFromRaw(DivideRaw(diffYRaw, framesToStageRaw));
+    p.Flags.VelocityDecayOff();
+    attackOnEnter(p, w, GAME_EVENT_IDS.LEDGE_ATTACK_GE);
+  },
+  OnUpdate: (p: Player, w: World) => {
+    if (p.FSMInfo.CurrentStateFrame === 10) {
+      p.Velocity.X.Zero();
+      p.Velocity.Y.Zero();
+    }
+    attackOnUpdate(p, w);
+  },
+  OnExit: (p: Player, w: World) => {
+    attackOnExit(p, w);
     p.Velocity.X.Zero();
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
@@ -679,7 +741,7 @@ export const NAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.ATTACK_GE;
     const stateId = STATE_IDS.ATTACK_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -692,7 +754,7 @@ export const DashAttack: FSMState = {
     p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DASH_ATTACK_GE);
     const geId = GAME_EVENT_IDS.DASH_ATTACK_GE;
     const stateId = STATE_IDS.DASH_ATTACK_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -704,7 +766,7 @@ export const DownTilt: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.D_TILT_GE;
     const stateId = STATE_IDS.DOWN_TILT_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -719,14 +781,14 @@ export const SideTilt: FSMState = {
     const ia = inputStore.GetInputForFrame(curFrame);
     const stateId = STATE_IDS.SIDE_TILT_S;
     if (ia.LYAxis.Raw > POINT_ONE_FIVE) {
-      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_U_GE, stateId);
+      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_U_GE);
       return;
     }
     if (ia.LYAxis.Raw < -POINT_ONE_FIVE) {
-      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_D_GE, stateId);
+      attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_D_GE);
       return;
     }
-    attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_GE, stateId);
+    attackOnEnter(p, w, GAME_EVENT_IDS.S_TILT_GE);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -738,7 +800,7 @@ export const UpTilt: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.U_TILT_GE;
     const stateId = STATE_IDS.UP_TILT_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -760,7 +822,7 @@ export const SideCharge: FSMState = {
     }
     const geId = GAME_EVENT_IDS.SIDE_CHARGE_GE;
     const stateId = STATE_IDS.SIDE_CHARGE_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -772,7 +834,7 @@ export const SideChargeEx: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.SIDE_CHARGE_EX_GE;
     const stateId = STATE_IDS.SIDE_CHARGE_EX_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -784,7 +846,7 @@ export const UpCharge: FSMState = {
   OnEnter: (p, w) => {
     const geId = GAME_EVENT_IDS.UP_CHARGE_GE;
     const stateId = STATE_IDS.UP_CHARGE_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -796,7 +858,7 @@ export const UpChargeEx: FSMState = {
   OnEnter: (p, w) => {
     const geId = GAME_EVENT_IDS.UP_CHARGE_EX_GE;
     const stateId = STATE_IDS.UP_CHARGE_EX_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -808,7 +870,7 @@ export const DownCharge: FSMState = {
   OnEnter: (p, w) => {
     const geId = GAME_EVENT_IDS.DOWN_CHARGE_GE;
     const stateId = STATE_IDS.DOWN_CHARGE_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -820,7 +882,7 @@ export const DownChargeEx: FSMState = {
   OnEnter: (p, w) => {
     const geId = GAME_EVENT_IDS.DOWN_CHARGE_EX_GE;
     const stateId = STATE_IDS.DOWN_CHARGE_EX_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -832,7 +894,7 @@ export const Pummel: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.PUMMEL_GE;
     const stateId = STATE_IDS.PUMMEL_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -844,7 +906,7 @@ export const GetUpAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.GETUP_ATTACK_GE;
     const stateId = STATE_IDS.GETUP_ATTACK_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -856,7 +918,7 @@ export const NAerialAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.N_AIR_GE;
     const stateId = STATE_IDS.N_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
@@ -871,7 +933,7 @@ export const FAerialAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.F_AIR_GE;
     const stateId = STATE_IDS.F_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
@@ -886,7 +948,7 @@ export const UAirAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.U_AIR_GE;
     const stateId = STATE_IDS.U_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
@@ -901,7 +963,7 @@ export const BAirAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.B_AIR_GE;
     const stateId = STATE_IDS.B_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
@@ -916,7 +978,7 @@ export const DAirAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.D_AIR_GE;
     const stateId = STATE_IDS.D_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {
     aerialInputOnUpdate(p, w);
@@ -931,7 +993,7 @@ export const NeutralSpecial: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.SPCL_GE;
     const stateId = STATE_IDS.SPCL_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -952,7 +1014,7 @@ export const SideSpecial: FSMState = {
     }
     const geId = GAME_EVENT_IDS.SIDE_SPCL_GE;
     const stateId = STATE_IDS.SIDE_SPCL_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -964,7 +1026,7 @@ export const SideSpecialExtension: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.SIDE_SPCL_EX_GE;
     const stateId = STATE_IDS.SIDE_SPCL_EX_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -985,7 +1047,7 @@ export const SideSpecialAir: FSMState = {
     }
     const geId = GAME_EVENT_IDS.S_SPCL_AIR_GE;
     const stateId = STATE_IDS.SIDE_SPCL_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -997,7 +1059,7 @@ export const SideSpecialExtensionAir: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.S_SPCL_EX_AIR_GE;
     const stateId = STATE_IDS.SIDE_SPCL_EX_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -1009,7 +1071,7 @@ export const DownSpecial: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.DOWN_SPCL_GE;
     const stateId = STATE_IDS.DOWN_SPCL_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -1021,7 +1083,7 @@ export const DownSpecialAerial: FSMState = {
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.D_SPCL_AIR_GE;
     const stateId = STATE_IDS.DOWN_SPCL_AIR_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -1040,7 +1102,7 @@ export const UpSpecial: FSMState = {
     }
     const geId = GAME_EVENT_IDS.UP_SPCL_GE;
     const stateId = STATE_IDS.UP_SPCL_S;
-    attackOnEnter(p, w, geId, stateId);
+    attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
   OnExit: attackOnExit
@@ -1414,12 +1476,7 @@ function fastFallCheck(p: Player, w: World) {
   }
 }
 
-function attackOnEnter(
-  p: Player,
-  w: World,
-  gameEventId: GameEventId,
-  stateId: StateId
-) {
+function attackOnEnter(p: Player, w: World, gameEventId: GameEventId) {
   const attackComp = p.Attacks;
   attackComp.SetCurrentAttack(gameEventId);
   const atk = attackComp.GetAttack();

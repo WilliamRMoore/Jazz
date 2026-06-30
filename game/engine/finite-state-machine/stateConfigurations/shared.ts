@@ -67,6 +67,7 @@ class GAME_EVENTS {
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
   public readonly FALL_GE = seq.Next as GameEventId;
   public readonly LEDGE_GRAB_GE = seq.Next as GameEventId;
+  public readonly LEDGE_ATTACK_GE = seq.Next as GameEventId;
   public readonly HIT_STOP_GE = seq.Next as GameEventId;
   public readonly GRAB_HELD_GE = seq.Next as GameEventId;
   public readonly GRAB_HOLD_GE = seq.Next as GameEventId;
@@ -210,6 +211,7 @@ class ATTACKS {
   public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
   public readonly PUMMEL_ATK = seq.Next as AttackId;
   public readonly GETUP_ATTACK_ATK = seq.Next as AttackId;
+  public readonly LEDGE_ATTACK_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();

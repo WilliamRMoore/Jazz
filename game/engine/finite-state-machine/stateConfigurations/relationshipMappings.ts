@@ -583,7 +583,8 @@ export function InitLedgeGrabRelations(): StateRelation {
   LedgeGrabTranslations.SetMappings([
     { geId: GAME_EVENT_IDS.JUMP_GE, sId: STATE_IDS.LEDGE_GETUP_S },
     { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
-    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S },
+    { geId: GAME_EVENT_IDS.ATTACK_GE, sId: STATE_IDS.LEDGE_ATTACK_S }
   ]);
 
   LedgeGrabTranslations.SetConditions([
@@ -604,6 +605,9 @@ export function InitLedgeGrabRelations(): StateRelation {
 
 export function InitLedgeGetUpRelations(): StateRelation {
   const LedgeGetUpTranslations = new ActionStateMappings();
+  LedgeGetUpTranslations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
   LedgeGetUpTranslations.SetDefaults([defaultIdle]);
 
   const LedgeGetUpRelations = new StateRelation(
@@ -612,6 +616,18 @@ export function InitLedgeGetUpRelations(): StateRelation {
   );
 
   return LedgeGetUpRelations;
+}
+
+export function InitLedgeAttackRelations(): StateRelation {
+  const translations = new ActionStateMappings();
+  translations.SetDefaults([defaultIdle]);
+  translations.SetMappings([
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+  ]);
+
+  const relations = new StateRelation(STATE_IDS.LEDGE_ATTACK_S, translations);
+
+  return relations;
 }
 
 export function InitLedgeRollRelations(): StateRelation {

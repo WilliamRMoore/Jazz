@@ -67,7 +67,7 @@ export function StageCollisionDetection(world: World): void {
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStateId;
-    
+
     const oldEcbHeightRaw = ecb.Height.Raw;
     const oldEcbWidthRaw = ecb.Width.Raw;
     const oldEcbYOffsetRaw = ecb.YOffset.Raw;
@@ -84,15 +84,22 @@ export function StageCollisionDetection(world: World): void {
     // ==========================================
     let overallCollision = false;
     let firstCollisionResult: ICollisionResult | undefined;
-    
+
     const playerVerts = getECBHull(preEcb, p.ECB);
 
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
-      if (!stage.AABBInterSectCheck(playerMinXRaw, playerMinYRaw, playerWidthRaw, playerHeightRaw)) {
+      if (
+        !stage.AABBInterSectCheck(
+          playerMinXRaw,
+          playerMinYRaw,
+          playerWidthRaw,
+          playerHeightRaw
+        )
+      ) {
         continue;
       }
-      
+
       const stageVerts = stage.StageVerticies.GetVerts();
       const collisionResult = IntersectsPolygons(
         playerVerts,
@@ -109,6 +116,7 @@ export function StageCollisionDetection(world: World): void {
         overallCollision = true;
         if (
           preResolutionStateId !== STATE_IDS.LEDGE_GETUP_S &&
+          preResolutionStateId !== STATE_IDS.LEDGE_ATTACK_S &&
           preResolutionStateId !== STATE_IDS.LEDGE_ROLL_S &&
           preResolutionStateId !== STATE_IDS.LEDGE_GRAB_S
         ) {
@@ -122,14 +130,19 @@ export function StageCollisionDetection(world: World): void {
     // ==========================================
     let isGrounded = false;
     let isTeetering = false;
-    
+
     const sensorXRaw = p.ECB.Bottom.X.Raw;
-    const sensorMinYRaw = Math.min(p.ECB.Bottom.Y.Raw, p.ECB.Bottom.Y.Raw - p.ECB.SensorDepth.Raw);
+    const sensorMinYRaw = Math.min(
+      p.ECB.Bottom.Y.Raw,
+      p.ECB.Bottom.Y.Raw - p.ECB.SensorDepth.Raw
+    );
     const sensorHeightRaw = p.ECB.SensorDepth.Raw;
 
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
-      if (!stage.AABBInterSectCheck(sensorXRaw, sensorMinYRaw, 0, sensorHeightRaw)) {
+      if (
+        !stage.AABBInterSectCheck(sensorXRaw, sensorMinYRaw, 0, sensorHeightRaw)
+      ) {
         continue;
       }
 
@@ -147,19 +160,32 @@ export function StageCollisionDetection(world: World): void {
     // Determine Previous Groundedness
     let prvGrnd = false;
     let previousStage: Stage | undefined;
-    
+
     const preSensorXRaw = preEcb.Bottom.X.Raw;
-    const preSensorMinYRaw = Math.min(preEcb.Bottom.Y.Raw, preEcb.Bottom.Y.Raw - p.ECB.SensorDepth.Raw);
+    const preSensorMinYRaw = Math.min(
+      preEcb.Bottom.Y.Raw,
+      preEcb.Bottom.Y.Raw - p.ECB.SensorDepth.Raw
+    );
     const preSensorHeightRaw = p.ECB.SensorDepth.Raw;
 
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
-      if (!stage.AABBInterSectCheck(preSensorXRaw, preSensorMinYRaw, 0, preSensorHeightRaw)) {
+      if (
+        !stage.AABBInterSectCheck(
+          preSensorXRaw,
+          preSensorMinYRaw,
+          0,
+          preSensorHeightRaw
+        )
+      ) {
         continue;
       }
 
-      if (PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth) || 
-         (!p.Flags.IsPlatDetectDisabled && PlayerOnPlats(stage, preEcb.Bottom, p.ECB.SensorDepth))) {
+      if (
+        PlayerOnStage(stage, preEcb.Bottom, p.ECB.SensorDepth) ||
+        (!p.Flags.IsPlatDetectDisabled &&
+          PlayerOnPlats(stage, preEcb.Bottom, p.ECB.SensorDepth))
+      ) {
         prvGrnd = true;
         previousStage = stage;
         break;
@@ -177,7 +203,7 @@ export function StageCollisionDetection(world: World): void {
     // PHASE 3: STATE REACTIONS & SHAPE MUTATIONS
     // ==========================================
     let handledLaunchOverride = false;
-    
+
     if (overallCollision && preResolutionStateId === STATE_IDS.LAUNCH_S) {
       const normYRaw = firstCollisionResult!.NormY.Raw;
       const normXRaw = firstCollisionResult!.NormX.Raw;
@@ -244,7 +270,11 @@ export function StageCollisionDetection(world: World): void {
 
     const postResolutionStateId = fsmInfo.CurrentStateId;
 
-    if (overallCollision && preResolutionStateId !== postResolutionStateId && firstCollisionResult) {
+    if (
+      overallCollision &&
+      preResolutionStateId !== postResolutionStateId &&
+      firstCollisionResult
+    ) {
       const newEcbHeightRaw = ecb.Height.Raw;
       const newEcbWidthRaw = ecb.Width.Raw;
       const newEcbYOffsetRaw = ecb.YOffset.Raw;
@@ -278,19 +308,31 @@ function CheckLedgeMargin(p: Player, stage: Stage): boolean {
 
   const leftMostPiece = stageGround[0];
   const rightMostPiece = stageGround[stageGround.length - 1];
-  
+
   const bottomXRaw = p.ECB.Bottom.X.Raw;
   const bottomYRaw = p.ECB.Bottom.Y.Raw;
   const sensorDepthRaw = p.ECB.SensorDepth.Raw;
 
-  if (bottomXRaw < leftMostPiece.X1.Raw && Math.abs(bottomXRaw - leftMostPiece.X1.Raw) <= CORNER_JITTER_CORRECTION_RAW) {
-    if (bottomYRaw >= leftMostPiece.Y1.Raw && (bottomYRaw - sensorDepthRaw) <= leftMostPiece.Y1.Raw) {
+  if (
+    bottomXRaw < leftMostPiece.X1.Raw &&
+    Math.abs(bottomXRaw - leftMostPiece.X1.Raw) <= CORNER_JITTER_CORRECTION_RAW
+  ) {
+    if (
+      bottomYRaw >= leftMostPiece.Y1.Raw &&
+      bottomYRaw - sensorDepthRaw <= leftMostPiece.Y1.Raw
+    ) {
       return true;
     }
   }
 
-  if (bottomXRaw > rightMostPiece.X2.Raw && Math.abs(bottomXRaw - rightMostPiece.X2.Raw) <= CORNER_JITTER_CORRECTION_RAW) {
-    if (bottomYRaw >= rightMostPiece.Y2.Raw && (bottomYRaw - sensorDepthRaw) <= rightMostPiece.Y2.Raw) {
+  if (
+    bottomXRaw > rightMostPiece.X2.Raw &&
+    Math.abs(bottomXRaw - rightMostPiece.X2.Raw) <= CORNER_JITTER_CORRECTION_RAW
+  ) {
+    if (
+      bottomYRaw >= rightMostPiece.Y2.Raw &&
+      bottomYRaw - sensorDepthRaw <= rightMostPiece.Y2.Raw
+    ) {
       return true;
     }
   }
@@ -312,7 +354,10 @@ function handleWalkOff(p: Player, previousStage: Stage): boolean {
     const fellOffRightLedge = p.Position.X.Raw > rightMostPiece.X2.Raw;
     const isFacingRight = p.Flags.IsFacingRight;
 
-    if ((fellOffLeftLedge && isFacingRight) || (fellOffRightLedge && !isFacingRight)) {
+    if (
+      (fellOffLeftLedge && isFacingRight) ||
+      (fellOffRightLedge && !isFacingRight)
+    ) {
       shouldSnapBack = true;
     }
   } else if (CanStateWalkOffLedge(p.FSMInfo.CurrentStateId) === false) {
@@ -321,7 +366,10 @@ function handleWalkOff(p: Player, previousStage: Stage): boolean {
 
   if (shouldSnapBack) {
     const yPosRaw = p.ECB.YOffset.Raw;
-    if (Math.abs(p.Position.X.Raw - leftMostPiece.X1.Raw) < Math.abs(p.Position.X.Raw - rightMostPiece.X2.Raw)) {
+    if (
+      Math.abs(p.Position.X.Raw - leftMostPiece.X1.Raw) <
+      Math.abs(p.Position.X.Raw - rightMostPiece.X2.Raw)
+    ) {
       SetPlayerPositionRaw(
         p,
         leftMostPiece.X1.Raw,

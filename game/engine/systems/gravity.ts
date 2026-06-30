@@ -30,7 +30,7 @@ export function Gravity(world: World): void {
   }
 }
 
-function playerHasGravity(p: Player, stage: Stage[]): boolean {
+function playerHasGravity(p: Player, stages: Stage[]): boolean {
   switch (p.FSMInfo.CurrentStateId) {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
@@ -50,11 +50,11 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   const attack = p.Attacks.GetAttack();
 
   if (attack === undefined) {
-    const stagesLength = stage.length;
+    const stagesLength = stages.length;
     let playerOnPlatsOrStage = false;
 
     for (let i = 0; i < stagesLength; i++) {
-      const stagePiece = stage[i];
+      const stagePiece = stages[i];
       const pps = PlayerOnStageOrPlats(stagePiece, p);
       if (pps) {
         playerOnPlatsOrStage = true;
@@ -69,11 +69,11 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   }
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  const stagesLength = stage.length;
+  const stagesLength = stages.length;
   let playerOnPlatsOrStage = false;
 
   for (let i = 0; i < stagesLength; i++) {
-    const stagePiece = stage[i];
+    const stagePiece = stages[i];
     const pps = PlayerOnStageOrPlats(stagePiece, p);
 
     if (pps) {

@@ -42,7 +42,10 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
   public LedgeBoxYOffset = 0;
-  public LedgeRollFrames = { ledgeGetUpFrames: 15, ledgeRollFrames: [16, 43] as [number, number] };
+  public LedgeRollFrames = {
+    ledgeGetUpFrames: 15,
+    ledgeRollFrames: [16, 43] as [number, number]
+  };
   public Attacks = new Map<AttackId, AttackConfig>();
   public Grabs = new Map<GrabId, GrabConfig>();
   public Weight = 0;
@@ -105,6 +108,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const forwardThrow = GetForThrow();
     const upThrow = GetUpThrow();
     const downThrow = GetDownThrow();
+    const ledgeAttack = GetLedgeAttack();
 
     this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
       .set(STATE_IDS.SHIELD_DROP_S, 6)
@@ -158,6 +162,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.BACK_THROW_S, backThrow.TotalFrames)
       .set(STATE_IDS.UP_THROW_S, upThrow.TotalFrames)
       .set(STATE_IDS.FORWARD_THROW_S, forwardThrow.TotalFrames)
+      .set(STATE_IDS.LEDGE_ATTACK_S, ledgeAttack.TotalFrameLength)
       .set(STATE_IDS.GRND_SLAM_S, 20)
       .set(STATE_IDS.DIRT_NAP_S, 480)
       .set(STATE_IDS.GETUP_S, 25)
@@ -233,6 +238,11 @@ export class DefaultCharacterConfig implements CharacterConfig {
         yOffset: 0
       })
       .set(STATE_IDS.LEDGE_GETUP_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.LEDGE_ATTACK_S, {
         height: 70,
         width: 70,
         yOffset: 0
@@ -319,7 +329,8 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(dashAtk.AttackId, dashAtk)
       .set(upSpecial.AttackId, upSpecial)
       .set(pummel.AttackId, pummel)
-      .set(getUpAttack.AttackId, getUpAttack);
+      .set(getUpAttack.AttackId, getUpAttack)
+      .set(ledgeAttack.AttackId, ledgeAttack);
 
     this.Grabs.set(grab.GrabId, grab);
 
@@ -1645,4 +1656,29 @@ function GetUpThrow(): ThrowConfig {
     Damage: 11
   };
   return tc;
+}
+
+function GetLedgeAttack(): AttackConfig {
+  const bldr = new AttackConfigBuilder('LedgeAttack');
+  const totalFrame = 45;
+  const radius = 25;
+  const b1 = new Map<frameNumber, ConfigVec>();
+  const b2 = new Map<frameNumber, ConfigVec>();
+  const b3 = new Map<frameNumber, ConfigVec>();
+  const b4 = new Map<frameNumber, ConfigVec>();
+  b1.set(28, toCv(65, -20)).set(29, toCv(65, -20));
+  b2.set(28, toCv(78, -20)).set(29, toCv(78, -20));
+  b3.set(32, toCv(-20, -90)).set(33, toCv(-65, -90));
+  b4.set(32, toCv(-30, -110)).set(33, toCv(-30, -110));
+
+  bldr
+    .WithAttackId(ATTACK_IDS.LEDGE_ATTACK_ATK)
+    .WithTotalFrames(totalFrame)
+    .WithGravity(false)
+    .WithHitBubble(8, radius, 1, 120, b1)
+    .WithHitBubble(9, radius, 0, 120, b2)
+    .WithHitBubble(12, radius, 3, 90, b3)
+    .WithHitBubble(13, radius, 2, 90, b4);
+
+  return bldr.Build();
 }
