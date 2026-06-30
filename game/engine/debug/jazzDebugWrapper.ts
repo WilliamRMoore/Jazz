@@ -8,7 +8,7 @@ import { FlatVec } from '../physics/vector';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
 import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
-import { SetPlayerToFrame } from '../jazz/jazzNetwork';
+import { SetPlayerToFrame } from '../world/stateModules';
 
 export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;

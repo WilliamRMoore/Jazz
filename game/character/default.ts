@@ -13,7 +13,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   GrabId,
-  GRAB_IDS,
+  GRAB_IDS
 } from '../engine/finite-state-machine/stateConfigurations/shared';
 
 import {
@@ -26,6 +26,7 @@ import {
   GrabConfig,
   GrabConfigBuilder,
   HurtCapsuleConfig,
+  ThrowConfig
 } from './shared';
 
 export class DefaultCharacterConfig implements CharacterConfig {
@@ -41,6 +42,10 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public LedgeBoxHeight = 0;
   public LedgeBoxWidth = 0;
   public LedgeBoxYOffset = 0;
+  public LedgeRollFrames = {
+    ledgeGetUpFrames: 15,
+    ledgeRollFrames: [16, 43] as [number, number]
+  };
   public Attacks = new Map<AttackId, AttackConfig>();
   public Grabs = new Map<GrabId, GrabConfig>();
   public Weight = 0;
@@ -52,6 +57,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public AerialSpeedMultiplier: number;
   public AirDodgeSpeed: number;
   public DodgeRollSpeed: number;
+  public LedgeRollSpeed: number;
+  public GetUpRollForwardSpeed: number;
+  public GetUpRollBackSpeed: number;
   public MaxWalkSpeed: number;
   public MaxRunSpeed: number;
   public DashMutiplier: number;
@@ -61,6 +69,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public FastFallSpeed: number;
   public FallSpeed: number;
   public Gravity: number;
+  public Throws: ThrowConfig[] = [];
 
   constructor() {
     const neutralAttack = GetNAtk();
@@ -78,10 +87,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const dashAtk = GetDashAttack();
     const nSpecial = GetNSpecial();
     const grab = GetGrab();
+    const pummel = GetPummel();
+    const getUpAttack = GetGetUpAttack();
     // runGrab
-    // side throw
-    // down throw
-    // up throw
     const sideSpecial = GetSideSpecial();
     const sideSpecialEx = GetSideSpecialExtension();
     const sideSpecialAir = GetSideSpecialAir();
@@ -95,6 +103,12 @@ export class DefaultCharacterConfig implements CharacterConfig {
     const uAir = GetUAir();
     const bAir = GetBAir();
     const dAir = GetDAir();
+
+    const backThrow = GetBackThrow();
+    const forwardThrow = GetForThrow();
+    const upThrow = GetUpThrow();
+    const downThrow = GetDownThrow();
+    const ledgeAttack = GetLedgeAttack();
 
     this.FrameLengths.set(STATE_IDS.SHIELD_RAISE_S, 6)
       .set(STATE_IDS.SHIELD_DROP_S, 6)
@@ -139,14 +153,30 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.DOWN_SPCL_S, downSpecial.TotalFrameLength)
       .set(STATE_IDS.DOWN_SPCL_AIR_S, downSpecialAerial.TotalFrameLength)
       .set(STATE_IDS.UP_SPCL_S, upSpecial.TotalFrameLength)
+      .set(STATE_IDS.GETUP_ATTACK_S, getUpAttack.TotalFrameLength)
       .set(STATE_IDS.GRAB_S, grab.TotalFrameLength)
       .set(STATE_IDS.WALL_KICK_S, 10)
-      .set(STATE_IDS.WALL_SLAM_S, 20);
+      .set(STATE_IDS.WALL_SLAM_S, 20)
+      .set(STATE_IDS.PUMMEL_S, pummel.TotalFrameLength)
+      .set(STATE_IDS.DOWN_THROW_S, downThrow.TotalFrames)
+      .set(STATE_IDS.BACK_THROW_S, backThrow.TotalFrames)
+      .set(STATE_IDS.UP_THROW_S, upThrow.TotalFrames)
+      .set(STATE_IDS.FORWARD_THROW_S, forwardThrow.TotalFrames)
+      .set(STATE_IDS.LEDGE_ATTACK_S, ledgeAttack.TotalFrameLength)
+      .set(STATE_IDS.GRND_SLAM_S, 20)
+      .set(STATE_IDS.DIRT_NAP_S, 480)
+      .set(STATE_IDS.GETUP_S, 25)
+      .set(STATE_IDS.GETUP_ROLL_FORWARD_S, 38)
+      .set(STATE_IDS.GETUP_ROLL_BACK_S, 40)
+      .set(STATE_IDS.LEDGE_GETUP_S, 30)
+      .set(STATE_IDS.LEDGE_ROLL_S, 43)
+      .set(STATE_IDS.TECH_IN_PLACE_S, 25)
+      .set(STATE_IDS.ROLL_TECH_S, 31);
 
     this.ECBShapes.set(STATE_IDS.N_FALL_S, {
       height: 70,
       width: 70,
-      yOffset: -25,
+      yOffset: -25
     })
       .set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 })
       .set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 })
@@ -175,22 +205,62 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
         height: 60,
         width: 60,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.SHIELD_BREAK_LAND_S, {
         height: 40,
         width: 100,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.DIZZY_S, {
         height: 70,
         width: 70,
-        yOffset: 0,
+        yOffset: 0
       })
       .set(STATE_IDS.WALL_SLAM_S, {
         height: 100,
         width: 40,
-        yOffset: 0,
+        yOffset: 0
+      })
+      .set(STATE_IDS.GRND_SLAM_S, {
+        height: 40,
+        width: 100,
+        yOffset: 0
+      })
+      .set(STATE_IDS.DIRT_NAP_S, {
+        height: 40,
+        width: 100,
+        yOffset: 0
+      })
+      .set(STATE_IDS.GETUP_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.LEDGE_GETUP_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.LEDGE_ATTACK_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.LEDGE_ROLL_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
+      })
+      .set(STATE_IDS.TECH_IN_PLACE_S, {
+        height: 70,
+        width: 85,
+        yOffset: 0
+      })
+      .set(STATE_IDS.ROLL_TECH_S, {
+        height: 70,
+        width: 70,
+        yOffset: 0
       });
 
     this.ShieldRadius = 75; //new FixedPoint(75);
@@ -210,6 +280,9 @@ export class DefaultCharacterConfig implements CharacterConfig {
     this.MaxDashSpeed = 7;
     this.AirDodgeSpeed = 11.5;
     this.DodgeRollSpeed = 11;
+    this.LedgeRollSpeed = 11;
+    this.GetUpRollBackSpeed = 10;
+    this.GetUpRollForwardSpeed = 10;
     this.GroundedVelocityDecay = 0.4;
 
     this.ECBOffset = 0;
@@ -254,9 +327,17 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(sideSpecialAir.AttackId, sideSpecialAir)
       .set(sideSpecialExAir.AttackId, sideSpecialExAir)
       .set(dashAtk.AttackId, dashAtk)
-      .set(upSpecial.AttackId, upSpecial);
+      .set(upSpecial.AttackId, upSpecial)
+      .set(pummel.AttackId, pummel)
+      .set(getUpAttack.AttackId, getUpAttack)
+      .set(ledgeAttack.AttackId, ledgeAttack);
 
     this.Grabs.set(grab.GrabId, grab);
+
+    this.Throws.push(GetForThrow());
+    this.Throws.push(GetBackThrow());
+    this.Throws.push(GetDownThrow());
+    this.Throws.push(GetUpThrow());
   }
 
   private populateHurtCircles() {
@@ -265,14 +346,14 @@ export class DefaultCharacterConfig implements CharacterConfig {
       y1: -40,
       x2: 0,
       y2: -50,
-      radius: 40,
+      radius: 40
     };
     const head: HurtCapsuleConfig = {
       x1: 0,
       y1: -105,
       x2: 0,
       y2: -125,
-      radius: 14,
+      radius: 14
     };
     this.HurtCapsules.push(head);
     this.HurtCapsules.push(body);
@@ -441,7 +522,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     160,
-    20,
+    20
   );
 
   const bubble2Offsets = generateArcBubbleOffsets(
@@ -449,7 +530,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     140,
-    20,
+    20
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -457,7 +538,7 @@ function GetUAir() {
     endAngle,
     uairFramesActive,
     110,
-    20,
+    20
   );
 
   const uAirAttack = new AttackConfigBuilder('UAir')
@@ -474,7 +555,7 @@ function GetUAir() {
       uairRadius,
       0,
       toeOfNoLaunchAngle,
-      bubble3Offsets,
+      bubble3Offsets
     )
     .Build();
 
@@ -500,7 +581,7 @@ function GetFAir() {
     155, // distance from player center
     130, // retract inwards by 10px at end
     12,
-    false,
+    false
   );
 
   // Bubble 2: further from player, stacked above, same rotation
@@ -511,7 +592,7 @@ function GetFAir() {
     130,
     110,
     12,
-    false,
+    false
   );
 
   const bubble3Offsets = generateArcBubbleOffsets(
@@ -521,7 +602,7 @@ function GetFAir() {
     100,
     100,
     12,
-    false,
+    false
   );
 
   // Build the FAir attack using AttackBuilder
@@ -866,7 +947,7 @@ function GetUpTilt() {
     120,
     0,
     50,
-    true,
+    true
   );
 
   const hitBubbleOffsets2 = new Map<frameNumber, ConfigVec>();
@@ -887,7 +968,7 @@ function GetUpTilt() {
       explosiveRadius,
       1,
       launchAngle,
-      hitBubbleOffsets2,
+      hitBubbleOffsets2
     );
 
   return bldr.Build();
@@ -921,7 +1002,7 @@ function GetUpchargeExt() {
     6,
     105,
     0,
-    21,
+    21
   );
 
   h1offset.forEach((v, k) => {
@@ -1086,20 +1167,20 @@ function GetSideSpecial() {
 
   const switchStateCommand: SwitchPlayerStateCommand = {
     commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-    payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
+    payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE
   };
 
   const sensorReactorChangeStateOnDetection: SetPlayerSensorDetectCommand = {
     commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-    payload: switchStateCommand,
+    payload: switchStateCommand
   };
 
   const setPlayerVelocityToZero: SetVelocityCommand = {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const sensor1: ActivateSensorCommand = {
@@ -1107,31 +1188,31 @@ function GetSideSpecial() {
     payload: {
       x: 45,
       y: -15,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const sensor2: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -50,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const sensor3: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -85,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
 
   const frameActivate = 15;
 
   const deactivateSensor: DeactivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
-    payload: undefined,
+    payload: undefined
   };
 
   const frameDeactivate = 40;
@@ -1179,8 +1260,8 @@ function GetSideSpecialExtension() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const bldr = new AttackConfigBuilder('SideSpecialExtension');
@@ -1206,19 +1287,19 @@ function GetSideSpecialAir() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const setPlayerStateToSideSpclAirEx: SwitchPlayerStateCommand = {
     commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-    payload: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE,
+    payload: GAME_EVENT_IDS.S_SPCL_EX_AIR_GE
   };
 
   const setSensorReactorToSwicthStateOnDetection: SetPlayerSensorDetectCommand =
     {
       commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-      payload: setPlayerStateToSideSpclAirEx,
+      payload: setPlayerStateToSideSpclAirEx
     };
 
   const activateSensor1: ActivateSensorCommand = {
@@ -1226,29 +1307,29 @@ function GetSideSpecialAir() {
     payload: {
       x: 45,
       y: -15,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const activateSensor2: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -50,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
   const activateSensor3: ActivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_ACTIVATE,
     payload: {
       x: 45,
       y: -85,
-      radius: 30,
-    },
+      radius: 30
+    }
   };
 
   const deactivateSensor: DeactivateSensorCommand = {
     commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
-    payload: undefined,
+    payload: undefined
   };
 
   for (let i = 14; i < 35; i++) {
@@ -1293,8 +1374,8 @@ function GetSideSpecialExtensionAir() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const bldr = new AttackConfigBuilder('SideSpecialExtensionAir');
@@ -1365,13 +1446,13 @@ function GetDownSpecialAerial() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   const setJumpToOne: SetJumpCountCommand = {
     commandName: COMMAND_NAMES.SET_JUMP_COUNT,
-    payload: 1,
+    payload: 1
   };
 
   const blrd = new AttackConfigBuilder('DSpecialAir');
@@ -1406,8 +1487,8 @@ function GetUpSpecial() {
     commandName: COMMAND_NAMES.VELOCITY_SET,
     payload: {
       x: 0,
-      y: 0,
-    },
+      y: 0
+    }
   };
 
   bldr
@@ -1437,6 +1518,60 @@ function GetGrab() {
   return bldr.Build();
 }
 
+function GetPummel() {
+  const totalFrames = 22;
+  const radius = 25;
+  const bubble1Offsets = new Map<frameNumber, ConfigVec>();
+  const cv = toCv(45, -40);
+  bubble1Offsets.set(4, cv).set(5, cv).set(6, cv);
+
+  const bldr = new AttackConfigBuilder('Pummel');
+
+  bldr
+    .WithAttackId(ATTACK_IDS.PUMMEL_ATK)
+    .WithInteruptableFrame(totalFrames)
+    .WithGravity(false)
+    .WithHitBubble(5, radius, 0, 0, bubble1Offsets);
+
+  return bldr.Build();
+}
+
+function GetGetUpAttack() {
+  const totalFrames = 55;
+  const radius = 25;
+  const bub1Offset = new Map<frameNumber, ConfigVec>();
+  const bub2Offset = new Map<frameNumber, ConfigVec>();
+  const bub3Offset = new Map<frameNumber, ConfigVec>();
+  const bub4Offset = new Map<frameNumber, ConfigVec>();
+  const bub5Offset = new Map<frameNumber, ConfigVec>();
+  const bub6Offset = new Map<frameNumber, ConfigVec>();
+
+  for (let frame = 15; frame < 18; frame++) {
+    bub1Offset.set(frame, toCv(40, -60));
+    bub2Offset.set(frame, toCv(55, -60));
+    bub3Offset.set(frame, toCv(70, -60));
+    bub4Offset.set(frame, toCv(-40, -60));
+    bub5Offset.set(frame, toCv(-55, -60));
+    bub6Offset.set(frame, toCv(-70, -60));
+  }
+
+  const bldr = new AttackConfigBuilder('GetUpAttack');
+
+  bldr
+    .WithAttackId(ATTACK_IDS.GETUP_ATTACK_ATK)
+    .WithTotalFrames(totalFrames)
+    .WithInteruptableFrame(totalFrames)
+    .WithGravity(false)
+    .WithHitBubble(7, radius, 0, 0, bub1Offset)
+    .WithHitBubble(6, radius, 1, 0, bub2Offset)
+    .WithHitBubble(6, radius, 2, 0, bub3Offset)
+    .WithHitBubble(7, radius, 3, 0, bub4Offset)
+    .WithHitBubble(6, radius, 4, 0, bub5Offset)
+    .WithHitBubble(6, radius, 5, 0, bub6Offset);
+
+  return bldr.Build();
+}
+
 function generateArcBubbleOffsets(
   startAngle: number,
   endAngle: number,
@@ -1444,7 +1579,7 @@ function generateArcBubbleOffsets(
   distance: number,
   inwardRetract: number,
   frameStart: number = 12,
-  invertY: boolean = true,
+  invertY: boolean = true
 ): Map<number, ConfigVec> {
   const offsets = new Map<number, ConfigVec>();
 
@@ -1458,4 +1593,92 @@ function generateArcBubbleOffsets(
     offsets.set(frameStart + i, toCv(x, invertY ? -y : y));
   }
   return offsets;
+}
+
+function GetForThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'ForThrow',
+    StateId: STATE_IDS.FORWARD_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 60,
+    BaseKnockBack: 500,
+    KnockBackScaling: 350,
+    TotalFrames: 90,
+    Damage: 14,
+    ReleaseFrame: 65
+  };
+
+  return tc;
+}
+
+function GetBackThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'BackThrow',
+    StateId: STATE_IDS.BACK_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 130,
+    BaseKnockBack: 500,
+    KnockBackScaling: 290,
+    TotalFrames: 60,
+    Damage: 13,
+    ReleaseFrame: 48
+  };
+
+  return tc;
+}
+
+function GetDownThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'DownThrow',
+    StateId: STATE_IDS.DOWN_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 150,
+    BaseKnockBack: 375,
+    KnockBackScaling: 325,
+    TotalFrames: 50,
+    ReleaseFrame: 40,
+    Damage: 15
+  };
+
+  return tc;
+}
+
+function GetUpThrow(): ThrowConfig {
+  const tc: ThrowConfig = {
+    Name: 'UpThrow',
+    StateId: STATE_IDS.UP_THROW_S,
+    MoveOps: [],
+    LaunchAngle: 90,
+    BaseKnockBack: 475,
+    KnockBackScaling: 300,
+    TotalFrames: 60,
+    ReleaseFrame: 30,
+    Damage: 11
+  };
+  return tc;
+}
+
+function GetLedgeAttack(): AttackConfig {
+  const bldr = new AttackConfigBuilder('LedgeAttack');
+  const totalFrame = 45;
+  const radius = 25;
+  const b1 = new Map<frameNumber, ConfigVec>();
+  const b2 = new Map<frameNumber, ConfigVec>();
+  const b3 = new Map<frameNumber, ConfigVec>();
+  const b4 = new Map<frameNumber, ConfigVec>();
+  b1.set(28, toCv(65, -20)).set(29, toCv(65, -20));
+  b2.set(28, toCv(78, -20)).set(29, toCv(78, -20));
+  b3.set(32, toCv(-20, -90)).set(33, toCv(-65, -90));
+  b4.set(32, toCv(-30, -110)).set(33, toCv(-30, -110));
+
+  bldr
+    .WithAttackId(ATTACK_IDS.LEDGE_ATTACK_ATK)
+    .WithTotalFrames(totalFrame)
+    .WithGravity(false)
+    .WithHitBubble(8, radius, 1, 120, b1)
+    .WithHitBubble(9, radius, 0, 120, b2)
+    .WithHitBubble(12, radius, 3, 90, b3)
+    .WithHitBubble(13, radius, 2, 90, b4);
+
+  return bldr.Build();
 }

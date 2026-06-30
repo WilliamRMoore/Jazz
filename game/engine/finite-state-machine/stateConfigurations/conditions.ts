@@ -1,6 +1,12 @@
+import { Player } from '../../entity/playerOrchestrator';
 import { InputAction } from '../../input/Input';
 import { IInputStore } from '../../managers/inputManager';
 import { NumberToRaw } from '../../math/fixedPoint';
+import {
+  POINT_FIVE,
+  POINT_FOUR,
+  POINT_TWO_FIVE
+} from '../../math/numberConstants';
 import { World } from '../../world/world';
 import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
 
@@ -13,7 +19,7 @@ const UP_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(0.1);
 const DOWN_CHARGE_EX_RYAXIS_THRESHOLD = NumberToRaw(-0.1);
 const TURN_TO_DASH_LXAXIS_THRESHOLD = NumberToRaw(0.5);
 
-type conditionFunc = (world: World, playerIndex: number) => boolean;
+type conditionFunc = (world: World, p: Player, ia: InputAction) => boolean;
 
 export type condition = {
   Name: string;
@@ -24,9 +30,10 @@ export type condition = {
 export function RunCondition(
   c: condition,
   w: World,
-  playerIndex: number,
+  p: Player,
+  ia: InputAction
 ): StateId | undefined {
-  if (c.ConditionFunc(w, playerIndex) === true) {
+  if (c.ConditionFunc(w, p, ia) === true) {
     return c.StateId;
   }
   return undefined;
@@ -34,175 +41,131 @@ export function RunCondition(
 
 export const IdleToTurn: condition = {
   Name: 'IdleToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const flags = p.Flags;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 const STICK_JUMP_THRESHOLD = NumberToRaw(0.4);
 export const ToStickJumpSquat: condition = {
   Name: 'StickJump',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const is = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const is = w.PlayerData.InputStore(p.ID);
     const lastFrame = w.PreviousFrame;
     const lastIa = is.GetInputForFrame(lastFrame);
-    const ia = is.GetInputForFrame(curFrame);
     if (ia.LYAxis.Raw <= 0) {
       return false;
     }
     const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
-    const p = w.PlayerData.Player(playerIndex)!;
     if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
       return true;
     }
     return false;
   },
-  StateId: STATE_IDS.JUMP_SQUAT_S,
+  StateId: STATE_IDS.JUMP_SQUAT_S
 };
 
 export const ToStickJump: condition = {
   Name: 'StickJump',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const is = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const is = w.PlayerData.InputStore(p.ID);
     const lastFrame = w.PreviousFrame;
     const lastIa = is.GetInputForFrame(lastFrame);
-    const ia = is.GetInputForFrame(curFrame);
     if (ia.LYAxis.Raw <= 0) {
       return false;
     }
     const checkDiff = ia.LYAxis.Raw - lastIa.LYAxis.Raw;
-    const p = w.PlayerData.Player(playerIndex)!;
     if (checkDiff > STICK_JUMP_THRESHOLD && p.Jump.HasJumps()) {
       return true;
     }
     return false;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const IdleToDash: condition = {
   Name: 'IdleToDash',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
-
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
-
     const facingRight = p.Flags.IsFacingRight;
     const lxAxisRaw = ia.LXAxisRaw;
-
     if (lxAxisRaw > 0 && facingRight) {
       return true;
     }
-
     if (lxAxisRaw < 0 && !facingRight) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const IdleToDashTurn: condition = {
   Name: 'IdleToTurnDash',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
-
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE) {
       return false;
     }
-
-    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
     const lxAxisRaw = ia.LXAxisRaw;
-
     if (lxAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (lxAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.DASH_TURN_S,
+  StateId: STATE_IDS.DASH_TURN_S
 };
 
 export const shieldToShieldDrop: condition = {
   Name: 'ToShieldDrop',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.LTValRaw === 0 && ia.RTValRaw === 0) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.SHIELD_DROP_S,
+  StateId: STATE_IDS.SHIELD_DROP_S
 };
 
 export const WalkToDash: condition = {
   Name: 'WalkToDash',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const fsmInfo = p.FSMInfo;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (
       fsmInfo.CurrentStateFrame > WALK_TO_DASH_STATE_FRAME_THRESHOLD ||
       prevIa.Action === GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return false;
     }
-
     const flags = p.Flags;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (
       flags.IsFacingRight &&
       ia.LXAxisRaw > 0 &&
@@ -210,7 +173,6 @@ export const WalkToDash: condition = {
     ) {
       return true;
     }
-
     if (
       flags.IsFacingLeft &&
       ia.LXAxisRaw < 0 &&
@@ -218,26 +180,20 @@ export const WalkToDash: condition = {
     ) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const WalkToTurn: condition = {
   Name: 'WalkToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const player = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (prevIa === undefined) {
       return false;
     }
-
     const prevLaxRaw = prevIa.LXAxisRaw;
     const curLaxRaw = ia.LXAxisRaw;
     if (
@@ -246,92 +202,71 @@ export const WalkToTurn: condition = {
     ) {
       return true;
     }
-
-    const flags = player.Flags;
+    const flags = p.Flags;
     if (
       (prevLaxRaw === 0 && flags.IsFacingRight && curLaxRaw < 0) ||
       (prevLaxRaw === 0 && flags.IsFacingLeft && curLaxRaw > 0)
     ) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 export const RunToRunStopByGuard: condition = {
   Name: 'RunToRunStopByGuard',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const pd = w.PlayerData;
-    const inputStore = pd.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
       return true;
     }
     return false;
   },
-  StateId: STATE_IDS.STOP_RUN_S,
+  StateId: STATE_IDS.STOP_RUN_S
 };
 
 export const RunToTurn: condition = {
   Name: 'RunToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const player = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (prevIa === undefined) {
       return false;
     }
-
     const prevLaxRaw = prevIa.LXAxisRaw;
     const curLaxRaw = ia.LXAxisRaw;
-
     if (
       (prevLaxRaw < 0 && curLaxRaw > 0) ||
       (prevLaxRaw > 0 && curLaxRaw < 0)
     ) {
       return true;
     }
-
-    const flags = player.Flags;
+    const flags = p.Flags;
     if (
       (prevLaxRaw === 0 && flags.IsFacingRight && curLaxRaw < 0) ||
       (prevLaxRaw === 0 && flags.IsFacingLeft && curLaxRaw > 0)
     ) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.RUN_TURN_S,
+  StateId: STATE_IDS.RUN_TURN_S
 };
 
 export const DashToTurn: condition = {
   Name: 'DashToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const player = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (prevIa === undefined) {
       return false;
     }
-
     const prevLaxRaw = prevIa.LXAxisRaw; // Previous left stick X-axis
     const curLaxRaw = ia.LXAxisRaw; // Current left stick X-axis
     const laxDifferenceRaw = curLaxRaw - prevLaxRaw; // Difference between current and previous X-axis
-
-    const flags = player.Flags;
+    const flags = p.Flags;
     const facingRight = flags.IsFacingRight;
     // Check if the variation exceeds the threshold and is in the opposite direction of the player's facing direction
     if (laxDifferenceRaw < -DASH_TO_TURN_THRESHOLD && facingRight) {
@@ -340,103 +275,79 @@ export const DashToTurn: condition = {
         return true;
       }
     }
-
     if (laxDifferenceRaw > DASH_TO_TURN_THRESHOLD && !facingRight) {
       // Player is facing left, but the stick moved significantly to the right
       if (curLaxRaw > 0) {
         return true;
       }
     }
-
     return false;
   },
-  StateId: STATE_IDS.DASH_TURN_S,
+  StateId: STATE_IDS.DASH_TURN_S
 };
 
 export const ToJump: condition = {
   Name: 'ToJump',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const player = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     const jumpId = GAME_EVENT_IDS.JUMP_GE;
-
     if (
       inputActionMacthesTargetNotRepeating(jumpId, ia, prevIa) &&
-      player.Jump.HasJumps()
+      p.Jump.HasJumps()
     ) {
       return true;
     }
 
     return false;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const ToAirDodge: condition = {
   Name: 'ToAirDodge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const curFrame = w.LocalFrame;
-    const p = w.PlayerData.Player(playerIndex)!;
     if (p.Flags.JumpedFromShield) {
       return false;
     }
     return isBufferedInput(inputStore, curFrame, 3, GAME_EVENT_IDS.GUARD_GE);
   },
-  StateId: STATE_IDS.AIR_DODGE_S,
+  StateId: STATE_IDS.AIR_DODGE_S
 };
 
 export const DashDefaultRun: condition = {
   Name: 'DashDefaultRun',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const flags = p.Flags;
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.RUN_S,
+  StateId: STATE_IDS.RUN_S
 };
 
 export const DashDefaultIdle: condition = {
   Name: 'DashDefaultIdle',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.LXAxisRaw === 0) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const TurnDefaultWalk: condition = {
   Name: 'TurnDefaultWalk',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-    const p = w.PlayerData.Player(playerIndex);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const facingRight = p?.Flags.IsFacingRight;
-
     if (
       (facingRight && ia!.LXAxisRaw < 0) ||
       (!facingRight && ia!.LXAxisRaw > 0)
@@ -445,22 +356,17 @@ export const TurnDefaultWalk: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const TurnToDash: condition = {
   Name: 'TurnToDash',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const stateFrame = p.FSMInfo.CurrentStateFrame;
-
     if (stateFrame > WALK_TO_DASH_STATE_FRAME_THRESHOLD) {
       return false;
     }
-
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     if (
       (ia.LXAxisRaw < -TURN_TO_DASH_LXAXIS_THRESHOLD &&
         p.Flags.IsFacingRight) ||
@@ -470,55 +376,44 @@ export const TurnToDash: condition = {
       return inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.MOVE_FAST_GE,
         ia,
-        prevIa,
+        prevIa
       );
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const ToNair: condition = {
   Name: 'ToNAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.N_AIR_S,
+  StateId: STATE_IDS.N_AIR_S
 };
 
 export const ToFAir: condition = {
   Name: 'ToFAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex);
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (ia.Action === prevIa.Action) {
       return false;
     }
-
     if (ia.Action !== GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       return false;
     }
-
     const isFacingRight = p?.Flags.IsFacingRight;
     const IsFacingLeft = !isFacingRight;
-
     const isRStickXAxisActuated = Math.abs(ia.RXAxisRaw) > 0;
-
     if (isRStickXAxisActuated === true) {
       if (isFacingRight && ia.RXAxisRaw > 0) {
         return true;
@@ -541,341 +436,264 @@ export const ToFAir: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.F_AIR_S,
+  StateId: STATE_IDS.F_AIR_S
 };
 
 export const ToBAir: condition = {
   Name: 'ToBAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (ia.Action === prevIa?.Action) {
       return false;
     }
-
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       if (p!.Flags.IsFacingRight && (ia.RXAxisRaw < 0 || ia.LXAxisRaw < 0)) {
         return true;
       }
-
       if (p!.Flags.IsFacingLeft && (ia.RXAxisRaw > 0 || ia.LXAxisRaw > 0)) {
         return true;
       }
     }
-
     return false;
   },
-  StateId: STATE_IDS.B_AIR_S,
+  StateId: STATE_IDS.B_AIR_S
 };
 
 export const ToUAir: condition = {
   Name: 'ToUAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.U_AIR_S,
+  StateId: STATE_IDS.U_AIR_S
 };
 
 export const ToDAir: condition = {
   Name: 'ToDAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.D_AIR_S,
+  StateId: STATE_IDS.D_AIR_S
 };
 
 export const SideTiltToWalk: condition = {
   Name: 'SideTiltToWalk',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (
       ia.Action !== GAME_EVENT_IDS.MOVE_GE ||
       ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return false;
     }
-
-    const p = w.PlayerData.Player(playerIndex)!;
     const flags = p.Flags;
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const LandToIdle: condition = {
   Name: 'LandToIdle',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.LXAxisRaw === 0) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const LandToWalk: condition = {
   Name: 'LandToWalk',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const flags = p.Flags;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const LandToTurn: condition = {
   Name: 'LandToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const flags = p.Flags;
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.TURN_S,
+  StateId: STATE_IDS.TURN_S
 };
 
 export const DefaultDownTiltToCrouch: condition = {
   Name: 'DefaultDownTiltToCrouch',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action === GAME_EVENT_IDS.DOWN_GE) {
       return true;
     }
     return false;
   },
-  StateId: STATE_IDS.CROUCH_S,
+  StateId: STATE_IDS.CROUCH_S
 };
 
 export const RunStopToTurn: condition = {
   Name: 'RunStopToTurn',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const flags = p.Flags;
-
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
     if (ia.LXAxisRaw > 0 && flags.IsFacingLeft) {
       return true;
     }
-
     if (ia.LXAxisRaw < 0 && flags.IsFacingRight) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.RUN_TURN_S,
+  StateId: STATE_IDS.RUN_TURN_S
 };
 
 export const IdleToAttack: condition = {
   Name: 'IdleToAttack',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.ATTACK_S,
+  StateId: STATE_IDS.ATTACK_S
 };
 
 export const ToSideCharge: condition = {
   Name: 'ToSideCharge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.SIDE_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
     }
-
     const rxAbsRaw = Math.abs(ia.RXAxisRaw);
     if (rxAbsRaw > 0 && rxAbsRaw > Math.abs(ia.RYAxisRaw)) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_S,
+  StateId: STATE_IDS.SIDE_CHARGE_S
 };
 
 export const IdleToUpTilt: condition = {
   Name: 'IdleToUpTilt',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     if (
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
     }
-
     if (ia.RYAxisRaw > 0) {
       return false;
     }
-
     return true;
   },
-  StateId: STATE_IDS.UP_TILT_S,
+  StateId: STATE_IDS.UP_TILT_S
 };
 
 export const ToUpCharge: condition = {
   Name: 'ToUpCharge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.UP_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
     }
-
     if (Math.abs(ia.RYAxisRaw) > Math.abs(ia.RXAxisRaw) === false) {
       return false;
     }
-
     return true;
   },
-  StateId: STATE_IDS.UP_CHARGE_S,
+  StateId: STATE_IDS.UP_CHARGE_S
 };
 
 export const ToDownCharge: condition = {
   Name: 'ToDownCharge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
-
     if (
       inputActionMacthesTargetNotRepeating(
         GAME_EVENT_IDS.DOWN_ATTACK_GE,
         ia,
-        prevIa,
+        prevIa
       ) === false
     ) {
       return false;
     }
-
     if (ia.RYAxisRaw >= 0) {
       return false;
     }
-
     if (Math.abs(ia.RYAxisRaw) > Math.abs(ia.RXAxisRaw) === false) {
       return false;
     }
 
     return true;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_S,
+  StateId: STATE_IDS.DOWN_CHARGE_S
 };
 
 export const RunToDashAttack: condition = {
   Name: 'ToDashAttack',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
-    const inputStore = w.PlayerData.InputStore(p.ID);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action === GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       if (Math.abs(ia.RXAxisRaw) > 0) {
         return false;
@@ -890,20 +708,15 @@ export const RunToDashAttack: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.DASH_ATTACK_S,
+  StateId: STATE_IDS.DASH_ATTACK_S
 };
 
 export const ToSideTilt: condition = {
   Name: 'ToSideTilt',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex);
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action !== GAME_EVENT_IDS.SIDE_ATTACK_GE) {
       return false;
     }
-
     if (Math.abs(ia.RXAxisRaw) > 0) {
       return false;
     }
@@ -914,135 +727,119 @@ export const ToSideTilt: condition = {
     ) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.SIDE_TILT_S,
+  StateId: STATE_IDS.SIDE_TILT_S
 };
 
 export const ToNSpecial: condition = {
   Name: 'ToNSpecial',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SPCL_S,
+  StateId: STATE_IDS.SPCL_S
 };
 
 export const ToSideSpecial: condition = {
   Name: 'ToSideSpecial',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SIDE_SPCL_S,
+  StateId: STATE_IDS.SIDE_SPCL_S
 };
 
 export const ToSideSpecialAir: condition = {
   Name: 'ToSideSpecialAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.SIDE_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.SIDE_SPCL_AIR_S,
+  StateId: STATE_IDS.SIDE_SPCL_AIR_S
 };
 
 export const ToDownSpecial: condition = {
   Name: 'ToDownSpecial',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_SPCL_S,
+  StateId: STATE_IDS.DOWN_SPCL_S
 };
 
 export const ToDownSpecialAir: condition = {
   Name: 'ToDownSpecialAir',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_SPCL_AIR_S,
+  StateId: STATE_IDS.DOWN_SPCL_AIR_S
 };
 
 export const ToUpSpecial: condition = {
   Name: 'ToUpSpecial',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.UP_SPCL_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.UP_SPCL_S,
+  StateId: STATE_IDS.UP_SPCL_S
 };
 
 export const ToDownTilt: condition = {
   Name: 'ToDownTilt',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const inputStore = w.PlayerData.InputStore(p.ID);
     const prevFrame = w.PreviousFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
     const prevIa = inputStore.GetInputForFrame(prevFrame);
     return inputActionMacthesTargetNotRepeating(
       GAME_EVENT_IDS.DOWN_ATTACK_GE,
       ia,
-      prevIa,
+      prevIa
     );
   },
-  StateId: STATE_IDS.DOWN_TILT_S,
+  StateId: STATE_IDS.DOWN_TILT_S
 };
 
 export const HitStopToFlinch: condition = {
   Name: 'HitStopToFlinch',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStop.Frames > 0) {
       return false;
     }
@@ -1051,31 +848,26 @@ export const HitStopToFlinch: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.HIT_FLINCH_S,
+  StateId: STATE_IDS.HIT_FLINCH_S
 };
 
 export const HitStopToHitSlide: condition = {
   Name: 'HitStopToHitSlide',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStop.Frames > 0) {
       return false;
     }
-
     if (p.HitStun.NextStateId === STATE_IDS.HIT_SLIDE_S) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.HIT_SLIDE_S,
+  StateId: STATE_IDS.HIT_SLIDE_S
 };
 
 export const HitStopToLaunch: condition = {
   Name: 'HitStopToLaunch',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStop.Frames > 0) {
       return false;
     }
@@ -1084,125 +876,96 @@ export const HitStopToLaunch: condition = {
     }
     return false;
   },
-  StateId: STATE_IDS.LAUNCH_S,
+  StateId: STATE_IDS.LAUNCH_S
 };
 
 export const HitSlideToIdle: condition = {
   Name: 'HitSlideToIdle',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStun.Frames > 0) {
       return false;
     }
     return true;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const FlinchToFall: condition = {
   Name: 'FlinchToFall',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStun.Frames > 0) {
       return false;
     }
     return true;
   },
-  StateId: STATE_IDS.N_FALL_S,
+  StateId: STATE_IDS.N_FALL_S
 };
 
 export const LaunchToTumble: condition = {
-  Name: 'LaunchToHitStun',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const p = w.PlayerData.Player(playerIndex)!;
-
+  Name: 'LaunchToTumble',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (p.HitStun.Frames > 0) {
       return false;
     }
-
     return true;
   },
-  StateId: STATE_IDS.TUMBLE_S,
+  StateId: STATE_IDS.TUMBLE_S
 };
 
 export const SideChargeToEx: condition = {
   Name: 'SideChargeToEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
       return true;
     }
-
-    const p = w.PlayerData.Player(playerIndex);
     const flags = p.Flags;
-
     if (flags.IsFacingRight && ia.RXAxisRaw <= 0) {
       return true;
     }
-
     if (flags.IsFacingLeft && ia.RXAxisRaw >= 0) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S
 };
 
 export const UpChargeToEx: condition = {
   Name: 'UpChargeToEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
       return true;
     }
-
     // This handles releasing the analog stick from the 'up' position
     if (ia.RYAxisRaw <= UP_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
+  StateId: STATE_IDS.UP_CHARGE_EX_S
 };
 
 export const DownChargeToEx: condition = {
   Name: 'DownChargeToEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const inputStore = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = inputStore.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     // Release C-stick
     if (ia.Action === GAME_EVENT_IDS.IDLE_GE) {
       return true;
     }
-
     // Release analog stick from down position
     if (ia.RYAxisRaw >= DOWN_CHARGE_EX_RYAXIS_THRESHOLD) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S
 };
 
 export const ToSpotDodge: condition = {
   Name: 'ToSpotDodge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const ips = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = ips.GetInputForFrame(curFrame);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const ips = w.PlayerData.InputStore(p.ID);
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
-
     if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
       const lyAxisDiff = prevIa.LYAxisRaw - ia.LYAxisRaw;
       if (
@@ -1216,23 +979,18 @@ export const ToSpotDodge: condition = {
 
     return false;
   },
-  StateId: STATE_IDS.SPOT_DODGE_S,
+  StateId: STATE_IDS.SPOT_DODGE_S
 };
 
 export const ToRollDodge: condition = {
   Name: 'ToRollDodge',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const ips = w.PlayerData.InputStore(playerIndex);
-    const curFrame = w.LocalFrame;
-    const ia = ips.GetInputForFrame(curFrame);
-
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const ips = w.PlayerData.InputStore(p.ID);
     if (ia.Action !== GAME_EVENT_IDS.GUARD_GE) {
       return false;
     }
-
     const prevIa = ips.GetInputForFrame(w.PreviousFrame);
     const lxAxisDiffRaw = prevIa.LXAxisRaw - ia.LXAxisRaw;
-
     if (
       ia.LXAxisRaw > 0 &&
       ia.LXAxisRaw > prevIa.LXAxisRaw &&
@@ -1240,7 +998,6 @@ export const ToRollDodge: condition = {
     ) {
       return true;
     }
-
     if (
       ia.LXAxisRaw < 0 &&
       ia.LXAxisRaw < prevIa.LXAxisRaw &&
@@ -1248,172 +1005,362 @@ export const ToRollDodge: condition = {
     ) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.ROLL_DODGE_S,
+  StateId: STATE_IDS.ROLL_DODGE_S
 };
 
-// export const ToTechInPlace: condition = {
-//   Name: 'ToTechInPlace',
-//   ConditionFunc: (w: World, playerIndex: number) => {
-//     const ips = w.PlayerData.InputStore(playerIndex);
-//     const curFrame = w.LocalFrame;
-//     const bufferFrames = 7;
-//   },
-//   StateId: STATE_IDS.TECH_IN_PLACE_S,
-// };
+export const ToForwardThrow: condition = {
+  Name: 'ToForwardThrow',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(p.ID);
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    const forwardIsRight = p.Flags.IsFacingRight;
+    const currentLx = ia.LXAxisRaw;
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (forwardIsRight && currentLx > 0 && prevIa.LXAxisRaw <= 0) {
+      return true;
+    }
+    if (!forwardIsRight && currentLx < 0 && prevIa.LXAxisRaw >= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.FORWARD_THROW_S
+};
+
+export const ToBackThrow: condition = {
+  Name: 'ToBackThrow',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(p.ID);
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    const forwardIsRight = p.Flags.IsFacingRight;
+    const currentLx = ia.LXAxisRaw;
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (forwardIsRight && currentLx < 0 && prevIa.LXAxisRaw >= 0) {
+      return true;
+    }
+    if (!forwardIsRight && currentLx > 0 && prevIa.LXAxisRaw <= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.BACK_THROW_S
+};
+
+export const ToUpThrow: condition = {
+  Name: 'ToUpThrow',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(p.ID);
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (moreHorzThanVirt) {
+      return false;
+    }
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    if (ia.LYAxisRaw > 0 && prevIa.LYAxisRaw <= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.UP_THROW_S
+};
+
+export const ToDownThrow: condition = {
+  Name: 'ToDownThrow',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const pd = w.PlayerData;
+    const ips = pd.InputStore(p.ID);
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (moreHorzThanVirt) {
+      return false;
+    }
+    const prevIa = ips.GetInputForFrame(w.PreviousFrame);
+    if (ia.LYAxisRaw < 0 && prevIa.LYAxisRaw >= 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.DOWN_THROW_S
+};
+
+export const toGetUp: condition = {
+  Name: 'ToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreVertThanHorz = Math.abs(ia.LXAxisRaw) < Math.abs(ia.LYAxisRaw);
+    if (!moreVertThanHorz) {
+      return false;
+    }
+    if (ia.LYAxisRaw > 0) {
+      return true;
+    }
+    if (ia.Action === GAME_EVENT_IDS.JUMP_GE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_S
+};
+
+export const toGetUpRollForward: condition = {
+  Name: 'toGetUpRollForward',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (p.Flags.IsFacingRight && ia.LXAxisRaw > 0) {
+      return true;
+    }
+    if (!p.Flags.IsFacingRight && ia.LXAxisRaw < 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_ROLL_FORWARD_S
+};
+
+export const toGetUpRollBack: condition = {
+  Name: 'toGetUpRollBack',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const moreHorzThanVirt = Math.abs(ia.LXAxisRaw) > Math.abs(ia.LYAxisRaw);
+    if (!moreHorzThanVirt) {
+      return false;
+    }
+    if (p.Flags.IsFacingRight && ia.LXAxisRaw < 0) {
+      return true;
+    }
+    if (!p.Flags.IsFacingRight && ia.LXAxisRaw > 0) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.GETUP_ROLL_BACK_S
+};
+
+export const LedgeGrabToGetUp: condition = {
+  Name: 'LedgeGrabToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    // Jump button
+    // Up on the left stick
+    if (ia.LYAxis.Raw > POINT_TWO_FIVE) {
+      return true;
+    }
+    // Push towards stage on left stick
+    if (p.Flags.IsFacingRight && ia.LXAxis.Raw > POINT_TWO_FIVE) {
+      return true;
+    }
+    if (p.Flags.IsFacingLeft && ia.LXAxis.Raw < -POINT_TWO_FIVE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_GETUP_S
+};
+
+export const LedgeGrabToLedgeRoll: condition = {
+  Name: 'LedgeGrabToLedgeRoll',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    if (ia.Action === GAME_EVENT_IDS.GUARD_GE) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.LEDGE_ROLL_S
+};
+
+export const LedgeGrabDrop: condition = {
+  Name: 'LedgeGrabDrop',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    const prevlY = w.PlayerData.InputStore(p.ID).GetInputForFrame(
+      w.PreviousFrame
+    ).LYAxis.Raw;
+    const currentStateFrame = p.FSMInfo.CurrentStateFrame;
+    if (
+      ia.LYAxis.Raw < -POINT_FIVE &&
+      prevlY > -POINT_FOUR &&
+      currentStateFrame > 3
+    ) {
+      return true;
+    }
+    return false;
+  },
+  StateId: STATE_IDS.N_FALL_S
+};
 
 export const shieldBreakDefaultShieldTumble: condition = {
   Name: 'ShieldBreakToShieldLaunch',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S,
+  StateId: STATE_IDS.SHIELD_BREAK_TUMBLE_S
 };
 
 export const shieldBreakLandDefaultToDizzy: condition = {
   Name: 'ShieldBreakToDizzy',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DIZZY_S,
+  StateId: STATE_IDS.DIZZY_S
 };
 
 export const defaultWalk: condition = {
   Name: 'Walk',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.WALK_S,
+  StateId: STATE_IDS.WALK_S
 };
 
 export const defaultTrunRunToIdle: condition = {
   Name: 'DefaultTrunRunToIdle',
-  ConditionFunc: (w: World, playerIndex: number) => {
-    const ia = w.PlayerData.InputStore(playerIndex).GetInputForFrame(
-      w.LocalFrame,
-    );
-    const p = w.PlayerData.Player(playerIndex);
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     const facingRight = p.Flags.IsFacingRight;
-
     if (ia.LXAxisRaw > 0 && facingRight) {
       return true;
     }
     if (ia.LXAxisRaw < 0 && !facingRight) {
       return true;
     }
-
     return false;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const defaultRun: condition = {
   Name: 'Run',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.RUN_S,
+  StateId: STATE_IDS.RUN_S
 };
 
 export const defaultIdle: condition = {
   Name: 'Idle',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.IDLE_S,
+  StateId: STATE_IDS.IDLE_S
 };
 
 export const defaultDash: condition = {
   Name: 'Dash',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DASH_S,
+  StateId: STATE_IDS.DASH_S
 };
 
 export const defaultJump: condition = {
   Name: 'Jump',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.JUMP_S,
+  StateId: STATE_IDS.JUMP_S
 };
 
 export const defaultShield: condition = {
   Name: 'Shield',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SHIELD_S,
+  StateId: STATE_IDS.SHIELD_S
 };
 
 export const defaultNFall: condition = {
   Name: 'NFall',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.N_FALL_S,
+  StateId: STATE_IDS.N_FALL_S
 };
 
 export const defaultHelpess: condition = {
   Name: 'Helpless',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.HELPLESS_S,
+  StateId: STATE_IDS.HELPLESS_S
 };
 
 export const defaultTumble: condition = {
   Name: 'DefaultTubmle',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.TUMBLE_S,
+  StateId: STATE_IDS.TUMBLE_S
 };
 
 export const defaultSideChargeEx: condition = {
   Name: 'DefaultSideChargeEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.SIDE_CHARGE_EX_S,
+  StateId: STATE_IDS.SIDE_CHARGE_EX_S
 };
 
 export const defaultUpChargeEx: condition = {
   Name: 'DefaultUpChargeToEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.UP_CHARGE_EX_S,
+  StateId: STATE_IDS.UP_CHARGE_EX_S
 };
 
 export const defaultDownChargeEx: condition = {
   Name: 'DefaultDownChargeEx',
-  ConditionFunc: (w: World, playerIndex: number) => {
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     return true;
   },
-  StateId: STATE_IDS.DOWN_CHARGE_EX_S,
+  StateId: STATE_IDS.DOWN_CHARGE_EX_S
+};
+
+export const defaultHold: condition = {
+  Name: 'DefaultHold',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    return true;
+  },
+  StateId: STATE_IDS.GRAB_HOLD_S
+};
+
+export const defaultDirtNap: condition = {
+  Name: 'DefaultDirtNap',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    return true;
+  },
+  StateId: STATE_IDS.DIRT_NAP_S
+};
+
+export const defaultToGetUp: condition = {
+  Name: 'DefaultToGetUp',
+  ConditionFunc: (w: World, p: Player, ia: InputAction) => {
+    return true;
+  },
+  StateId: STATE_IDS.GETUP_S
 };
 
 function inputActionMacthesTargetNotRepeating(
   targetGeId: GameEventId,
   ia: InputAction,
-  prevIa: InputAction | undefined,
+  prevIa: InputAction | undefined
 ) {
   if (ia.Action !== targetGeId) {
     return false;
   }
-
   if (prevIa === undefined) {
     return true;
   }
-
   if (ia.Action === prevIa.Action) {
     return false;
   }
-
   return true;
 }
 
@@ -1421,7 +1368,7 @@ function isBufferedInput(
   inputStore: IInputStore,
   currentFrame: number,
   bufferFrames: number,
-  targetGameEvent: GameEventId,
+  targetGameEvent: GameEventId
 ): boolean {
   for (let i = 0; i < bufferFrames; i++) {
     const ia = inputStore.GetInputForFrame(currentFrame - i);

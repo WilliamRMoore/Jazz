@@ -9,12 +9,15 @@ export function Gravity(world: World): void {
   const playerData = world.PlayerData;
   const stageData = world.StageData;
   const playerCount = playerData.PlayerCount;
+
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = playerData.Player(playerIndex);
     const stage = stageData.Stages;
+
     if (playerHasGravity(p, stage) === false) {
       continue;
     }
+
     const speeds = p.Speeds;
     const grav = speeds.GravityRaw;
     const isFF = p.Flags.IsFastFalling;
@@ -22,30 +25,36 @@ export function Gravity(world: World): void {
     const gravMutliplier = isFF ? TWO : ONE;
     p.Velocity.AddClampedYImpulseRaw(
       fallSpeed,
-      MultiplyRaw(grav, gravMutliplier),
+      MultiplyRaw(grav, gravMutliplier)
     );
   }
 }
 
-function playerHasGravity(p: Player, stage: Stage[]): boolean {
+function playerHasGravity(p: Player, stages: Stage[]): boolean {
   switch (p.FSMInfo.CurrentStateId) {
     case STATE_IDS.AIR_DODGE_S:
     case STATE_IDS.LEDGE_GRAB_S:
+    case STATE_IDS.LEDGE_GETUP_S:
+    case STATE_IDS.LEDGE_ROLL_S:
     case STATE_IDS.HIT_STOP_S:
     case STATE_IDS.WALL_KICK_S:
       return false;
     default:
       break;
   }
+
   if (p.Flags.IsInHitPause) {
     return false;
   }
+
   const attack = p.Attacks.GetAttack();
+
   if (attack === undefined) {
-    const stagesLength = stage.length;
+    const stagesLength = stages.length;
     let playerOnPlatsOrStage = false;
+
     for (let i = 0; i < stagesLength; i++) {
-      const stagePiece = stage[i];
+      const stagePiece = stages[i];
       const pps = PlayerOnStageOrPlats(stagePiece, p);
       if (pps) {
         playerOnPlatsOrStage = true;
@@ -60,11 +69,13 @@ function playerHasGravity(p: Player, stage: Stage[]): boolean {
   }
   // just need to check if player is on stage
   // if player on stage, no gravity, if off stage, gravity
-  const stagesLength = stage.length;
+  const stagesLength = stages.length;
   let playerOnPlatsOrStage = false;
+
   for (let i = 0; i < stagesLength; i++) {
-    const stagePiece = stage[i];
+    const stagePiece = stages[i];
     const pps = PlayerOnStageOrPlats(stagePiece, p);
+
     if (pps) {
       playerOnPlatsOrStage = true;
       break;

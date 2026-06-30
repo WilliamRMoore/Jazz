@@ -31,6 +31,7 @@ class GAME_EVENTS {
   public readonly DOWN_CHARGE_EX_GE = seq.Next as GameEventId;
   public readonly ATTACK_GE = seq.Next as GameEventId;
   public readonly DASH_ATTACK_GE = seq.Next as GameEventId;
+  public readonly GETUP_ATTACK_GE = seq.Next as GameEventId;
   public readonly D_TILT_GE = seq.Next as GameEventId;
   public readonly S_TILT_GE = seq.Next as GameEventId;
   public readonly S_TILT_U_GE = seq.Next as GameEventId;
@@ -50,17 +51,23 @@ class GAME_EVENTS {
   public readonly MOVE_FAST_GE = seq.Next as GameEventId;
   public readonly JUMP_GE = seq.Next as GameEventId;
   public readonly GRAB_GE = seq.Next as GameEventId;
+  public readonly PUMMEL_GE = seq.Next as GameEventId;
   public readonly RUN_GRAB_GE = seq.Next as GameEventId;
   public readonly SPCL_GRAB_GE = seq.Next as GameEventId;
   public readonly GUARD_GE = seq.Next as GameEventId;
   public readonly UP_GE = seq.Next as GameEventId;
   public readonly DOWN_GE = seq.Next as GameEventId;
   public readonly WALL_KICK_GE = seq.Next as GameEventId;
-  // End of GameEvents that can be sourced from player input
+  public readonly F_THROW = seq.Next as GameEventId;
+  public readonly B_THROW = seq.Next as GameEventId;
+  public readonly U_THROW = seq.Next as GameEventId;
+  public readonly D_THROW = seq.Next as GameEventId;
+  public readonly GETUP_GE = seq.Next as GameEventId;
   public readonly LAND_GE = seq.Next as GameEventId;
   public readonly SOFT_LAND_GE = seq.Next as GameEventId;
   public readonly FALL_GE = seq.Next as GameEventId;
   public readonly LEDGE_GRAB_GE = seq.Next as GameEventId;
+  public readonly LEDGE_ATTACK_GE = seq.Next as GameEventId;
   public readonly HIT_STOP_GE = seq.Next as GameEventId;
   public readonly GRAB_HELD_GE = seq.Next as GameEventId;
   public readonly GRAB_HOLD_GE = seq.Next as GameEventId;
@@ -71,6 +78,9 @@ class GAME_EVENTS {
   public readonly SHIELD_BREAK_GE = seq.Next as GameEventId;
   public readonly WALL_SLAM_GE = seq.Next as GameEventId;
   public readonly GRND_SLAM_GE = seq.Next as GameEventId;
+  public readonly TECH_IN_PLACE_GE = seq.Next as GameEventId;
+  public readonly ROLL_TECH_GE = seq.Next as GameEventId;
+  public readonly TEETER_GE = seq.Next as GameEventId;
 }
 
 export const GAME_EVENT_IDS = new GAME_EVENTS();
@@ -120,6 +130,7 @@ class STATES {
   public readonly DOWN_SPCL_S = seq.Next as StateId;
   public readonly DOWN_SPCL_AIR_S = seq.Next as StateId;
   public readonly UP_SPCL_S = seq.Next as StateId;
+  public readonly GETUP_ATTACK_S = seq.Next as StateId;
   public readonly HIT_STOP_S = seq.Next as StateId;
   public readonly LAUNCH_S = seq.Next as StateId;
   public readonly TUMBLE_S = seq.Next as StateId;
@@ -138,19 +149,30 @@ class STATES {
   public readonly SPCL_GRAB_S = seq.Next as StateId;
   public readonly GRAB_HOLD_S = seq.Next as StateId;
   public readonly GRAB_HELD_S = seq.Next as StateId;
+  public readonly PUMMEL_S = seq.Next as StateId;
   public readonly GRAB_RELEASE_S = seq.Next as StateId;
   public readonly GRAB_ESCAPE_S = seq.Next as StateId;
-  public readonly LEDGE_RECOVER_S = seq.Next as StateId;
-  public readonly LEDGE_GUA_S = seq.Next as StateId;
+  public readonly LEDGE_GETUP_S = seq.Next as StateId;
+  public readonly LEDGE_JUMP_S = seq.Next as StateId;
+  public readonly LEDGE_ROLL_S = seq.Next as StateId;
+  public readonly LEDGE_ATTACK_S = seq.Next as StateId;
   public readonly WALL_KICK_S = seq.Next as StateId;
   public readonly HIT_SLIDE_S = seq.Next as StateId;
   public readonly HIT_FLINCH_S = seq.Next as StateId;
   public readonly GRND_SLAM_S = seq.Next as StateId;
   public readonly WALL_SLAM_S = seq.Next as StateId;
   public readonly DIRT_NAP_S = seq.Next as StateId;
+  public readonly FORWARD_THROW_S = seq.Next as StateId;
+  public readonly BACK_THROW_S = seq.Next as StateId;
+  public readonly UP_THROW_S = seq.Next as StateId;
+  public readonly DOWN_THROW_S = seq.Next as StateId;
+  public readonly GETUP_S = seq.Next as StateId;
+  public readonly GETUP_ROLL_FORWARD_S = seq.Next as StateId;
+  public readonly GETUP_ROLL_BACK_S = seq.Next as StateId;
   public readonly TECH_IN_PLACE_S = seq.Next as StateId;
   public readonly ROLL_TECH_S = seq.Next as StateId;
   public readonly WALL_TECH_S = seq.Next as StateId;
+  public readonly TEETER_S = seq.Next as StateId;
 }
 
 export const STATE_IDS = new STATES();
@@ -187,8 +209,9 @@ class ATTACKS {
   public readonly U_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_ATK = seq.Next as AttackId;
   public readonly D_SPCL_AIR_ATK = seq.Next as AttackId;
-  public readonly LEDGE_GU_ATK = seq.Next as AttackId;
-  public readonly LEDGE_ATK = seq.Next as AttackId;
+  public readonly PUMMEL_ATK = seq.Next as AttackId;
+  public readonly GETUP_ATTACK_ATK = seq.Next as AttackId;
+  public readonly LEDGE_ATTACK_ATK = seq.Next as AttackId;
 }
 
 export const ATTACK_IDS = new ATTACKS();
@@ -246,90 +269,17 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.DASH_S:
     case STATE_IDS.DOWN_CHARGE_S:
     case STATE_IDS.DOWN_CHARGE_EX_S:
+    case STATE_IDS.GETUP_S:
+    case STATE_IDS.GETUP_ROLL_FORWARD_S:
+    case STATE_IDS.GETUP_ROLL_BACK_S:
+    case STATE_IDS.LEDGE_GETUP_S:
+    case STATE_IDS.LEDGE_ROLL_S:
+    case STATE_IDS.TECH_IN_PLACE_S:
+    case STATE_IDS.ROLL_TECH_S:
+    case STATE_IDS.TEETER_S:
       return false;
     default:
       return true;
-  }
-}
-
-export function IsStateNecessarilyGrounded(stateId: StateId) {
-  switch (stateId) {
-    case STATE_IDS.JUMP_SQUAT_S:
-    case STATE_IDS.IDLE_S:
-    case STATE_IDS.WALK_S:
-    case STATE_IDS.TURN_S:
-    case STATE_IDS.DASH_S:
-    case STATE_IDS.DASH_ATTACK_S:
-    case STATE_IDS.DASH_TURN_S:
-    case STATE_IDS.RUN_S:
-    case STATE_IDS.RUN_TURN_S:
-    case STATE_IDS.STOP_RUN_S:
-    case STATE_IDS.STOP_RUN_TURN_S:
-    case STATE_IDS.SHIELD_RAISE_S:
-    case STATE_IDS.SHIELD_S:
-    case STATE_IDS.SHIELD_DROP_S:
-    case STATE_IDS.SHIELD_BREAK_LAND_S:
-    case STATE_IDS.DIZZY_S:
-    case STATE_IDS.CROUCH_S:
-    case STATE_IDS.ROLL_DODGE_S:
-    case STATE_IDS.SPOT_DODGE_S:
-    case STATE_IDS.GRAB_S:
-    case STATE_IDS.GRAB_HOLD_S:
-    case STATE_IDS.GRAB_HELD_S:
-    case STATE_IDS.GRAB_RELEASE_S:
-    case STATE_IDS.GRAB_ESCAPE_S:
-    case STATE_IDS.RUN_GRAB_S:
-    case STATE_IDS.LEDGE_GRAB_S:
-    case STATE_IDS.LEDGE_RECOVER_S:
-    case STATE_IDS.LEDGE_GUA_S:
-    case STATE_IDS.LAND_S:
-    case STATE_IDS.SOFT_LAND_S:
-    case STATE_IDS.UP_TILT_S:
-    case STATE_IDS.DOWN_TILT_S:
-    case STATE_IDS.SIDE_TILT_S:
-    case STATE_IDS.SIDE_CHARGE_S:
-    case STATE_IDS.SIDE_CHARGE_EX_S:
-    case STATE_IDS.UP_CHARGE_S:
-    case STATE_IDS.UP_CHARGE_EX_S:
-    case STATE_IDS.DOWN_CHARGE_S:
-    case STATE_IDS.DOWN_CHARGE_EX_S:
-    case STATE_IDS.ATTACK_S:
-      return true;
-    default:
-      return true;
-  }
-}
-
-export function IsStateAttackState(stateId: StateId) {
-  switch (stateId) {
-    case STATE_IDS.ATTACK_S:
-    case STATE_IDS.DASH_ATTACK_S:
-    case STATE_IDS.SIDE_CHARGE_S:
-    case STATE_IDS.SIDE_CHARGE_EX_S:
-    case STATE_IDS.UP_CHARGE_S:
-    case STATE_IDS.UP_CHARGE_EX_S:
-    case STATE_IDS.DOWN_CHARGE_S:
-    case STATE_IDS.DOWN_CHARGE_EX_S:
-    case STATE_IDS.SIDE_TILT_S:
-    case STATE_IDS.UP_TILT_S:
-    case STATE_IDS.DOWN_TILT_S:
-    case STATE_IDS.N_AIR_S:
-    case STATE_IDS.F_AIR_S:
-    case STATE_IDS.B_AIR_S:
-    case STATE_IDS.U_AIR_S:
-    case STATE_IDS.D_AIR_S:
-    case STATE_IDS.SPCL_S:
-    case STATE_IDS.SIDE_SPCL_S:
-    case STATE_IDS.SIDE_SPCL_EX_S:
-    case STATE_IDS.SIDE_SPCL_AIR_S:
-    case STATE_IDS.SIDE_SPCL_EX_AIR_S:
-    case STATE_IDS.DOWN_SPCL_S:
-    case STATE_IDS.DOWN_SPCL_AIR_S:
-    case STATE_IDS.UP_SPCL_S:
-    case STATE_IDS.LEDGE_GUA_S:
-      return true;
-    default:
-      return false;
   }
 }
 

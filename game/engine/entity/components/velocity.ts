@@ -7,20 +7,34 @@ export class VelocityComponent {
   public AddClampedXImpulseRaw(clampRaw: number, impulseRaw: number): void {
     const clampValueRaw = Math.abs(clampRaw);
     const currentVelocityRaw = this.x.Raw;
-    // Don't add impulse if we are already at or beyond the clamp limit.
-    if (Math.abs(currentVelocityRaw) >= clampValueRaw) {
-      return;
+
+    if (impulseRaw > 0) {
+      if (currentVelocityRaw >= clampValueRaw) {
+        return;
+      }
+      this.x.SetFromRaw(Math.min(currentVelocityRaw + impulseRaw, clampValueRaw));
+    } else if (impulseRaw < 0) {
+      if (currentVelocityRaw <= -clampValueRaw) {
+        return;
+      }
+      this.x.SetFromRaw(Math.max(currentVelocityRaw + impulseRaw, -clampValueRaw));
     }
-    this.x.SetFromRaw(currentVelocityRaw + impulseRaw);
   }
 
   public AddClampedYImpulseRaw(clampRaw: number, impulse: number): void {
-    const newVelocityRaw = this.y.Raw + impulse;
     const clampValueRaw = Math.abs(clampRaw);
-    if (newVelocityRaw > 0) {
-      this.y.SetFromRaw(Math.min(newVelocityRaw, clampValueRaw));
-    } else {
-      this.y.SetFromRaw(newVelocityRaw);
+    const currentVelocityRaw = this.y.Raw;
+
+    if (impulse > 0) {
+      if (currentVelocityRaw >= clampValueRaw) {
+        return;
+      }
+      this.y.SetFromRaw(Math.min(currentVelocityRaw + impulse, clampValueRaw));
+    } else if (impulse < 0) {
+      if (currentVelocityRaw <= -clampValueRaw) {
+        return;
+      }
+      this.y.SetFromRaw(Math.max(currentVelocityRaw + impulse, -clampValueRaw));
     }
   }
 

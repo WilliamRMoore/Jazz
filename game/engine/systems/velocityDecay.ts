@@ -1,7 +1,5 @@
 import { PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
-import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
-import { DivideRaw } from '../math/fixedPoint';
-import { POINT_TWO, TWO } from '../math/numberConstants';
+import { POINT_TWO } from '../math/numberConstants';
 import { World } from '../world/world';
 
 export function ApplyVelocityDecay(world: World): void {

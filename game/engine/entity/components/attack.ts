@@ -3,7 +3,7 @@ import { Command } from '../../command/command';
 import { AttackGameEventMappings } from '../../finite-state-machine/PlayerStates';
 import {
   AttackId,
-  GameEventId,
+  GameEventId
 } from '../../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
@@ -30,7 +30,7 @@ export class HitBubble {
   constructor(
     hbc: HitBubblesConifg,
     posRef: FlatVec,
-    facingRight: () => boolean,
+    facingRight: () => boolean
   ) {
     this.posRef = posRef;
     this.facingRight = facingRight;
@@ -51,14 +51,14 @@ export class HitBubble {
   }
 
   public GetLocalPosiitionOffsetForFrame(
-    frameNumber: frameNumber,
+    frameNumber: frameNumber
   ): FlatVec | undefined {
     return this.frameOffsets.get(frameNumber);
   }
 
   public GetGlobalPosition(
     vecPool: Pool<PooledVector>,
-    attackFrameNumber: frameNumber,
+    attackFrameNumber: frameNumber
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(attackFrameNumber);
 
@@ -82,7 +82,7 @@ export class HitBubble {
     prevPosXRaw: number,
     prevPosYRaw: number,
     prevFaingRight: boolean,
-    attackFrameNumber: frameNumber,
+    attackFrameNumber: frameNumber
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(attackFrameNumber);
 
@@ -133,7 +133,7 @@ export class Attack {
     }
 
     const hbs = conf.HitBubbles.map(
-      (hbc) => new HitBubble(hbc, posRef, facingRight),
+      (hbc) => new HitBubble(hbc, posRef, facingRight)
     );
     hbs.sort((a, b) => a.BubbleId - b.BubbleId);
 
@@ -144,7 +144,7 @@ export class Attack {
 
       if (hb.BubbleId === lastBubbleId) {
         throw new Error(
-          'Duplicate BubbleId found in HitBubbles. BubbleId must be unique.',
+          'Duplicate BubbleId found in HitBubbles. BubbleId must be unique.'
         );
       }
       lastBubbleId = hb.BubbleId;
@@ -158,7 +158,6 @@ export class Attack {
         this.Impulses.set(k, ToFV(v.x, v.y));
       }
     }
-
     if (conf.onEnterCommands !== undefined) {
       this.onEnterCommands = conf.onEnterCommands;
     }
@@ -179,7 +178,7 @@ export class Attack {
 
   public GetActiveBubblesForFrame(
     frameNumber: frameNumber,
-    activeHBs: ActiveHitBubblesDTO,
+    activeHBs: ActiveHitBubblesDTO
   ): ActiveHitBubblesDTO {
     const hitBubbleslength = this.HitBubbles.length;
 
@@ -205,7 +204,7 @@ export class AttackComponment {
   public constructor(
     attacksConfigs: Map<AttackId, AttackConfig>,
     posRef: FlatVec,
-    facingRight: () => boolean,
+    facingRight: () => boolean
   ) {
     const attacks = new Map<AttackId, Attack>();
     attacksConfigs.forEach((ac) => {

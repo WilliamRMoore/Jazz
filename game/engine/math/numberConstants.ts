@@ -14,6 +14,7 @@ export const ONE_POINT_FOUR = NumberToRaw(1.4);
 export const ONE_POINT_FIVE = NumberToRaw(1.5);
 export const TWO = NumberToRaw(2);
 export const THREE = NumberToRaw(3);
+export const FIVE = NumberToRaw(5);
 export const FIVE_POINT_SIX = NumberToRaw(5.6);
 export const TEN = NumberToRaw(10);
 export const EIGHTEEN = NumberToRaw(18);

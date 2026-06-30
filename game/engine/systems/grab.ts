@@ -102,6 +102,8 @@ function resolveGrab(
 ) {
   grabberSm.UpdateFromWorld(GAME_EVENT_IDS.GRAB_HOLD_GE);
   grabeeSm.UpdateFromWorld(GAME_EVENT_IDS.GRAB_HELD_GE);
+  grabee.GrabMeter.SetHoldingPlayerId(grabber.ID);
+  grabber.Hold.heldPlayerId = grabee.ID;
 
   const grabberPos = grabber.Position;
   const grabberDirection = grabber.Flags.IsFacingRight;
@@ -117,7 +119,6 @@ function resolveGrab(
     : grabberPos.X.Raw - HOLD_DISTANCE;
 
   SetPlayerPositionRaw(grabee, grabeeNewPosX, grabeeNewPosY);
-  grabee.GrabMeter.SetHoldingPlayerId(grabber.ID);
 }
 
 const agbDto = new ActiveGrabBubblesDTO();

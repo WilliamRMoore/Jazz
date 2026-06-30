@@ -6,18 +6,24 @@ import {
   AirDodge,
   Idle,
   Walk,
-  Dash,
+  Dash
 } from '../game/engine/finite-state-machine/stateConfigurations/states';
-import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import {
+  STATE_IDS,
+  CanStateWalkOffLedge,
+  GAME_EVENT_IDS,
+  ATTACK_IDS
+} from '../game/engine/finite-state-machine/stateConfigurations/shared';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,
   RawToNumber,
-  MultiplyRaw,
-  DivideRaw,
+  MultiplyRaw
 } from '../game/engine/math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../game/engine/math/LUTS';
-
+import { ApplyVelocity } from '../game/engine/systems/velocity';
+import { defaultStage } from '../game/engine/stage/stageMain';
+import { SetPlayerPositionRaw } from '../game/engine/entity/playerOrchestrator';
 describe('Player states tests', () => {
   let p: Player;
   let w: World;
@@ -48,10 +54,10 @@ describe('Player states tests', () => {
     const angleIndex = GetAtan2IndexRaw(input.LYAxis.Raw, input.LXAxis.Raw);
     const expectedSpeedRaw = p.Speeds.AirDogeSpeedRaw;
     const expectedVelXRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw),
+      MultiplyRaw(NumberToRaw(COS_LUT[angleIndex]), expectedSpeedRaw)
     );
     const expectedVelYRaw = RawToNumber(
-      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw),
+      MultiplyRaw(NumberToRaw(-SIN_LUT[angleIndex]), expectedSpeedRaw)
     );
 
     expect(p.Velocity.X.Raw).toBeCloseTo(expectedVelXRaw, -1);
@@ -208,8 +214,259 @@ describe('Player states tests', () => {
 
     // Expect velocity to decrease further (become more negative), clamped by MaxDashSpeed
     expect(p.Velocity.X.AsNumber).toBeGreaterThanOrEqual(
-      -p.Speeds.MaxDashSpeedRaw,
+      -p.Speeds.MaxDashSpeedRaw
     );
     expect(p.Velocity.X.Raw).toBeLessThan(initialVelocityXLeft);
+  });
+
+  test('GetUpRollForward state', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // 1. Transition from dirt nap
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+    p.Flags.FaceRight();
+
+    // Create input for roll forward (pressing right while facing right)
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.LXAxis.SetFromNumber(0.8);
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ROLL_FORWARD_S);
+
+    // 2. Verify it moves the character
+    p.Velocity.X.SetFromNumber(0);
+    fsm.UpdateFromInput(input, w);
+
+    expect(p.Velocity.X.Raw).toBeGreaterThan(0); // moved right
+
+    // 3. Verify you can't roll off the ledge
+    expect(CanStateWalkOffLedge(STATE_IDS.GETUP_ROLL_FORWARD_S)).toBe(false);
+  });
+
+  test('GetUpRollBack state', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // 1. Transition from dirt nap
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+    p.Flags.FaceRight();
+
+    // Create input for roll backward (pressing left while facing right)
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.LXAxis.SetFromNumber(-0.8);
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ROLL_BACK_S);
+
+    // 2. Verify it moves the character
+    p.Velocity.X.SetFromNumber(0);
+    fsm.UpdateFromInput(input, w);
+
+    expect(p.Velocity.X.Raw).toBeLessThan(0); // moved left
+
+    // 3. Verify you can't roll off the ledge
+  });
+
+  test('LedgeGetUp state - transition and properties', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // Transition from LedgeGrab
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+
+    // Simulate jump input
+    const frame = 10;
+    w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.JUMP_GE;
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Simulate FSM update
+    fsm.UpdateFromInput(input, w);
+
+    // Verify transition
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_GETUP_S);
+
+    // Verify state properties
+    expect(p.Flags.HasNoVelocityDecay()).toBeTruthy();
+    expect(p.Flags.GetIntangabilityFrames()).toBe(30);
+    expect(CanStateWalkOffLedge(STATE_IDS.LEDGE_GETUP_S)).toBe(false);
+  });
+
+  test('LedgeGetUp state - gets back on stage and defaults to IDLE', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // Setup stage so the state can find the ledge
+    w.SetStage(defaultStage());
+
+    // Position player near the left ledge (left ledge is at X=500, Y=650)
+    SetPlayerPositionRaw(p, NumberToRaw(480), NumberToRaw(650));
+    p.Flags.FaceRight();
+
+    // Transition from LedgeGrab
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+
+    const frame = 10;
+    w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.JUMP_GE;
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Trigger transition to LEDGE_GETUP_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_GETUP_S);
+
+    const getUpFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 30;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < getUpFrameLength; i++) {
+      ApplyVelocity(w);
+      fsm.UpdateFromInput(NewInputAction(), w);
+    }
+
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+
+    // Verify target position: X should be 500 + (LedgeGetUp ECB Width / 2) = 535, Y should be 650
+    const expectedX = 535;
+    const expectedY = 650 - RawToNumber(p.ECB.YOffset.Raw);
+
+    expect(p.Position.X.AsNumber).toBeCloseTo(expectedX, 0);
+    expect(p.Position.Y.AsNumber).toBeCloseTo(expectedY, 0);
+  });
+
+  test('GetUpAttack state - transitions from DirtNap and executes fully', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    SetPlayerPositionRaw(p, NumberToRaw(1000), NumberToRaw(650));
+    fsm.ForceState(STATE_IDS.DIRT_NAP_S);
+
+    const frame = 10;
+    w.LocalFrame = frame;
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.ATTACK_GE;
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Trigger transition to GETUP_ATTACK_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.GETUP_ATTACK_S);
+    expect(p.Attacks.GetAttack()?.AttackId).toBe(ATTACK_IDS.GETUP_ATTACK_ATK);
+
+    const getUpAtkFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 55;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < getUpAtkFrameLength; i++) {
+      fsm.UpdateFromInput(NewInputAction(), w);
+    }
+
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+  });
+
+  test('LedgeRoll transition and behavior', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    SetPlayerPositionRaw(p, NumberToRaw(1000), NumberToRaw(650));
+    p.Flags.FaceRight();
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+
+    const frame = 10;
+    w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.GUARD_GE;
+    inputStore.StoreInputForFrame(frame, input);
+
+    // Trigger transition to LEDGE_ROLL_S
+    fsm.UpdateFromInput(input, w);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_ROLL_S);
+
+    const rollFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 43;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < rollFrameLength; i++) {
+      fsm.UpdateFromInput(NewInputAction(), w);
+    }
+
+    // Check if player defaulted to IDLE
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+  });
+
+  test('LedgeAttack state - transition, behavior, and hit detection', () => {
+    const fsm = w.PlayerData.StateMachine(p.ID);
+    const inputStore = w.PlayerData.InputStore(p.ID);
+
+    // Setup stage so the state can find the ledge
+    w.SetStage(defaultStage());
+
+    // Position player near the left ledge (left ledge is at X=500, Y=650)
+    SetPlayerPositionRaw(p, NumberToRaw(480), NumberToRaw(650));
+    p.Flags.FaceRight();
+
+    fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
+
+    // Trigger transition to LEDGE_ATTACK_S
+    const frame = 10;
+    w.LocalFrame = frame;
+    inputStore.StoreInputForFrame(frame - 1, NewInputAction());
+    const input = NewInputAction();
+    input.Action = GAME_EVENT_IDS.ATTACK_GE;
+    inputStore.StoreInputForFrame(frame, input);
+
+    fsm.UpdateFromInput(input, w);
+
+    // Verify the attack works (state is active and attack is triggered)
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_ATTACK_S);
+    expect(p.Attacks.GetAttack()?.AttackId).toBe(ATTACK_IDS.LEDGE_ATTACK_ATK);
+
+    const attackFrameLength = p.FSMInfo.GetCurrentStateFrameLength() || 45;
+
+    // Simulate the state over its duration
+    for (let i = 0; i < attackFrameLength; i++) {
+      ApplyVelocity(w);
+      fsm.UpdateFromInput(NewInputAction(), w);
+    }
+
+    // Verify that we correctly default to idle when done
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.IDLE_S);
+
+    // Verify we end up on the stage correctly
+    // X should be 500 + (LedgeAttack ECB Width / 2) = 535, Y should be 650
+    const expectedX = 535;
+    const expectedY = 650 - RawToNumber(p.ECB.YOffset.Raw);
+
+    expect(p.Position.X.AsNumber).toBeCloseTo(expectedX, 0);
+    expect(p.Position.Y.AsNumber).toBeCloseTo(expectedY, 0);
+
+    // Now verify we can be hit out of it
+    // Reset state back to LedgeAttack
+    fsm.ForceState(STATE_IDS.LEDGE_ATTACK_S);
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.LEDGE_ATTACK_S);
+
+    // Simulate being hit via HIT_STOP_GE (which is in InitLedgeAttackRelations mappings)
+    const hitInput = NewInputAction();
+    hitInput.Action = GAME_EVENT_IDS.HIT_STOP_GE;
+    fsm.UpdateFromInput(hitInput, w);
+
+    // Verify state changed to hit stun/stop
+    expect(p.FSMInfo.CurrentStateId).toBe(STATE_IDS.HIT_STOP_S);
   });
 });

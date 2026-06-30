@@ -12,12 +12,20 @@ export class LedgeDetectorComponent {
   private readonly rightSide: Array<FlatVec> = new Array<FlatVec>(4);
   private readonly leftSide: Array<FlatVec> = new Array<FlatVec>(4);
   private grabbedLedge: FlatVec[] | undefined;
+  public readonly LedgeRollFrames: { ledgeGetUpFrames: number, ledgeRollFrames: [number, number] };
 
-  constructor(posRef: FlatVec, width: number, height: number, yOffset = -130) {
+  constructor(
+    posRef: FlatVec,
+    width: number,
+    height: number,
+    yOffset = -130,
+    ledgeRollFrames: { ledgeGetUpFrames: number, ledgeRollFrames: [number, number] }
+  ) {
     this.posRef = posRef;
     this.height.SetFromNumber(height);
     this.width.SetFromNumber(width);
     this.yOffset.SetFromNumber(yOffset);
+    this.LedgeRollFrames = ledgeRollFrames;
     FillArrayWithFlatVec(this.rightSide);
     FillArrayWithFlatVec(this.leftSide);
   }

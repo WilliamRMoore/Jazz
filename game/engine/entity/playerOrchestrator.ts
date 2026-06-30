@@ -19,13 +19,15 @@ import { SensorComponent } from './components/sensor';
 import { ShieldComponent } from './components/shield';
 import {
   SpeedsComponentConfigBuilder,
-  SpeedsComponent,
+  SpeedsComponent
 } from './components/speeds';
 import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
 import { GrabComponent } from './components/grab';
 import { GrabMeterComponent } from './components/grabMeter';
 import { PlayerStateHistory } from '../systems/history';
+import { HoldComponent } from './components/hold';
+import { ThrowComponent } from './components/throw';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 
@@ -47,6 +49,8 @@ export class Player {
   public readonly Attacks: AttackComponment;
   public readonly Grabs: GrabComponent;
   public readonly GrabMeter: GrabMeterComponent;
+  public readonly Hold: HoldComponent;
+  public readonly Throw: ThrowComponent;
   public readonly Shield: ShieldComponent;
   public readonly ID: number = 0;
 
@@ -58,10 +62,11 @@ export class Player {
     sB.SetAerialSpeeds(
       cc.AerialVelocityDecay,
       cc.AerialSpeedInpulseLimit,
-      cc.AerialSpeedMultiplier,
+      cc.AerialSpeedMultiplier
     );
     sB.SetDashSpeeds(cc.DashMutiplier, cc.MaxDashSpeed);
-    sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed);
+    sB.SetDodgeSpeeds(cc.AirDodgeSpeed, cc.DodgeRollSpeed, cc.LedgeRollSpeed);
+    sB.SetGetUpRollSpeeds(cc.GetUpRollForwardSpeed, cc.GetUpRollBackSpeed);
     sB.SetGroundedVelocityDecay(cc.GroundedVelocityDecay);
     sB.SetWallKickVelocity(cc.WallKickVelocity.x, cc.WallKickVelocity.y);
     this.ID = Id;
@@ -81,7 +86,7 @@ export class Player {
       this.Position.Ref,
       cc.ECBHeight,
       cc.ECBWidth,
-      cc.ECBOffset,
+      cc.ECBOffset
     );
     this.HurtCircles = new HurtCapsulesComponent(cc.HurtCapsules);
     this.Jump = new JumpComponent(cc.JumpVelocity, cc.NumberOfJumps);
@@ -91,15 +96,18 @@ export class Player {
       cc.LedgeBoxWidth,
       cc.LedgeBoxHeight,
       cc.LedgeBoxYOffset,
+      cc.LedgeRollFrames
     );
     this.Sensors = new SensorComponent();
     this.Attacks = new AttackComponment(
       cc.Attacks,
       this.Position.Ref,
-      isFacingRight,
+      isFacingRight
     );
     this.Grabs = new GrabComponent(cc.Grabs, this.Position.Ref, isFacingRight);
+    this.Throw = new ThrowComponent(cc.Throws);
     this.GrabMeter = new GrabMeterComponent();
+    this.Hold = new HoldComponent();
     this.Shield = new ShieldComponent(cc.ShieldRadius, cc.ShieldYOffset);
   }
 }
@@ -117,7 +125,7 @@ export function CanOnlyFallOffLedgeWhenFacingAwayFromIt(p: Player): boolean {
 export function SetPlayerInitialPositionRaw(
   p: Player,
   xRaw: number,
-  yRaw: number,
+  yRaw: number
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
@@ -158,7 +166,7 @@ export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
 export function AddToPlayerPositionFp(
   p: Player,
   x: FixedPoint,
-  y: FixedPoint,
+  y: FixedPoint
 ): void {
   AddToPlayerPositionRaw(p, x.Raw, y.Raw);
 }
@@ -170,7 +178,7 @@ export function AddToPlayerPositionVec(p: Player, v: PooledVector): void {
 export function AddToPlayerPositionRaw(
   p: Player,
   xRaw: number,
-  yRaw: number,
+  yRaw: number
 ): void {
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
@@ -182,13 +190,29 @@ export function AddToPlayerPositionRaw(
 export function PlayerOnStage(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint,
+  ecbSensorDepth: FixedPoint
 ) {
   const grnd = s.StageVerticies.GetGround();
   const grndLoopLength = grnd.length;
 
   for (let i = 0; i < grndLoopLength; i++) {
     const gP = grnd[i];
+    
+    let minX = gP.X1.Raw;
+    let maxX = gP.X2.Raw;
+    if (minX > maxX) { minX = gP.X2.Raw; maxX = gP.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = gP.Y1.Raw;
+    let maxY = gP.Y2.Raw;
+    if (minY > maxY) { minY = gP.Y2.Raw; maxY = gP.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         gP.X1.Raw,
@@ -198,7 +222,7 @@ export function PlayerOnStage(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY
       )
     ) {
       return true;
@@ -211,7 +235,7 @@ export function PlayerOnStage(
 export function PlayerOnPlats(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint,
+  ecbSensorDepth: FixedPoint
 ): boolean {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -221,16 +245,32 @@ export function PlayerOnPlats(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw,
+        plat.Y2.Raw
       )
     ) {
       return true;
@@ -242,7 +282,7 @@ export function PlayerOnPlats(
 export function PlayerOnPlatsReturnsYCoord(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint,
+  ecbSensorDepth: FixedPoint
 ): FixedPoint | undefined {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -252,16 +292,32 @@ export function PlayerOnPlatsReturnsYCoord(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw,
+        plat.Y2.Raw
       )
     ) {
       return plat.Y1;
@@ -273,7 +329,7 @@ export function PlayerOnPlatsReturnsYCoord(
 export function PlayerOnPlatsReturnsPlatform(
   s: Stage,
   ecbBottom: FlatVec,
-  ecbSensorDepth: FixedPoint,
+  ecbSensorDepth: FixedPoint
 ): Line | undefined {
   const plats = s.Platforms;
   if (plats === undefined) {
@@ -283,16 +339,32 @@ export function PlayerOnPlatsReturnsPlatform(
 
   for (let i = 0; i < platLength; i++) {
     const plat = plats[i];
+    
+    let minX = plat.X1.Raw;
+    let maxX = plat.X2.Raw;
+    if (minX > maxX) { minX = plat.X2.Raw; maxX = plat.X1.Raw; }
+    if (ecbBottom.X.Raw < minX || ecbBottom.X.Raw > maxX) {
+      continue;
+    }
+
+    let minY = plat.Y1.Raw;
+    let maxY = plat.Y2.Raw;
+    if (minY > maxY) { minY = plat.Y2.Raw; maxY = plat.Y1.Raw; }
+    const sensorBottomY = ecbBottom.Y.Raw - ecbSensorDepth.Raw;
+    if (ecbBottom.Y.Raw < minY || sensorBottomY > maxY) {
+      continue;
+    }
+
     if (
       LineSegmentIntersectionRaw(
         ecbBottom.X.Raw,
         ecbBottom.Y.Raw,
         ecbBottom.X.Raw,
-        ecbBottom.Y.Raw - ecbSensorDepth.Raw,
+        sensorBottomY,
         plat.X1.Raw,
         plat.Y1.Raw,
         plat.X2.Raw,
-        plat.Y2.Raw,
+        plat.Y2.Raw
       )
     ) {
       return plat;
@@ -317,7 +389,7 @@ export function PlayerOnStageOrPlats(s: Stage, p: Player) {
 export function PlayerTouchingStageLeftWall(
   s: Stage,
   ecbRight: FlatVec,
-  sensorDepth: FixedPoint,
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -333,7 +405,7 @@ export function PlayerTouchingStageLeftWall(
         ecbRight.X.Raw,
         ecbRight.Y.Raw,
         ecbRight.X.Raw - sensorDepth.Raw,
-        ecbRight.Y.Raw,
+        ecbRight.Y.Raw
       )
     ) {
       return true;
@@ -346,7 +418,7 @@ export function PlayerTouchingStageLeftWall(
 export function PlayerTouchingStageRightWall(
   s: Stage,
   ecbLeft: FlatVec,
-  sensorDepth: FixedPoint,
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -362,7 +434,7 @@ export function PlayerTouchingStageRightWall(
         ecbLeft.X.Raw,
         ecbLeft.Y.Raw,
         ecbLeft.X.Raw + sensorDepth.Raw,
-        ecbLeft.Y.Raw,
+        ecbLeft.Y.Raw
       )
     ) {
       return true;
@@ -375,7 +447,7 @@ export function PlayerTouchingStageRightWall(
 export function PlayerTouchingStageCeiling(
   s: Stage,
   ecbTop: FlatVec,
-  sensorDepth: FixedPoint,
+  sensorDepth: FixedPoint
 ) {
   const left = s.StageVerticies.GetLeftWall();
   const leftLoopLength = left.length - 1;
@@ -391,7 +463,7 @@ export function PlayerTouchingStageCeiling(
         ecbTop.X.Raw,
         ecbTop.Y.Raw,
         ecbTop.X.Raw,
-        ecbTop.Y.Raw + sensorDepth.Raw,
+        ecbTop.Y.Raw + sensorDepth.Raw
       )
     ) {
       return true;
@@ -411,7 +483,7 @@ type aabbdto = {
 export function PlayerECBAABB(
   p: Player,
   lastPState: PlayerStateHistory,
-  abdto: aabbdto,
+  abdto: aabbdto
 ) {
   const curLeft = p.ECB.Left.X.Raw;
   const curTop = p.ECB.Top.Y.Raw;
@@ -432,7 +504,7 @@ export function PlayerECBAABB(
 export function PlayerHurtCapAABB(
   p: Player,
   lastPState: PlayerStateHistory,
-  abdto: aabbdto,
+  abdto: aabbdto
 ) {
   const maxInt = Number.MAX_SAFE_INTEGER;
   const minInt = -maxInt;

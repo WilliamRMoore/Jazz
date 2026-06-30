@@ -1,10 +1,9 @@
 import {
   GAME_EVENT_IDS,
-  GameEventId,
+  GameEventId
 } from '../finite-state-machine/stateConfigurations/shared';
 import { FixedPoint } from '../math/fixedPoint';
 import { ToFp } from '../utils';
-import { World } from '../world/world';
 
 export type NetworkInput = {
   Input: InputAction;
@@ -137,7 +136,7 @@ export function GetInput(index: number): InputAction {
 function handleSpecial(
   inputAction: InputAction,
   LXAxis: number,
-  LYAxis: number,
+  LYAxis: number
 ): InputAction {
   //are we more vertical than horizontal?
   if (Math.abs(LYAxis) > Math.abs(LXAxis)) {
@@ -161,7 +160,7 @@ function handleSpecial(
 function handleAction(
   inputAction: InputAction,
   LXAxis: number,
-  LYAxis: number,
+  LYAxis: number
 ): InputAction {
   if (Math.abs(LYAxis) > Math.abs(LXAxis)) {
     // up
@@ -273,7 +272,6 @@ function setDeadzone(v: number): number {
     v = 0;
   } else {
     v = v - Math.sign(v) * DEADZONE;
-
     v /= 1.0 - DEADZONE;
   }
 
@@ -323,7 +321,7 @@ export function NewInputAction() {
     },
     get RTValRaw() {
       return this.RTVal.Raw;
-    },
+    }
   } as InputAction;
 }
 
@@ -332,6 +330,6 @@ export function NewNetworkInput(): NetworkInput {
     Input: NewInputAction(),
     PlayerId: 0,
     Frame: 0,
-    FrameAdvantage: 0,
+    FrameAdvantage: 0
   };
 }

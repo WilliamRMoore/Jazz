@@ -2,7 +2,7 @@ import { Command } from '../engine/command/command';
 import {
   StateId,
   AttackId,
-  GrabId,
+  GrabId
 } from '../engine/finite-state-machine/stateConfigurations/shared';
 
 type frameNumber = number;
@@ -35,6 +35,9 @@ export type SpeedsComponentConfig = {
   aerialSpeedMultiplier: number;
   airDodgeSpeed: number;
   dodgeRollSpeed: number;
+  ledgeRollSpeed: number;
+  getUpRollRightSpeed: number;
+  getUpRollLeftSpeed: number;
   maxWalkSpeed: number;
   maxRunSpeed: number;
   dashMutiplier: number;
@@ -59,8 +62,10 @@ export type CharacterConfig = {
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
   LedgeBoxYOffset: number;
+  LedgeRollFrames: { ledgeGetUpFrames: number, ledgeRollFrames: [number, number] };
   Attacks: Map<AttackId, AttackConfig>;
   Grabs: Map<GrabId, GrabConfig>;
+  Throws: ThrowConfig[];
   Weight: number;
   ShieldRadius: number;
   ShieldYOffset: number;
@@ -70,6 +75,9 @@ export type CharacterConfig = {
   AerialSpeedMultiplier: number;
   AirDodgeSpeed: number;
   DodgeRollSpeed: number;
+  LedgeRollSpeed: number;
+  GetUpRollForwardSpeed: number;
+  GetUpRollBackSpeed: number;
   MaxWalkSpeed: number;
   MaxRunSpeed: number;
   DashMutiplier: number;
@@ -108,6 +116,18 @@ export type AttackConfig = {
   onExitCommands: Array<Command>;
 };
 
+export type ThrowConfig = {
+  Name: string;
+  StateId: number;
+  MoveOps: Array<ConfigVec>;
+  LaunchAngle: number;
+  BaseKnockBack: number;
+  KnockBackScaling: number;
+  TotalFrames: number;
+  Damage: number;
+  ReleaseFrame: number;
+};
+
 export class AttackConfigBuilder {
   private attackId: AttackId = 0;
   private name: string = '';
@@ -140,7 +160,7 @@ export class AttackConfigBuilder {
 
   public WithImpulses(
     impulses: Map<frameNumber, ConfigVec>,
-    impulseClamp: number | undefined = undefined,
+    impulseClamp: number | undefined = undefined
   ): AttackConfigBuilder {
     this.impulses = impulses;
     this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
@@ -179,7 +199,7 @@ export class AttackConfigBuilder {
 
   public WithOnUpdateCommand(
     frameNumber: number,
-    command: Command,
+    command: Command
   ): AttackConfigBuilder {
     if (!this.onUpdateCommands.has(frameNumber)) {
       this.onUpdateCommands.set(frameNumber, [command]);
@@ -200,7 +220,7 @@ export class AttackConfigBuilder {
     priority: number,
     launchAngle: number,
     frameOffsets: Map<frameNumber, ConfigVec>,
-    thresholdAngle: boolean = false,
+    thresholdAngle: boolean = false
   ): AttackConfigBuilder {
     const hitBubId = this.hitBubbles.length;
 
@@ -214,7 +234,7 @@ export class AttackConfigBuilder {
       Radius: radius,
       ThresholdAngle: thresholdAngle,
       LaunchAngle: launchAngle,
-      frameOffsets: frameOffsets,
+      frameOffsets: frameOffsets
     };
 
     this.hitBubbles.push(hitBub);
@@ -241,7 +261,7 @@ export class AttackConfigBuilder {
       HitBubbles: this.hitBubbles,
       onEnterCommands: this.onEnterCommands,
       onUpdateCommands: this.onUpdateCommands,
-      onExitCommands: this.onExitCommands,
+      onExitCommands: this.onExitCommands
     };
 
     return atkConf;
@@ -287,7 +307,7 @@ export class GrabConfigBuilder {
 
   public WithImpulses(
     impulses: Map<frameNumber, ConfigVec>,
-    impulseClamp: number | undefined = undefined,
+    impulseClamp: number | undefined = undefined
   ): GrabConfigBuilder {
     this.impulses = impulses;
     this.impulseClamp = impulseClamp !== undefined ? impulseClamp : undefined;
@@ -296,7 +316,7 @@ export class GrabConfigBuilder {
 
   public WithGrabBubble(
     radius: number,
-    frameOffsets: Map<frameNumber, ConfigVec>,
+    frameOffsets: Map<frameNumber, ConfigVec>
   ): GrabConfigBuilder {
     const grabBubId = this.grabBubbles.length;
     if (grabBubId >= 25) {
@@ -305,7 +325,7 @@ export class GrabConfigBuilder {
     const grabBub: GrabBubbleConfig = {
       BubbleId: grabBubId,
       Radius: radius,
-      frameOffsets: frameOffsets,
+      frameOffsets: frameOffsets
     };
     this.grabBubbles.push(grabBub);
     return this;
@@ -321,7 +341,7 @@ export class GrabConfigBuilder {
       TotalFrameLength: this.totalFrames,
       ImpulseClamp: this.impulseClamp,
       Impulses: this.impulses,
-      GrabBubbles: this.grabBubbles,
+      GrabBubbles: this.grabBubbles
     };
 
     return grabConf;

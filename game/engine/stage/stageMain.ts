@@ -56,11 +56,41 @@ export class Stage {
   public readonly StageVerticies: StageVerticies;
   public readonly Ledges: Ledges;
   public readonly Platforms: Array<Line> | undefined;
+  
+  public readonly AabbMinXRaw: number;
+  public readonly AabbMaxXRaw: number;
+  public readonly AabbMinYRaw: number;
+  public readonly AabbMaxYRaw: number;
 
   constructor(sv: StageVerticies, sl: Ledges, pl?: Array<Line>) {
     this.StageVerticies = sv;
     this.Ledges = sl;
     this.Platforms = pl;
+
+    let minX = sv.OriginXRaw;
+    let maxX = sv.OriginXRaw + sv.WidthRaw;
+    let minY = sv.OriginYRaw;
+    let maxY = sv.OriginYRaw + sv.HeightRaw;
+
+    if (pl !== undefined) {
+      for (let i = 0; i < pl.length; i++) {
+        const plat = pl[i];
+        if (plat.X1.Raw < minX) minX = plat.X1.Raw;
+        if (plat.X2.Raw < minX) minX = plat.X2.Raw;
+        if (plat.X1.Raw > maxX) maxX = plat.X1.Raw;
+        if (plat.X2.Raw > maxX) maxX = plat.X2.Raw;
+
+        if (plat.Y1.Raw < minY) minY = plat.Y1.Raw;
+        if (plat.Y2.Raw < minY) minY = plat.Y2.Raw;
+        if (plat.Y1.Raw > maxY) maxY = plat.Y1.Raw;
+        if (plat.Y2.Raw > maxY) maxY = plat.Y2.Raw;
+      }
+    }
+
+    this.AabbMinXRaw = minX;
+    this.AabbMaxXRaw = maxX;
+    this.AabbMinYRaw = minY;
+    this.AabbMaxYRaw = maxY;
   }
 
   public AABBInterSectCheck(
@@ -73,16 +103,12 @@ export class Stage {
     const right = xRaw + widthRaw;
     const top = yRaw + heightRaw;
     const bottom = yRaw;
-    const stageXRaw = this.StageVerticies.OriginXRaw;
-    const stageYRaw = this.StageVerticies.OriginYRaw;
-    const stageWidthRaw = this.StageVerticies.WidthRaw;
-    const stageHeightRaw = this.StageVerticies.HeightRaw;
 
     if (
-      left > stageXRaw + stageWidthRaw ||
-      right < stageXRaw ||
-      top < stageYRaw ||
-      bottom > stageYRaw + stageHeightRaw
+      left > this.AabbMaxXRaw ||
+      right < this.AabbMinXRaw ||
+      top < this.AabbMinYRaw ||
+      bottom > this.AabbMaxYRaw
     ) {
       return false;
     }

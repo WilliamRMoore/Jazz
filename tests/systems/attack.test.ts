@@ -24,6 +24,7 @@ import { PooledVector } from '../../game/engine/pools/PooledVector';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
+import { RecordIntoHistory } from '../../game/engine/systems/history';
 
 describe('Attack systesm tests', () => {
   let p1: Player;
@@ -68,12 +69,8 @@ describe('Attack systesm tests', () => {
     p2InputStore.StoreInputForFrame(1, i2);
     p2InputStore.StoreInputForFrame(2, i3);
     for (let i = 0; i < 3; i++) {
-      const h1State = h1.get(i);
-      h1State.posXRaw = p1.Position.X.Raw;
-      h1State.posYRaw = p1.Position.Y.Raw;
-      const h2State = h2.get(i);
-      h2State.posXRaw = p2.Position.X.Raw;
-      h2State.posYRaw = p2.Position.Y.Raw;
+      RecordIntoHistory(p1, h1.get(i));
+      RecordIntoHistory(p2, h2.get(i));
     }
     w.LocalFrame = 2;
     p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
@@ -99,12 +96,8 @@ describe('Attack systesm tests', () => {
     p2InputStore.StoreInputForFrame(1, i2);
     p2InputStore.StoreInputForFrame(2, i3);
     for (let i = 0; i < 3; i++) {
-      const h1State = h1.get(i);
-      h1State.posXRaw = p1.Position.X.Raw;
-      h1State.posYRaw = p1.Position.Y.Raw;
-      const h2State = h2.get(i);
-      h2State.posXRaw = p2.Position.X.Raw;
-      h2State.posYRaw = p2.Position.Y.Raw;
+      RecordIntoHistory(p1, h1.get(i));
+      RecordIntoHistory(p2, h2.get(i));
     }
     w.LocalFrame = 2;
     p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
@@ -131,15 +124,14 @@ describe('Attack systesm tests', () => {
     SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
     SetPlayerInitialPositionRaw(p2, NumberToRaw(1150), NumberToRaw(650.01));
 
-    // At this point, p1's hitbubble (at ~1040) is far from p2's hurtbox (at 1150). No collision.
+    // Set attack to be on an active frame so that RecordIntoHistory captures the attack bubbles
+    p1.FSMInfo._db_currentStateFrame = 3;
 
     // Store history for frame n-1
-    const h1State = h1.get(frame_n_minus_1);
-    h1State.posXRaw = p1.Position.X.Raw;
-    h1State.posYRaw = p1.Position.Y.Raw;
-    const h2State = h2.get(frame_n_minus_1);
-    h2State.posXRaw = p2.Position.X.Raw;
-    h2State.posYRaw = p2.Position.Y.Raw;
+    RecordIntoHistory(p1, h1.get(frame_n_minus_1));
+    RecordIntoHistory(p2, h2.get(frame_n_minus_1));
+
+    // At this point, p1's hitbubble (at ~1040) is far from p2's hurtbox (at 1150). No collision.
     p1InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
     p2InputStore.StoreInputForFrame(frame_n_minus_1, NewInputAction());
 
@@ -162,6 +154,43 @@ describe('Attack systesm tests', () => {
 
     expect(p1.Attacks.HasHitPlayer(p2.ID)).toBe(true);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.HIT_STOP_S);
+  });
+
+  test('Player should not launch held player during Pummel', () => {
+    p2Sm.ForceState(STATE_IDS.GRAB_HOLD_S);
+    p1Sm.ForceState(STATE_IDS.PUMMEL_S);
+
+    p1.Hold.heldPlayerId = p2.ID;
+    p2.GrabMeter.SetHoldingPlayerId(p1.ID);
+
+    SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
+    SetPlayerInitialPositionRaw(p2, NumberToRaw(1045), NumberToRaw(650.01));
+
+    const i1 = NewInputAction();
+    p1InputStore.StoreInputForFrame(0, i1);
+    p2InputStore.StoreInputForFrame(0, i1);
+
+    for (let i = 0; i < 3; i++) {
+      RecordIntoHistory(p1, h1.get(i));
+      RecordIntoHistory(p2, h2.get(i));
+    }
+
+    w.LocalFrame = 2;
+    p1.FSMInfo._db_currentStateFrame = 4;
+
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(p2.ID)).toBe(true);
+
+    expect(p1.Flags.HitPauseFrames).toBeGreaterThan(0);
+    expect(p2.Flags.HitPauseFrames).toBeGreaterThan(0);
+
+    expect(p2.Damage.Damage.Raw).toBeGreaterThan(0);
+
+    expect(p1.Hold.heldPlayerId).toBe(p2.ID);
+    expect(p2.GrabMeter.HoldingPlayerId).toBe(p1.ID);
+
+    expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRAB_HOLD_S);
   });
 });
 

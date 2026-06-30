@@ -1,6 +1,6 @@
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
+  STATE_IDS
 } from '../finite-state-machine/stateConfigurations/shared';
 import { MultiplyRaw } from '../math/fixedPoint';
 import {
@@ -8,7 +8,7 @@ import {
   POINT_FOUR,
   POINT_TWO_FIVE,
   SIXTY,
-  TWO,
+  TWO
 } from '../math/numberConstants';
 import { World } from '../world/world';
 
@@ -19,10 +19,28 @@ export function GrabMeter(w: World) {
   const playerCount = pd.PlayerCount;
   for (let playerIndex = 0; playerIndex < playerCount; playerIndex++) {
     const p = pd.Player(playerIndex);
-    if (p.FSMInfo.CurrentStateId !== STATE_IDS.GRAB_HELD_S) {
+
+    if (
+      p.FSMInfo.CurrentStateId !== STATE_IDS.GRAB_HELD_S ||
+      p.Flags.IsInHitPause
+    ) {
       continue;
     }
+
     const grabMeterComp = p.GrabMeter;
+    const holdingPlayerId = grabMeterComp.HoldingPlayerId!;
+    const holdingPlayer = pd.Player(holdingPlayerId);
+    const hPSId = holdingPlayer.FSMInfo.CurrentStateId;
+
+    if (
+      hPSId === STATE_IDS.FORWARD_THROW_S ||
+      hPSId === STATE_IDS.BACK_THROW_S ||
+      hPSId === STATE_IDS.UP_THROW_S ||
+      hPSId === STATE_IDS.DOWN_THROW_S
+    ) {
+      return;
+    }
+
     const baseDecay = grabMeterComp.BaseDecayRate;
     const damage = p.Damage.Damage;
     const currentMeter = grabMeterComp.Meter;
@@ -33,6 +51,7 @@ export function GrabMeter(w: World) {
     const actionBonusDecay =
       previousInput.Action !== currentInput.Action ? ONE_POINT_FIVE : 0;
     let stickbonusDecay = 0;
+
     if (
       Math.abs(previousInput.LXAxis.Raw - currentInput.LXAxis.Raw) > POINT_FOUR
     ) {
@@ -53,8 +72,10 @@ export function GrabMeter(w: World) {
     ) {
       stickbonusDecay += POINT_TWO_FIVE;
     }
+
     const decay = baseDecay + actionBonusDecay + stickbonusDecay;
     currentMeter.AddRaw(decay);
+
     if (currentMeter.Raw >= maxMeter) {
       const sm = pd.StateMachine(p.ID);
       const grabber = pd.Player(grabMeterComp.HoldingPlayerId!);

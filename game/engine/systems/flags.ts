@@ -1,6 +1,6 @@
 import {
   STATE_IDS,
-  StateId,
+  StateId
 } from '../finite-state-machine/stateConfigurations/shared';
 import { World } from '../world/world';
 
@@ -18,6 +18,9 @@ export function Flags(world: World): void {
     }
     if (flags.IsPlatDetectDisabled) {
       flags.DecrementDisablePlatDetection();
+    }
+    if (flags.IsLedgeDetectDisabled) {
+      flags.DecrementDisableLedgeDetection();
     }
     if (flags.JumpedFromShield) {
       const curFrame = world.LocalFrame;

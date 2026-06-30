@@ -4,8 +4,10 @@ export class PlayerFlagsComponent {
   private hitPauseFrames: number = 0;
   private intangabilityFrames: number = 0;
   private disablePlatformDetection: number = 0;
+  private disableLedgeDetection: number = 0;
   private velocityDecayActive: boolean = true;
   private shieldJump: boolean = false;
+  private lastTechFrame: number = 0;
 
   public FaceRight(): void {
     this.facingRight = true;
@@ -59,6 +61,14 @@ export class PlayerFlagsComponent {
     this.disablePlatformDetection = frameCount;
   }
 
+  public SetDisableLedgeDetectionFrames(frameCount: number): void {
+    this.disableLedgeDetection = frameCount;
+  }
+
+  public DecrementDisableLedgeDetection(): void {
+    this.disableLedgeDetection--;
+  }
+
   public ZeroIntangabilityFrames(): void {
     this.intangabilityFrames = 0;
   }
@@ -71,12 +81,24 @@ export class PlayerFlagsComponent {
     this.disablePlatformDetection = 0;
   }
 
+  public ZeroDisableLedgeDetection(): void {
+    this.disableLedgeDetection = 0;
+  }
+
   public JumpFromShield(): void {
     this.shieldJump = true;
   }
 
   public ResetJumpFromShield(): void {
     this.shieldJump = false;
+  }
+
+  public SetLastTechFrame(frame: number): void {
+    (this, (this.lastTechFrame = frame));
+  }
+
+  public ZeroTechLockOut(): void {
+    this.lastTechFrame = 0;
   }
 
   public get IsFastFalling(): boolean {
@@ -107,6 +129,10 @@ export class PlayerFlagsComponent {
     return this.disablePlatformDetection > 0;
   }
 
+  public get IsLedgeDetectDisabled(): boolean {
+    return this.disableLedgeDetection > 0;
+  }
+
   public get JumpedFromShield(): boolean {
     return this.shieldJump;
   }
@@ -123,6 +149,10 @@ export class PlayerFlagsComponent {
     return this.intangabilityFrames;
   }
 
+  public get LastTechFrame(): number {
+    return this.lastTechFrame;
+  }
+
   public HasNoVelocityDecay(): boolean {
     return !this.velocityDecayActive;
   }
@@ -133,8 +163,10 @@ export class PlayerFlagsComponent {
     this.hitPauseFrames = history.hitPauseFrames;
     this.intangabilityFrames = history.intangabilityFrames;
     this.disablePlatformDetection = history.disablePlatformDetectionFrames;
+    this.disableLedgeDetection = history.disableLedgeDetectionFrames;
     this.velocityDecayActive = history.velocityDecayActive;
     this.shieldJump = history.shieldJump;
+    this.lastTechFrame = history.lastTechFrame;
   }
 }
 
@@ -144,6 +176,8 @@ export type FlagsHist = {
   hitPauseFrames: number;
   intangabilityFrames: number;
   disablePlatformDetectionFrames: number;
+  disableLedgeDetectionFrames: number;
   velocityDecayActive: boolean;
   shieldJump: boolean;
+  lastTechFrame: number;
 };
