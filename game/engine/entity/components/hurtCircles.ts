@@ -1,7 +1,8 @@
 import { HurtCapsuleConfig } from '../../../character/shared';
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint, MAX_RAW_VALUE, MIN_RAW_VALUE } from '../../math/fixedPoint';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
+import { AABB } from './shared/AABB';
 
 export class HurtCapsule {
   public readonly StartOffsetX: FixedPoint = new FixedPoint();
@@ -15,7 +16,7 @@ export class HurtCapsule {
     startOffsetY: number,
     endOffsetX: number,
     endOffsetY: number,
-    radius: number,
+    radius: number
   ) {
     this.StartOffsetX.SetFromNumber(startOffsetX);
     this.StartOffsetY.SetFromNumber(startOffsetY);
@@ -27,7 +28,7 @@ export class HurtCapsule {
   public GetStartPosition(
     x: FixedPoint,
     y: FixedPoint,
-    vecPool: Pool<PooledVector>,
+    vecPool: Pool<PooledVector>
   ): PooledVector {
     const xsRaw = this.StartOffsetX.Raw + x.Raw;
     const ysRaw = this.StartOffsetY.Raw + y.Raw;
@@ -37,7 +38,7 @@ export class HurtCapsule {
   public GetEndPosition(
     x: FixedPoint,
     y: FixedPoint,
-    vecPool: Pool<PooledVector>,
+    vecPool: Pool<PooledVector>
   ): PooledVector {
     const xeRaw = this.EndOffsetX.Raw + x.Raw;
     const yeRaw = this.EndOffsetY.Raw + y.Raw;
@@ -47,13 +48,50 @@ export class HurtCapsule {
 
 export class HurtCapsulesComponent {
   public readonly HurtCapsules: Array<HurtCapsule>;
+  public readonly AABB: AABB;
 
   constructor(hurtCapsules: Array<HurtCapsuleConfig>) {
     this.HurtCapsules = [];
     hurtCapsules.forEach((hc) => {
       this.HurtCapsules.push(
-        new HurtCapsule(hc.x1, hc.y1, hc.x2, hc.y2, hc.radius),
+        new HurtCapsule(hc.x1, hc.y1, hc.x2, hc.y2, hc.radius)
       );
     });
+    this.AABB = BuildAABBFromHurtCircles(this.HurtCapsules);
   }
+}
+
+function BuildAABBFromHurtCircles(hc: Array<HurtCapsule>): AABB {
+  let minX = MAX_RAW_VALUE;
+  let minY = MAX_RAW_VALUE;
+  let maxX = MIN_RAW_VALUE;
+  let maxY = MIN_RAW_VALUE;
+  hc.forEach((h) => {
+    minX = Math.min(
+      minX,
+      h.StartOffsetX.Raw - h.Radius.Raw,
+      h.EndOffsetX.Raw - h.Radius.Raw
+    );
+    minY = Math.min(
+      minY,
+      h.StartOffsetY.Raw - h.Radius.Raw,
+      h.EndOffsetY.Raw - h.Radius.Raw
+    );
+    maxX = Math.max(
+      maxX,
+      h.StartOffsetX.Raw + h.Radius.Raw,
+      h.EndOffsetX.Raw + h.Radius.Raw
+    );
+    maxY = Math.max(
+      maxY,
+      h.StartOffsetY.Raw + h.Radius.Raw,
+      h.EndOffsetY.Raw + h.Radius.Raw
+    );
+  });
+  return {
+    minXRaw: minX,
+    minYRaw: minY,
+    widthRaw: maxX - minX,
+    heightRaw: maxY - minY
+  };
 }

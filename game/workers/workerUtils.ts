@@ -217,6 +217,7 @@ type initCommand = {
     stateBuffers: SharedArrayBuffer[];
     writeBackBuffers?: SharedArrayBuffer[];
     frameBuffer?: SharedArrayBuffer;
+    poolCountBuffer?: SharedArrayBuffer;
   };
 };
 

@@ -102,6 +102,10 @@ export class World {
     return this.HistoryData.RentedECBDtos[frame];
   }
 
+  public GetRentedAABBDtosForFrame(frame: number): number {
+    return this.HistoryData.RentedAABBDtos[frame];
+  }
+
   public SetPoolHistory(): void {
     const frame = this.LocalFrame;
     const histDat = this.HistoryData;
@@ -114,6 +118,7 @@ export class World {
       pools.ActiveHitBubbleDtoPool.ActiveCount;
     histDat.RentedClosestPoints[frame] = pools.ClstsPntsResPool.ActiveCount;
     histDat.RentedECBDtos[frame] = pools.DiamondPool.ActiveCount;
+    histDat.RentedAABBDtos[frame] = pools.AABBDTOPool.ActiveCount;
   }
 }
 

@@ -3,6 +3,8 @@ export class PlayerFlagsComponent {
   private fastFalling: boolean = false;
   private hitPauseFrames: number = 0;
   private intangabilityFrames: number = 0;
+  private invincibilityFrames: number = 0;
+  private superArmorFrames: number = 0;
   private disablePlatformDetection: number = 0;
   private disableLedgeDetection: number = 0;
   private velocityDecayActive: boolean = true;
@@ -175,6 +177,8 @@ export type FlagsHist = {
   fasFalling: boolean;
   hitPauseFrames: number;
   intangabilityFrames: number;
+  invincibilityFrames: number;
+  superArmorFrames: number;
   disablePlatformDetectionFrames: number;
   disableLedgeDetectionFrames: number;
   velocityDecayActive: boolean;

@@ -83,11 +83,13 @@ function startEngine(controllerInfo: playerControllerInfo) {
   const stateSab = new SharedArrayBuffer(stateSabSize);
 
   const frameSab = new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT);
+  const poolCountSab = new SharedArrayBuffer(8 * Int32Array.BYTES_PER_ELEMENT);
 
   const inputBuffer = new Int32Array(inputSab);
   const writeBackBuffer = new Int32Array(writeBackSab);
   const stateBuffer = new Int32Array(stateSab);
   const frameBuffer = new Int32Array(frameSab);
+  const poolCountBuffer = new Int32Array(poolCountSab);
 
   const inputWriter = new LocalInputBufferWriter(inputBuffer);
   const writeBackReader = new LocalInputBufferReader(writeBackBuffer);
@@ -102,7 +104,8 @@ function startEngine(controllerInfo: playerControllerInfo) {
       inputBuffers: [inputSab],
       writeBackBuffers: [writeBackSab],
       stateBuffers: [stateSab],
-      frameBuffer: frameSab
+      frameBuffer: frameSab,
+      poolCountBuffer: poolCountSab
     }
   });
 
@@ -157,7 +160,7 @@ function startEngine(controllerInfo: playerControllerInfo) {
     }
   });
 
-  ECHO_RENDER_LOOP(writeBackReader, stateBuffer, frameBuffer);
+  ECHO_RENDER_LOOP(writeBackReader, stateBuffer, frameBuffer, poolCountBuffer);
 }
 
 class HistoryRingBuffer {
@@ -196,7 +199,8 @@ class HistoryRingBuffer {
 function ECHO_RENDER_LOOP(
   writeBackReader: LocalInputBufferReader,
   stateBuffer: Int32Array,
-  frameBuffer: Int32Array
+  frameBuffer: Int32Array,
+  poolCountBuffer: Int32Array
 ) {
   const canvas = document.getElementById('game') as HTMLCanvasElement;
 
@@ -323,20 +327,6 @@ function ECHO_RENDER_LOOP(
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = 'grey'; // Match original debug renderer
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.font = '24px Arial';
-      ctx.fillText(`Action: ${inputToRender.Action}`, 50, 50);
-      ctx.fillText(`LXAxis: ${inputToRender.LXAxis.Raw}`, 50, 80);
-      ctx.fillText(`LYAxis: ${inputToRender.LYAxis.Raw}`, 50, 110);
-      ctx.fillText(`RXAxis: ${inputToRender.RXAxis.Raw}`, 50, 140);
-      ctx.fillText(`RYAxis: ${inputToRender.RYAxis.Raw}`, 50, 170);
-      ctx.fillText(`LTVal: ${inputToRender.LTVal.Raw}`, 50, 200);
-      ctx.fillText(`RTVal: ${inputToRender.RTVal.Raw}`, 50, 230);
-      ctx.fillText(`Start: ${inputToRender.Start}`, 50, 260);
-      ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
-      ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
-      ctx.fillText(`Tick Time: ${tickTimeMs.toFixed(2)} ms`, 50, 350);
-
       let renderFrameFloat = renderTime / loopRate;
       let thenFrame = Math.floor(renderFrameFloat);
       let nowFrame = thenFrame + 1;
@@ -385,6 +375,28 @@ function ECHO_RENDER_LOOP(
           dbX += 200;
         }
       }
+
+      ctx.fillStyle = 'white';
+      ctx.font = '24px Arial';
+      ctx.fillText(`Action: ${inputToRender.Action}`, 50, 50);
+      ctx.fillText(`LXAxis: ${inputToRender.LXAxis.Raw}`, 50, 80);
+      ctx.fillText(`LYAxis: ${inputToRender.LYAxis.Raw}`, 50, 110);
+      ctx.fillText(`RXAxis: ${inputToRender.RXAxis.Raw}`, 50, 140);
+      ctx.fillText(`RYAxis: ${inputToRender.RYAxis.Raw}`, 50, 170);
+      ctx.fillText(`LTVal: ${inputToRender.LTVal.Raw}`, 50, 200);
+      ctx.fillText(`RTVal: ${inputToRender.RTVal.Raw}`, 50, 230);
+      ctx.fillText(`Start: ${inputToRender.Start}`, 50, 260);
+      ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
+      ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
+      ctx.fillText(`Tick Time: ${tickTimeMs.toFixed(2)} ms`, 50, 350);
+      ctx.fillText(`VectorsRented: ${Atomics.load(poolCountBuffer, 0)}`, 50, 380);
+      ctx.fillText(`CollisionResultsRented: ${Atomics.load(poolCountBuffer, 1)}`, 50, 410);
+      ctx.fillText(`ProjectionReultsRented: ${Atomics.load(poolCountBuffer, 2)}`, 50, 440);
+      ctx.fillText(`ATKReultsRented: ${Atomics.load(poolCountBuffer, 3)}`, 50, 470);
+      ctx.fillText(`ActiveHitBubblesRented: ${Atomics.load(poolCountBuffer, 4)}`, 50, 500);
+      ctx.fillText(`ClosestPointsRented: ${Atomics.load(poolCountBuffer, 5)}`, 50, 530);
+      ctx.fillText(`ECBDiamondDTOsRented: ${Atomics.load(poolCountBuffer, 6)}`, 50, 560);
+      ctx.fillText(`AABBsRented: ${Atomics.load(poolCountBuffer, 7)}`, 50, 590);
     }
   });
 }

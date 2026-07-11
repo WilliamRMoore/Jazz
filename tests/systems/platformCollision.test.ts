@@ -60,7 +60,7 @@ describe('Platform Collision system tests', () => {
     SetPlayerPosition(
       p,
       new FixedPoint(1000),
-      new FixedPoint(300 - p.ECB.Height.AsNumber),
+      new FixedPoint(300),
     );
     p.FSMInfo.SetCurrentState(Idle);
 

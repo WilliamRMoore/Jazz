@@ -169,9 +169,15 @@ export class DebugRenderer {
     );
 
     ctx.fillText(
-      `Avg Tick Rate (5s): ${this.averageTickRate.toFixed(2)} Hz`,
+      `AABBsRented: ${world.GetRentedAABBDtosForFrame(localFrame)}`,
       10,
       300,
+    );
+
+    ctx.fillText(
+      `Avg Tick Rate (5s): ${this.averageTickRate.toFixed(2)} Hz`,
+      10,
+      330,
     );
     if (this.PlayerDeBugInfo) {
       this.renderLiveDebugInfo(world);

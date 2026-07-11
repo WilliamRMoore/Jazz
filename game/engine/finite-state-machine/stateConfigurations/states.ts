@@ -313,6 +313,7 @@ export const LedgeGetUp: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 
@@ -376,6 +377,7 @@ export const LedgeAttack: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 
@@ -464,6 +466,7 @@ export const LedgeRoll: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 

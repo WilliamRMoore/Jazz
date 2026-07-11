@@ -22,6 +22,7 @@ import {
   POINT_EIGHT,
   POINT_FIVE
 } from '../math/numberConstants';
+import { GetECBAABBHullCC } from './shared/AABBHelper';
 
 const NEG_ZERO_POINT_EIGHT = -POINT_EIGHT;
 const NEG_ZERO_POINT_FIVE = -POINT_FIVE;
@@ -66,15 +67,18 @@ export function PlatformDetection(world: World): void {
         continue;
       }
 
+      const aabb = GetECBAABBHullCC(p, world);
+
+      if (!stage.AABBIntersectCheckAABBDTO(aabb)) {
+        continue;
+      }
+
       const dPool = world.Pools.DiamondPool;
-      //const compHist = histories.PlayerComponentHistories[playerIndex];
       const playerHist = histories.PlayerHistoryDB[playerIndex];
       const prevState = playerHist.get(prevFrame);
       const ecb = p.ECB;
       const previousECBShape =
         ecb.ecbStateShapes.get(prevState.stateId) ?? ecb.OriginalShape;
-      // const prevEcbSnapShot = compHist.EcbHistory[prevFrame];
-      // const prevPosition = compHist.PositionHistory[prevFrame];
       const preEcb = CreateDiamondFromHistory(
         previousECBShape,
         prevState.posXRaw,

@@ -18,6 +18,7 @@ let inputReaders: LocalInputBufferReader[] = [];
 let inputWriters: LocalInputBufferWriter[] = [];
 let stateWriterBuffers: Int32Array[] = [];
 let frameBuffer: Int32Array;
+let poolCountBuffer: Int32Array;
 const jazz = new JazzDebugger();
 
 self.onmessage = (event: MessageEvent) => {
@@ -28,6 +29,7 @@ self.onmessage = (event: MessageEvent) => {
     const writeBackSabs = initPayload.writeBackBuffers || [];
     const stateSabs = initPayload.stateBuffers;
     const frameSab = initPayload.frameBuffer;
+    const poolCountSab = initPayload.poolCountBuffer;
 
     inputReaders = inputSabs.map(
       (sab) => new LocalInputBufferReader(new Int32Array(sab))
@@ -39,6 +41,9 @@ self.onmessage = (event: MessageEvent) => {
 
     if (frameSab) {
       frameBuffer = new Int32Array(frameSab);
+    }
+    if (poolCountSab) {
+      poolCountBuffer = new Int32Array(poolCountSab);
     }
 
     // Initialize the engine with a default stage
@@ -164,6 +169,16 @@ function loop() {
             1,
             Math.round((tickEnd - tickStart) * 1000)
           );
+        }
+        if (poolCountBuffer) {
+          Atomics.store(poolCountBuffer, 0, jazz.World.GetRentedVecsForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 1, jazz.World.GetRentedColResForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 2, jazz.World.GetRentedProjResForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 3, jazz.World.GetRentedAtkResForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 4, jazz.World.GetRentedActiveHitBubblesForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 5, jazz.World.GetRentedClosestPointsForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 6, jazz.World.GetRentedECBDtosForFrame(currentFrame));
+          Atomics.store(poolCountBuffer, 7, jazz.World.GetRentedAABBDtosForFrame(currentFrame));
         }
       }
     }

@@ -20,7 +20,7 @@ export function CreateDiamondFromHistory(
   ecbShape: ECBShape,
   posXRaw: number,
   posYRaw: number,
-  pool: Pool<DiamondDTO>,
+  pool: Pool<DiamondDTO>
 ): DiamondDTO {
   const diamondDTO = pool.Rent();
   const height = ecbShape.height.Raw;
@@ -64,19 +64,19 @@ export class ECBComponent {
     positionRef: FlatVec,
     height = 100,
     width = 100,
-    yOffset = 0,
+    yOffset = 0
   ) {
     this.OriginalShape = {
       height: new FixedPoint(height),
       width: new FixedPoint(width),
-      yOffset: new FixedPoint(yOffset),
+      yOffset: new FixedPoint(yOffset)
     };
     this.ecbStateShapes = new Map<StateId, ECBShape>();
     for (const [Key, val] of shapes) {
       this.ecbStateShapes.set(Key, {
         height: new FixedPoint(val.height),
         width: new FixedPoint(val.width),
-        yOffset: new FixedPoint(val.yOffset),
+        yOffset: new FixedPoint(val.yOffset)
       });
     }
     this.currentShape = this.OriginalShape;
@@ -161,22 +161,6 @@ export class ECBComponent {
 
   public get _db_ecbShapes() {
     return this.ecbStateShapes;
-  }
-
-  public get AABBOrgXRaw(): number {
-    return this.Left.X.Raw;
-  }
-
-  public get AABBOrgYRaw(): number {
-    return this.Top.Y.Raw;
-  }
-
-  public get ECBWidthRaw(): number {
-    return this.currentShape.width.Raw;
-  }
-
-  public get ECBHeightRaw(): number {
-    return this.currentShape.height.Raw;
   }
 
   public ResetECBShape(): void {

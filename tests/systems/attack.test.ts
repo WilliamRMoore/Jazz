@@ -192,6 +192,71 @@ describe('Attack systesm tests', () => {
 
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRAB_HOLD_S);
   });
+
+  test('Player should hit shield when close and shielding', () => {
+    p2Sm.ForceState(STATE_IDS.SHIELD_S);
+    p2.Shield.Active = true;
+    p1Sm.ForceState(STATE_IDS.ATTACK_S);
+    SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
+    SetPlayerInitialPositionRaw(p2, NumberToRaw(1070), NumberToRaw(650.01));
+    const i1 = NewInputAction();
+    i1.RTVal.SetFromNumber(1); 
+    const i2 = NewInputAction();
+    i2.RTVal.SetFromNumber(1);
+    const i3 = NewInputAction();
+    i3.RTVal.SetFromNumber(1);
+
+    p1InputStore.StoreInputForFrame(0, NewInputAction());
+    p1InputStore.StoreInputForFrame(1, NewInputAction());
+    p1InputStore.StoreInputForFrame(2, NewInputAction());
+    p2InputStore.StoreInputForFrame(0, i1);
+    p2InputStore.StoreInputForFrame(1, i2);
+    p2InputStore.StoreInputForFrame(2, i3);
+    for (let i = 0; i < 3; i++) {
+      RecordIntoHistory(p1, h1.get(i));
+      RecordIntoHistory(p2, h2.get(i));
+    }
+    w.LocalFrame = 2;
+    p1.FSMInfo._db_currentStateFrame = 3; // Startup frames over, active frames
+
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(true);
+    expect(p2.Shield.PreModCurrentRadius.Raw).toBeLessThan(p2.Shield.InitialRadius.Raw); // Shield takes damage
+    expect(p1.Flags.HitPauseFrames).toBeGreaterThan(0);
+  });
+
+  test('Player should NOT hit shield when far away (AABB check early out)', () => {
+    p2Sm.ForceState(STATE_IDS.SHIELD_S);
+    p2.Shield.Active = true;
+    p1Sm.ForceState(STATE_IDS.ATTACK_S);
+    SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
+    SetPlayerInitialPositionRaw(p2, NumberToRaw(1270), NumberToRaw(650.01)); // far away
+    const i1 = NewInputAction();
+    i1.RTVal.SetFromNumber(1); 
+    const i2 = NewInputAction();
+    i2.RTVal.SetFromNumber(1);
+    const i3 = NewInputAction();
+    i3.RTVal.SetFromNumber(1);
+
+    p1InputStore.StoreInputForFrame(0, NewInputAction());
+    p1InputStore.StoreInputForFrame(1, NewInputAction());
+    p1InputStore.StoreInputForFrame(2, NewInputAction());
+    p2InputStore.StoreInputForFrame(0, i1);
+    p2InputStore.StoreInputForFrame(1, i2);
+    p2InputStore.StoreInputForFrame(2, i3);
+    for (let i = 0; i < 3; i++) {
+      RecordIntoHistory(p1, h1.get(i));
+      RecordIntoHistory(p2, h2.get(i));
+    }
+    w.LocalFrame = 2;
+    p1.FSMInfo._db_currentStateFrame = 3; 
+
+    PlayerAttacks(w);
+
+    expect(p1.Attacks.HasHitPlayer(1)).toBe(false);
+    expect(p2.Shield.PreModCurrentRadius.Raw).toBe(p2.Shield.InitialRadius.Raw); // No shield damage
+  });
 });
 
 describe('Attack Calculation Tests', () => {

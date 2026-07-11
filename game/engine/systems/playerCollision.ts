@@ -1,6 +1,6 @@
 import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
 import { DivideRaw } from '../math/fixedPoint';
-import { IntersectsPolygons } from '../physics/collisions';
+import { AABBIntersect, IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { ONE_POINT_FIVE, TWO } from '../math/numberConstants';
@@ -23,7 +23,13 @@ export function PlayerCollisionDetection(world: World): void {
       continue;
     }
 
-    const checkPlayerEcb = checkPlayer.ECB.GetActiveVerts();
+    const checkPlayerEcb = checkPlayer.ECB;
+    const checkPlayerEcbVerts = checkPlayer.ECB.GetActiveVerts();
+
+    const cpMinx = checkPlayerEcb.Left.X.Raw;
+    const cpMaxx = checkPlayerEcb.Right.X.Raw;
+    const cpMiny = checkPlayerEcb.Top.Y.Raw;
+    const cpMaxy = checkPlayerEcb.Bottom.Y.Raw;
 
     for (let pIInner = pIOuter + 1; pIInner < playerCount; pIInner++) {
       const otherPlayer = playerData.Player(pIInner);
@@ -36,14 +42,34 @@ export function PlayerCollisionDetection(world: World): void {
         continue;
       }
 
+      const opMinX = otherPlayer.ECB.Left.X.Raw;
+      const opMaxX = otherPlayer.ECB.Right.X.Raw;
+      const opMiny = otherPlayer.ECB.Top.Y.Raw;
+      const opMaxy = otherPlayer.ECB.Bottom.Y.Raw;
+
+      const AABBIntersects = AABBIntersect(
+        cpMinx,
+        cpMiny,
+        cpMaxx - cpMinx,
+        cpMaxy - cpMiny,
+        opMinX,
+        opMiny,
+        opMaxX - opMinX,
+        opMaxy - opMiny
+      );
+
+      if (!AABBIntersects) {
+        continue;
+      }
+
       const otherPlayerEcb = otherPlayer.ECB.GetActiveVerts();
 
       const collision = IntersectsPolygons(
-        checkPlayerEcb,
+        checkPlayerEcbVerts,
         otherPlayerEcb,
         pools.VecPool,
         pools.ColResPool,
-        pools.ProjResPool,
+        pools.ProjResPool
       );
 
       if (collision.Collision) {
@@ -58,13 +84,13 @@ export function PlayerCollisionDetection(world: World): void {
           SetPlayerPositionRaw(
             checkPlayer,
             checkPlayerXRaw + DivideRaw(MOVE_X, TWO),
-            checkPlayerYRaw,
+            checkPlayerYRaw
           );
 
           SetPlayerPositionRaw(
             otherPlayer,
             otherPlayerXRaw - DivideRaw(MOVE_X, TWO),
-            otherPlayerYRaw,
+            otherPlayerYRaw
           );
           continue;
         }
@@ -72,13 +98,13 @@ export function PlayerCollisionDetection(world: World): void {
         SetPlayerPositionRaw(
           checkPlayer,
           checkPlayerXRaw - DivideRaw(MOVE_X, TWO),
-          checkPlayerYRaw,
+          checkPlayerYRaw
         );
 
         SetPlayerPositionRaw(
           otherPlayer,
           otherPlayerXRaw + DivideRaw(MOVE_X, TWO),
-          otherPlayerYRaw,
+          otherPlayerYRaw
         );
       }
     }

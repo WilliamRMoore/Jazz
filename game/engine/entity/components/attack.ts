@@ -5,12 +5,14 @@ import {
   AttackId,
   GameEventId
 } from '../../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../../math/fixedPoint';
+import { FixedPoint, MAX_RAW_VALUE, MIN_RAW_VALUE } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
+import { AABBDTO } from '../../pools/AABBDTO';
 import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
+import { AABB } from './shared/AABB';
 
 type bubbleId = number;
 export type frameNumber = number;
@@ -197,7 +199,8 @@ export class Attack {
 }
 
 export class AttackComponment {
-  private readonly attacks: Map<AttackId, Attack>;
+  private readonly attacks = new Map<AttackId, Attack>();
+  public readonly AABBs = new Map<AttackId, AABB>();
   private currentAttack: Attack | undefined = undefined;
   public readonly PlayerIdsHit = new Set<number>();
 
@@ -206,12 +209,16 @@ export class AttackComponment {
     posRef: FlatVec,
     facingRight: () => boolean
   ) {
-    const attacks = new Map<AttackId, Attack>();
     attacksConfigs.forEach((ac) => {
       const atk = new Attack(ac, posRef, facingRight);
-      attacks.set(ac.AttackId, atk);
+      this.attacks.set(ac.AttackId, atk);
     });
-    this.attacks = attacks;
+    this.attacks.forEach((atk) => {
+      const aabb = BuildAABBFromAttack(atk);
+      if (aabb !== false) {
+        this.AABBs.set(atk.AttackId, aabb);
+      }
+    });
   }
 
   public GetAttack(): Attack | undefined {
@@ -268,3 +275,29 @@ export type ATKHist = {
   atkId: AttackId | undefined;
   playersHit: Set<number>;
 };
+
+function BuildAABBFromAttack(attack: Attack): AABB | false {
+  if (attack.HitBubbles.length === 0) {
+    return false;
+  }
+
+  const bubs = attack.HitBubbles;
+  let minX = MAX_RAW_VALUE;
+  let minY = MAX_RAW_VALUE;
+  let maxX = MIN_RAW_VALUE;
+  let maxY = MIN_RAW_VALUE;
+  let width = 0;
+  let height = 0;
+
+  bubs.forEach((hb) => {
+    hb.frameOffsets.forEach((off) => {
+      minX = Math.min(minX, off.X.Raw - hb.Radius.Raw);
+      minY = Math.min(minY, off.Y.Raw - hb.Radius.Raw);
+      maxX = Math.max(maxX, off.X.Raw + hb.Radius.Raw);
+      maxY = Math.max(maxY, off.Y.Raw + hb.Radius.Raw);
+    });
+  });
+  width = maxX - minX;
+  height = maxY - minY;
+  return { minXRaw: minX, minYRaw: minY, widthRaw: width, heightRaw: height };
+}
