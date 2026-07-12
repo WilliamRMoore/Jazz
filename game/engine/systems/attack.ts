@@ -37,7 +37,7 @@ import {
 import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
 import { isPlayerGroundedAtAll } from './shared';
-import { GetAttackAABBHull, GetHurtCirclesAABBHull } from './shared/AABBHelper';
+import { GetActionSweptAABBHull, GetHurtCirclesAABBHull } from './shared/AABBHelper';
 import { AABBDTO } from '../pools/AABBDTO';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
@@ -262,7 +262,7 @@ function PAvsPB(w: World, pA: Player, pB: Player): AttackResult {
     curPosDto.X.SetFromRaw(curPosXRaw);
     curPosDto.Y.SetFromRaw(curPosYRaw);
 
-    attackHull = GetAttackAABBHull(
+    attackHull = GetActionSweptAABBHull(
       ifr,
       wfr,
       prevPostDto,

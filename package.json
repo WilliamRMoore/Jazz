@@ -8,7 +8,8 @@
     "build": "node esbuild.config.js",
     "build:worker": "node esbuild.config.js --worker",
     "start": "node server.js",
-    "deploy": "npm run build && esbuild public/*.js --minify --allow-overwrite --outdir=public && gh-pages -d public"
+    "deploy": "npm run build && esbuild public/*.js --minify --allow-overwrite --outdir=public && gh-pages -d public",
+    "export:config": "npx -y tsx scripts/exportConfig.ts"
   },
   "repository": {
     "type": "git",

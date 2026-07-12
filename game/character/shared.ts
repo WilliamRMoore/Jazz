@@ -50,6 +50,7 @@ export type SpeedsComponentConfig = {
 };
 
 export type CharacterConfig = {
+  Name: string;
   FrameLengths: Map<StateId, number>;
   ECBHeight: number;
   ECBWidth: number;
@@ -62,7 +63,10 @@ export type CharacterConfig = {
   LedgeBoxHeight: number;
   LedgeBoxWidth: number;
   LedgeBoxYOffset: number;
-  LedgeRollFrames: { ledgeGetUpFrames: number, ledgeRollFrames: [number, number] };
+  LedgeRollFrames: {
+    ledgeGetUpFrames: number;
+    ledgeRollFrames: [number, number];
+  };
   Attacks: Map<AttackId, AttackConfig>;
   Grabs: Map<GrabId, GrabConfig>;
   Throws: ThrowConfig[];

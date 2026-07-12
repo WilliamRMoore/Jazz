@@ -49,8 +49,8 @@ async function start() {
     let urlPath = req.url === '/' ? '/index.html' : req.url;
     let filePath = path.join(PUBLIC_DIR, urlPath);
 
-    // Provide a fallback to root for HTML files during development
-    if (!fs.existsSync(filePath) && urlPath.endsWith('.html')) {
+    // Provide a fallback to root for files during development (like our JSON configs)
+    if (!fs.existsSync(filePath)) {
       const rootPath = path.join(__dirname, urlPath);
       if (fs.existsSync(rootPath)) {
         filePath = rootPath;

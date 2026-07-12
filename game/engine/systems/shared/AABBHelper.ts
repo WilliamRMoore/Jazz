@@ -25,7 +25,7 @@ export function GetECBAABBHullCC(p: Player, w: World) {
   return ret;
 }
 
-export function GetAttackAABBHull(
+export function GetActionSweptAABBHull(
   isFacingRight: boolean,
   wasFacingRight: boolean,
   prevPos: PooledVector,

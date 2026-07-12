@@ -4,8 +4,8 @@ import { CharacterConfig } from './shared';
  * Serializes a CharacterConfig object into a JSON string.
  * Safely handles ES6 Maps which are ignored by standard JSON.stringify.
  */
-export function serializeCharacterConfig(config: CharacterConfig): string {
-  return JSON.stringify(config, mapReplacer);
+export function serializeCharacterConfig(config: CharacterConfig, space?: string | number): string {
+  return JSON.stringify(config, mapReplacer, space);
 }
 
 /**

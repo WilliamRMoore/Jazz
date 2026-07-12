@@ -8,7 +8,6 @@ import {
 } from './workers/workerUtils';
 import { RENDER_MONITOR_FRAME_RATE } from './loops/animation-loop';
 import { PlayerStateHistory } from './engine/systems/history';
-import { DefaultCharacterConfig } from './character/default';
 import { ToFV } from './engine/utils';
 import { RawToNumber } from './engine/math/fixedPoint';
 import { defaultStage, Stage, WallStage } from './engine/stage/stageMain';
@@ -21,8 +20,13 @@ import {
   GetAttackName
 } from './engine/debug/debugUtils';
 import { STATE_IDS } from './engine/finite-state-machine/stateConfigurations/shared';
+import { CharacterRepo } from './character/characterRepo';
 
-document.addEventListener('DOMContentLoaded', () => {
+const characterRepo = new CharacterRepo();
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load the default character config from our source folder
+  await characterRepo.Load('/game/character/source/default.json');
+
   InitGamePage();
 });
 
@@ -122,7 +126,10 @@ function startEngine(controllerInfo: playerControllerInfo) {
   worker.postMessage({
     type: 'SET_PLAYER',
     payload: {
-      ccJson: JSON.stringify(new DefaultCharacterConfig(), mapReplacer),
+      ccJson: JSON.stringify(
+        characterRepo.GetCharacterConfig('default'),
+        mapReplacer
+      ),
       pos: ToFV(610, 100)
     }
   });
@@ -389,13 +396,41 @@ function ECHO_RENDER_LOOP(
       ctx.fillText(`Select: ${inputToRender.Select}`, 50, 290);
       ctx.fillText(`Frame: ${currentFrame}`, 50, 320);
       ctx.fillText(`Tick Time: ${tickTimeMs.toFixed(2)} ms`, 50, 350);
-      ctx.fillText(`VectorsRented: ${Atomics.load(poolCountBuffer, 0)}`, 50, 380);
-      ctx.fillText(`CollisionResultsRented: ${Atomics.load(poolCountBuffer, 1)}`, 50, 410);
-      ctx.fillText(`ProjectionReultsRented: ${Atomics.load(poolCountBuffer, 2)}`, 50, 440);
-      ctx.fillText(`ATKReultsRented: ${Atomics.load(poolCountBuffer, 3)}`, 50, 470);
-      ctx.fillText(`ActiveHitBubblesRented: ${Atomics.load(poolCountBuffer, 4)}`, 50, 500);
-      ctx.fillText(`ClosestPointsRented: ${Atomics.load(poolCountBuffer, 5)}`, 50, 530);
-      ctx.fillText(`ECBDiamondDTOsRented: ${Atomics.load(poolCountBuffer, 6)}`, 50, 560);
+      ctx.fillText(
+        `VectorsRented: ${Atomics.load(poolCountBuffer, 0)}`,
+        50,
+        380
+      );
+      ctx.fillText(
+        `CollisionResultsRented: ${Atomics.load(poolCountBuffer, 1)}`,
+        50,
+        410
+      );
+      ctx.fillText(
+        `ProjectionReultsRented: ${Atomics.load(poolCountBuffer, 2)}`,
+        50,
+        440
+      );
+      ctx.fillText(
+        `ATKReultsRented: ${Atomics.load(poolCountBuffer, 3)}`,
+        50,
+        470
+      );
+      ctx.fillText(
+        `ActiveHitBubblesRented: ${Atomics.load(poolCountBuffer, 4)}`,
+        50,
+        500
+      );
+      ctx.fillText(
+        `ClosestPointsRented: ${Atomics.load(poolCountBuffer, 5)}`,
+        50,
+        530
+      );
+      ctx.fillText(
+        `ECBDiamondDTOsRented: ${Atomics.load(poolCountBuffer, 6)}`,
+        50,
+        560
+      );
       ctx.fillText(`AABBsRented: ${Atomics.load(poolCountBuffer, 7)}`, 50, 590);
     }
   });

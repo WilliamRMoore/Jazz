@@ -30,6 +30,7 @@ import {
 } from './shared';
 
 export class DefaultCharacterConfig implements CharacterConfig {
+  public Name = 'default';
   public FrameLengths = new Map<StateId, number>();
   public ECBHeight = 0;
   public ECBWidth = 0;

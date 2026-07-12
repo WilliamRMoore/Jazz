@@ -1,4 +1,4 @@
-import { GetAttackAABBHull, GetHurtCirclesAABBHull } from '../../game/engine/systems/shared/AABBHelper';
+import { GetActionSweptAABBHull, GetHurtCirclesAABBHull } from '../../game/engine/systems/shared/AABBHelper';
 import { World } from '../../game/engine/world/world';
 import { Player, SetPlayerInitialPositionRaw } from '../../game/engine/entity/playerOrchestrator';
 import { DefaultCharacterConfig } from '../../game/character/default';
@@ -37,7 +37,7 @@ describe('AABBHelper getAttackAABBHull tests', () => {
       heightRaw: NumberToRaw(8)
     };
 
-    const hull = GetAttackAABBHull(
+    const hull = GetActionSweptAABBHull(
       true,
       true,
       prevPos,
@@ -92,7 +92,7 @@ describe('AABBHelper getAttackAABBHull tests', () => {
       heightRaw: NumberToRaw(8)
     };
 
-    const hull = GetAttackAABBHull(
+    const hull = GetActionSweptAABBHull(
       false,
       false,
       prevPos,
@@ -148,7 +148,7 @@ describe('AABBHelper getAttackAABBHull tests', () => {
       heightRaw: NumberToRaw(10)
     };
 
-    const hull = GetAttackAABBHull(
+    const hull = GetActionSweptAABBHull(
       false,
       true,
       prevPos,
