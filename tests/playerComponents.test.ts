@@ -119,21 +119,6 @@ describe('PlayerComponents ECB tests', () => {
     expect(ecb.Right.X.AsNumber).toBe(x + halfWidth);
     expect(ecb.Right.Y.AsNumber).toBe(y + yOffset - halfHeight);
   });
-
-  // test('GetHull and GetActiveVerts return correct vertices', () => {
-  //   const activeVerts = ecb.GetActiveVerts();
-  //   expect(activeVerts.length).toBe(4);
-  //   expect(activeVerts[0]).toBe(ecb.Bottom);
-  //   expect(activeVerts[1]).toBe(ecb.Left);
-  //   expect(activeVerts[2]).toBe(ecb.Top);
-  //   expect(activeVerts[3]).toBe(ecb.Right);
-
-  //   ecb.MoveToPositionRaw(NumberToRaw(10), NumberToRaw(10));
-
-  //   const hull = ecb.GetHull();
-  //   // with no movement, hull should be same as active verts
-  //   expect(hull.length).toBe(4);
-  // });
 });
 
 import { HurtCapsulesComponent } from '../game/engine/entity/components/hurtCircles';
@@ -262,9 +247,7 @@ describe('AttackComponment AABB tests', () => {
         Radius: 5,
         LaunchAngle: 45,
         ThresholdAngle: false,
-        frameOffsets: new Map([
-          [1, { x: 50, y: 50 }]
-        ])
+        frameOffsets: new Map([[1, { x: 50, y: 50 }]])
       }
     ];
 
