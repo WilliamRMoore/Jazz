@@ -266,16 +266,20 @@ export function CanStateWalkOffLedge(stateId: StateId): boolean {
     case STATE_IDS.SPOT_DODGE_S:
     case STATE_IDS.GRAB_S:
     case STATE_IDS.TURN_S:
-    case STATE_IDS.DASH_S:
     case STATE_IDS.DOWN_CHARGE_S:
     case STATE_IDS.DOWN_CHARGE_EX_S:
     case STATE_IDS.GETUP_S:
+    case STATE_IDS.GETUP_ATTACK_S:
     case STATE_IDS.GETUP_ROLL_FORWARD_S:
     case STATE_IDS.GETUP_ROLL_BACK_S:
     case STATE_IDS.LEDGE_GETUP_S:
     case STATE_IDS.LEDGE_ROLL_S:
     case STATE_IDS.TECH_IN_PLACE_S:
     case STATE_IDS.ROLL_TECH_S:
+    case STATE_IDS.GRAB_HOLD_S:
+    case STATE_IDS.GRAB_HELD_S:
+    case STATE_IDS.GRAB_RELEASE_S:
+    case STATE_IDS.GRAB_ESCAPE_S:
     case STATE_IDS.TEETER_S:
       return false;
     default:

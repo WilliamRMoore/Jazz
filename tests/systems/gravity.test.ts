@@ -6,8 +6,8 @@ import { World } from '../../game/engine/world/world';
 import {
   STATE_IDS,
   ATTACK_IDS,
-  GAME_EVENT_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  GAME_EVENT_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 import { Attack } from '../../game/engine/entity/components/attack';
 
 describe('Gravity system tests', () => {
@@ -53,7 +53,7 @@ describe('Gravity system tests', () => {
     const states = [
       STATE_IDS.AIR_DODGE_S,
       STATE_IDS.LEDGE_GRAB_S,
-      STATE_IDS.HIT_STOP_S,
+      STATE_IDS.HIT_STOP_S
     ];
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
@@ -88,7 +88,7 @@ describe('Gravity system tests', () => {
       const newAttack = new Attack(
         newAttackConf,
         p.Position.Ref,
-        () => p.Flags.IsFacingRight,
+        () => p.Flags.IsFacingRight
       );
 
       p.Attacks['_attacks'].set(ATTACK_IDS.N_GRND_ATK, newAttack);
@@ -124,11 +124,11 @@ describe('Gravity system tests', () => {
     p.Position.Y.SetFromNumber(-100);
     p.Position.X.SetFromNumber(0);
     p.ECB.Update();
-    
+
     // Simulate getting hit by a downward spike (DAir)
-    const spikeVelocity = 20; 
-    p.Velocity.Y.SetFromNumber(spikeVelocity); 
-    
+    const spikeVelocity = 20;
+    p.Velocity.Y.SetFromNumber(spikeVelocity);
+
     Gravity(w);
 
     // Gravity shouldn't reduce the velocity to fallSpeed. It should just let it be.

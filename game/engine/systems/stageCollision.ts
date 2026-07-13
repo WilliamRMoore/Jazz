@@ -2,7 +2,7 @@ import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import { DivideRaw } from '../math/fixedPoint';
 import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
@@ -36,6 +36,7 @@ import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import { PlayerData, StageData, Pools } from '../world/stateModules';
 import { World } from '../world/world';
+import { GetECBAABBHullCC } from './shared/AABBHelper';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;
 
@@ -72,12 +73,7 @@ export function StageCollisionDetection(world: World): void {
     const oldEcbWidthRaw = ecb.Width.Raw;
     const oldEcbYOffsetRaw = ecb.YOffset.Raw;
 
-    const playerMinXRaw = Math.min(preEcb.Left.X.Raw, p.ECB.Left.X.Raw);
-    const playerMaxXRaw = Math.max(preEcb.Right.X.Raw, p.ECB.Right.X.Raw);
-    const playerMinYRaw = Math.min(preEcb.Top.Y.Raw, p.ECB.Top.Y.Raw);
-    const playerMaxYRaw = Math.max(preEcb.Bottom.Y.Raw, p.ECB.Bottom.Y.Raw);
-    const playerWidthRaw = playerMaxXRaw - playerMinXRaw;
-    const playerHeightRaw = playerMaxYRaw - playerMinYRaw;
+    const aabb = GetECBAABBHullCC(p, world);
 
     // ==========================================
     // PHASE 1: PHYSICS RESOLUTION
@@ -89,14 +85,7 @@ export function StageCollisionDetection(world: World): void {
 
     for (let i = 0; i < stagesLength; i++) {
       const stage = stages[i];
-      if (
-        !stage.AABBInterSectCheck(
-          playerMinXRaw,
-          playerMinYRaw,
-          playerWidthRaw,
-          playerHeightRaw
-        )
-      ) {
+      if (!stage.AABBIntersectCheckAABBDTO(aabb)) {
         continue;
       }
 

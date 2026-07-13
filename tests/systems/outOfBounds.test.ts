@@ -3,7 +3,7 @@ import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import { OutOfBoundsCheck } from '../../game/engine/systems/outOfBounds';
 import { World } from '../../game/engine/world/world';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { FixedPoint, NumberToRaw } from '../../game/engine/math/fixedPoint';
 
 describe('OutOfBounds system tests', () => {
@@ -33,7 +33,7 @@ describe('OutOfBounds system tests', () => {
       { bound: 'top', x: 500, y: -2000 },
       { bound: 'bottom', x: 500, y: 2000 },
       { bound: 'left', x: -2000, y: 500 },
-      { bound: 'right', x: 2100, y: 500 },
+      { bound: 'right', x: 2100, y: 500 }
     ];
 
     test.each(testCases)(
@@ -59,7 +59,7 @@ describe('OutOfBounds system tests', () => {
 
         // Check state is reset
         expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.N_FALL_S);
-      },
+      }
     );
   });
 

@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../finiteStateMachines/player/shared';
 import { POINT_FOUR, POINT_SEVEN } from '../math/numberConstants';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { World } from '../world/world';
@@ -22,7 +22,7 @@ export function WallKick(w: World) {
     const sensor = ecb.SensorDepth;
     const rightSensorPoint = pools.VecPool.Rent().SetXYRaw(
       rightECBPoint.X.Raw - sensor.Raw,
-      rightECBPoint.Y.Raw,
+      rightECBPoint.Y.Raw
     );
     const stages = w.StageData.Stages;
     const stagesLength = stages.length;
@@ -34,7 +34,7 @@ export function WallKick(w: World) {
 
       const leftSensorPoint = pools.VecPool.Rent().SetXYRaw(
         leftECBPoint.X.Raw + sensor.Raw,
-        leftECBPoint.Y.Raw,
+        leftECBPoint.Y.Raw
       );
       //RightPoint, left wall
       const rightCollision = LineSegmentIntersectionRaw(
@@ -45,7 +45,7 @@ export function WallKick(w: World) {
         l.X1.Raw,
         l.Y1.Raw,
         l.X2.Raw,
-        l.Y2.Raw,
+        l.Y2.Raw
       );
       //LeftPoint, right wall
       const leftCollision = LineSegmentIntersectionRaw(
@@ -56,7 +56,7 @@ export function WallKick(w: World) {
         r.X1.Raw,
         r.Y1.Raw,
         r.X2.Raw,
-        r.Y2.Raw,
+        r.Y2.Raw
       );
 
       if (rightCollision) {

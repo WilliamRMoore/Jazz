@@ -6,13 +6,13 @@ import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switch
 import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../game/engine/finiteStateMachines/player/shared';
 import { Player } from '../game/engine/entity/playerOrchestrator';
 import { PlayerStateHistory } from '../game/engine/systems/history';
 import {
   PlayerECBAABB,
-  PlayerHurtCapAABB,
+  PlayerHurtCapAABB
 } from '../game/engine/entity/playerOrchestrator';
 
 describe('Player Orechstraotr Initialization', () => {
@@ -33,14 +33,14 @@ describe('Player Orechstraotr Initialization', () => {
 
     const sideSpecial = attacks.get(ATTACK_IDS.S_SPCL_ATK);
     const setVelCommand = sideSpecial?.onEnterCommands.find(
-      (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET,
+      (c) => c.commandName == COMMAND_NAMES.VELOCITY_SET
     )! as SetVelocityCommand;
     const payLoad = setVelCommand.payload;
     expect(payLoad.x).toBe(0);
     expect(payLoad.y).toBe(0);
 
     const c = sideSpecial?.onEnterCommands.find(
-      (c) => c.commandName == COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
+      (c) => c.commandName == COMMAND_NAMES.SET_SENSOR_REACT_COMMAND
     )! as SetPlayerSensorDetectCommand;
     const cPayload = c.payload as SwitchPlayerStateCommand;
     const ge = cPayload.payload;
@@ -73,8 +73,8 @@ describe('PlayerECBAABB', () => {
         Right: { X: { Raw: 150 }, Y: { Raw: 75 } },
         Bottom: { X: { Raw: 125 }, Y: { Raw: 100 } },
         Width: { Raw: 50 },
-        Height: { Raw: 50 },
-      },
+        Height: { Raw: 50 }
+      }
     } as unknown as Player;
 
     // Mock the previous player state history
@@ -84,15 +84,15 @@ describe('PlayerECBAABB', () => {
         { xRaw: 105, yRaw: 120 }, // Bottom (0)
         { xRaw: 80, yRaw: 95 }, // Left (1)
         { xRaw: 130, yRaw: 95 }, // Right (2)
-        { xRaw: 105, yRaw: 70 }, // Top (3)
-      ],
+        { xRaw: 105, yRaw: 70 } // Top (3)
+      ]
     } as unknown as PlayerStateHistory;
 
     const aabb = {
       xRaw: 0,
       yRaw: 0,
       widthRaw: 0,
-      heightRaw: 0,
+      heightRaw: 0
     };
 
     PlayerECBAABB(mockPlayer, mockLastState, aabb);
@@ -111,7 +111,7 @@ describe('PlayerHurtCapAABB', () => {
     const mockPlayer = {
       Position: {
         X: { Raw: 200 },
-        Y: { Raw: 150 },
+        Y: { Raw: 150 }
       },
       HurtCircles: {
         HurtCapsules: [
@@ -121,7 +121,7 @@ describe('PlayerHurtCapAABB', () => {
             StartOffsetY: { Raw: -80 },
             EndOffsetX: { Raw: 0 },
             EndOffsetY: { Raw: -20 },
-            Radius: { Raw: 25 },
+            Radius: { Raw: 25 }
           },
           {
             // Head capsule
@@ -129,10 +129,10 @@ describe('PlayerHurtCapAABB', () => {
             StartOffsetY: { Raw: -100 },
             EndOffsetX: { Raw: 0 },
             EndOffsetY: { Raw: -80 },
-            Radius: { Raw: 20 },
-          },
-        ],
-      },
+            Radius: { Raw: 20 }
+          }
+        ]
+      }
     } as unknown as Player;
 
     //x: 200 - 25 = 175
@@ -152,7 +152,7 @@ describe('PlayerHurtCapAABB', () => {
           y1Raw: 65, // Global: 140 + (-75)
           x2Raw: 180, // Global: 180 + 0
           y2Raw: 125, // Global: 140 + (-15)
-          radiusRaw: 25,
+          radiusRaw: 25
         },
         {
           // Head capsule
@@ -161,9 +161,9 @@ describe('PlayerHurtCapAABB', () => {
           y1Raw: 45, // Global: 140 + (-95)
           x2Raw: 180, // Global: 180 + 0
           y2Raw: 65, // Global: 140 + (-75)
-          radiusRaw: 20,
-        },
-      ],
+          radiusRaw: 20
+        }
+      ]
     } as unknown as PlayerStateHistory;
 
     const aabb = { xRaw: 0, yRaw: 0, widthRaw: 0, heightRaw: 0 };

@@ -1,8 +1,8 @@
-import { GAME_EVENT_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { GAME_EVENT_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import {
   InputStore,
-  RemoteInputManager,
+  RemoteInputManager
 } from '../../game/engine/managers/inputManager';
 import { RollBackManager } from '../../game/engine/managers/rollBack';
 

@@ -1,16 +1,18 @@
 import { GrabBubbleConfig, GrabConfig } from '../../../character/shared';
-import { GrabGameEventMappings } from '../../finite-state-machine/PlayerStates';
+import { GrabGameEventMappings } from '../../finiteStateMachines/player/PlayerStateCollections';
+import { GameEventId, GrabId } from '../../finiteStateMachines/player/shared';
 import {
-  GameEventId,
-  GrabId,
-} from '../../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint } from '../../math/fixedPoint';
+  FixedPoint,
+  MAX_RAW_VALUE,
+  MIN_RAW_VALUE
+} from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { ActiveGrabBubblesDTO } from '../../pools/ActiveGrabBubbles';
 import { Pool } from '../../pools/Pool';
 import { PooledVector } from '../../pools/PooledVector';
 import { ToFV } from '../../utils';
 import { frameNumber } from './attack';
+import { AABB } from './shared/AABB';
 
 type bubbleId = number;
 
@@ -25,7 +27,7 @@ export class GrabBubble {
   constructor(
     gbc: GrabBubbleConfig,
     posRef: FlatVec,
-    directionGetter: () => boolean,
+    directionGetter: () => boolean
   ) {
     this.posRef = posRef;
     this.facingRight = directionGetter;
@@ -38,7 +40,7 @@ export class GrabBubble {
   }
 
   public GetLocalPositionOffsetForFrame(
-    frameNumber: frameNumber,
+    frameNumber: frameNumber
   ): FlatVec | undefined {
     return this.frameOffsets.get(frameNumber);
   }
@@ -49,7 +51,7 @@ export class GrabBubble {
 
   public GetGlobalPosition(
     vecPool: Pool<PooledVector>,
-    grabFrameNumber: frameNumber,
+    grabFrameNumber: frameNumber
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
@@ -70,7 +72,7 @@ export class GrabBubble {
     prevPlayerXRaw: number,
     prevPlayerYRaw: number,
     prevFacinRight: boolean,
-    grabFrameNumber: frameNumber,
+    grabFrameNumber: frameNumber
   ): PooledVector | undefined {
     const offset = this.frameOffsets.get(grabFrameNumber);
     if (offset === undefined) {
@@ -94,14 +96,15 @@ export class Grab {
   constructor(
     conf: GrabConfig,
     posRef: FlatVec,
-    directionGetter: () => boolean,
+    directionGetter: () => boolean
   ) {
     this.Name = conf.Name;
     this.GrabId = conf.GrabId;
     const gbs = conf.GrabBubbles.map(
-      (gbc) => new GrabBubble(gbc, posRef, directionGetter),
+      (gbc) => new GrabBubble(gbc, posRef, directionGetter)
     );
     this.GrabBubbles = gbs.sort((a, b) => a.BubbleId - b.BubbleId);
+    this.GrabBubbles.forEach((gb) => {});
     if (conf.Impulses !== undefined) {
       this.ImpulseClamp = new FixedPoint(conf.ImpulseClamp!);
       this.Impulses = new Map<frameNumber, FlatVec>();
@@ -120,7 +123,7 @@ export class Grab {
 
   public GetActiveBubblesForFrame(
     frame: number,
-    activeGbs: ActiveGrabBubblesDTO,
+    activeGbs: ActiveGrabBubblesDTO
   ) {
     const gbLength = this.GrabBubbles.length;
     if (gbLength === 0) {
@@ -138,15 +141,22 @@ export class Grab {
 
 export class GrabComponent {
   private grabs: Map<GrabId, Grab> = new Map();
+  public readonly AABBs = new Map<GrabId, AABB>();
   private currentGrab: Grab | undefined = undefined;
 
   public constructor(
     grabConfigs: Map<GrabId, GrabConfig>,
     posRef: FlatVec,
-    directionGetter: () => boolean,
+    directionGetter: () => boolean
   ) {
     for (const [k, v] of grabConfigs) {
       this.grabs.set(k, new Grab(v, posRef, directionGetter));
+    }
+    for (const [k, v] of this.grabs) {
+      const aabb = buildGrabAABB(v);
+      if (aabb !== false) {
+        this.AABBs.set(k, aabb);
+      }
     }
   }
 
@@ -182,3 +192,30 @@ export class GrabComponent {
 export type GrabHist = {
   grabId: GrabId | undefined;
 };
+
+function buildGrabAABB(g: Grab): AABB | false {
+  if (g.GrabBubbles.length === 0) {
+    return false;
+  }
+
+  let minX = MAX_RAW_VALUE;
+  let minY = MAX_RAW_VALUE;
+  let maxX = MIN_RAW_VALUE;
+  let maxY = MIN_RAW_VALUE;
+
+  g.GrabBubbles.forEach((gb) => {
+    gb.frameOffsets.forEach((off) => {
+      minX = Math.min(minX, off.X.Raw - gb.Radius.Raw);
+      minY = Math.min(minY, off.Y.Raw - gb.Radius.Raw);
+      maxX = Math.max(maxX, off.X.Raw + gb.Radius.Raw);
+      maxY = Math.max(maxY, off.Y.Raw + gb.Radius.Raw);
+    });
+  });
+
+  return {
+    minXRaw: minX,
+    minYRaw: minY,
+    widthRaw: maxX - minX,
+    heightRaw: maxY - minY
+  };
+}

@@ -14,7 +14,7 @@ import {
   GAME_EVENT_IDS,
   GrabId,
   GRAB_IDS
-} from '../engine/finite-state-machine/stateConfigurations/shared';
+} from '../engine/finiteStateMachines/player/shared';
 
 import {
   AttackConfig,
@@ -30,6 +30,7 @@ import {
 } from './shared';
 
 export class DefaultCharacterConfig implements CharacterConfig {
+  public Name = 'default';
   public FrameLengths = new Map<StateId, number>();
   public ECBHeight = 0;
   public ECBWidth = 0;

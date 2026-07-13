@@ -1,4 +1,4 @@
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import { NewInputAction } from '../input/Input';
 import { Player } from '../entity/playerOrchestrator';
 import { DeathBoundry, Stage } from '../stage/stageMain';
@@ -16,6 +16,7 @@ import { IInputStore } from '../managers/inputManager';
 import { RingBuffer } from '../utils';
 import { PlayerStateHistory } from '../systems/history';
 import { World } from './world';
+import { AABBDTO } from '../pools/AABBDTO';
 
 export type PlayerData = {
   PlayerCount: number;
@@ -51,6 +52,7 @@ export type IHistoryData = {
   RentedAtiveHitBubHistory: Array<number>;
   RentedClosestPoints: Array<number>;
   RentedECBDtos: Array<number>;
+  RentedAABBDtos: Array<number>;
 };
 
 export class PlayerState implements PlayerData {
@@ -103,35 +105,40 @@ export class PoolContainer implements Pools {
   public readonly AtkResPool: Pool<AttackResult>;
   public readonly ClstsPntsResPool: Pool<ClosestPointsResult>;
   public readonly DiamondPool: Pool<DiamondDTO>;
+  public readonly AABBDTOPool: Pool<AABBDTO>;
 
   constructor(mc: MainConfig) {
     this.ActiveHitBubbleDtoPool = new Pool<ActiveHitBubblesDTO>(
       mc.get('PoolSizes.ActiveHitBubblesDTOCount') as number,
-      () => new ActiveHitBubblesDTO(),
+      () => new ActiveHitBubblesDTO()
     );
     this.VecPool = new Pool<PooledVector>(
       mc.get('PoolSizes.PooledVectorCount') as number,
-      () => new PooledVector(),
+      () => new PooledVector()
     );
     this.ColResPool = new Pool<CollisionResult>(
       mc.get('PoolSizes.CollisionResultCount') as number,
-      () => new CollisionResult(),
+      () => new CollisionResult()
     );
     this.ProjResPool = new Pool<ProjectionResult>(
       mc.get('PoolSizes.ProjectionResultCount') as number,
-      () => new ProjectionResult(),
+      () => new ProjectionResult()
     );
     this.AtkResPool = new Pool<AttackResult>(
       mc.get('PoolSizes.AttackResultCount') as number,
-      () => new AttackResult(),
+      () => new AttackResult()
     );
     this.ClstsPntsResPool = new Pool<ClosestPointsResult>(
       mc.get('PoolSizes.ClosestPointsResultCount') as number,
-      () => new ClosestPointsResult(),
+      () => new ClosestPointsResult()
     );
     this.DiamondPool = new Pool<DiamondDTO>(
       mc.get('PoolSizes.DiamondDTOCount') as number,
-      () => new DiamondDTO(),
+      () => new DiamondDTO()
+    );
+    this.AABBDTOPool = new Pool<AABBDTO>(
+      mc.get('PoolSizes.AABBDTOPool') as number,
+      () => new AABBDTO()
     );
   }
   public Zero(): void {
@@ -142,6 +149,7 @@ export class PoolContainer implements Pools {
     this.AtkResPool.Zero();
     this.ClstsPntsResPool.Zero();
     this.DiamondPool.Zero();
+    this.AABBDTOPool.Zero();
   }
 }
 
@@ -154,6 +162,7 @@ export class HistoryData implements IHistoryData {
   public readonly RentedAtiveHitBubHistory: Array<number> = [];
   public readonly RentedClosestPoints: Array<number> = [];
   public readonly RentedECBDtos: Array<number> = [];
+  public readonly RentedAABBDtos: Array<number> = [];
 }
 
 export type PlayerHistoryTable = RingBuffer<PlayerStateHistory>;
@@ -161,7 +170,7 @@ export type PlayerHistoryTable = RingBuffer<PlayerStateHistory>;
 export function createEmptyHistoryData(): PlayerHistoryTable {
   const pHists = new RingBuffer<PlayerStateHistory>(
     envConfig.get('State.MaxFrameStorage') as number,
-    () => new PlayerStateHistory(),
+    () => new PlayerStateHistory()
   );
   return pHists;
 }

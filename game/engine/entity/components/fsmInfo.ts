@@ -1,7 +1,7 @@
-import { FSMState } from '../../finite-state-machine/PlayerStateMachine';
-import { FSMStates } from '../../finite-state-machine/PlayerStates';
-import { StateId } from '../../finite-state-machine/stateConfigurations/shared';
-import { Idle } from '../../finite-state-machine/stateConfigurations/states';
+import { FSMState } from '../../finiteStateMachines/player/PlayerStateMachine';
+import { FSMStates } from '../../finiteStateMachines/player/PlayerStateCollections';
+import { StateId } from '../../finiteStateMachines/player/shared';
+import { Idle } from '../../finiteStateMachines/player/states';
 
 export type StateFrameRef = {
   readonly Frame: number;

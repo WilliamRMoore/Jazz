@@ -21,7 +21,7 @@ import {
   AttackId,
   GrabId,
   STATE_IDS
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import { FlatVec } from '../physics/vector';
 import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
@@ -262,6 +262,8 @@ export class PlayerStateHistory
   fasFalling = false;
   hitPauseFrames = 0;
   intangabilityFrames = 0;
+  invincibilityFrames = 0;
+  superArmorFrames = 0;
   disablePlatformDetectionFrames = 0;
   disableLedgeDetectionFrames = 0;
   velocityDecayActive = true;
@@ -425,6 +427,8 @@ export class PlayerStateHistory
     this.fasFalling = false;
     this.hitPauseFrames = 0;
     this.intangabilityFrames = 0;
+    this.invincibilityFrames = 0;
+    this.superArmorFrames = 0;
     this.disablePlatformDetectionFrames = 0;
     this.disableLedgeDetectionFrames = 0;
     this.velocityDecayActive = true;
@@ -546,6 +550,8 @@ export class PlayerStateHistory
     write(buffer, this.jumpCount, ptr++);
     write(buffer, this.hitPauseFrames, ptr++);
     write(buffer, this.intangabilityFrames, ptr++);
+    write(buffer, this.invincibilityFrames, ptr++);
+    write(buffer, this.superArmorFrames, ptr++);
     write(buffer, this.disablePlatformDetectionFrames, ptr++);
     write(buffer, this.disableLedgeDetectionFrames, ptr++);
     write(buffer, this.lastTechFrame, ptr++);
@@ -694,6 +700,8 @@ export class PlayerStateHistory
       this.jumpCount = load(buffer, ptr++);
       this.hitPauseFrames = load(buffer, ptr++);
       this.intangabilityFrames = load(buffer, ptr++);
+      this.invincibilityFrames = load(buffer, ptr++);
+      this.superArmorFrames = load(buffer, ptr++);
       this.disablePlatformDetectionFrames = load(buffer, ptr++);
       this.disableLedgeDetectionFrames = load(buffer, ptr++);
       this.lastTechFrame = load(buffer, ptr++);
@@ -815,8 +823,8 @@ export class PlayerStateHistory
     // Sequence and Frame numbers
     stride += 2; // seq, frameNumber
 
-    // 1. Core Numerics (29 properties)
-    stride += 28;
+    // 1. Core Numerics (30 properties)
+    stride += 30;
 
     // 2. Booleans (Packed into 1 Integer)
     stride += 1;

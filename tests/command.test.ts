@@ -4,8 +4,8 @@ import { ActivateSensorCommand } from '../game/engine/command/commands/activateS
 import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switchPlayerState';
 import {
   STATE_IDS,
-  GAME_EVENT_IDS,
-} from '../game/engine/finite-state-machine/stateConfigurations/shared';
+  GAME_EVENT_IDS
+} from '../game/engine/finiteStateMachines/player/shared';
 
 import { Player } from '../game/engine/entity/playerOrchestrator';
 import { World } from '../game/engine/world/world';
@@ -28,7 +28,7 @@ describe('CommandTests', () => {
 
     const switchStateCommand: SwitchPlayerStateCommand = {
       commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-      payload: GAME_EVENT_IDS.JUMP_GE,
+      payload: GAME_EVENT_IDS.JUMP_GE
     };
 
     HandleCommand(world, player, switchStateCommand);
@@ -46,8 +46,8 @@ describe('CommandTests', () => {
       payload: {
         x: 45,
         y: -15,
-        radius: 30,
-      },
+        radius: 30
+      }
     };
 
     HandleCommand(world, player, activateSensorCommand);
@@ -70,8 +70,8 @@ describe('CommandTests', () => {
       payload: {
         x: 45,
         y: -15,
-        radius: 30,
-      },
+        radius: 30
+      }
     };
 
     HandleCommand(world, player, activateSensorCommand);
@@ -81,7 +81,7 @@ describe('CommandTests', () => {
 
     const deactivateSensorCommand = {
       commandName: COMMAND_NAMES.SENSOR_DEACTIVATE,
-      payload: undefined,
+      payload: undefined
     };
 
     HandleCommand(world, player, deactivateSensorCommand);
@@ -95,12 +95,12 @@ describe('CommandTests', () => {
 
     const switchStatePayload: SwitchPlayerStateCommand = {
       commandName: COMMAND_NAMES.PLAYER_SWITCH_STATE,
-      payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE,
+      payload: GAME_EVENT_IDS.SIDE_SPCL_EX_GE
     };
 
     const setSensorReactorCommand = {
       commandName: COMMAND_NAMES.SET_SENSOR_REACT_COMMAND,
-      payload: switchStatePayload,
+      payload: switchStatePayload
     };
 
     HandleCommand(world, player, setSensorReactorCommand);
@@ -114,7 +114,7 @@ describe('CommandTests', () => {
 
     const setVelocityCommand = {
       commandName: COMMAND_NAMES.VELOCITY_SET,
-      payload: { x: 10, y: 20 },
+      payload: { x: 10, y: 20 }
     };
 
     HandleCommand(world, player, setVelocityCommand);
@@ -128,7 +128,7 @@ describe('CommandTests', () => {
 
     const setJumpCountCommand = {
       commandName: COMMAND_NAMES.SET_JUMP_COUNT,
-      payload: 2,
+      payload: 2
     };
 
     HandleCommand(world, player, setJumpCountCommand);

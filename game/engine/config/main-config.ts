@@ -14,16 +14,17 @@ const config = {
     ClosestPointsResultCount: 500,
     ActiveHitBubblesDTOCount: 200,
     DiamondDTOCount: 50,
+    AABBDTOPool: 50
   },
   Physics: {
-    MaxVelocity: 200,
+    MaxVelocity: 200
   },
   NetWork: {
-    MaxRollBackFrames: 100,
+    MaxRollBackFrames: 100
   },
   State: {
-    MaxFrameStorage: 1000,
-  },
+    MaxFrameStorage: 1000
+  }
 };
 
 export type MainConfig = Map<string, number | string>;

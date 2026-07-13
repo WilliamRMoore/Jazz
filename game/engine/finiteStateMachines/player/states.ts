@@ -13,7 +13,7 @@ import {
 } from '../../entity/playerOrchestrator';
 import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
-import { FSMState } from '../PlayerStateMachine';
+import { FSMState } from './PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
 import { Grab } from '../../entity/components/grab';
@@ -313,6 +313,7 @@ export const LedgeGetUp: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 
@@ -376,6 +377,7 @@ export const LedgeAttack: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 
@@ -464,6 +466,7 @@ export const LedgeRoll: FSMState = {
     p.Velocity.Y.Zero();
     p.Flags.VelocityDecayOn();
     p.LedgeDetector.ZeroLedgeGrabCount();
+    p.Jump.ResetJumps();
   }
 };
 

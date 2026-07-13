@@ -4,27 +4,17 @@
 
 1. Update ledge grab system (consisten placement)
 2. Projectiles
-3. Throws?
-4. Add an iteration mechanic to the attack system (combos)
-5. Add Crouch canceling
+3. Add an iteration mechanic to the attack system (combos)
+4. Add Crouch canceling
 
 ## States
 
-1. Ledge Get Up
-2. Ledge get up attack
 3. Launch DI
 4. Smash DI
-5. throws
-6. clang
-7. wall slam
-8. ground slam (Do we re-bound, or not?)
-9. Bonk
-10. pummel
-11. dirt nap
-12. Get up attack
-13. GroundTech
-14. GrundTech Roll
-15. ECB track system (the shape changes per-frame)
+5. clang
+6. ground slam (Do we re-bound, or not?)
+7. Bonk
+8. ECB track system (the shape changes per-frame)
 
 ## State-Relations
 

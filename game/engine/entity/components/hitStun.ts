@@ -1,7 +1,4 @@
-import {
-  STATE_IDS,
-  StateId,
-} from '../../finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, StateId } from '../../finiteStateMachines/player/shared';
 import { FixedPoint } from '../../math/fixedPoint';
 
 export class HitStunComponent {
@@ -29,7 +26,7 @@ export class HitStunComponent {
   public SetHitStun(
     hitStunFrames: number,
     vx: FixedPoint,
-    vy: FixedPoint,
+    vy: FixedPoint
   ): void {
     this.framesOfHitStun = hitStunFrames;
     this.xVelocity.SetFromFp(vx);

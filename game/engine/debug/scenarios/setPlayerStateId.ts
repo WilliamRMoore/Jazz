@@ -1,4 +1,4 @@
-import { StateId } from '../../finite-state-machine/stateConfigurations/shared';
+import { StateId } from '../../finiteStateMachines/player/shared';
 import { JazzDebugger } from '../jazzDebugWrapper';
 
 export function SetPlayerToStateId(

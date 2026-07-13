@@ -1,9 +1,9 @@
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
+import { STATE_IDS } from '../finiteStateMachines/player/shared';
 import { NumberToRaw } from '../math/fixedPoint';
 import {
   Player,
-  SetPlayerInitialPositionRaw,
+  SetPlayerInitialPositionRaw
 } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 

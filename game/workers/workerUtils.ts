@@ -1,5 +1,5 @@
 import { CharacterConfig } from '../character/shared';
-import { StateId } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { StateId } from '../engine/finiteStateMachines/player/shared';
 import { InputAction, NetworkInput } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 
@@ -217,6 +217,7 @@ type initCommand = {
     stateBuffers: SharedArrayBuffer[];
     writeBackBuffers?: SharedArrayBuffer[];
     frameBuffer?: SharedArrayBuffer;
+    poolCountBuffer?: SharedArrayBuffer;
   };
 };
 

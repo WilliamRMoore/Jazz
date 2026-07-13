@@ -2,7 +2,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
   StateId
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import {
   NumberToRaw,
   RawToNumber,
@@ -12,15 +12,13 @@ import {
 } from '../math/fixedPoint';
 import { COS_LUT, LUT_SIZE as LUT_SIZE_OG, SIN_LUT } from '../math/LUTS';
 import {
+  AABBIntersect,
   ClosestPointsBetweenSegments,
   IntersectsCircles,
   IntersectsCirclesRaw
 } from '../physics/collisions';
 import { Player } from '../entity/playerOrchestrator';
-import { ActiveHitBubblesDTO } from '../pools/ActiveAttackBubbles';
 import { AttackResult } from '../pools/AttackResult';
-import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
 import {
@@ -36,18 +34,20 @@ import {
   POINT_ZERO_ONE_THREE,
   TWO_HUNDRED
 } from '../math/numberConstants';
-import { IInputStore } from '../managers/inputManager';
-import { PlayerData, PlayerHistoryTable } from '../world/stateModules';
+import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
 import { isPlayerGroundedAtAll } from './shared';
+import {
+  GetActionSweptAABBHull,
+  GetHurtCirclesAABBHull
+} from './shared/AABBHelper';
+import { AABBDTO } from '../pools/AABBDTO';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 
 export function PlayerAttacks(world: World): void {
   const playerData: PlayerData = world.PlayerData;
   const pools = world.Pools;
-  const historyData = world.HistoryData;
-  const currentFrame = world.LocalFrame;
   const playerCount = playerData.PlayerCount;
   if (playerCount === 1) {
     return;
@@ -55,37 +55,13 @@ export function PlayerAttacks(world: World): void {
 
   for (let outerPIdx = 0; outerPIdx < playerCount - 1; outerPIdx++) {
     const p1 = playerData.Player(outerPIdx);
-    const p1InputStore = playerData.InputStore(p1.ID);
 
     for (let innerPIdx = outerPIdx + 1; innerPIdx < playerCount; innerPIdx++) {
       const p2 = playerData.Player(innerPIdx);
-      const p2InputStore = playerData.InputStore(p2.ID);
 
-      const p1HitsP2Result = PAvsPB(
-        currentFrame,
-        pools.ActiveHitBubbleDtoPool,
-        pools.AtkResPool,
-        pools.VecPool,
-        pools.ColResPool,
-        pools.ClstsPntsResPool,
-        historyData.PlayerHistoryDB,
-        p1,
-        p2,
-        p2InputStore
-      );
+      const p1HitsP2Result = PAvsPB(world, p1, p2);
 
-      const p2HitsP1Result = PAvsPB(
-        currentFrame,
-        pools.ActiveHitBubbleDtoPool,
-        pools.AtkResPool,
-        pools.VecPool,
-        pools.ColResPool,
-        pools.ClstsPntsResPool,
-        historyData.PlayerHistoryDB,
-        p2,
-        p1,
-        p1InputStore
-      );
+      const p2HitsP1Result = PAvsPB(world, p2, p1);
 
       if (p1HitsP2Result.Hit && p2HitsP1Result.Hit) {
         //check for clang
@@ -191,6 +167,9 @@ function resolveHitResult(
 
   launchVec.Y.Negate();
 
+  const pBSm = playerData.StateMachine(pB.ID);
+
+  pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
   pB.HitStop.SetHitStop(Math.floor(RawToNumber(hitStopRaw)));
   pB.HitStun.SetHitStun(hitStunFrames, launchVec.X, launchVec.Y);
   pB.HitStun.NextStateId = nextStateId;
@@ -202,10 +181,6 @@ function resolveHitResult(
     const holdingPlayer = playerData.Player(holdingPlayerId);
     holdingPlayer.Flags.SetHitPauseFrames(RawToNumber(hitStopRaw));
   }
-
-  const pBSm = playerData.StateMachine(pB.ID);
-
-  pBSm.UpdateFromWorld(GAME_EVENT_IDS.HIT_STOP_GE);
 }
 
 function resolveShieldHitResult(
@@ -227,20 +202,9 @@ function resolveShieldHitResult(
   pB.Shield.Damage(atkDamage);
 }
 
-function PAvsPB(
-  currentFrame: number,
-  activeHbPool: Pool<ActiveHitBubblesDTO>,
-  atkResPool: Pool<AttackResult>,
-  vecPool: Pool<PooledVector>,
-  colResPool: Pool<CollisionResult>,
-  clstsPntsResPool: Pool<ClosestPointsResult>,
-  componentHistories: Array<PlayerHistoryTable>,
-  pA: Player,
-  pB: Player,
-  pBInputStore: IInputStore
-): AttackResult {
-  const pAstateFrame = pA.FSMInfo.CurrentStateFrame;
+function PAvsPB(w: World, pA: Player, pB: Player): AttackResult {
   const pAAttack = pA.Attacks.GetAttack();
+  const atkResPool = w.Pools.AtkResPool;
 
   if (
     pAAttack === undefined ||
@@ -249,6 +213,9 @@ function PAvsPB(
   ) {
     return atkResPool.Rent();
   }
+
+  const pAstateFrame = pA.FSMInfo.CurrentStateFrame;
+  const activeHbPool = w.Pools.ActiveHitBubbleDtoPool;
 
   const pAHitBubbles = pAAttack.GetActiveBubblesForFrame(
     pAstateFrame,
@@ -259,6 +226,14 @@ function PAvsPB(
     return atkResPool.Rent();
   }
 
+  const vecPool = w.Pools.VecPool;
+  const aabbPool = w.Pools.AABBDTOPool;
+  const clstsPntsResPool = w.Pools.ClstsPntsResPool;
+  const pBInputStore = w.PlayerData.InputStore(pB.ID);
+  const colResPool = w.Pools.ColResPool;
+  const componentHistories = w.HistoryData.PlayerHistoryDB;
+  const currentFrame = w.LocalFrame;
+
   const hitLength = pAHitBubbles.Length;
   // Check shield impact
 
@@ -267,6 +242,56 @@ function PAvsPB(
   const pAPrevState = pAStateHist.get(previousWorldFrame);
   const currentStateFrame = pAstateFrame;
   const pBIa = pBInputStore.GetInputForFrame(currentFrame);
+  const attackAABB = pA.Attacks.AABBs.get(pAAttack.AttackId)!;
+  const previousAABB =
+    pAPrevState.atkId === undefined
+      ? undefined
+      : pA.Attacks.AABBs.get(pAPrevState.atkId);
+
+  let attackHull: AABBDTO | undefined = undefined;
+
+  const prevXRaw = pAPrevState.posXRaw;
+  const prevYRaw = pAPrevState.posYRaw;
+  const curPosXRaw = pA.Position.X.Raw;
+  const curPosYRaw = pA.Position.Y.Raw;
+  const ifr = pA.Flags.IsFacingRight;
+  const wfr = pAPrevState.facingRight;
+
+  if (previousAABB !== undefined) {
+    const prevPostDto = vecPool.Rent();
+    prevPostDto.X.SetFromRaw(prevXRaw);
+    prevPostDto.Y.SetFromRaw(prevYRaw);
+    const curPosDto = vecPool.Rent();
+    curPosDto.X.SetFromRaw(curPosXRaw);
+    curPosDto.Y.SetFromRaw(curPosYRaw);
+
+    attackHull = GetActionSweptAABBHull(
+      ifr,
+      wfr,
+      prevPostDto,
+      curPosDto,
+      previousAABB,
+      attackAABB,
+      aabbPool
+    );
+  } else {
+    const curLocalMinX = attackAABB.minXRaw;
+    const curLocalMaxX = attackAABB.minXRaw + attackAABB.widthRaw;
+    const globalMaxX = ifr
+      ? curPosXRaw + curLocalMaxX
+      : curPosXRaw - curLocalMinX;
+    const globalMinX = ifr
+      ? curPosXRaw + curLocalMinX
+      : curPosXRaw - curLocalMaxX;
+    const globalMaxY = curPosYRaw + attackAABB.minYRaw + attackAABB.heightRaw;
+    const globalMinY = curPosYRaw + attackAABB.minYRaw;
+
+    attackHull = aabbPool.Rent();
+    attackHull.minX.SetFromRaw(globalMinX);
+    attackHull.minY.SetFromRaw(globalMinY);
+    attackHull.width.SetFromRaw(globalMaxX - globalMinX);
+    attackHull.height.SetFromRaw(globalMaxY - globalMinY);
+  }
 
   if (pB.Shield.Active) {
     const pBShield = pB.Shield;
@@ -279,73 +304,109 @@ function PAvsPB(
     const shieldPos = vecPool
       .Rent()
       .SetXYRaw(pB.Position.X.Raw + tiltXRaw, pB.Position.Y.Raw + tiltYRaw);
+    const shieldMinX = shieldPos.X.Raw - radiusRaw;
+    const shieldMaxX = shieldPos.X.Raw + radiusRaw;
+    const shieldMinY = shieldPos.Y.Raw - radiusRaw;
+    const shieldMaxY = shieldPos.Y.Raw + radiusRaw;
 
-    for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
-      const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
+    const aabbIntersection = AABBIntersect(
+      attackHull.minX.Raw,
+      attackHull.minY.Raw,
+      attackHull.width.Raw,
+      attackHull.height.Raw,
+      shieldMinX,
+      shieldMinY,
+      shieldMaxX - shieldMinX,
+      shieldMaxY - shieldMinY
+    );
 
-      const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
-        vecPool,
-        currentStateFrame
-      );
+    if (aabbIntersection) {
+      for (let hitIndex = 0; hitIndex < hitLength; hitIndex++) {
+        const pAHitBubble = pAHitBubbles.AtIndex(hitIndex)!;
 
-      if (pAhitBubbleCurrentPos === undefined) {
-        continue;
-      }
+        const pAhitBubbleCurrentPos = pAHitBubble?.GetGlobalPosition(
+          vecPool,
+          currentStateFrame
+        );
 
-      let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
-      const hitBubbleId = pAHitBubble.BubbleId;
-      for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
-        const previousHitBubble = pAPrevState.comp_attackCircles[i];
-        if (hitBubbleId === previousHitBubble.id && previousHitBubble.active) {
+        if (pAhitBubbleCurrentPos === undefined) {
+          continue;
+        }
+
+        let pAHitBubblePreviousPos: PooledVector | undefined = undefined;
+        const hitBubbleId = pAHitBubble.BubbleId;
+        for (let i = 0; i < pAPrevState.comp_attackCircles.length; i++) {
+          const previousHitBubble = pAPrevState.comp_attackCircles[i];
+          if (
+            hitBubbleId === previousHitBubble.id &&
+            previousHitBubble.active
+          ) {
+            pAHitBubblePreviousPos = vecPool
+              .Rent()
+              .SetXYRaw(previousHitBubble.xRaw, previousHitBubble.yRaw);
+          }
+        }
+
+        if (pAHitBubblePreviousPos === undefined) {
           pAHitBubblePreviousPos = vecPool
             .Rent()
-            .SetXYRaw(previousHitBubble.xRaw, previousHitBubble.yRaw);
+            .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
+        }
+
+        const closestPoints = ClosestPointsBetweenSegments(
+          shieldPos,
+          shieldPos,
+          pAHitBubblePreviousPos,
+          pAhitBubbleCurrentPos,
+          vecPool,
+          clstsPntsResPool
+        );
+
+        const collision = IntersectsCirclesRaw(
+          colResPool,
+          closestPoints.C1X.Raw,
+          closestPoints.C1Y.Raw,
+          closestPoints.C2X.Raw,
+          closestPoints.C2Y.Raw,
+          radiusRaw,
+          pAHitBubble.Radius.Raw
+        );
+
+        if (collision.Collision) {
+          pA.Attacks.HitPlayer(pB.ID);
+          const attackResult = atkResPool.Rent();
+          attackResult.SetShieldHitTrue(
+            pB.ID,
+            pAHitBubble.Damage,
+            pAHitBubble.Priority,
+            collision.NormX,
+            collision.NormY,
+            collision.Depth,
+            pAAttack.BaseKnockBack,
+            pAAttack.KnockBackScaling,
+            pAHitBubble.launchAngle,
+            pAHitBubble.ThresholdAngle
+          );
+          return attackResult;
         }
       }
-
-      if (pAHitBubblePreviousPos === undefined) {
-        pAHitBubblePreviousPos = vecPool
-          .Rent()
-          .SetXY(pAhitBubbleCurrentPos.X, pAhitBubbleCurrentPos.Y);
-      }
-
-      const closestPoints = ClosestPointsBetweenSegments(
-        shieldPos,
-        shieldPos,
-        pAHitBubblePreviousPos,
-        pAhitBubbleCurrentPos,
-        vecPool,
-        clstsPntsResPool
-      );
-
-      const collision = IntersectsCirclesRaw(
-        colResPool,
-        closestPoints.C1X.Raw,
-        closestPoints.C1Y.Raw,
-        closestPoints.C2X.Raw,
-        closestPoints.C2Y.Raw,
-        radiusRaw,
-        pAHitBubble.Radius.Raw
-      );
-
-      if (collision.Collision) {
-        pA.Attacks.HitPlayer(pB.ID);
-        const attackResult = atkResPool.Rent();
-        attackResult.SetShieldHitTrue(
-          pB.ID,
-          pAHitBubble.Damage,
-          pAHitBubble.Priority,
-          collision.NormX,
-          collision.NormY,
-          collision.Depth,
-          pAAttack.BaseKnockBack,
-          pAAttack.KnockBackScaling,
-          pAHitBubble.launchAngle,
-          pAHitBubble.ThresholdAngle
-        );
-        return attackResult;
-      }
     }
+  }
+
+  const pbHCAABBHull = GetHurtCirclesAABBHull(pB, w);
+  const atkHCHullIntersects = AABBIntersect(
+    attackHull.minX.Raw,
+    attackHull.minY.Raw,
+    attackHull.width.Raw,
+    attackHull.height.Raw,
+    pbHCAABBHull.minX.Raw,
+    pbHCAABBHull.minY.Raw,
+    pbHCAABBHull.width.Raw,
+    pbHCAABBHull.height.Raw
+  );
+
+  if (!atkHCHullIntersects) {
+    return atkResPool.Rent();
   }
 
   const pBHurtBubbles = pB.HurtCircles.HurtCapsules;

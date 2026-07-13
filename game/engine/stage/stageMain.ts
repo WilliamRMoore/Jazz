@@ -1,5 +1,8 @@
+import { AABB } from '../entity/components/shared/AABB';
 import { NumberToRaw, FixedPoint } from '../math/fixedPoint';
+import { AABBIntersect } from '../physics/collisions';
 import { FlatVec, Line, VertArrayContainsFlatVec } from '../physics/vector';
+import { AABBDTO } from '../pools/AABBDTO';
 
 //TODO: Add Platforms
 
@@ -19,7 +22,7 @@ export function defaultStage() {
   plats.push(
     Line.FromNumbers(950, 300, 1150, 300),
     Line.FromNumbers(700, 475, 900, 475),
-    Line.FromNumbers(1200, 475, 1400, 475),
+    Line.FromNumbers(1200, 475, 1400, 475)
   );
   return new Stage(sv, sl, plats);
 }
@@ -48,7 +51,7 @@ function wallStageVerts() {
     groundPeices,
     leftFacingWalls,
     rightFacingWalls,
-    ceilingPeices,
+    ceilingPeices
   );
 }
 
@@ -56,7 +59,7 @@ export class Stage {
   public readonly StageVerticies: StageVerticies;
   public readonly Ledges: Ledges;
   public readonly Platforms: Array<Line> | undefined;
-  
+
   public readonly AabbMinXRaw: number;
   public readonly AabbMaxXRaw: number;
   public readonly AabbMinYRaw: number;
@@ -97,23 +100,34 @@ export class Stage {
     xRaw: number,
     yRaw: number,
     widthRaw: number,
-    heightRaw: number,
+    heightRaw: number
   ): boolean {
     const left = xRaw;
-    const right = xRaw + widthRaw;
-    const top = yRaw + heightRaw;
     const bottom = yRaw;
 
-    if (
-      left > this.AabbMaxXRaw ||
-      right < this.AabbMinXRaw ||
-      top < this.AabbMinYRaw ||
-      bottom > this.AabbMaxYRaw
-    ) {
-      return false;
-    }
+    return AABBIntersect(
+      left,
+      bottom,
+      widthRaw,
+      heightRaw,
+      this.AabbMinXRaw,
+      this.AabbMinYRaw,
+      this.AabbMaxXRaw - this.AabbMinXRaw,
+      this.AabbMaxYRaw - this.AabbMinYRaw
+    );
+  }
 
-    return true;
+  public AABBIntersectCheckAABBDTO(aabb: AABBDTO) {
+    return AABBIntersect(
+      aabb.minX.Raw,
+      aabb.minY.Raw,
+      aabb.width.Raw,
+      aabb.height.Raw,
+      this.AabbMinXRaw,
+      this.AabbMinYRaw,
+      this.AabbMaxXRaw - this.AabbMinXRaw,
+      this.AabbMaxYRaw - this.AabbMinYRaw
+    );
   }
 }
 
@@ -121,14 +135,14 @@ function DefaultStageVerticies() {
   const groundPeices: Array<Line> = [Line.FromNumbers(500, 650, 1600, 650)];
   const leftFacingWalls: Array<Line> = [Line.FromNumbers(500, 650, 500, 700)];
   const rightFacingWalls: Array<Line> = [
-    Line.FromNumbers(1600, 650, 1600, 700),
+    Line.FromNumbers(1600, 650, 1600, 700)
   ];
   const ceilingPeices: Array<Line> = [Line.FromNumbers(500, 700, 1600, 700)];
   return new StageVerticies(
     groundPeices,
     leftFacingWalls,
     rightFacingWalls,
-    ceilingPeices,
+    ceilingPeices
   );
 }
 
@@ -147,7 +161,7 @@ export class StageVerticies {
     groundPeices: Array<Line>,
     leftFacingWalls: Array<Line>,
     rightFacingWalls: Array<Line>,
-    ceilingPeices: Array<Line>,
+    ceilingPeices: Array<Line>
   ) {
     this.Ground = groundPeices;
     this.leftWall = leftFacingWalls;
@@ -208,7 +222,7 @@ export class Ledges {
     topLeft: FlatVec,
     topRight: FlatVec,
     widthRaw: number = NumberToRaw(50),
-    heightRaw: number = NumberToRaw(20),
+    heightRaw: number = NumberToRaw(20)
   ) {
     const leftLedge = [] as FlatVec[];
     const rightLedge = [] as FlatVec[];
@@ -216,16 +230,16 @@ export class Ledges {
     leftLedge.push(topLeft); //
     leftLedge.push(FlatVec.FromRaw(topLeft.X.Raw + widthRaw, topLeft.Y.Raw));
     leftLedge.push(
-      FlatVec.FromRaw(topLeft.X.Raw + widthRaw, topLeft.Y.Raw + heightRaw),
+      FlatVec.FromRaw(topLeft.X.Raw + widthRaw, topLeft.Y.Raw + heightRaw)
     );
     leftLedge.push(FlatVec.FromRaw(topLeft.X.Raw, topLeft.Y.Raw + heightRaw));
 
     rightLedge.push(topRight);
     rightLedge.push(
-      FlatVec.FromRaw(topRight.X.Raw, topRight.Y.Raw + heightRaw),
+      FlatVec.FromRaw(topRight.X.Raw, topRight.Y.Raw + heightRaw)
     );
     rightLedge.push(
-      FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw + heightRaw),
+      FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw + heightRaw)
     );
     rightLedge.push(FlatVec.FromRaw(topRight.X.Raw - widthRaw, topRight.Y.Raw));
 

@@ -2,8 +2,8 @@ import { PlayerStateHistory } from '../../game/engine/systems/history';
 import {
   ATTACK_IDS,
   GRAB_IDS,
-  STATE_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 
 jest.mock('../../game/engine/config/main-config', () => ({
   envConfig: {
@@ -20,8 +20,8 @@ jest.mock('../../game/engine/config/main-config', () => ({
         default:
           return 10; // Default for other things like MaxFrameStorage
       }
-    }),
-  },
+    })
+  }
 }));
 
 describe('PlayerStateHistory Serialization', () => {
@@ -63,13 +63,13 @@ describe('PlayerStateHistory Serialization', () => {
       xOffsetRaw: 1,
       yOffsetRaw: 2,
       radiusRaw: 3,
-      active: true,
+      active: true
     };
     sourceHistory.sensors[1] = {
       xOffsetRaw: 4,
       yOffsetRaw: 5,
       radiusRaw: 6,
-      active: false,
+      active: false
     };
 
     // Populate some computed values to ensure they are serialized
@@ -77,7 +77,7 @@ describe('PlayerStateHistory Serialization', () => {
       globalXRaw: 10,
       globalYRaw: 20,
       radiusRaw: 30,
-      active: true,
+      active: true
     };
     sourceHistory.comp_ecbDiamond[0] = { xRaw: 11, yRaw: 22 };
     sourceHistory.comp_hurtCapsules[0] = {
@@ -86,21 +86,21 @@ describe('PlayerStateHistory Serialization', () => {
       x2Raw: 3,
       y2Raw: 4,
       radiusRaw: 5,
-      active: true,
+      active: true
     };
     sourceHistory.comp_attackCircles[0] = {
       id: 1,
       xRaw: 2,
       yRaw: 3,
       radiusRaw: 4,
-      active: true,
+      active: true
     };
     sourceHistory.comp_grabCircles[0] = {
       iD: 1,
       xRaw: 1,
       yRaw: 2,
       radiusRaw: 3,
-      active: true,
+      active: true
     };
     sourceHistory.comp_ledgeDetectorLeft[0] = { xRaw: 1, yRaw: 2 };
     sourceHistory.comp_ledgeDetectorRight[0] = { xRaw: 3, yRaw: 4 };
@@ -173,7 +173,7 @@ describe('PlayerStateHistory Serialization', () => {
     hist.atkId = undefined;
 
     const buffer = new Int32Array(
-      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize())
     );
     hist.Serialize(buffer, 0, 42);
 
@@ -192,7 +192,7 @@ describe('PlayerStateHistory Serialization', () => {
     hist.atkId = 0;
 
     const buffer = new Int32Array(
-      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize())
     );
     hist.Serialize(buffer, 0, 42);
 
@@ -206,7 +206,7 @@ describe('PlayerStateHistory Serialization', () => {
 
   it('should return false from Deserialize if the seqlock is odd (write in progress)', () => {
     const buffer = new Int32Array(
-      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize())
     );
 
     // Set the seqlock start integer (offset 0) to an odd number
@@ -308,7 +308,7 @@ describe('PlayerStateHistory Serialization', () => {
     }
 
     const buffer = new Int32Array(
-      new SharedArrayBuffer(PlayerStateHistory.BufferSize()),
+      new SharedArrayBuffer(PlayerStateHistory.BufferSize())
     );
     const testFrame = 999;
     source.Serialize(buffer, 0, testFrame);

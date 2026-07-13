@@ -1,4 +1,4 @@
-import { GameEventId } from '../../finite-state-machine/stateConfigurations/shared';
+import { GameEventId } from '../../finiteStateMachines/player/shared';
 import { Player } from '../../entity/playerOrchestrator';
 import { World } from '../../world/world';
 
@@ -10,7 +10,7 @@ export type SwitchPlayerStateCommand = {
 export function SwitchPlayerState(
   w: World,
   p: Player,
-  c: SwitchPlayerStateCommand,
+  c: SwitchPlayerStateCommand
 ) {
   const sm = w.PlayerData.StateMachine(p.ID);
   sm.UpdateFromWorld(c.payload);

@@ -79,7 +79,7 @@ import {
   InitWallSlamRelations,
   InitGetUpAttackRelations,
   InitLedgeAttackRelations
-} from './stateConfigurations/relationshipMappings';
+} from './relationshipMappings';
 import {
   StateId,
   GameEventId,
@@ -88,7 +88,7 @@ import {
   ATTACK_IDS,
   GrabId,
   GRAB_IDS
-} from './stateConfigurations/shared';
+} from './shared';
 import {
   Idle,
   SpotDodge,
@@ -168,7 +168,7 @@ import {
   RollTech,
   WallSlam,
   GetUpAttack
-} from './stateConfigurations/states';
+} from './states';
 
 const IDLE_STATE_RELATIONS = InitIdleRelations();
 const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();

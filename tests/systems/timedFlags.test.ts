@@ -2,11 +2,11 @@ import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import {
   JumpSquat,
-  NeutralFall,
-} from '../../game/engine/finite-state-machine/stateConfigurations/states';
+  NeutralFall
+} from '../../game/engine/finiteStateMachines/player/states';
 import {
   IInputStore,
-  InputStore,
+  InputStore
 } from '../../game/engine/managers/inputManager';
 import { Flags } from '../../game/engine/systems/flags';
 import { World } from '../../game/engine/world/world';

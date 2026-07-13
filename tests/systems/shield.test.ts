@@ -6,8 +6,8 @@ import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 
 describe('Shield system tests', () => {
   let p: Player;
@@ -51,7 +51,7 @@ describe('Shield system tests', () => {
     ShieldRegen(w);
 
     expect(p.Shield.PreModCurrentRadius.Raw).toBeGreaterThan(
-      initialShieldValue,
+      initialShieldValue
     );
   });
 
