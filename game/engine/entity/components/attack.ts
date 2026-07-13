@@ -1,6 +1,6 @@
 import { HitBubblesConifg, AttackConfig } from '../../../character/shared';
 import { Command } from '../../command/command';
-import { AttackGameEventMappings } from '../../finiteStateMachines/player/PlayerStates';
+import { AttackGameEventMappings } from '../../finiteStateMachines/player/PlayerStateCollections';
 import { AttackId, GameEventId } from '../../finiteStateMachines/player/shared';
 import {
   FixedPoint,

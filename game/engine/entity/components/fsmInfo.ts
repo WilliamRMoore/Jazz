@@ -1,5 +1,5 @@
 import { FSMState } from '../../finiteStateMachines/player/PlayerStateMachine';
-import { FSMStates } from '../../finiteStateMachines/player/PlayerStates';
+import { FSMStates } from '../../finiteStateMachines/player/PlayerStateCollections';
 import { StateId } from '../../finiteStateMachines/player/shared';
 import { Idle } from '../../finiteStateMachines/player/states';
 

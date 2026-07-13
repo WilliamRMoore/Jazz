@@ -6,7 +6,7 @@ import { ActionStateMappings } from './relationshipMappings';
 import { StateId, GameEventId, STATE_IDS } from './shared';
 import { Idle } from './states';
 import { FSMInfoComponent } from '../../entity/components/fsmInfo';
-import { ActionMappings, FSMStates } from './PlayerStates';
+import { ActionMappings, FSMStates } from './PlayerStateCollections';
 
 export type FSMState = {
   StateName: string;

@@ -1,5 +1,5 @@
 import { GrabBubbleConfig, GrabConfig } from '../../../character/shared';
-import { GrabGameEventMappings } from '../../finiteStateMachines/player/PlayerStates';
+import { GrabGameEventMappings } from '../../finiteStateMachines/player/PlayerStateCollections';
 import { GameEventId, GrabId } from '../../finiteStateMachines/player/shared';
 import {
   FixedPoint,
