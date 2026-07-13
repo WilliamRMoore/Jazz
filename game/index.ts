@@ -19,7 +19,7 @@ import {
   GetGrabName,
   GetAttackName
 } from './engine/debug/debugUtils';
-import { STATE_IDS } from './engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from './engine/finiteStateMachines/player/shared';
 import { CharacterRepo } from './character/characterRepo';
 
 const characterRepo = new CharacterRepo();

@@ -4,7 +4,7 @@ import { NewInputAction } from '../engine/input/Input';
 import { defaultStage, WallStage } from '../engine/stage/stageMain';
 import { PlayerStateHistory } from '../engine/systems/history';
 import { FlatVec } from '../engine/physics/vector';
-import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
 import {
   jMessage,
@@ -171,14 +171,46 @@ function loop() {
           );
         }
         if (poolCountBuffer) {
-          Atomics.store(poolCountBuffer, 0, jazz.World.GetRentedVecsForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 1, jazz.World.GetRentedColResForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 2, jazz.World.GetRentedProjResForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 3, jazz.World.GetRentedAtkResForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 4, jazz.World.GetRentedActiveHitBubblesForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 5, jazz.World.GetRentedClosestPointsForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 6, jazz.World.GetRentedECBDtosForFrame(currentFrame));
-          Atomics.store(poolCountBuffer, 7, jazz.World.GetRentedAABBDtosForFrame(currentFrame));
+          Atomics.store(
+            poolCountBuffer,
+            0,
+            jazz.World.GetRentedVecsForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            1,
+            jazz.World.GetRentedColResForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            2,
+            jazz.World.GetRentedProjResForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            3,
+            jazz.World.GetRentedAtkResForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            4,
+            jazz.World.GetRentedActiveHitBubblesForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            5,
+            jazz.World.GetRentedClosestPointsForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            6,
+            jazz.World.GetRentedECBDtosForFrame(currentFrame)
+          );
+          Atomics.store(
+            poolCountBuffer,
+            7,
+            jazz.World.GetRentedAABBDtosForFrame(currentFrame)
+          );
         }
       }
     }

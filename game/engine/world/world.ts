@@ -1,7 +1,7 @@
 import { MainConfig, envConfig } from '../config/main-config';
 import { PlayerDebugAdapter } from '../debug/playerDebugger';
 import { Player } from '../entity/playerOrchestrator';
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import { InputStore, RemoteInputManager } from '../managers/inputManager';
 import { RollBackManager } from '../managers/rollBack';
 import { Stage } from '../stage/stageMain';
@@ -11,7 +11,7 @@ import {
   HistoryData,
   PlayerState,
   PoolContainer,
-  StageWorldState,
+  StageWorldState
 } from './stateModules';
 
 export class World {
@@ -127,7 +127,7 @@ type NetworkPlayers = { pIndex: number; player: Player };
 export function AddNetowrkedPlayers(
   w: World,
   local: NetworkPlayers,
-  remote: NetworkPlayers,
+  remote: NetworkPlayers
 ) {
   if (local.pIndex < remote.pIndex) {
     w.SetPlayer(local.player);

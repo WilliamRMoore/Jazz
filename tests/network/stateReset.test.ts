@@ -2,8 +2,8 @@ import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 import { JazzNetwork } from '../../game/engine/jazz/jazzNetwork';
 import { RollBackManager } from '../../game/engine/managers/rollBack';
@@ -12,7 +12,7 @@ import { ToFV } from '../../game/engine/utils';
 import { World } from '../../game/engine/world/world';
 import {
   PlayerStateHistory,
-  RecordIntoHistory,
+  RecordIntoHistory
 } from '../../game/engine/systems/history';
 import { SetPlayerToFrame } from '../../game/engine/world/stateModules';
 
@@ -58,7 +58,7 @@ describe('state reset testing', () => {
       ToFV(600, 650),
       0,
       getInput,
-      sendInput,
+      sendInput
     );
     nj.SetRemotePlayer(new DefaultCharacterConfig(), ToFV(600, 650), 1);
     nj.init();
@@ -114,7 +114,7 @@ describe('state reset testing', () => {
       input9,
       input10,
       input11,
-      input12,
+      input12
     ];
     const remoteInputs = [
       rinput1,
@@ -128,7 +128,7 @@ describe('state reset testing', () => {
       rinput9,
       rinput10,
       rinput11,
-      rinput12,
+      rinput12
     ];
 
     let p1SnapshotForFrame4: PlayerStateHistory = new PlayerStateHistory();
@@ -180,7 +180,7 @@ describe('state reset testing', () => {
         GAME_EVENT_IDS.SPCL_GE,
         GAME_EVENT_IDS.SIDE_SPCL_GE,
         GAME_EVENT_IDS.UP_SPCL_GE,
-        GAME_EVENT_IDS.DOWN_SPCL_GE,
+        GAME_EVENT_IDS.DOWN_SPCL_GE
       ];
 
       input.Action =

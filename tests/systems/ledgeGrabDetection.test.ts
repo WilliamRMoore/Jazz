@@ -1,12 +1,12 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
   Player,
-  SetPlayerPositionRaw,
+  SetPlayerPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
 import { World } from '../../game/engine/world/world';
 import { LedgeGrabDetection } from '../../game/engine/systems/ledgeGrabDetection';
 import { defaultStage } from '../../game/engine/stage/stageMain';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { NumberToRaw, FixedPoint } from '../../game/engine/math/fixedPoint';
 import { RecordHistory } from '../../game/engine/systems/history';
 
@@ -176,10 +176,10 @@ describe('Ledge Grab Detection system tests', () => {
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
     expect(p2.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.LEDGE_GRAB_S);
     expect(p.LedgeDetector.GrabbedLedge).toBe(
-      w.StageData.Stages[0].Ledges.GetLeftLedge(),
+      w.StageData.Stages[0].Ledges.GetLeftLedge()
     );
     expect(p2.LedgeDetector.GrabbedLedge).toBe(
-      w.StageData.Stages[0].Ledges.GetRightLedge(),
+      w.StageData.Stages[0].Ledges.GetRightLedge()
     );
   });
 
@@ -188,7 +188,7 @@ describe('Ledge Grab Detection system tests', () => {
     fsm.ForceState(STATE_IDS.N_FALL_S); // Set state to falling
     p.Velocity.Y.SetFromNumber(10); // Set downward velocity
     p.Flags.FaceLeft(); // Face the ledge
-    
+
     // Disable ledge detection
     p.Flags.SetDisableLedgeDetectionFrames(15);
 

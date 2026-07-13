@@ -3,17 +3,17 @@ import { defaultStage } from '../../game/engine/stage/stageMain';
 import { PlatformDetection } from '../../game/engine/systems/platformCollision';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import {
   Idle,
-  NeutralFall,
-} from '../../game/engine/finite-state-machine/stateConfigurations/states';
+  NeutralFall
+} from '../../game/engine/finiteStateMachines/player/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import * as playerOrchestratorModule from '../../game/engine/entity/playerOrchestrator';
 import {
   Player,
-  SetPlayerPosition,
+  SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
 import { RecordHistory } from '../../game/engine/systems/history';
 
@@ -57,11 +57,7 @@ describe('Platform Collision system tests', () => {
 
   test('Player should drop through a platform with a fast down-flick', () => {
     // Position player on the platform
-    SetPlayerPosition(
-      p,
-      new FixedPoint(1000),
-      new FixedPoint(300),
-    );
+    SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(300));
     p.FSMInfo.SetCurrentState(Idle);
 
     const frame = 10;
@@ -80,10 +76,7 @@ describe('Platform Collision system tests', () => {
 
     const MOCK_Y_COORD = new FixedPoint(300);
     jest
-      .spyOn(
-        playerOrchestratorModule,
-        'PlayerOnPlatsReturnsYCoord',
-      )
+      .spyOn(playerOrchestratorModule, 'PlayerOnPlatsReturnsYCoord')
       .mockReturnValue(MOCK_Y_COORD);
 
     PlatformDetection(w);

@@ -1,10 +1,11 @@
 import { GrabBubbleConfig, GrabConfig } from '../../../character/shared';
-import { GrabGameEventMappings } from '../../finite-state-machine/PlayerStates';
+import { GrabGameEventMappings } from '../../finiteStateMachines/player/PlayerStates';
+import { GameEventId, GrabId } from '../../finiteStateMachines/player/shared';
 import {
-  GameEventId,
-  GrabId
-} from '../../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint, MAX_RAW_VALUE, MIN_RAW_VALUE } from '../../math/fixedPoint';
+  FixedPoint,
+  MAX_RAW_VALUE,
+  MIN_RAW_VALUE
+} from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { ActiveGrabBubblesDTO } from '../../pools/ActiveGrabBubbles';
 import { Pool } from '../../pools/Pool';

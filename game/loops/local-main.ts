@@ -2,13 +2,16 @@ import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
 import { GetInput, NewInputAction } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
-import { STATE_IDS } from '../engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
 import { FixedPoint } from '../engine/math/fixedPoint';
 import { DefaultCharacterConfig } from '../character/default';
 import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
 import { IJazzLocal } from '../engine/jazz/jazzLocal';
+import { PlayerCPU } from '../engine/finiteStateMachines/cpu/playerCPU';
+
+const cpuPlayers = new Map<number, PlayerCPU>();
 
 const frameInterval = 1000 / 60;
 let accumulator = 0;
@@ -51,7 +54,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   const playerCount = playerInfo.length;
   //p1 spawn point
   const positions = [
-    { X: new FixedPoint(610), Y: new FixedPoint(100) },
+    { X: new FixedPoint(610), Y: new FixedPoint(100) }
   ] as Array<FlatVec>;
 
   if (playerCount == 2) {
@@ -91,12 +94,12 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
   const mainWindow: renderTarget = {
     canvas: canvas,
     resX: 1920,
-    resY: 1080,
+    resY: 1080
   };
   const dbWindow: renderTarget = {
     canvas: dbCanvas,
     resX: 600,
-    resY: 1200,
+    resY: 1200
   };
 
   const dbRenderer = new DebugRenderer(mainWindow, dbWindow);
@@ -109,7 +112,7 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
 const loopRate = 1000 / 60; //60 hrz
 function logicStep(
   engine: IJazzLocal,
-  gamePadInfo: Array<playerControllerInfo>,
+  gamePadInfo: Array<playerControllerInfo>
 ) {
   const now = performance.now();
   const delta = now - lastTime;
@@ -119,13 +122,17 @@ function logicStep(
     accumulator -= loopRate;
     //const gamePadCount = gamePadInfo.length;
     const w = engine.World;
-    const playerCount = w?.PlayerData.PlayerCount!;
+    if (!w) continue;
+    const playerCount = w.PlayerData.PlayerCount!;
 
     for (let i = 0; i < playerCount; i++) {
       const info = gamePadInfo[i];
       if (info === undefined) {
-        const dbInput = NewInputAction();
-        engine.UpdateInputForCurrentFrame(dbInput, i);
+        if (!cpuPlayers.has(i)) {
+          cpuPlayers.set(i, new PlayerCPU(i, w));
+        }
+        const cpuInput = cpuPlayers.get(i)!.NextInput();
+        engine.UpdateInputForCurrentFrame(cpuInput, i);
         continue;
       }
       const gpI = info.inputIndex;

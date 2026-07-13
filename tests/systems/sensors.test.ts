@@ -1,12 +1,12 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
   Player,
-  SetPlayerInitialPositionRaw,
+  SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
 import { PlayerSensors } from '../../game/engine/systems/sensors';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import { ApplyVelocityDecay } from '../../game/engine/systems/velocityDecay';
 import { defaultStage } from '../../game/engine/stage/stageMain';

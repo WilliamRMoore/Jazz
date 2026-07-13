@@ -1,10 +1,10 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
   Player,
-  SetPlayerPosition,
+  SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
-import { NeutralFall } from '../../game/engine/finite-state-machine/stateConfigurations/states';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { NeutralFall } from '../../game/engine/finiteStateMachines/player/states';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import { defaultStage } from '../../game/engine/stage/stageMain';

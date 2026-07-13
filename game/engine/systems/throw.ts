@@ -2,13 +2,13 @@ import { PlayerThrow } from '../entity/components/throw';
 import { Player } from '../entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../finiteStateMachines/player/shared';
 import { World } from '../world/world';
 import {
   CalculateHitStun,
   CalculateKnockbackRaw,
-  CalculateLaunchVector,
+  CalculateLaunchVector
 } from './attack';
 
 export function PlayerThrows(w: World) {
@@ -34,7 +34,7 @@ export function PlayerThrows(w: World) {
       handleRelease(player, pThrow, w);
       continue;
     }
-    if(stateFrame > releaseFrame) {
+    if (stateFrame > releaseFrame) {
       continue;
     }
     const moveOp = pThrow.GetMoveOpForFrame(stateFrame);
@@ -70,7 +70,7 @@ function handleRelease(thrower: Player, pThrow: PlayerThrow, w: World) {
     tDam,
     throweeWight,
     kbs,
-    bkb,
+    bkb
   );
   const histStunFrames = CalculateHitStun(kbRaw);
   const throweeSm = w.PlayerData.StateMachine(throwee.ID);

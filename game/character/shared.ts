@@ -3,7 +3,7 @@ import {
   StateId,
   AttackId,
   GrabId
-} from '../engine/finite-state-machine/stateConfigurations/shared';
+} from '../engine/finiteStateMachines/player/shared';
 
 type frameNumber = number;
 

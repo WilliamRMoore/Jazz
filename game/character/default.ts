@@ -14,7 +14,7 @@ import {
   GAME_EVENT_IDS,
   GrabId,
   GRAB_IDS
-} from '../engine/finite-state-machine/stateConfigurations/shared';
+} from '../engine/finiteStateMachines/player/shared';
 
 import {
   AttackConfig,

@@ -1,6 +1,6 @@
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { GAME_EVENT_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
+import { GAME_EVENT_IDS } from '../finiteStateMachines/player/shared';
 import { FIFTY } from '../math/numberConstants';
 import {
   AABBIntersect,

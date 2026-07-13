@@ -1,4 +1,4 @@
-import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../finiteStateMachines/player/shared';
 import { DivideRaw } from '../math/fixedPoint';
 import { AABBIntersect, IntersectsPolygons } from '../physics/collisions';
 import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';

@@ -21,7 +21,7 @@ import {
   AttackId,
   GrabId,
   STATE_IDS
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import { FlatVec } from '../physics/vector';
 import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';

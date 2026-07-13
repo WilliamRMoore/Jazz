@@ -7,13 +7,13 @@ import {
   Idle,
   Walk,
   Dash
-} from '../game/engine/finite-state-machine/stateConfigurations/states';
+} from '../game/engine/finiteStateMachines/player/states';
 import {
   STATE_IDS,
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   ATTACK_IDS
-} from '../game/engine/finite-state-machine/stateConfigurations/shared';
+} from '../game/engine/finiteStateMachines/player/shared';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
   NumberToRaw,

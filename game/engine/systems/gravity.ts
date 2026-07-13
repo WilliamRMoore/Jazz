@@ -1,4 +1,4 @@
-import { STATE_IDS } from '../finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../finiteStateMachines/player/shared';
 import { MultiplyRaw } from '../math/fixedPoint';
 import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { Stage } from '../stage/stageMain';

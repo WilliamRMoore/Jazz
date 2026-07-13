@@ -1,8 +1,8 @@
 import { InputAction } from '../input/Input';
 import { frameNumber } from '../entity/components/attack';
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
-import { StateId } from '../finite-state-machine/stateConfigurations/shared';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
+import { StateId } from '../finiteStateMachines/player/shared';
 import { IInputStore } from '../managers/inputManager';
 import { NumberToRaw } from '../math/fixedPoint';
 import { World } from '../world/world';

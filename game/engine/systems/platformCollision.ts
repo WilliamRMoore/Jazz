@@ -1,9 +1,9 @@
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import {
   GAME_EVENT_IDS,
   STATE_IDS,
   CanStateWalkOffLedge
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import { FixedPoint } from '../math/fixedPoint';
 import { LineSegmentIntersectionFp } from '../physics/collisions';
 import {

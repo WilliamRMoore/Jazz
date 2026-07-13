@@ -1,7 +1,4 @@
-import {
-  STATE_IDS,
-  StateId
-} from '../finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS, StateId } from '../finiteStateMachines/player/shared';
 import { World } from '../world/world';
 
 export function Flags(world: World): void {

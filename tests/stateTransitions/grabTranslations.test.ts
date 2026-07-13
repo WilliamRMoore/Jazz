@@ -3,12 +3,12 @@ import {
   InitGrabRelations,
   InitGrabReleaseRelations,
   InitHeldRelations,
-  InitHoldRelations,
-} from '../../game/engine/finite-state-machine/stateConfigurations/relationshipMappings';
+  InitHoldRelations
+} from '../../game/engine/finiteStateMachines/player/relationshipMappings';
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 
 describe('grab translation tests', () => {
   const grabTranslations = InitGrabRelations();

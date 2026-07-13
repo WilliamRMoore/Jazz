@@ -2,7 +2,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
   StateId
-} from '../finite-state-machine/stateConfigurations/shared';
+} from '../finiteStateMachines/player/shared';
 import {
   NumberToRaw,
   RawToNumber,
@@ -37,7 +37,10 @@ import {
 import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
 import { isPlayerGroundedAtAll } from './shared';
-import { GetActionSweptAABBHull, GetHurtCirclesAABBHull } from './shared/AABBHelper';
+import {
+  GetActionSweptAABBHull,
+  GetHurtCirclesAABBHull
+} from './shared/AABBHelper';
 import { AABBDTO } from '../pools/AABBDTO';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);

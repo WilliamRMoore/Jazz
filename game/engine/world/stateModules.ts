@@ -1,4 +1,4 @@
-import { StateMachine } from '../finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import { NewInputAction } from '../input/Input';
 import { Player } from '../entity/playerOrchestrator';
 import { DeathBoundry, Stage } from '../stage/stageMain';

@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../game/character/default';
 import { Player } from '../game/engine/entity/playerOrchestrator';
 import { World } from '../game/engine/world/world';
-import { STATE_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { STATE_IDS } from '../game/engine/finiteStateMachines/player/shared';
 import { NumberToRaw } from '../game/engine/math/fixedPoint';
 import { ECBComponent } from '../game/engine/entity/components/ecb';
 import { ToFV } from '../game/engine/utils';
@@ -125,7 +125,7 @@ import { HurtCapsulesComponent } from '../game/engine/entity/components/hurtCirc
 import { RawToNumber } from '../game/engine/math/fixedPoint';
 import { HitBubblesConifg, AttackConfig } from '../game/character/shared';
 import { AttackComponment } from '../game/engine/entity/components/attack';
-import { ATTACK_IDS } from '../game/engine/finite-state-machine/stateConfigurations/shared';
+import { ATTACK_IDS } from '../game/engine/finiteStateMachines/player/shared';
 
 describe('HurtCapsulesComponent AABB tests', () => {
   test('BuildAABBFromHurtCircles computes correct bounding box', () => {

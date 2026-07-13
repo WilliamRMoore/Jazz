@@ -1,18 +1,25 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage, WallStage, Stage } from '../../game/engine/stage/stageMain';
+import {
+  defaultStage,
+  WallStage,
+  Stage
+} from '../../game/engine/stage/stageMain';
 import {
   Player,
-  SetPlayerPosition,
+  SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
 import { StageCollisionDetection } from '../../game/engine/systems/stageCollision';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
-import { STATE_IDS, GAME_EVENT_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import {
+  STATE_IDS,
+  GAME_EVENT_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import {
   Launch,
-  NeutralFall,
-} from '../../game/engine/finite-state-machine/stateConfigurations/states';
+  NeutralFall
+} from '../../game/engine/finiteStateMachines/player/states';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import { RecordHistory } from '../../game/engine/systems/history';
 import { ToFp } from '../../game/engine/utils';
@@ -103,16 +110,16 @@ describe('Stage Collision system tests', () => {
 
   test('Player should transition to wall slam', () => {
     w.SetStage(WallStage());
-    // WallStage has a left facing wall at x=350. 
+    // WallStage has a left facing wall at x=350.
     // We place the player to the left of it (x=310) and move them right.
     SetPlayerPosition(p, ToFp(310), ToFp(400));
     p.FSMInfo.SetCurrentState(Launch);
-    p.Velocity.X.SetFromNumber(20); 
-    p.Velocity.Y.SetFromNumber(0); 
+    p.Velocity.X.SetFromNumber(20);
+    p.Velocity.Y.SetFromNumber(0);
 
     RecordHistory(w);
     w.LocalFrame = 1;
-    applyVelocity(); 
+    applyVelocity();
     StageCollisionDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.WALL_SLAM_S);
@@ -144,21 +151,21 @@ describe('Stage Collision system tests', () => {
     RecordHistory(w);
     w.LocalFrame = 1;
     applyVelocity(); // p.Position.y becomes 660. Intersects ground
-    
+
     // Impact with the ground should cause transition to GRND_SLAM_S
     StageCollisionDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
-    
+
     // Simulate updating the state machine to reach the end of GroundSlam (20 frames)
     const sm = w.PlayerData.StateMachine(0);
     const ia = NewInputAction();
-    for(let i = 0; i < 20; i++) {
+    for (let i = 0; i < 20; i++) {
       sm.UpdateFromInput(ia, w);
     }
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.DIRT_NAP_S);
-    
+
     // Simulate updating the state machine to reach the end of DirtNap (480 frames)
-    for(let i = 0; i < 480; i++) {
+    for (let i = 0; i < 480; i++) {
       sm.UpdateFromInput(ia, w);
     }
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GETUP_S);
@@ -175,15 +182,15 @@ describe('Stage Collision system tests', () => {
     is.StoreInputForFrame(49, prevIa);
 
     const techIa = NewInputAction();
-    techIa.LTVal.SetFromNumber(1); 
-    techIa.LXAxis.SetFromNumber(0); 
+    techIa.LTVal.SetFromNumber(1);
+    techIa.LXAxis.SetFromNumber(0);
     is.StoreInputForFrame(50, techIa);
 
     w.LocalFrame = 50;
     RecordHistory(w);
-    Launch.OnUpdate(p, w); 
+    Launch.OnUpdate(p, w);
 
-    applyVelocity(); 
+    applyVelocity();
     StageCollisionDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.TECH_IN_PLACE_S);
   });
@@ -191,46 +198,46 @@ describe('Stage Collision system tests', () => {
   test('Player transitions to Roll Tech when trigger pressed and stick held', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
     p.FSMInfo.SetCurrentState(Launch);
-    p.Velocity.Y.SetFromNumber(25); 
+    p.Velocity.Y.SetFromNumber(25);
 
     const is = w.PlayerData.InputStore(0);
     is.StoreInputForFrame(49, NewInputAction());
 
     const techIa = NewInputAction();
-    techIa.LTVal.SetFromNumber(1); 
+    techIa.LTVal.SetFromNumber(1);
     techIa.LXAxis.SetFromNumber(-1); // Left roll
     is.StoreInputForFrame(50, techIa);
 
     w.LocalFrame = 50;
     RecordHistory(w);
-    Launch.OnUpdate(p, w); 
+    Launch.OnUpdate(p, w);
 
-    applyVelocity(); 
+    applyVelocity();
     StageCollisionDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.ROLL_TECH_S);
-    expect(p.Flags.IsFacingRight).toBe(true); 
+    expect(p.Flags.IsFacingRight).toBe(true);
   });
 
   test('Player fails to tech if trigger was pressed more than 20 frames before ground collision', () => {
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(635));
     p.FSMInfo.SetCurrentState(Launch);
-    p.Velocity.Y.SetFromNumber(25); 
+    p.Velocity.Y.SetFromNumber(25);
 
     const is = w.PlayerData.InputStore(0);
     is.StoreInputForFrame(49, NewInputAction());
 
     const techIa = NewInputAction();
-    techIa.LTVal.SetFromNumber(1); 
+    techIa.LTVal.SetFromNumber(1);
     is.StoreInputForFrame(50, techIa);
 
     w.LocalFrame = 50;
-    Launch.OnUpdate(p, w); 
+    Launch.OnUpdate(p, w);
 
     w.LocalFrame = 71;
     RecordHistory(w);
     is.StoreInputForFrame(71, NewInputAction());
 
-    applyVelocity(); 
+    applyVelocity();
     StageCollisionDetection(w);
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
   });
@@ -241,26 +248,28 @@ describe('Stage Collision system tests', () => {
     p.Velocity.Y.SetFromNumber(25);
 
     const is = w.PlayerData.InputStore(0);
-    
+
     is.StoreInputForFrame(49, NewInputAction());
-    const earlyTechIa = NewInputAction(); earlyTechIa.LTVal.SetFromNumber(1);
+    const earlyTechIa = NewInputAction();
+    earlyTechIa.LTVal.SetFromNumber(1);
     is.StoreInputForFrame(50, earlyTechIa);
-    
+
     w.LocalFrame = 50;
     Launch.OnUpdate(p, w);
     expect(p.Flags.LastTechFrame).toBe(50);
 
     is.StoreInputForFrame(73, NewInputAction());
-    const laterTechIa = NewInputAction(); laterTechIa.LTVal.SetFromNumber(1);
+    const laterTechIa = NewInputAction();
+    laterTechIa.LTVal.SetFromNumber(1);
     is.StoreInputForFrame(74, laterTechIa);
 
     w.LocalFrame = 74;
     Launch.OnUpdate(p, w);
-    
+
     expect(p.Flags.LastTechFrame).toBe(50);
 
     RecordHistory(w);
-    applyVelocity(); 
+    applyVelocity();
     StageCollisionDetection(w);
 
     expect(p.FSMInfo.CurrentState.StateId).toBe(STATE_IDS.GRND_SLAM_S);
@@ -271,15 +280,15 @@ describe('Stage Collision system tests', () => {
     w.SetStage(defaultStage());
     const fsm = w.PlayerData.StateMachine(p.ID);
     fsm.ForceState(STATE_IDS.LEDGE_GRAB_S);
-    
+
     // Position the player so they intersect the stage slightly
-    // Player ECB for LEDGE_GRAB_S is height 110, yOffset 0. 
+    // Player ECB for LEDGE_GRAB_S is height 110, yOffset 0.
     // Top is pos.y. Bottom is pos.y + 110.
     // If we set pos.y to 640, bottom is 750, intersecting the ground (650).
     SetPlayerPosition(p, new FixedPoint(1000), new FixedPoint(640));
     p.ECB.Update();
     const initialY = p.Position.Y.AsNumber;
-    
+
     RecordHistory(w);
     w.LocalFrame = 1;
     applyVelocity();
@@ -303,7 +312,7 @@ describe('Stage Collision system tests', () => {
     RecordHistory(w);
     w.LocalFrame = 1;
     applyVelocity();
-    
+
     const spy = jest.spyOn(sm, 'UpdateFromWorld');
     StageCollisionDetection(w);
 
@@ -333,11 +342,9 @@ describe('Stage Collision system tests', () => {
 
   test('Player on platform does not skip wall collision', () => {
     const baseStage = WallStage();
-    const customStage = new Stage(
-      baseStage.StageVerticies,
-      baseStage.Ledges,
-      [new Line(ToFp(200), ToFp(500), ToFp(600), ToFp(500))]
-    );
+    const customStage = new Stage(baseStage.StageVerticies, baseStage.Ledges, [
+      new Line(ToFp(200), ToFp(500), ToFp(600), ToFp(500))
+    ]);
     w.SetStage(customStage);
 
     SetPlayerPosition(p, ToFp(310), ToFp(490)); // Left of the left-facing wall at 350

@@ -1,21 +1,21 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { StateMachine } from '../../game/engine/finite-state-machine/PlayerStateMachine';
-import { STATE_IDS } from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+import { StateMachine } from '../../game/engine/finiteStateMachines/player/PlayerStateMachine';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
 import {
   FixedPoint,
   NumberToRaw,
-  RawToNumber,
+  RawToNumber
 } from '../../game/engine/math/fixedPoint';
 import {
   Player,
-  SetPlayerInitialPositionRaw,
+  SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
 import {
   CalculateHitStop,
   CalculateHitStun,
   CalculateKnockback,
   CalculateLaunchVector,
-  PlayerAttacks,
+  PlayerAttacks
 } from '../../game/engine/systems/attack';
 import { World } from '../../game/engine/world/world';
 import { NewInputAction } from '../../game/engine/input/Input';
@@ -200,7 +200,7 @@ describe('Attack systesm tests', () => {
     SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
     SetPlayerInitialPositionRaw(p2, NumberToRaw(1070), NumberToRaw(650.01));
     const i1 = NewInputAction();
-    i1.RTVal.SetFromNumber(1); 
+    i1.RTVal.SetFromNumber(1);
     const i2 = NewInputAction();
     i2.RTVal.SetFromNumber(1);
     const i3 = NewInputAction();
@@ -222,7 +222,9 @@ describe('Attack systesm tests', () => {
     PlayerAttacks(w);
 
     expect(p1.Attacks.HasHitPlayer(1)).toBe(true);
-    expect(p2.Shield.PreModCurrentRadius.Raw).toBeLessThan(p2.Shield.InitialRadius.Raw); // Shield takes damage
+    expect(p2.Shield.PreModCurrentRadius.Raw).toBeLessThan(
+      p2.Shield.InitialRadius.Raw
+    ); // Shield takes damage
     expect(p1.Flags.HitPauseFrames).toBeGreaterThan(0);
   });
 
@@ -233,7 +235,7 @@ describe('Attack systesm tests', () => {
     SetPlayerInitialPositionRaw(p1, NumberToRaw(1000), NumberToRaw(650.01));
     SetPlayerInitialPositionRaw(p2, NumberToRaw(1270), NumberToRaw(650.01)); // far away
     const i1 = NewInputAction();
-    i1.RTVal.SetFromNumber(1); 
+    i1.RTVal.SetFromNumber(1);
     const i2 = NewInputAction();
     i2.RTVal.SetFromNumber(1);
     const i3 = NewInputAction();
@@ -250,7 +252,7 @@ describe('Attack systesm tests', () => {
       RecordIntoHistory(p2, h2.get(i));
     }
     w.LocalFrame = 2;
-    p1.FSMInfo._db_currentStateFrame = 3; 
+    p1.FSMInfo._db_currentStateFrame = 3;
 
     PlayerAttacks(w);
 
@@ -319,7 +321,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle.Raw,
         isFacingRight,
-        knockBackRaw,
+        knockBackRaw
       );
 
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(17.6, 1);
@@ -335,7 +337,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle.Raw,
         isFacingRight,
-        knockBackRaw,
+        knockBackRaw
       );
 
       // Angle is 180 - 45 = 135. cos(135) = -0.707, sin(135) = 0.707
@@ -353,7 +355,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle.Raw,
         isFacingRight,
-        knockBackRaw,
+        knockBackRaw
       );
       // cos(0) = 1, sin(0) = 0
       expect(RawToNumber(launchVector.X.Raw)).toBeGreaterThan(0);
@@ -368,7 +370,7 @@ describe('Attack Calculation Tests', () => {
         vecPool,
         launchAngle.Raw,
         isFacingRight,
-        knockBackRaw,
+        knockBackRaw
       );
       // cos(90) = 0, sin(90) = 1
       expect(RawToNumber(launchVector.X.Raw)).toBeCloseTo(0, 0);

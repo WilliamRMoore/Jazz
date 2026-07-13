@@ -1,11 +1,12 @@
 import { HitBubblesConifg, AttackConfig } from '../../../character/shared';
 import { Command } from '../../command/command';
-import { AttackGameEventMappings } from '../../finite-state-machine/PlayerStates';
+import { AttackGameEventMappings } from '../../finiteStateMachines/player/PlayerStates';
+import { AttackId, GameEventId } from '../../finiteStateMachines/player/shared';
 import {
-  AttackId,
-  GameEventId
-} from '../../finite-state-machine/stateConfigurations/shared';
-import { FixedPoint, MAX_RAW_VALUE, MIN_RAW_VALUE } from '../../math/fixedPoint';
+  FixedPoint,
+  MAX_RAW_VALUE,
+  MIN_RAW_VALUE
+} from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { AABBDTO } from '../../pools/AABBDTO';
 import { ActiveHitBubblesDTO } from '../../pools/ActiveAttackBubbles';

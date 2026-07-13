@@ -1,13 +1,13 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
   Player,
-  SetPlayerInitialPositionRaw,
+  SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
-import { StateMachine } from '../../game/engine/finite-state-machine/PlayerStateMachine';
+import { StateMachine } from '../../game/engine/finiteStateMachines/player/PlayerStateMachine';
 import {
   GAME_EVENT_IDS,
-  STATE_IDS,
-} from '../../game/engine/finite-state-machine/stateConfigurations/shared';
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw } from '../../game/engine/math/fixedPoint';
 import { PlayerGrabs } from '../../game/engine/systems/grab';

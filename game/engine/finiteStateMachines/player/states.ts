@@ -13,7 +13,7 @@ import {
 } from '../../entity/playerOrchestrator';
 import { EaseInRaw, GetAtan2IndexRaw } from '../../utils';
 import { World } from '../../world/world';
-import { FSMState } from '../PlayerStateMachine';
+import { FSMState } from './PlayerStateMachine';
 import { STATE_IDS, GAME_EVENT_IDS, GameEventId, StateId } from './shared';
 import { Attack } from '../../entity/components/attack';
 import { Grab } from '../../entity/components/grab';

@@ -8,8 +8,8 @@ import {
   GrabId,
   GrabIdToNameMap,
   StateId,
-  StateIdToNameMap,
-} from '../finite-state-machine/stateConfigurations/shared';
+  StateIdToNameMap
+} from '../finiteStateMachines/player/shared';
 type node = sVal | aVal;
 
 export type sVal = {
@@ -79,7 +79,7 @@ const LedgeDetector = 'LedgeDetector:';
 const Attack = 'Attack:';
 
 export function StructurePlayerSnapShotForPrinting(
-  ps: PlayerStateHistory,
+  ps: PlayerStateHistory
 ): deBugInfoTree {
   const root: node = {
     kind: 2,
@@ -99,8 +99,8 @@ export function StructurePlayerSnapShotForPrinting(
       grabNode(ps),
       grabMeterNode(ps),
       attackNode(ps),
-      sensorsNode(ps),
-    ],
+      sensorsNode(ps)
+    ]
   };
   return root;
 }
@@ -113,14 +113,14 @@ function positionNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: X,
-        data: RawToNumber(ps.posXRaw),
+        data: RawToNumber(ps.posXRaw)
       },
       {
         kind: 1,
         label: Y,
-        data: RawToNumber(ps.posYRaw),
-      },
-    ],
+        data: RawToNumber(ps.posYRaw)
+      }
+    ]
   };
 }
 
@@ -132,14 +132,14 @@ function velocityNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: Vx,
-        data: RawToNumber(ps.velXRaw),
+        data: RawToNumber(ps.velXRaw)
       },
       {
         kind: 1,
         label: Vy,
-        data: RawToNumber(ps.velYRaw),
-      },
-    ],
+        data: RawToNumber(ps.velYRaw)
+      }
+    ]
   };
 }
 
@@ -151,19 +151,19 @@ function stateNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: State_Id,
-        data: ps.stateId,
+        data: ps.stateId
       },
       {
         kind: 1,
         label: Name,
-        data: GetStateName(ps.stateId),
+        data: GetStateName(ps.stateId)
       },
       {
         kind: 1,
         label: Frame,
-        data: ps.stateFrame,
-      },
-    ],
+        data: ps.stateFrame
+      }
+    ]
   };
 }
 
@@ -171,7 +171,7 @@ function directionNode(ps: PlayerStateHistory): node {
   return {
     kind: 1,
     label: Direction,
-    data: ps.facingRight ? Right : Left,
+    data: ps.facingRight ? Right : Left
   };
 }
 
@@ -187,14 +187,14 @@ function ecbNode(ps: PlayerStateHistory): node {
           {
             kind: 1,
             label: X,
-            data: RawToNumber(ps.comp_ecbDiamond[2].xRaw),
+            data: RawToNumber(ps.comp_ecbDiamond[2].xRaw)
           },
           {
             kind: 1,
             label: Y,
-            data: RawToNumber(ps.comp_ecbDiamond[2].yRaw),
-          },
-        ],
+            data: RawToNumber(ps.comp_ecbDiamond[2].yRaw)
+          }
+        ]
       },
       {
         kind: 2,
@@ -203,14 +203,14 @@ function ecbNode(ps: PlayerStateHistory): node {
           {
             kind: 1,
             label: X,
-            data: RawToNumber(ps.comp_ecbDiamond[0].xRaw),
+            data: RawToNumber(ps.comp_ecbDiamond[0].xRaw)
           },
           {
             kind: 1,
             label: Y,
-            data: RawToNumber(ps.comp_ecbDiamond[0].yRaw),
-          },
-        ],
+            data: RawToNumber(ps.comp_ecbDiamond[0].yRaw)
+          }
+        ]
       },
       {
         kind: 2,
@@ -219,14 +219,14 @@ function ecbNode(ps: PlayerStateHistory): node {
           {
             kind: 1,
             label: X,
-            data: RawToNumber(ps.comp_ecbDiamond[1].xRaw),
+            data: RawToNumber(ps.comp_ecbDiamond[1].xRaw)
           },
           {
             kind: 1,
             label: Y,
-            data: RawToNumber(ps.comp_ecbDiamond[1].yRaw),
-          },
-        ],
+            data: RawToNumber(ps.comp_ecbDiamond[1].yRaw)
+          }
+        ]
       },
       {
         kind: 2,
@@ -235,16 +235,16 @@ function ecbNode(ps: PlayerStateHistory): node {
           {
             kind: 1,
             label: X,
-            data: RawToNumber(ps.comp_ecbDiamond[3].xRaw),
+            data: RawToNumber(ps.comp_ecbDiamond[3].xRaw)
           },
           {
             kind: 1,
             label: Y,
-            data: RawToNumber(ps.comp_ecbDiamond[3].yRaw),
-          },
-        ],
-      },
-    ],
+            data: RawToNumber(ps.comp_ecbDiamond[3].yRaw)
+          }
+        ]
+      }
+    ]
   };
 }
 
@@ -252,7 +252,7 @@ function damageNode(ps: PlayerStateHistory): node {
   return {
     kind: 1,
     label: Damage,
-    data: RawToNumber(ps.damageRaw),
+    data: RawToNumber(ps.damageRaw)
   };
 }
 
@@ -264,19 +264,19 @@ function hitStunNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: Frame,
-        data: ps.hitStunFrames,
+        data: ps.hitStunFrames
       },
       {
         kind: 1,
         label: Vx,
-        data: RawToNumber(ps.hitStunVxRaw),
+        data: RawToNumber(ps.hitStunVxRaw)
       },
       {
         kind: 1,
         label: Vy,
-        data: RawToNumber(ps.hitStunVyRaw),
-      },
-    ],
+        data: RawToNumber(ps.hitStunVyRaw)
+      }
+    ]
   };
 }
 
@@ -288,29 +288,29 @@ function flagsNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: FastFalling,
-        data: ps.fasFalling ? T : F,
+        data: ps.fasFalling ? T : F
       },
       {
         kind: 1,
         label: VelocityDecay,
-        data: ps.velocityDecayActive ? T : F,
+        data: ps.velocityDecayActive ? T : F
       },
       {
         kind: 1,
         label: HitPauseFrames,
-        data: ps.hitPauseFrames,
+        data: ps.hitPauseFrames
       },
       {
         kind: 1,
         label: IntangabilityFrames,
-        data: ps.intangabilityFrames,
+        data: ps.intangabilityFrames
       },
       {
         kind: 1,
         label: PlatFormDetection,
-        data: ps.disablePlatformDetectionFrames,
-      },
-    ],
+        data: ps.disablePlatformDetectionFrames
+      }
+    ]
   };
 }
 
@@ -322,9 +322,9 @@ function jumpNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: Count,
-        data: ps.jumpCount,
-      },
-    ],
+        data: ps.jumpCount
+      }
+    ]
   };
 }
 
@@ -336,19 +336,19 @@ function grabNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: GrabIdLabel,
-        data: ps.grabId ?? '',
+        data: ps.grabId ?? ''
       },
       {
         kind: 1,
         label: GrabIdName,
-        data: ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
+        data: ps.grabId === undefined ? '' : GetGrabName(ps.grabId)
       },
       {
         kind: 1,
         label: GrabConfigName,
-        data: ps.grabId === undefined ? '' : GetGrabName(ps.grabId),
-      },
-    ],
+        data: ps.grabId === undefined ? '' : GetGrabName(ps.grabId)
+      }
+    ]
   };
 }
 
@@ -360,14 +360,14 @@ function grabMeterNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: Meter,
-        data: RawToNumber(ps.grabMeterRaw),
+        data: RawToNumber(ps.grabMeterRaw)
       },
       {
         kind: 1,
         label: HoldingPlayerId,
-        data: ps.holdingPlayerId ?? '',
-      },
-    ],
+        data: ps.holdingPlayerId ?? ''
+      }
+    ]
   };
 }
 
@@ -379,19 +379,19 @@ function attackNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: AttackConfigName,
-        data: ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
+        data: ps.atkId === undefined ? '' : GetAttackName(ps.atkId)
       },
       {
         kind: 1,
         label: AttackIdName,
-        data: ps.atkId === undefined ? '' : GetAttackName(ps.atkId),
+        data: ps.atkId === undefined ? '' : GetAttackName(ps.atkId)
       },
       {
         kind: 1,
         label: PlayersHit,
-        data: Array.from(ps.playersHit).toString(),
-      },
-    ],
+        data: Array.from(ps.playersHit).toString()
+      }
+    ]
   };
 }
 
@@ -403,12 +403,12 @@ function shieldNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: CurrentRadius,
-        data: RawToNumber(ps.shieldRadiusRaw),
+        data: RawToNumber(ps.shieldRadiusRaw)
       },
       {
         kind: 1,
         label: Active,
-        data: ps.shieldActive ? T : F,
+        data: ps.shieldActive ? T : F
       },
       {
         kind: 2,
@@ -417,16 +417,16 @@ function shieldNode(ps: PlayerStateHistory): node {
           {
             kind: 1,
             label: X,
-            data: RawToNumber(ps.shieldTiltXRaw),
+            data: RawToNumber(ps.shieldTiltXRaw)
           },
           {
             kind: 1,
             label: Y,
-            data: RawToNumber(ps.shieldTiltYRaw),
-          },
-        ],
-      },
-    ],
+            data: RawToNumber(ps.shieldTiltYRaw)
+          }
+        ]
+      }
+    ]
   };
 }
 
@@ -438,9 +438,9 @@ function ledgeDetectorNode(ps: PlayerStateHistory): node {
       {
         kind: 1,
         label: ledgeGrabCount,
-        data: ps.ldGrabCount,
-      },
-    ],
+        data: ps.ldGrabCount
+      }
+    ]
   };
 }
 
@@ -448,7 +448,7 @@ function sensorsNode(ps: PlayerStateHistory) {
   const r: node = {
     kind: 2,
     label: Sensors,
-    data: [],
+    data: []
   };
 
   const sensors = ps.comp_sensors;
@@ -466,19 +466,19 @@ function sensorsNode(ps: PlayerStateHistory) {
         {
           kind: 1,
           label: Radius,
-          data: RawToNumber(s.radiusRaw),
+          data: RawToNumber(s.radiusRaw)
         },
         {
           kind: 1,
           label: X,
-          data: RawToNumber(s.globalXRaw),
+          data: RawToNumber(s.globalXRaw)
         },
         {
           kind: 1,
           label: Y,
-          data: RawToNumber(s.globalYRaw),
-        },
-      ],
+          data: RawToNumber(s.globalYRaw)
+        }
+      ]
     });
   }
 
