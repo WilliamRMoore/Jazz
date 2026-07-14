@@ -1,11 +1,11 @@
-import { Line } from '../engine/physics/vector';
-import { World } from '../engine/world/world';
+import { envConfig } from '../engine/config/main-config';
 import {
   deBugInfoTree,
   StructurePlayerSnapShotForPrinting,
 } from '../engine/debug/debugUtils';
-import { envConfig } from '../engine/config/main-config';
-import { PlayerLerper, LerpedPlayer } from './render-utlis';
+import { Line } from '../engine/physics/vector';
+import { World } from '../engine/world/world';
+import { LerpedPlayer, PlayerLerper } from './render-utlis';
 
 function getAlpha(
   timeStampNow: number,

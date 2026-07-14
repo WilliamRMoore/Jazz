@@ -7,13 +7,13 @@ import {
   ThrowConfig
 } from '../../game/character/shared';
 import {
-  StateId,
   AttackId,
-  GrabId
+  GrabId,
+  StateId
 } from '../../game/engine/finiteStateMachines/player/shared';
 
-import { RightPanel } from '../ui/panels/rightPanel';
 import { sections } from '../ui/panels/leftPanel';
+import { RightPanel } from '../ui/panels/rightPanel';
 
 export type CharacterProject = {
   config: CharacterConfig;

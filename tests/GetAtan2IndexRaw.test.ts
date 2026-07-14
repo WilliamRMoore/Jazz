@@ -1,6 +1,6 @@
-import { GetAtan2IndexRaw } from '../game/engine/utils';
 import { NumberToRaw } from '../game/engine/math/fixedPoint';
 import { LUT_SIZE } from '../game/engine/math/LUTS';
+import { GetAtan2IndexRaw } from '../game/engine/utils';
 
 // This is a helper function to get the expected index based on Math.atan2,
 // which is the ground truth we are testing against.

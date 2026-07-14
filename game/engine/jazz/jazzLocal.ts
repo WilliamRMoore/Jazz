@@ -1,10 +1,9 @@
 import { CharacterConfig } from '../../character/shared';
-import { LocalInputBufferReader } from '../../workers/workerUtils';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
-import { InputAction, NewInputAction } from '../input/Input';
+import { InputAction } from '../input/Input';
 import { FlatVec } from '../physics/vector';
 import { defaultStage, Stage, WallStage } from '../stage/stageMain';
 import { World } from '../world/world';

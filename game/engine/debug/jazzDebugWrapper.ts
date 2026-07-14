@@ -1,14 +1,14 @@
 import { CharacterConfig } from '../../character/shared';
-import { InputAction } from '../input/Input';
 import {
   Player,
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
+import { InputAction } from '../input/Input';
+import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
 import { FlatVec } from '../physics/vector';
+import { SetPlayerToFrame } from '../world/stateModules';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
-import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
-import { SetPlayerToFrame } from '../world/stateModules';
 
 export interface IJazzDebugger extends IJazzLocal {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;

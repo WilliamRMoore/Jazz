@@ -1,39 +1,40 @@
+import { Player } from '../entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
   STATE_IDS,
   StateId
 } from '../finiteStateMachines/player/shared';
 import {
-  NumberToRaw,
-  RawToNumber,
-  MultiplyRaw,
+  DivideRaw,
   FixedPoint,
-  DivideRaw
+  MultiplyRaw,
+  NumberToRaw,
+  RawToNumber
 } from '../math/fixedPoint';
 import { COS_LUT, LUT_SIZE as LUT_SIZE_OG, SIN_LUT } from '../math/LUTS';
+import {
+  FULL_CIRCLE,
+  HALF_CIRCLE,
+  ONE_HUNDRED,
+  ONE_POINT_FOUR,
+  POINT_SEVEN_FIVE,
+  POINT_ZERO_ONE_THREE,
+  POINT_ZERO_THREE,
+  TEN,
+  THREE,
+  TWENTY,
+  TWO_HUNDRED
+} from '../math/numberConstants';
 import {
   AABBIntersect,
   ClosestPointsBetweenSegments,
   IntersectsCircles,
   IntersectsCirclesRaw
 } from '../physics/collisions';
-import { Player } from '../entity/playerOrchestrator';
+import { AABBDTO } from '../pools/AABBDTO';
 import { AttackResult } from '../pools/AttackResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import {
-  THREE,
-  POINT_SEVEN_FIVE,
-  HALF_CIRCLE,
-  FULL_CIRCLE,
-  TEN,
-  TWENTY,
-  ONE_HUNDRED,
-  POINT_ZERO_THREE,
-  ONE_POINT_FOUR,
-  POINT_ZERO_ONE_THREE,
-  TWO_HUNDRED
-} from '../math/numberConstants';
 import { PlayerData } from '../world/stateModules';
 import { World } from '../world/world';
 import { isPlayerGroundedAtAll } from './shared';
@@ -41,7 +42,6 @@ import {
   GetActionSweptAABBHull,
   GetHurtCirclesAABBHull
 } from './shared/AABBHelper';
-import { AABBDTO } from '../pools/AABBDTO';
 
 const LUT_SIZE = NumberToRaw(LUT_SIZE_OG);
 

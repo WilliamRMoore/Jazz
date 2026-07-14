@@ -3,12 +3,12 @@ import {
   Player,
   SetPlayerPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
-import { World } from '../../game/engine/world/world';
-import { LedgeGrabDetection } from '../../game/engine/systems/ledgeGrabDetection';
-import { defaultStage } from '../../game/engine/stage/stageMain';
 import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
-import { NumberToRaw, FixedPoint } from '../../game/engine/math/fixedPoint';
+import { NumberToRaw } from '../../game/engine/math/fixedPoint';
+import { defaultStage } from '../../game/engine/stage/stageMain';
 import { RecordHistory } from '../../game/engine/systems/history';
+import { LedgeGrabDetection } from '../../game/engine/systems/ledgeGrabDetection';
+import { World } from '../../game/engine/world/world';
 
 describe('Ledge Grab Detection system tests', () => {
   let p: Player;

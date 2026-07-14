@@ -1,11 +1,11 @@
 import { HandleCommand } from '../command/command';
+import { Player } from '../entity/playerOrchestrator';
+import { MAX_RAW_VALUE, MIN_RAW_VALUE } from '../math/fixedPoint';
 import {
   AABBIntersect,
   ClosestPointsBetweenSegments,
   IntersectsCircles,
 } from '../physics/collisions';
-import { MAX_RAW_VALUE, MIN_RAW_VALUE } from '../math/fixedPoint';
-import { Player } from '../entity/playerOrchestrator';
 import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';

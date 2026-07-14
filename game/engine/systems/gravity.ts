@@ -1,9 +1,9 @@
+import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
 import { STATE_IDS } from '../finiteStateMachines/player/shared';
 import { MultiplyRaw } from '../math/fixedPoint';
-import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
+import { ONE, TWO } from '../math/numberConstants';
 import { Stage } from '../stage/stageMain';
 import { World } from '../world/world';
-import { ONE, TWO } from '../math/numberConstants';
 
 export function Gravity(world: World): void {
   const playerData = world.PlayerData;

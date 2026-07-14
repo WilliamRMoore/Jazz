@@ -1,15 +1,15 @@
-import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
-import { GetInput, NewInputAction } from '../engine/input/Input';
-import { FlatVec } from '../engine/physics/vector';
-import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
-import { FixedPoint } from '../engine/math/fixedPoint';
 import { DefaultCharacterConfig } from '../character/default';
 import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
-import { IJazzLocal } from '../engine/jazz/jazzLocal';
 import { PlayerCPU } from '../engine/finiteStateMachines/cpu/playerCPU';
+import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
+import { GetInput } from '../engine/input/Input';
+import { IJazzLocal } from '../engine/jazz/jazzLocal';
+import { FixedPoint } from '../engine/math/fixedPoint';
+import { FlatVec } from '../engine/physics/vector';
+import { DebugRenderer, renderTarget } from '../render/debug-2d';
+import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
 
 const cpuPlayers = new Map<number, PlayerCPU>();
 

@@ -1,33 +1,33 @@
-import { Stage } from '../stage/stageMain';
+import { CharacterConfig } from '../../character/shared';
+import { FixedPoint } from '../math/fixedPoint';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { FlatVec, Line } from '../physics/vector';
 import { PooledVector } from '../pools/PooledVector';
-import { CharacterConfig } from '../../character/shared';
-import { FixedPoint } from '../math/fixedPoint';
+import { Stage } from '../stage/stageMain';
+import { PlayerStateHistory } from '../systems/history';
 import { AttackComponment } from './components/attack';
+import { PlayerDamageComponent } from './components/damage';
 import { ECBComponent } from './components/ecb';
 import { PlayerFlagsComponent } from './components/flags';
 import { FSMInfoComponent } from './components/fsmInfo';
+import { GrabComponent } from './components/grab';
+import { GrabMeterComponent } from './components/grabMeter';
 import { HitStopComponent } from './components/hitStop';
 import { HitStunComponent } from './components/hitStun';
+import { HoldComponent } from './components/hold';
 import { HurtCapsulesComponent } from './components/hurtCircles';
 import { JumpComponent } from './components/jump';
 import { LedgeDetectorComponent } from './components/ledgeDetector';
-import { PlayerDamageComponent } from './components/damage';
 import { PositionComponent } from './components/position';
 import { SensorComponent } from './components/sensor';
 import { ShieldComponent } from './components/shield';
 import {
-  SpeedsComponentConfigBuilder,
-  SpeedsComponent
+  SpeedsComponent,
+  SpeedsComponentConfigBuilder
 } from './components/speeds';
+import { ThrowComponent } from './components/throw';
 import { VelocityComponent } from './components/velocity';
 import { WeightComponent } from './components/weight';
-import { GrabComponent } from './components/grab';
-import { GrabMeterComponent } from './components/grabMeter';
-import { PlayerStateHistory } from '../systems/history';
-import { HoldComponent } from './components/hold';
-import { ThrowComponent } from './components/throw';
 
 export type speedBuilderOptions = (scb: SpeedsComponentConfigBuilder) => void;
 

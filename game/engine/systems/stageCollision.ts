@@ -1,28 +1,25 @@
 import {
+  CreateDiamondFromHistory,
+  ECBComponent,
+  EcbHistoryDTO
+} from '../entity/components/ecb';
+import {
+  AddToPlayerPositionVec,
+  AddToPlayerXPostionRaw,
+  AddToPlayerYPositionRaw,
+  CanOnlyFallOffLedgeWhenFacingAwayFromIt,
+  Player,
+  PlayerOnPlats,
+  PlayerOnStage,
+  PlayerOnStageOrPlats,
+  SetPlayerPositionRaw
+} from '../entity/playerOrchestrator';
+import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS
 } from '../finiteStateMachines/player/shared';
 import { DivideRaw } from '../math/fixedPoint';
-import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
-import {
-  PlayerOnPlats,
-  AddToPlayerPositionVec,
-  PlayerOnStage,
-  CanOnlyFallOffLedgeWhenFacingAwayFromIt,
-  SetPlayerPositionRaw,
-  AddToPlayerXPostionRaw,
-  AddToPlayerYPositionRaw,
-  Player,
-  PlayerOnStageOrPlats
-} from '../entity/playerOrchestrator';
-import { ShouldSoftlandRaw } from './shared';
-import {
-  CreateDiamondFromHistory,
-  ECBComponent,
-  EcbHistoryDTO
-} from '../entity/components/ecb';
-import { FlatVec } from '../physics/vector';
 import {
   CORRECTION_DEPTH_RAW,
   POINT_SEVEN,
@@ -30,12 +27,15 @@ import {
   TEN,
   TWO
 } from '../math/numberConstants';
-import { Stage } from '../stage/stageMain';
+import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
+import { FlatVec } from '../physics/vector';
 import { ICollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
 import { PooledVector } from '../pools/PooledVector';
-import { PlayerData, StageData, Pools } from '../world/stateModules';
+import { Stage } from '../stage/stageMain';
+import { PlayerData, Pools, StageData } from '../world/stateModules';
 import { World } from '../world/world';
+import { ShouldSoftlandRaw } from './shared';
 import { GetECBAABBHullCC } from './shared/AABBHelper';
 
 const CORNER_JITTER_CORRECTION_RAW = TWO;

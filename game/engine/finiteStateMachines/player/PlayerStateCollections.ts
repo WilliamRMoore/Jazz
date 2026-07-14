@@ -1,426 +1,224 @@
+import { AirDodgeNode } from './states/airDodge';
+import { BackThrowNode } from './states/backThrow';
+import { BAirAttackNode } from './states/bAirAttack';
+import { CrouchNode } from './states/crouch';
+import { DAirAttackNode } from './states/dAirAttack';
+import { DashNode } from './states/dash';
+import { DashAttackNode } from './states/dashAttack';
+import { DashTurnNode } from './states/dashTurn';
+import { DirtNapNode } from './states/dirtNap';
+import { DizzyNode } from './states/dizzy';
+import { DownChargeNode } from './states/downCharge';
+import { DownChargeExNode } from './states/downChargeEx';
+import { DownSpecialNode } from './states/downSpecial';
+import { DownSpecialAerialNode } from './states/downSpecialAerial';
+import { DownThrowNode } from './states/downThrow';
+import { DownTiltNode } from './states/downTilt';
+import { FAerialAttackNode } from './states/fAerialAttack';
+import { ForwardThrowNode } from './states/forwardThrow';
+import { GetUpNode } from './states/getUp';
+import { GetUpAttackNode } from './states/getUpAttack';
+import { GetUpRollBackNode } from './states/getUpRollBack';
+import { GetUpRollForwardNode } from './states/getUpRollForward';
+import { GrabEscapeNode } from './states/grabEscape';
+import { GrabReleaseNode } from './states/grabRelease';
+import { GroundSlamNode } from './states/groundSlam';
+import { HeldNode } from './states/held';
+import { HelplessNode } from './states/helpless';
+import { HitFlinchNode } from './states/hitFlinch';
+import { HitSlideNode } from './states/hitSlide';
+import { HitStopNode } from './states/hitStop';
+import { HoldNode } from './states/hold';
+import { IdleNode } from './states/idle';
+import { JumpNode } from './states/jump';
+import { JumpSquatNode } from './states/jumpSquat';
+import { LandNode } from './states/land';
+import { LaunchNode } from './states/launch';
+import { LedgeAttackNode } from './states/ledgeAttack';
+import { LedgeGetUpNode } from './states/ledgeGetUp';
+import { LedgeGrabNode } from './states/ledgeGrab';
+import { LedgeRollNode } from './states/ledgeRoll';
+import { NAerialAttackNode } from './states/nAerialAttack';
+import { NAttackNode } from './states/nAttack';
+import { NeutralFallNode } from './states/neutralFall';
+import { NeutralSpecialNode } from './states/neutralSpecial';
+import { NuetralGrabNode } from './states/nuetralGrab';
+import { PummelNode } from './states/pummel';
+import { RollDodgeNode } from './states/rollDodge';
+import { RollTechNode } from './states/rollTech';
+import { RunNode } from './states/run';
+import { RunStopNode } from './states/runStop';
+import { RunTurnNode } from './states/runTurn';
+import { ShieldNode } from './states/shield';
+import { ShieldBreakNode } from './states/shieldBreak';
+import { ShieldBreakLandNode } from './states/shieldBreakLand';
+import { ShieldBreakTumbleNode } from './states/shieldBreakTumble';
+import { ShieldDropNode } from './states/shieldDrop';
+import { ShieldRaiseNode } from './states/shieldRaise';
+import { SideChargeNode } from './states/sideCharge';
+import { SideChargeExNode } from './states/sideChargeEx';
+import { SideSpecialNode } from './states/sideSpecial';
+import { SideSpecialAirNode } from './states/sideSpecialAir';
+import { SideSpecialExtensionNode } from './states/sideSpecialExtension';
+import { SideSpecialExtensionAirNode } from './states/sideSpecialExtensionAir';
+import { SideTiltNode } from './states/sideTilt';
+import { SoftLandNode } from './states/softLand';
+import { SpotDodgeNode } from './states/spotDodge';
+import { TechInPlaceNode } from './states/techInPlace';
+import { TumbleNode } from './states/tumble';
+import { TurnNode } from './states/turn';
+import { UAirAttackNode } from './states/uAirAttack';
+import { UpChargeNode } from './states/upCharge';
+import { UpChargeExNode } from './states/upChargeEx';
+import { UpSpecialNode } from './states/upSpecial';
+import { UpThrowNode } from './states/upThrow';
+import { UpTiltNode } from './states/upTilt';
+import { WalkNode } from './states/walk';
+import { WallKickNode } from './states/wallKick';
+import { WallSlamNode } from './states/wallSlam';
+
+import { condition } from './conditions';
 import { FSMState } from './PlayerStateMachine';
-import {
-  InitIdleRelations,
-  InitShieldRaiseRelations,
-  InitShieldRelations,
-  InitShieldDropRelations,
-  InitSpotDodgeRelations,
-  InitRollDodgeRelations,
-  InitTurnRelations,
-  InitWalkRelations,
-  InitDashRelations,
-  InitDashTurnRelations,
-  InitRunRelations,
-  InitRunTurnRelations,
-  InitStopRunRelations,
-  InitJumpSquatRelations,
-  InitJumpRelations,
-  InitNeutralFallRelations,
-  InitLandRelations,
-  InitSoftLandRelations,
-  InitLedgeGrabRelations,
-  InitAirDodgeRelations,
-  InitHelpessRelations,
-  InitAttackRelations,
-  InitSideChargeRelations,
-  InitSideChargeExRelations,
-  InitDownTiltRelations,
-  InitUpTiltRelations,
-  InitSideTiltRelations,
-  InitDashAttackRelations,
-  InitAirAttackRelations,
-  InitFAirAttackRelations,
-  InitUAirRelations,
-  InitBAirRelations,
-  InitDAirRelations,
-  InitNSpecialRelations,
-  InitSideSpecialRelations,
-  InitSideSpecialExtensionRelations,
-  InitSideSpecialAirRelations,
-  InitSideSpecialExAirRelations,
-  InitDownSpecialRelations,
-  InitDownSpecialAirRelations,
-  InitUpSpecialRelations,
-  InitHitStopRelations,
-  InitTumbleRelations,
-  InitLaunchRelations,
-  InitCrouchRelations,
-  InitUpChargeRelations,
-  InitiUpChargeExRelations,
-  InitDownChargeRelations,
-  InitDownChargeExRelations,
-  ActionStateMappings,
-  InitGrabRelations,
-  InitHoldRelations,
-  InitHeldRelations,
-  InitGrabReleaseRelations,
-  InitGrabEscapeRelations,
-  InitShieldBreakLandRelations,
-  InitShieldBreakRelations,
-  initShieldTubmleRelations,
-  InitDizzyRelations,
-  InitWallKickRelations,
-  InitHitSlideRelations,
-  InitHitFlinchRelations,
-  InitPummelRelations,
-  InitForwardThrowRelations,
-  InitBackThrowRelations,
-  InitDownThrowRelations,
-  InitUpThrowRelations,
-  InitGroundSlamRelations,
-  InitDirtNapRelations,
-  InitGetUpRelations,
-  InitGetUpBackRollRelations,
-  InitGetUpForwardRollRelations,
-  InitLedgeGetUpRelations,
-  InitLedgeRollRelations,
-  InitTechInPlaceRelations,
-  InitRollTechRelations,
-  InitWallSlamRelations,
-  InitGetUpAttackRelations,
-  InitLedgeAttackRelations
-} from './relationshipMappings';
-import {
-  StateId,
-  GameEventId,
-  AttackId,
-  GAME_EVENT_IDS,
-  ATTACK_IDS,
-  GrabId,
-  GRAB_IDS
-} from './shared';
-import {
-  Idle,
-  SpotDodge,
-  RollDodge,
-  ShieldRaise,
-  Shield,
-  ShieldDrop,
-  Turn,
-  Walk,
-  Run,
-  RunTurn,
-  RunStop,
-  Dash,
-  DashTurn,
-  JumpSquat,
-  Jump,
-  NeutralFall,
-  Land,
-  SoftLand,
-  LedgeGrab,
-  AirDodge,
-  Helpless,
-  NAttack,
-  SideCharge,
-  SideChargeEx,
-  SideTilt,
-  UpCharge,
-  UpChargeEx,
-  DownCharge,
-  DownChargeEx,
-  DashAttack,
-  NAerialAttack,
-  FAerialAttack,
-  UAirAttack,
-  BAirAttack,
-  DAirAttack,
-  NeutralSpecial,
-  SideSpecial,
-  SideSpecialExtension,
-  SideSpecialAir,
-  SideSpecialExtensionAir,
-  DownSpecial,
-  DownSpecialAerial,
-  UpSpecial,
-  HitStop,
-  Tumble,
-  Launch,
-  Crouch,
-  DownTilt,
-  UpTilt,
-  NuetralGrab,
-  Hold,
-  Held,
-  GrabEscape,
-  GrabRelease,
-  ShieldBreak,
-  ShieldBreakTumble,
-  ShieldBreakLand,
-  Dizzy,
-  WallKick,
-  HitSlide,
-  HitFlinch,
-  Pummel,
-  ForwardThrow,
-  BackThrow,
-  DownThrow,
-  UpThrow,
-  GroundSlam,
-  DirtNap,
-  GetUp,
-  GetUpRollBack,
-  GetUpRollForward,
-  LedgeGetUp,
-  LedgeAttack,
-  LedgeRoll,
-  TechInPlace,
-  RollTech,
-  WallSlam,
-  GetUpAttack
-} from './states';
+import { ATTACK_IDS, AttackId, GAME_EVENT_IDS, GameEventId, GRAB_IDS, GrabId, StateId } from './shared';
 
-const IDLE_STATE_RELATIONS = InitIdleRelations();
-const SHIELD_RAISE_RELATIONS = InitShieldRaiseRelations();
-const SHIELD_RELATIONS = InitShieldRelations();
-const SHIELD_DROP_RELATIONS = InitShieldDropRelations();
-const SPOT_DODGE_RELATIONS = InitSpotDodgeRelations();
-const ROLL_DODGE_RELATIONS = InitRollDodgeRelations();
-const TURN_RELATIONS = InitTurnRelations();
-const WALK_RELATIONS = InitWalkRelations();
-const DASH_RELATIONS = InitDashRelations();
-const DASH_TURN_RELATIONS = InitDashTurnRelations();
-const RUN_RELATIONS = InitRunRelations();
-const RUN_TURN_RELATIONS = InitRunTurnRelations();
-const STOP_RUN_RELATIONS = InitStopRunRelations();
-const JUMP_SQUAT_RELATIONS = InitJumpSquatRelations();
-const JUMP_RELATIONS = InitJumpRelations();
-const NFALL_RELATIONS = InitNeutralFallRelations();
-const LAND_RELATIONS = InitLandRelations();
-const SOFT_LAND_RELATIONS = InitSoftLandRelations();
-const LEDGE_GRAB_RELATIONS = InitLedgeGrabRelations();
-const AIR_DODGE_RELATIONS = InitAirDodgeRelations();
-const HELPESS_RELATIONS = InitHelpessRelations();
-const ATTACK_RELATIONS = InitAttackRelations();
-const SIDE_CHARGE_RELATIONS = InitSideChargeRelations();
-const SIDE_CHARGE_EX_RELATIONS = InitSideChargeExRelations();
-const DOWN_TILT_RELATIONS = InitDownTiltRelations();
-const UP_TILT_RELATIONS = InitUpTiltRelations();
-const SIDE_TILT_RELATIONS = InitSideTiltRelations();
-const DASH_ATK_RELATIONS = InitDashAttackRelations();
-const AIR_ATK_RELATIONS = InitAirAttackRelations();
-const F_AIR_ATK_RELATIONS = InitFAirAttackRelations();
-const U_AIR_ATK_RELATIONS = InitUAirRelations();
-const B_AIR_ATK_RELATIONS = InitBAirRelations();
-const D_AIR_ATK_RELATIONS = InitDAirRelations();
-const N_SPECIAL_ATK_RELATIONS = InitNSpecialRelations();
-const SIDE_SPCL_RELATIONS = InitSideSpecialRelations();
-const SIDE_SPCL_EX_RELATIONS = InitSideSpecialExtensionRelations();
-const SIDE_SPCL_AIR_RELATIONS = InitSideSpecialAirRelations();
-const SIDE_SPCL_AIR_EX_RELATIONS = InitSideSpecialExAirRelations();
-const DOWN_SPECIAL_RELATIONS = InitDownSpecialRelations();
-const DOWN_SPECIAL_AIR_RELATIONS = InitDownSpecialAirRelations();
-const UP_SPECIAL_RELATIONS = InitUpSpecialRelations();
-const HIT_STOP_RELATIONS = InitHitStopRelations();
-const HIT_SLIDE_RELATIONS = InitHitSlideRelations();
-const HIT_FLINCH_RELATIONS = InitHitFlinchRelations();
-const TUMBLE_RELATIONS = InitTumbleRelations();
-const LAUNCH_RELATIONS = InitLaunchRelations();
-const CROUCH_RELATIONS = InitCrouchRelations();
-const UP_CHARGE_RELATIONS = InitUpChargeRelations();
-const UP_CHARGE_EX_RELATIONS = InitiUpChargeExRelations();
-const DOWN_CHARGE_RELATIONS = InitDownChargeRelations();
-const DOWN_CHARGE_EX_RELATIONS = InitDownChargeExRelations();
-const GRAB_RELATIONS = InitGrabRelations();
-const GRAB_HOLD_RELATIONS = InitHoldRelations();
-const GRAB_HELD_RELATIONS = InitHeldRelations();
-const GRAB_RELEASE_RELATIONS = InitGrabReleaseRelations();
-const GRAB_ESCAPE_RELATIONS = InitGrabEscapeRelations();
-const FOR_THROW_RELATIONS = InitForwardThrowRelations();
-const BACK_THROW_RELATIONS = InitBackThrowRelations();
-const DOWN_THROW_RELATIONS = InitDownThrowRelations();
-const UP_THROW_RELATIONS = InitUpThrowRelations();
-const SHIELD_BREAK_RELATIONS = InitShieldBreakRelations();
-const SHIELD_BREAK_LAND_RELATIONS = InitShieldBreakLandRelations();
-const SHIELD_BREAK_TUMBLE_RELATIONS = initShieldTubmleRelations();
-const SHIELD_BREAK_DIZZY_RELATIONS = InitDizzyRelations();
-const WALL_KICK_RELATIONS = InitWallKickRelations();
-const PUMMEL_RELATIONS = InitPummelRelations();
-const GROUND_SLAM_RELATIONS = InitGroundSlamRelations();
-const WALL_SLAM_RELATIONS = InitWallSlamRelations();
-const DIRT_NAP_RELATIONS = InitDirtNapRelations();
-const GETUP_RELATIONS = InitGetUpRelations();
-const GETUP_ROLL_FORWARD_RELATIONS = InitGetUpForwardRollRelations();
-const GETUP_ROLL_BACK_RELATIONS = InitGetUpBackRollRelations();
-const LEDGE_GETUP_RELATIONS = InitLedgeGetUpRelations();
-const LEDGE_ROLL_RELATIONS = InitLedgeRollRelations();
-const TECH_IN_PLACE_RELATIONS = InitTechInPlaceRelations();
-const TECH_ROLL_RELATIONS = InitRollTechRelations();
-const GETUP_ATTACK_RELATIONS = InitGetUpAttackRelations();
-const LEDGE_ATTACK_RELATIONS = InitLedgeAttackRelations();
+export class ActionStateMappings {
+  private readonly mappings = new Map<GameEventId, StateId>();
+  private condtions?: Array<condition>;
+  private defaultConditions?: Array<condition>;
 
-export const ActionMappings = new Map<StateId, ActionStateMappings>()
-  .set(IDLE_STATE_RELATIONS.stateId, IDLE_STATE_RELATIONS.mappings)
-  .set(SPOT_DODGE_RELATIONS.stateId, SPOT_DODGE_RELATIONS.mappings)
-  .set(ROLL_DODGE_RELATIONS.stateId, ROLL_DODGE_RELATIONS.mappings)
-  .set(SHIELD_RAISE_RELATIONS.stateId, SHIELD_RAISE_RELATIONS.mappings)
-  .set(SHIELD_RELATIONS.stateId, SHIELD_RELATIONS.mappings)
-  .set(SHIELD_DROP_RELATIONS.stateId, SHIELD_DROP_RELATIONS.mappings)
-  .set(TURN_RELATIONS.stateId, TURN_RELATIONS.mappings)
-  .set(WALK_RELATIONS.stateId, WALK_RELATIONS.mappings)
-  .set(DASH_RELATIONS.stateId, DASH_RELATIONS.mappings)
-  .set(DASH_TURN_RELATIONS.stateId, DASH_TURN_RELATIONS.mappings)
-  .set(RUN_RELATIONS.stateId, RUN_RELATIONS.mappings)
-  .set(RUN_TURN_RELATIONS.stateId, RUN_TURN_RELATIONS.mappings)
-  .set(STOP_RUN_RELATIONS.stateId, STOP_RUN_RELATIONS.mappings)
-  .set(JUMP_SQUAT_RELATIONS.stateId, JUMP_SQUAT_RELATIONS.mappings)
-  .set(JUMP_RELATIONS.stateId, JUMP_RELATIONS.mappings)
-  .set(NFALL_RELATIONS.stateId, NFALL_RELATIONS.mappings)
-  .set(LAND_RELATIONS.stateId, LAND_RELATIONS.mappings)
-  .set(SOFT_LAND_RELATIONS.stateId, SOFT_LAND_RELATIONS.mappings)
-  .set(LEDGE_GRAB_RELATIONS.stateId, LEDGE_GRAB_RELATIONS.mappings)
-  .set(AIR_DODGE_RELATIONS.stateId, AIR_DODGE_RELATIONS.mappings)
-  .set(HELPESS_RELATIONS.stateId, HELPESS_RELATIONS.mappings)
-  .set(ATTACK_RELATIONS.stateId, ATTACK_RELATIONS.mappings)
-  .set(SIDE_CHARGE_RELATIONS.stateId, SIDE_CHARGE_RELATIONS.mappings)
-  .set(SIDE_CHARGE_EX_RELATIONS.stateId, SIDE_CHARGE_EX_RELATIONS.mappings)
-  .set(UP_CHARGE_RELATIONS.stateId, UP_CHARGE_RELATIONS.mappings)
-  .set(UP_CHARGE_EX_RELATIONS.stateId, UP_CHARGE_EX_RELATIONS.mappings)
-  .set(DOWN_CHARGE_RELATIONS.stateId, DOWN_CHARGE_RELATIONS.mappings)
-  .set(DOWN_CHARGE_EX_RELATIONS.stateId, DOWN_CHARGE_EX_RELATIONS.mappings)
-  .set(DOWN_TILT_RELATIONS.stateId, DOWN_TILT_RELATIONS.mappings)
-  .set(UP_TILT_RELATIONS.stateId, UP_TILT_RELATIONS.mappings)
-  .set(SIDE_TILT_RELATIONS.stateId, SIDE_TILT_RELATIONS.mappings)
-  .set(DASH_ATK_RELATIONS.stateId, DASH_ATK_RELATIONS.mappings)
-  .set(AIR_ATK_RELATIONS.stateId, AIR_ATK_RELATIONS.mappings)
-  .set(F_AIR_ATK_RELATIONS.stateId, F_AIR_ATK_RELATIONS.mappings)
-  .set(U_AIR_ATK_RELATIONS.stateId, U_AIR_ATK_RELATIONS.mappings)
-  .set(B_AIR_ATK_RELATIONS.stateId, B_AIR_ATK_RELATIONS.mappings)
-  .set(D_AIR_ATK_RELATIONS.stateId, D_AIR_ATK_RELATIONS.mappings)
-  .set(DOWN_SPECIAL_RELATIONS.stateId, DOWN_SPECIAL_RELATIONS.mappings)
-  .set(DOWN_SPECIAL_AIR_RELATIONS.stateId, DOWN_SPECIAL_AIR_RELATIONS.mappings)
-  .set(N_SPECIAL_ATK_RELATIONS.stateId, N_SPECIAL_ATK_RELATIONS.mappings)
-  .set(SIDE_SPCL_RELATIONS.stateId, SIDE_SPCL_RELATIONS.mappings)
-  .set(SIDE_SPCL_EX_RELATIONS.stateId, SIDE_SPCL_EX_RELATIONS.mappings)
-  .set(SIDE_SPCL_AIR_RELATIONS.stateId, SIDE_SPCL_AIR_RELATIONS.mappings)
-  .set(SIDE_SPCL_AIR_EX_RELATIONS.stateId, SIDE_SPCL_AIR_EX_RELATIONS.mappings)
-  .set(UP_SPECIAL_RELATIONS.stateId, UP_SPECIAL_RELATIONS.mappings)
-  .set(HIT_STOP_RELATIONS.stateId, HIT_STOP_RELATIONS.mappings)
-  .set(HIT_SLIDE_RELATIONS.stateId, HIT_SLIDE_RELATIONS.mappings)
-  .set(HIT_FLINCH_RELATIONS.stateId, HIT_FLINCH_RELATIONS.mappings)
-  .set(TUMBLE_RELATIONS.stateId, TUMBLE_RELATIONS.mappings)
-  .set(LAUNCH_RELATIONS.stateId, LAUNCH_RELATIONS.mappings)
-  .set(CROUCH_RELATIONS.stateId, CROUCH_RELATIONS.mappings)
-  .set(GRAB_RELATIONS.stateId, GRAB_RELATIONS.mappings)
-  .set(GRAB_HOLD_RELATIONS.stateId, GRAB_HOLD_RELATIONS.mappings)
-  .set(GRAB_HELD_RELATIONS.stateId, GRAB_HELD_RELATIONS.mappings)
-  .set(GRAB_RELEASE_RELATIONS.stateId, GRAB_RELEASE_RELATIONS.mappings)
-  .set(GRAB_ESCAPE_RELATIONS.stateId, GRAB_ESCAPE_RELATIONS.mappings)
-  .set(FOR_THROW_RELATIONS.stateId, FOR_THROW_RELATIONS.mappings)
-  .set(BACK_THROW_RELATIONS.stateId, BACK_THROW_RELATIONS.mappings)
-  .set(DOWN_THROW_RELATIONS.stateId, DOWN_THROW_RELATIONS.mappings)
-  .set(UP_THROW_RELATIONS.stateId, UP_THROW_RELATIONS.mappings)
-  .set(SHIELD_BREAK_RELATIONS.stateId, SHIELD_BREAK_RELATIONS.mappings)
-  .set(
-    SHIELD_BREAK_TUMBLE_RELATIONS.stateId,
-    SHIELD_BREAK_TUMBLE_RELATIONS.mappings
-  )
-  .set(
-    SHIELD_BREAK_LAND_RELATIONS.stateId,
-    SHIELD_BREAK_LAND_RELATIONS.mappings
-  )
-  .set(
-    SHIELD_BREAK_DIZZY_RELATIONS.stateId,
-    SHIELD_BREAK_DIZZY_RELATIONS.mappings
-  )
-  .set(WALL_KICK_RELATIONS.stateId, WALL_KICK_RELATIONS.mappings)
-  .set(PUMMEL_RELATIONS.stateId, PUMMEL_RELATIONS.mappings)
-  .set(GROUND_SLAM_RELATIONS.stateId, GROUND_SLAM_RELATIONS.mappings)
-  .set(DIRT_NAP_RELATIONS.stateId, DIRT_NAP_RELATIONS.mappings)
-  .set(GETUP_RELATIONS.stateId, GETUP_RELATIONS.mappings)
-  .set(
-    GETUP_ROLL_FORWARD_RELATIONS.stateId,
-    GETUP_ROLL_FORWARD_RELATIONS.mappings
-  )
-  .set(GETUP_ROLL_BACK_RELATIONS.stateId, GETUP_ROLL_BACK_RELATIONS.mappings)
-  .set(LEDGE_GETUP_RELATIONS.stateId, LEDGE_GETUP_RELATIONS.mappings)
-  .set(LEDGE_ROLL_RELATIONS.stateId, LEDGE_ROLL_RELATIONS.mappings)
-  .set(TECH_IN_PLACE_RELATIONS.stateId, TECH_IN_PLACE_RELATIONS.mappings)
-  .set(TECH_ROLL_RELATIONS.stateId, TECH_ROLL_RELATIONS.mappings)
-  .set(WALL_SLAM_RELATIONS.stateId, WALL_SLAM_RELATIONS.mappings)
-  .set(GETUP_ATTACK_RELATIONS.stateId, GETUP_ATTACK_RELATIONS.mappings)
-  .set(LEDGE_ATTACK_RELATIONS.stateId, LEDGE_ATTACK_RELATIONS.mappings);
+  public GetMapping(geId: GameEventId): StateId | undefined {
+    return this.mappings.get(geId);
+  }
 
-export const FSMStates = new Map<StateId, FSMState>()
-  .set(Idle.StateId, Idle)
-  .set(SpotDodge.StateId, SpotDodge)
-  .set(RollDodge.StateId, RollDodge)
-  .set(ShieldRaise.StateId, ShieldRaise)
-  .set(Shield.StateId, Shield)
-  .set(ShieldDrop.StateId, ShieldDrop)
-  .set(Turn.StateId, Turn)
-  .set(Walk.StateId, Walk)
-  .set(Run.StateId, Run)
-  .set(RunTurn.StateId, RunTurn)
-  .set(RunStop.StateId, RunStop)
-  .set(Dash.StateId, Dash)
-  .set(DashTurn.StateId, DashTurn)
-  .set(JumpSquat.StateId, JumpSquat)
-  .set(Jump.StateId, Jump)
-  .set(NeutralFall.StateId, NeutralFall)
-  .set(Land.StateId, Land)
-  .set(SoftLand.StateId, SoftLand)
-  .set(LedgeGrab.StateId, LedgeGrab)
-  .set(AirDodge.StateId, AirDodge)
-  .set(Helpless.StateId, Helpless)
-  .set(NAttack.StateId, NAttack)
-  .set(SideCharge.StateId, SideCharge)
-  .set(SideChargeEx.StateId, SideChargeEx)
-  .set(SideTilt.StateId, SideTilt)
-  .set(UpCharge.StateId, UpCharge)
-  .set(UpChargeEx.StateId, UpChargeEx)
-  .set(DownCharge.StateId, DownCharge)
-  .set(DownChargeEx.StateId, DownChargeEx)
-  .set(DashAttack.StateId, DashAttack)
-  .set(NAerialAttack.StateId, NAerialAttack)
-  .set(FAerialAttack.StateId, FAerialAttack)
-  .set(UAirAttack.StateId, UAirAttack)
-  .set(BAirAttack.StateId, BAirAttack)
-  .set(DAirAttack.StateId, DAirAttack)
-  .set(NeutralSpecial.StateId, NeutralSpecial)
-  .set(SideSpecial.StateId, SideSpecial)
-  .set(SideSpecialExtension.StateId, SideSpecialExtension)
-  .set(SideSpecialAir.StateId, SideSpecialAir)
-  .set(SideSpecialExtensionAir.StateId, SideSpecialExtensionAir)
-  .set(DownSpecial.StateId, DownSpecial)
-  .set(DownSpecialAerial.StateId, DownSpecialAerial)
-  .set(UpSpecial.StateId, UpSpecial)
-  .set(HitStop.StateId, HitStop)
-  .set(HitSlide.StateId, HitSlide)
-  .set(HitFlinch.StateId, HitFlinch)
-  .set(Tumble.StateId, Tumble)
-  .set(Launch.StateId, Launch)
-  .set(Crouch.StateId, Crouch)
-  .set(DownTilt.StateId, DownTilt)
-  .set(UpTilt.StateId, UpTilt)
-  .set(NuetralGrab.StateId, NuetralGrab)
-  .set(Hold.StateId, Hold)
-  .set(Held.StateId, Held)
-  .set(GrabRelease.StateId, GrabRelease)
-  .set(GrabEscape.StateId, GrabEscape)
-  .set(ForwardThrow.StateId, ForwardThrow)
-  .set(BackThrow.StateId, BackThrow)
-  .set(UpThrow.StateId, UpThrow)
-  .set(DownThrow.StateId, DownThrow)
-  .set(ShieldBreak.StateId, ShieldBreak)
-  .set(ShieldBreakTumble.StateId, ShieldBreakTumble)
-  .set(ShieldBreakLand.StateId, ShieldBreakLand)
-  .set(Dizzy.StateId, Dizzy)
-  .set(WallKick.StateId, WallKick)
-  .set(Pummel.StateId, Pummel)
-  .set(GroundSlam.StateId, GroundSlam)
-  .set(WallSlam.StateId, WallSlam)
-  .set(DirtNap.StateId, DirtNap)
-  .set(GetUp.StateId, GetUp)
-  .set(GetUpRollForward.StateId, GetUpRollForward)
-  .set(GetUpRollBack.StateId, GetUpRollBack)
-  .set(LedgeGetUp.StateId, LedgeGetUp)
-  .set(LedgeAttack.StateId, LedgeAttack)
-  .set(LedgeRoll.StateId, LedgeRoll)
-  .set(TechInPlace.StateId, TechInPlace)
-  .set(RollTech.StateId, RollTech)
-  .set(GetUpAttack.StateId, GetUpAttack);
+  public GetConditions(): Array<condition> | undefined {
+    return this.condtions;
+  }
 
+  public GetDefaults(): Array<condition> | undefined {
+    return this.defaultConditions;
+  }
+
+  public SetMappings(mappingsArray: { geId: GameEventId; sId: StateId }[]) {
+    mappingsArray.forEach((actSt) => {
+      this.mappings.set(actSt.geId, actSt.sId);
+    });
+  }
+
+  public SetConditions(conditions: Array<condition>) {
+    this.condtions = conditions;
+  }
+
+  public SetDefaults(conditions: Array<condition>) {
+    this.defaultConditions = conditions;
+  }
+}
+
+export type FSMNode = {
+  State: FSMState;
+  DirectTransitions: { geId: GameEventId; sId: StateId }[];
+  Conditions: Array<condition>;
+  DefaultConditions: Array<condition>;
+};
+
+const AllNodes = [
+  IdleNode,
+  WalkNode,
+  TurnNode,
+  DashNode,
+  DashTurnNode,
+  RunNode,
+  RunTurnNode,
+  RunStopNode,
+  JumpSquatNode,
+  JumpNode,
+  NeutralFallNode,
+  LandNode,
+  SoftLandNode,
+  LedgeGrabNode,
+  LedgeGetUpNode,
+  LedgeAttackNode,
+  LedgeRollNode,
+  AirDodgeNode,
+  HelplessNode,
+  HitStopNode,
+  LaunchNode,
+  TumbleNode,
+  CrouchNode,
+  ShieldRaiseNode,
+  ShieldNode,
+  SpotDodgeNode,
+  RollDodgeNode,
+  ShieldDropNode,
+  NAttackNode,
+  DashAttackNode,
+  DownTiltNode,
+  SideTiltNode,
+  UpTiltNode,
+  SideChargeNode,
+  SideChargeExNode,
+  UpChargeNode,
+  UpChargeExNode,
+  DownChargeNode,
+  DownChargeExNode,
+  PummelNode,
+  GetUpAttackNode,
+  NAerialAttackNode,
+  FAerialAttackNode,
+  UAirAttackNode,
+  BAirAttackNode,
+  DAirAttackNode,
+  NeutralSpecialNode,
+  SideSpecialNode,
+  SideSpecialExtensionNode,
+  SideSpecialAirNode,
+  SideSpecialExtensionAirNode,
+  DownSpecialNode,
+  DownSpecialAerialNode,
+  UpSpecialNode,
+  NuetralGrabNode,
+  HoldNode,
+  HeldNode,
+  GrabReleaseNode,
+  GrabEscapeNode,
+  ShieldBreakNode,
+  ShieldBreakTumbleNode,
+  ShieldBreakLandNode,
+  DizzyNode,
+  WallKickNode,
+  HitSlideNode,
+  HitFlinchNode,
+  ForwardThrowNode,
+  BackThrowNode,
+  UpThrowNode,
+  DownThrowNode,
+  GroundSlamNode,
+  WallSlamNode,
+  DirtNapNode,
+  GetUpNode,
+  GetUpRollForwardNode,
+  GetUpRollBackNode,
+  TechInPlaceNode,
+  RollTechNode,
+];
+
+export const ActionMappings = new Map<StateId, ActionStateMappings>();
+export const FSMStates = new Map<StateId, FSMState>();
+
+for (const node of AllNodes) {
+  FSMStates.set(node.State.StateId, node.State);
+  
+  const mappings = new ActionStateMappings();
+  mappings.SetMappings(node.DirectTransitions);
+  if (node.Conditions && node.Conditions.length > 0) {
+    mappings.SetConditions(node.Conditions);
+  }
+  if (node.DefaultConditions && node.DefaultConditions.length > 0) {
+    mappings.SetDefaults(node.DefaultConditions);
+  }
+  ActionMappings.set(node.State.StateId, mappings);
+}
+
+// Keeping original Attack and Grab mappings
 export const AttackGameEventMappings = new Map<GameEventId, AttackId>()
   .set(GAME_EVENT_IDS.ATTACK_GE, ATTACK_IDS.N_GRND_ATK)
   .set(GAME_EVENT_IDS.SIDE_CHARGE_GE, ATTACK_IDS.S_CHARGE_ATK)

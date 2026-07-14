@@ -1,27 +1,27 @@
+import { CreateDiamondFromHistory } from '../entity/components/ecb';
+import {
+  CanOnlyFallOffLedgeWhenFacingAwayFromIt,
+  Player,
+  PlayerOnPlats,
+  PlayerOnPlatsReturnsPlatform,
+  PlayerOnPlatsReturnsYCoord,
+  SetPlayerPositionRaw
+} from '../entity/playerOrchestrator';
 import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import {
+  CanStateWalkOffLedge,
   GAME_EVENT_IDS,
-  STATE_IDS,
-  CanStateWalkOffLedge
+  STATE_IDS
 } from '../finiteStateMachines/player/shared';
 import { FixedPoint } from '../math/fixedPoint';
-import { LineSegmentIntersectionFp } from '../physics/collisions';
-import {
-  PlayerOnPlats,
-  CanOnlyFallOffLedgeWhenFacingAwayFromIt,
-  PlayerOnPlatsReturnsYCoord,
-  SetPlayerPositionRaw,
-  Player,
-  PlayerOnPlatsReturnsPlatform
-} from '../entity/playerOrchestrator';
-import { World } from '../world/world';
-import { ShouldSoftlandRaw } from './shared';
-import { CreateDiamondFromHistory } from '../entity/components/ecb';
 import {
   CORRECTION_DEPTH_RAW,
   POINT_EIGHT,
   POINT_FIVE
 } from '../math/numberConstants';
+import { LineSegmentIntersectionFp } from '../physics/collisions';
+import { World } from '../world/world';
+import { ShouldSoftlandRaw } from './shared';
 import { GetECBAABBHullCC } from './shared/AABBHelper';
 
 const NEG_ZERO_POINT_EIGHT = -POINT_EIGHT;

@@ -3,14 +3,14 @@ import {
   Player,
   SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
-import { PlayerSensors } from '../../game/engine/systems/sensors';
-import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
 import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { NumberToRaw } from '../../game/engine/math/fixedPoint';
+import { defaultStage } from '../../game/engine/stage/stageMain';
+import { PlayerSensors } from '../../game/engine/systems/sensors';
 import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import { ApplyVelocityDecay } from '../../game/engine/systems/velocityDecay';
-import { defaultStage } from '../../game/engine/stage/stageMain';
-import { NumberToRaw } from '../../game/engine/math/fixedPoint';
+import { World } from '../../game/engine/world/world';
 
 describe('Sensor system tests', () => {
   let world: World;

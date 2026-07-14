@@ -3,8 +3,8 @@ import { COMMAND_NAMES, HandleCommand } from '../game/engine/command/command';
 import { ActivateSensorCommand } from '../game/engine/command/commands/activateSensor';
 import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switchPlayerState';
 import {
-  STATE_IDS,
-  GAME_EVENT_IDS
+  GAME_EVENT_IDS,
+  STATE_IDS
 } from '../game/engine/finiteStateMachines/player/shared';
 
 import { Player } from '../game/engine/entity/playerOrchestrator';

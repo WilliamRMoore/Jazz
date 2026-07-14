@@ -1,6 +1,6 @@
 import { ECBShapesConfig } from '../../../character/shared';
 import { StateId } from '../../finiteStateMachines/player/shared';
-import { FixedPoint, NumberToRaw, MultiplyRaw } from '../../math/fixedPoint';
+import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { DiamondDTO } from '../../pools/ECBDiamonDTO';
 import { Pool } from '../../pools/Pool';

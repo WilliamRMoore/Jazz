@@ -1,9 +1,7 @@
-import { World } from '../engine/world/world';
-import { Lerp } from '../engine/utils';
-import { frameNumber } from '../engine/entity/components/attack';
 import { MainConfig } from '../engine/config/main-config';
 import { RawToNumber } from '../engine/math/fixedPoint';
 import { PlayerStateHistory } from '../engine/systems/history';
+import { Lerp } from '../engine/utils';
 
 export class PlayerLerper {
   private pool: LerpedPlayer[] = [];

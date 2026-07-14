@@ -1,21 +1,21 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage } from '../../game/engine/stage/stageMain';
-import { PlatformDetection } from '../../game/engine/systems/platformCollision';
-import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
-import { ApplyVelocity } from '../../game/engine/systems/velocity';
-import {
-  Idle,
-  NeutralFall
-} from '../../game/engine/finiteStateMachines/player/states';
-import { FixedPoint } from '../../game/engine/math/fixedPoint';
 import * as playerOrchestratorModule from '../../game/engine/entity/playerOrchestrator';
 import {
   Player,
   SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import {
+  Idle,
+  NeutralFall
+} from '../../game/engine/finiteStateMachines/player/states';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { FixedPoint } from '../../game/engine/math/fixedPoint';
+import { defaultStage } from '../../game/engine/stage/stageMain';
 import { RecordHistory } from '../../game/engine/systems/history';
+import { PlatformDetection } from '../../game/engine/systems/platformCollision';
+import { ApplyVelocity } from '../../game/engine/systems/velocity';
+import { World } from '../../game/engine/world/world';
 
 describe('Platform Collision system tests', () => {
   let p: Player;

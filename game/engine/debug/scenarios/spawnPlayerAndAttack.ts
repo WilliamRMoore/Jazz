@@ -1,5 +1,5 @@
 import { DefaultCharacterConfig } from '../../../character/default';
-import { STATE_IDS, StateId } from '../../finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../finiteStateMachines/player/shared';
 import { RawToNumber } from '../../math/fixedPoint';
 import { CORRECTION_DEPTH_RAW } from '../../math/numberConstants';
 import { ToFV } from '../../utils';

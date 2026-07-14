@@ -1,15 +1,20 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
+import {
+  Player,
+  SetPlayerInitialPositionRaw
+} from '../../game/engine/entity/playerOrchestrator';
 import { StateMachine } from '../../game/engine/finiteStateMachines/player/PlayerStateMachine';
 import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { IInputStore } from '../../game/engine/managers/inputManager';
 import {
   FixedPoint,
   NumberToRaw,
   RawToNumber
 } from '../../game/engine/math/fixedPoint';
-import {
-  Player,
-  SetPlayerInitialPositionRaw
-} from '../../game/engine/entity/playerOrchestrator';
+import { Pool } from '../../game/engine/pools/Pool';
+import { PooledVector } from '../../game/engine/pools/PooledVector';
+import { defaultStage } from '../../game/engine/stage/stageMain';
 import {
   CalculateHitStop,
   CalculateHitStun,
@@ -17,14 +22,9 @@ import {
   CalculateLaunchVector,
   PlayerAttacks
 } from '../../game/engine/systems/attack';
-import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
-import { Pool } from '../../game/engine/pools/Pool';
-import { PooledVector } from '../../game/engine/pools/PooledVector';
-import { IInputStore } from '../../game/engine/managers/inputManager';
-import { defaultStage } from '../../game/engine/stage/stageMain';
-import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
 import { RecordIntoHistory } from '../../game/engine/systems/history';
+import { PlayerHistoryTable } from '../../game/engine/world/stateModules';
+import { World } from '../../game/engine/world/world';
 
 describe('Attack systesm tests', () => {
   let p1: Player;

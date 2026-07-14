@@ -7,13 +7,13 @@ import { SetVelocityCommand } from '../engine/command/commands/setPlayerVelocity
 import { SwitchPlayerStateCommand } from '../engine/command/commands/switchPlayerState';
 import { frameNumber } from '../engine/entity/components/attack';
 import {
-  StateId,
-  AttackId,
-  STATE_IDS,
   ATTACK_IDS,
+  AttackId,
   GAME_EVENT_IDS,
+  GRAB_IDS,
   GrabId,
-  GRAB_IDS
+  STATE_IDS,
+  StateId
 } from '../engine/finiteStateMachines/player/shared';
 
 import {

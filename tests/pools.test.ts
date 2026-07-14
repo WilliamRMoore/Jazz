@@ -1,4 +1,4 @@
-import { Pool, IPooledObject } from '../game/engine/pools/Pool';
+import { IPooledObject, Pool } from '../game/engine/pools/Pool';
 
 class MockPooledObject implements IPooledObject {
     public value: number = 0;

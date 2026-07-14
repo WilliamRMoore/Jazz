@@ -1,4 +1,7 @@
 import { PlayerAttacks } from '../systems/attack';
+import { Flags } from '../systems/flags';
+import { PlayerGrabs } from '../systems/grab';
+import { GrabMeter } from '../systems/grabMeter';
 import { Gravity } from '../systems/gravity';
 import { RecordHistory } from '../systems/history';
 import { LedgeGrabDetection } from '../systems/ledgeGrabDetection';
@@ -9,15 +12,12 @@ import { PlayerInput } from '../systems/playerInput';
 import { PlayerSensors } from '../systems/sensors';
 import { ShieldRegen } from '../systems/shieldRegen';
 import { StageCollisionDetection } from '../systems/stageCollision';
-import { Flags } from '../systems/flags';
+import { PlayerThrows } from '../systems/throw';
 import { ApplyVelocity } from '../systems/velocity';
 import { ApplyVelocityDecay } from '../systems/velocityDecay';
-import { PlayerGrabs } from '../systems/grab';
-import { GrabMeter } from '../systems/grabMeter';
 import { WallKick } from '../systems/wallKick';
 import { World } from '../world/world';
 import { GameLoop } from './jazzLocal';
-import { PlayerThrows } from '../systems/throw';
 
 export const DefaultGameLoop: GameLoop = (w: World) => {
   Flags(w);

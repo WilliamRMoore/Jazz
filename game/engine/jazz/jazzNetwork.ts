@@ -9,7 +9,7 @@ import { RollBackManager } from '../managers/rollBack';
 import { FlatVec } from '../physics/vector';
 import { Stage } from '../stage/stageMain';
 import { SetPlayerToFrame } from '../world/stateModules';
-import { World, AddNetowrkedPlayers } from '../world/world';
+import { AddNetowrkedPlayers, World } from '../world/world';
 import { DefaultGameLoop } from './jazzGameLoops';
 import { GameLoop } from './jazzLocal';
 

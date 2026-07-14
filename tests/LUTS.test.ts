@@ -1,10 +1,10 @@
 import { NumberToRaw } from '../game/engine/math/fixedPoint';
 import {
-  SIN_LUT,
-  COS_LUT,
   ATAN2_LUT,
   ATAN2_SIZE,
+  COS_LUT,
   LUT_SIZE,
+  SIN_LUT,
 } from '../game/engine/math/LUTS';
 
 describe('LUTS tests', () => {

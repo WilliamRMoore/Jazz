@@ -1,5 +1,3 @@
-import { RawToNumber } from '../math/fixedPoint';
-import { PlayerStateHistory } from '../systems/history';
 import {
   AttackId,
   AttackIdToNameMap,
@@ -10,6 +8,8 @@ import {
   StateId,
   StateIdToNameMap
 } from '../finiteStateMachines/player/shared';
+import { RawToNumber } from '../math/fixedPoint';
+import { PlayerStateHistory } from '../systems/history';
 type node = sVal | aVal;
 
 export type sVal = {

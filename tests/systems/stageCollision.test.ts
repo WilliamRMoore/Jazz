@@ -1,29 +1,29 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import {
-  defaultStage,
-  WallStage,
-  Stage
-} from '../../game/engine/stage/stageMain';
-import {
   Player,
   SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
-import { StageCollisionDetection } from '../../game/engine/systems/stageCollision';
-import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
 import {
-  STATE_IDS,
-  GAME_EVENT_IDS
+  GAME_EVENT_IDS,
+  STATE_IDS
 } from '../../game/engine/finiteStateMachines/player/shared';
-import { ApplyVelocity } from '../../game/engine/systems/velocity';
 import {
   Launch,
   NeutralFall
 } from '../../game/engine/finiteStateMachines/player/states';
+import { NewInputAction } from '../../game/engine/input/Input';
 import { FixedPoint } from '../../game/engine/math/fixedPoint';
-import { RecordHistory } from '../../game/engine/systems/history';
-import { ToFp } from '../../game/engine/utils';
 import { Line } from '../../game/engine/physics/vector';
+import {
+  defaultStage,
+  Stage,
+  WallStage
+} from '../../game/engine/stage/stageMain';
+import { RecordHistory } from '../../game/engine/systems/history';
+import { StageCollisionDetection } from '../../game/engine/systems/stageCollision';
+import { ApplyVelocity } from '../../game/engine/systems/velocity';
+import { ToFp } from '../../game/engine/utils';
+import { World } from '../../game/engine/world/world';
 
 describe('Stage Collision system tests', () => {
   let p: Player;

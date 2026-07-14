@@ -8,10 +8,6 @@ import {
   IntersectsCirclesRawBool
 } from '../physics/collisions';
 import { ActiveGrabBubblesDTO } from '../pools/ActiveGrabBubbles';
-import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import { Pool } from '../pools/Pool';
-import { PooledVector } from '../pools/PooledVector';
-import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
 import {
   GetActionSweptAABBHull,

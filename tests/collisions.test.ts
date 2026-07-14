@@ -1,19 +1,19 @@
-import {
-  FindArithemticMean,
-  IntersectsPolygons,
-  ClosestPointsBetweenSegments,
-  LineSegmentIntersectionFp,
-  IntersectsCircles,
-  LineSegmentIntersectionLine,
-  CreateConvexHull,
-} from '../game/engine/physics/collisions';
-import { Pool } from '../game/engine/pools/Pool';
-import { FlatVec, Line } from '../game/engine/physics/vector';
-import { CollisionResult } from '../game/engine/pools/CollisionResult';
-import { ProjectionResult } from '../game/engine/pools/ProjectResult';
-import { PooledVector } from '../game/engine/pools/PooledVector';
-import { ClosestPointsResult } from '../game/engine/pools/ClosestPointsResult';
 import { FixedPoint } from '../game/engine/math/fixedPoint';
+import {
+  ClosestPointsBetweenSegments,
+  CreateConvexHull,
+  FindArithemticMean,
+  IntersectsCircles,
+  IntersectsPolygons,
+  LineSegmentIntersectionFp,
+  LineSegmentIntersectionLine,
+} from '../game/engine/physics/collisions';
+import { FlatVec, Line } from '../game/engine/physics/vector';
+import { ClosestPointsResult } from '../game/engine/pools/ClosestPointsResult';
+import { CollisionResult } from '../game/engine/pools/CollisionResult';
+import { Pool } from '../game/engine/pools/Pool';
+import { PooledVector } from '../game/engine/pools/PooledVector';
+import { ProjectionResult } from '../game/engine/pools/ProjectResult';
 
 describe('FindArithemticMean', () => {
   test('should correctly calculate the arithmetic mean of vertices', () => {

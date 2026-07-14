@@ -1,11 +1,11 @@
-import { DebugRenderer, renderTarget } from '../render/debug-2d';
-import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
-import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
 import { DefaultCharacterConfig } from '../character/default';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
-import { World } from '../engine/world/world';
+import { GetInput, InputAction, NewInputAction } from '../engine/input/Input';
 import { JazzNetwork } from '../engine/jazz/jazzNetwork';
 import { ToFV } from '../engine/utils';
+import { World } from '../engine/world/world';
+import { DebugRenderer, renderTarget } from '../render/debug-2d';
+import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
 
 export type GamePadIndexes = Array<number>;
 

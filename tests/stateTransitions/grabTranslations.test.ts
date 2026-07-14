@@ -1,25 +1,16 @@
-import {
-  InitGrabEscapeRelations,
-  InitGrabRelations,
-  InitGrabReleaseRelations,
-  InitHeldRelations,
-  InitHoldRelations
-} from '../../game/engine/finiteStateMachines/player/relationshipMappings';
+import { ActionMappings } from '../../game/engine/finiteStateMachines/player/PlayerStateCollections';
 import {
   GAME_EVENT_IDS,
   STATE_IDS
 } from '../../game/engine/finiteStateMachines/player/shared';
 
 describe('grab translation tests', () => {
-  const grabTranslations = InitGrabRelations();
-  const holdTranslations = InitHoldRelations();
-  const heldTranslations = InitHeldRelations();
-  const grabReleaseTranslations = InitGrabReleaseRelations();
-  const grabEscapeTranslations = InitGrabEscapeRelations();
+  const heldTranslations = ActionMappings.get(STATE_IDS.GRAB_HELD_S);
+  
   beforeEach(() => {});
 
   test('held should be able to trnasition to grab escape', () => {
-    const stateId = heldTranslations.mappings.GetMapping(
+    const stateId = heldTranslations?.GetMapping(
       GAME_EVENT_IDS.GRAB_ESCAPE_GE
     );
     expect(stateId).toBeDefined();

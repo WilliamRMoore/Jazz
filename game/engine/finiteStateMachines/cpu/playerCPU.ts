@@ -1,18 +1,17 @@
 import { Player } from '../../entity/playerOrchestrator';
+import { InputAction, NewInputAction } from '../../input/Input';
+import { Sequencer } from '../../utils';
 import { World } from '../../world/world';
-import { GroundPatrol } from './sequences/groundPatrol';
-import { CPUAction } from './sequences/shared';
-import { IAstNode, SelectorNode } from './astNode';
 import {
   Node_IsOffStage,
   Node_IsOnPlatform,
   Node_ReturnSequence
 } from './analyzers/platformChecks';
-import { Recover } from './sequences/recover';
+import { IAstNode, SelectorNode } from './astNode';
 import { FallThrough } from './sequences/fallThrough';
-import { InputAction, NewInputAction } from '../../input/Input';
-import { STATE_IDS } from '../player/shared';
-import { Sequencer } from '../../utils';
+import { GroundPatrol } from './sequences/groundPatrol';
+import { Recover } from './sequences/recover';
+import { CPUAction } from './sequences/shared';
 
 export class PlayerCPU {
   public readonly ID: number;

@@ -1,9 +1,9 @@
 import { InputAction } from '../../../input/Input';
 import { World } from '../../../world/world';
 import { GAME_EVENT_IDS } from '../../player/shared';
+import { stageCenterRaw } from '../analyzers/stage';
 import { PlayerCPU } from '../playerCPU';
 import { CPUAction } from './shared';
-import { stageCenterRaw } from '../analyzers/stage';
 
 // For this POC, we just move towards the center of the stage, or left/right.
 export const GroundPatrol: CPUAction = {

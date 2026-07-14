@@ -1,5 +1,5 @@
-import { GameEventId } from '../../finiteStateMachines/player/shared';
 import { Player } from '../../entity/playerOrchestrator';
+import { GameEventId } from '../../finiteStateMachines/player/shared';
 import { World } from '../../world/world';
 
 export type SwitchPlayerStateCommand = {

@@ -1,8 +1,8 @@
 import {
-  NumberToRaw,
+  DivideRaw,
   FixedPoint,
   MultiplyRaw,
-  DivideRaw,
+  NumberToRaw,
   RawToNumber,
 } from './math/fixedPoint';
 import { ATAN2_LUT, ATAN2_SIZE, LUT_SIZE } from './math/LUTS';

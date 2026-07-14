@@ -1,8 +1,8 @@
 import {
+  DivideRaw,
   FixedPoint,
   MultiplyRaw,
   SqrtRaw,
-  DivideRaw,
 } from '../math/fixedPoint';
 import { FlatVec } from '../physics/vector';
 import { IPooledObject } from './Pool';

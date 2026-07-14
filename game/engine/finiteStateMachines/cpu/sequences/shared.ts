@@ -1,6 +1,6 @@
-import { PlayerCPU } from '../playerCPU';
-import { World } from '../../../world/world';
 import { InputAction } from '../../../input/Input';
+import { World } from '../../../world/world';
+import { PlayerCPU } from '../playerCPU';
 
 export type CPUAction = {
   Name: string;

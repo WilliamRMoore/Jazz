@@ -1,9 +1,9 @@
+import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { STATE_IDS } from '../finiteStateMachines/player/shared';
 import { DivideRaw } from '../math/fixedPoint';
-import { AABBIntersect, IntersectsPolygons } from '../physics/collisions';
-import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
-import { World } from '../world/world';
 import { ONE_POINT_FIVE, TWO } from '../math/numberConstants';
+import { AABBIntersect, IntersectsPolygons } from '../physics/collisions';
+import { World } from '../world/world';
 
 const MOVE_X = ONE_POINT_FIVE;
 

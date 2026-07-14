@@ -1,10 +1,10 @@
-import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
-import { STATE_IDS } from '../finiteStateMachines/player/shared';
-import { NumberToRaw } from '../math/fixedPoint';
 import {
   Player,
   SetPlayerInitialPositionRaw
 } from '../entity/playerOrchestrator';
+import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
+import { STATE_IDS } from '../finiteStateMachines/player/shared';
+import { NumberToRaw } from '../math/fixedPoint';
 import { World } from '../world/world';
 
 export function OutOfBoundsCheck(world: World): void {

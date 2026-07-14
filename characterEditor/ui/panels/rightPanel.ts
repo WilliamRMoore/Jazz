@@ -1,5 +1,4 @@
 import { CharacterConfig } from '../../../game/character/shared';
-import { traitTypes } from '../editForm/editableTrait';
 import { sections } from './leftPanel';
 
 export class RightPanel {

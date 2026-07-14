@@ -8,11 +8,11 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS
 } from '../../game/engine/finiteStateMachines/player/shared';
+import { NewInputAction } from '../../game/engine/input/Input';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw, RawToNumber } from '../../game/engine/math/fixedPoint';
 import { PlayerThrows } from '../../game/engine/systems/throw';
 import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
 
 describe('Throws System Tests', () => {
   let w: World;

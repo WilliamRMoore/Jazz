@@ -1,4 +1,4 @@
-import { MainConfig, envConfig } from '../config/main-config';
+import { envConfig, MainConfig } from '../config/main-config';
 import { PlayerDebugAdapter } from '../debug/playerDebugger';
 import { Player } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';

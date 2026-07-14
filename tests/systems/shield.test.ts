@@ -1,13 +1,13 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { ShieldRegen } from '../../game/engine/systems/shieldRegen';
-import { World } from '../../game/engine/world/world';
-import { NewInputAction } from '../../game/engine/input/Input';
 import {
   GAME_EVENT_IDS,
   STATE_IDS
 } from '../../game/engine/finiteStateMachines/player/shared';
+import { NewInputAction } from '../../game/engine/input/Input';
+import { defaultStage } from '../../game/engine/stage/stageMain';
+import { ShieldRegen } from '../../game/engine/systems/shieldRegen';
+import { World } from '../../game/engine/world/world';
 
 describe('Shield system tests', () => {
   let p: Player;

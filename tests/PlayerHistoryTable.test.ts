@@ -1,5 +1,5 @@
-import { createEmptyHistoryData } from '../game/engine/world/stateModules';
 import { envConfig } from '../game/engine/config/main-config';
+import { createEmptyHistoryData } from '../game/engine/world/stateModules';
 
 jest.mock('../game/engine/config/main-config', () => ({
   envConfig: {

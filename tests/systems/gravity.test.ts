@@ -1,14 +1,14 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage } from '../../game/engine/stage/stageMain';
+import { Attack } from '../../game/engine/entity/components/attack';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
+import {
+  ATTACK_IDS,
+  GAME_EVENT_IDS,
+  STATE_IDS
+} from '../../game/engine/finiteStateMachines/player/shared';
+import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Gravity } from '../../game/engine/systems/gravity';
 import { World } from '../../game/engine/world/world';
-import {
-  STATE_IDS,
-  ATTACK_IDS,
-  GAME_EVENT_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
-import { Attack } from '../../game/engine/entity/components/attack';
 
 describe('Gravity system tests', () => {
   let p: Player;

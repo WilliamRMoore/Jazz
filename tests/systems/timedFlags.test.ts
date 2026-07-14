@@ -4,13 +4,12 @@ import {
   JumpSquat,
   NeutralFall
 } from '../../game/engine/finiteStateMachines/player/states';
+import { NewInputAction } from '../../game/engine/input/Input';
 import {
-  IInputStore,
-  InputStore
+  IInputStore
 } from '../../game/engine/managers/inputManager';
 import { Flags } from '../../game/engine/systems/flags';
 import { World } from '../../game/engine/world/world';
-import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 
 describe('TimedFlags system tests', () => {
   let p: Player;

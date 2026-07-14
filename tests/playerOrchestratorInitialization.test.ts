@@ -4,16 +4,15 @@ import { SetPlayerSensorDetectCommand } from '../game/engine/command/commands/se
 import { SetVelocityCommand } from '../game/engine/command/commands/setPlayerVelocity';
 import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switchPlayerState';
 import {
+  Player, PlayerECBAABB,
+  PlayerHurtCapAABB
+} from '../game/engine/entity/playerOrchestrator';
+import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS
 } from '../game/engine/finiteStateMachines/player/shared';
-import { Player } from '../game/engine/entity/playerOrchestrator';
 import { PlayerStateHistory } from '../game/engine/systems/history';
-import {
-  PlayerECBAABB,
-  PlayerHurtCapAABB
-} from '../game/engine/entity/playerOrchestrator';
 
 describe('Player Orechstraotr Initialization', () => {
   let config: DefaultCharacterConfig;

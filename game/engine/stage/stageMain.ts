@@ -1,5 +1,4 @@
-import { AABB } from '../entity/components/shared/AABB';
-import { NumberToRaw, FixedPoint } from '../math/fixedPoint';
+import { FixedPoint, NumberToRaw } from '../math/fixedPoint';
 import { AABBIntersect } from '../physics/collisions';
 import { FlatVec, Line, VertArrayContainsFlatVec } from '../physics/vector';
 import { AABBDTO } from '../pools/AABBDTO';

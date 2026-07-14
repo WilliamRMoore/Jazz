@@ -1,12 +1,11 @@
-import { Player } from '../../entity/playerOrchestrator';
-import { World } from '../../world/world';
-import { InputAction } from '../../input/Input';
-import { RunCondition } from './conditions';
-import { ActionStateMappings } from './relationshipMappings';
-import { StateId, GameEventId, STATE_IDS } from './shared';
-import { Idle } from './states';
 import { FSMInfoComponent } from '../../entity/components/fsmInfo';
-import { ActionMappings, FSMStates } from './PlayerStateCollections';
+import { Player } from '../../entity/playerOrchestrator';
+import { InputAction } from '../../input/Input';
+import { World } from '../../world/world';
+import { RunCondition } from './conditions';
+import { ActionMappings, ActionStateMappings, FSMStates } from './PlayerStateCollections';
+import { GameEventId, STATE_IDS, StateId } from './shared';
+import { Idle } from './states';
 
 export type FSMState = {
   StateName: string;

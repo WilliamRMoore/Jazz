@@ -1,17 +1,17 @@
 import {
-  STATE_IDS,
-  GAME_EVENT_IDS
+  GAME_EVENT_IDS,
+  STATE_IDS
 } from '../finiteStateMachines/player/shared';
 import { DivideRaw } from '../math/fixedPoint';
 
-import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
 import {
   PlayerOnStageOrPlats,
   SetPlayerPositionRaw
 } from '../entity/playerOrchestrator';
-import { FlatVec } from '../physics/vector';
 import { TWO } from '../math/numberConstants';
-import { PlayerData, StageData, Pools } from '../world/stateModules';
+import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
+import { FlatVec } from '../physics/vector';
+import { PlayerData, Pools, StageData } from '../world/stateModules';
 import { World } from '../world/world';
 
 const combinedVerts = new Array<FlatVec>();

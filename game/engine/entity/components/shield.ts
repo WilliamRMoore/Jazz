@@ -1,8 +1,8 @@
 import {
   DivideRaw,
+  FixedPoint,
   MultiplyRaw,
   NumberToRaw,
-  FixedPoint,
 } from '../../math/fixedPoint';
 
 const ONE = NumberToRaw(1);

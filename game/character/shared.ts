@@ -1,8 +1,8 @@
 import { Command } from '../engine/command/command';
 import {
-  StateId,
   AttackId,
-  GrabId
+  GrabId,
+  StateId
 } from '../engine/finiteStateMachines/player/shared';
 
 type frameNumber = number;

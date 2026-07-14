@@ -8,7 +8,7 @@ import {
   POINT_TWO_FIVE
 } from '../../math/numberConstants';
 import { World } from '../../world/world';
-import { StateId, STATE_IDS, GAME_EVENT_IDS, GameEventId } from './shared';
+import { GAME_EVENT_IDS, GameEventId, STATE_IDS, StateId } from './shared';
 
 // Constants for conditions
 const WALK_TO_DASH_STATE_FRAME_THRESHOLD = 2;

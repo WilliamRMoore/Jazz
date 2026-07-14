@@ -1,9 +1,8 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { World } from '../../game/engine/world/world';
-import { PlayerCollisionDetection } from '../../game/engine/systems/playerCollision';
 import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
-import { FixedPoint } from '../../game/engine/math/fixedPoint';
+import { PlayerCollisionDetection } from '../../game/engine/systems/playerCollision';
+import { World } from '../../game/engine/world/world';
 
 describe('Player Collision system tests', () => {
   let p1: Player;

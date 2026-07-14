@@ -1,9 +1,9 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
-import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
+import { NumberToRaw } from '../../game/engine/math/fixedPoint';
+import { defaultStage } from '../../game/engine/stage/stageMain';
 import { ApplyVelocityDecay } from '../../game/engine/systems/velocityDecay';
 import { World } from '../../game/engine/world/world';
-import { FixedPoint, NumberToRaw } from '../../game/engine/math/fixedPoint';
 
 describe('Velocity Decay system tests', () => {
   let p: Player;

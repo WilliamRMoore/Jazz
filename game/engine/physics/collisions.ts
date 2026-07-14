@@ -1,21 +1,21 @@
+import {
+  DistanceRaw,
+  DivideRaw,
+  DotProductRaw,
+  DotProductVectorRaw,
+  FixedPoint,
+  MAX_RAW_VALUE,
+  MIN_RAW_VALUE,
+  MultiplyRaw,
+  NumberToRaw
+} from '../math/fixedPoint';
+import { ClosestPointsResult } from '../pools/ClosestPointsResult';
 import { CollisionResult, ICollisionResult } from '../pools/CollisionResult';
 import { Pool } from '../pools/Pool';
-import { IProjectionResult, ProjectionResult } from '../pools/ProjectResult';
 import { PooledVector } from '../pools/PooledVector';
-import { FlatVec, Line } from './vector';
+import { IProjectionResult, ProjectionResult } from '../pools/ProjectResult';
 import { ClampWithMin } from '../utils';
-import { ClosestPointsResult } from '../pools/ClosestPointsResult';
-import {
-  NumberToRaw,
-  MAX_RAW_VALUE,
-  DotProductRaw,
-  FixedPoint,
-  DotProductVectorRaw,
-  MultiplyRaw,
-  DivideRaw,
-  MIN_RAW_VALUE,
-  DistanceRaw
-} from '../math/fixedPoint';
+import { FlatVec, Line } from './vector';
 
 const ONE = NumberToRaw(1);
 

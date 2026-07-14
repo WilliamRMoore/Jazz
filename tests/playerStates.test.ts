@@ -1,29 +1,28 @@
 import { DefaultCharacterConfig } from '../game/character/default';
-import { Player } from '../game/engine/entity/playerOrchestrator';
-import { World } from '../game/engine/world/world';
-import { GetAtan2IndexRaw } from '../game/engine/utils';
+import { Player, SetPlayerPositionRaw } from '../game/engine/entity/playerOrchestrator';
 import {
-  AirDodge,
-  Idle,
-  Walk,
-  Dash
-} from '../game/engine/finiteStateMachines/player/states';
-import {
-  STATE_IDS,
+  ATTACK_IDS,
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
-  ATTACK_IDS
+  STATE_IDS
 } from '../game/engine/finiteStateMachines/player/shared';
+import {
+  AirDodge,
+  Dash,
+  Idle,
+  Walk
+} from '../game/engine/finiteStateMachines/player/states';
 import { NewInputAction } from '../game/engine/input/Input';
 import {
+  MultiplyRaw,
   NumberToRaw,
-  RawToNumber,
-  MultiplyRaw
+  RawToNumber
 } from '../game/engine/math/fixedPoint';
 import { COS_LUT, SIN_LUT } from '../game/engine/math/LUTS';
-import { ApplyVelocity } from '../game/engine/systems/velocity';
 import { defaultStage } from '../game/engine/stage/stageMain';
-import { SetPlayerPositionRaw } from '../game/engine/entity/playerOrchestrator';
+import { ApplyVelocity } from '../game/engine/systems/velocity';
+import { GetAtan2IndexRaw } from '../game/engine/utils';
+import { World } from '../game/engine/world/world';
 describe('Player states tests', () => {
   let p: Player;
   let w: World;

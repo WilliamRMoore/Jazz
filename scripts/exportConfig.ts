@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { DefaultCharacterConfig } from '../game/character/default';
 import { serializeCharacterConfig } from '../game/character/configSerializer';
+import { DefaultCharacterConfig } from '../game/character/default';
 
 // 1. Serialize the default character config
 const configInstance = new DefaultCharacterConfig();
