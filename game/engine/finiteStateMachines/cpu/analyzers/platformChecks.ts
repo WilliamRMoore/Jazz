@@ -24,6 +24,22 @@ export class Node_IsOffStage implements IAstNode {
   }
 }
 
+export class Node_IsAerialActionable implements IAstNode {
+  constructor(private childNode: IAstNode) {}
+
+  Evaluate(world: World, player: Player): CPUAction | undefined {
+    const playerStateId = player.FSMInfo.CurrentStateId;
+    switch (playerStateId) {
+      case STATE_IDS.N_FALL_S:
+      case STATE_IDS.TUMBLE_S:
+      case STATE_IDS.HELPLESS_S:
+        return this.childNode.Evaluate(world, player);
+      default:
+        return undefined;
+    }
+  }
+}
+
 export class Node_IsOnPlatform implements IAstNode {
   constructor(private childNode: IAstNode) {}
 

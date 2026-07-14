@@ -50,22 +50,11 @@ export class PlayerCPU {
     ]);
   }
 
+  public get SequenceFrame() {
+    return this.sequenceFrame;
+  }
+
   public NextInput(): InputAction {
-    const stateId = this.Player.FSMInfo.CurrentStateId;
-    const isHitstun =
-      stateId === STATE_IDS.HIT_FLINCH_S ||
-      stateId === STATE_IDS.HIT_SLIDE_S ||
-      stateId === STATE_IDS.HIT_STOP_S ||
-      stateId === STATE_IDS.LAUNCH_S ||
-      stateId === STATE_IDS.TUMBLE_S;
-
-    if (isHitstun) {
-      if (this.CurrentCPUSeq && this.CurrentCPUSeq.OnExit) {
-        this.CurrentCPUSeq.OnExit(this, this.world);
-      }
-      this.CurrentCPUSeq = undefined;
-    }
-
     // 2. Evaluate AST if no active sequence
     if (this.CurrentCPUSeq === undefined) {
       // For POC, just using current world state.

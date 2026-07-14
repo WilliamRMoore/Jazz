@@ -12,6 +12,7 @@
     },
     "include": [
         "game",
-        "tests"
+        "tests",
+        "characterEditor"
     ]
 }

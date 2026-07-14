@@ -1,0 +1,138 @@
+/* editor.css */
+:root {
+    /* Sleek Dark Mode Palette */
+    --bg-dark: #0d0d0d;
+    --panel-bg: #1a1a1a;
+    --border-color: #333333;
+    --text-primary: #e0e0e0;
+    --accent: #8a2be2; /* A nice Jazz-fitting purple accent */
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    /* Modern typography */
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow: hidden; /* Prevent scrolling on the main window */
+}
+
+/* CSS Grid Layout */
+.main-editor-window {
+    display: grid;
+    /* 250px left panel, center takes remaining space, 300px right panel */
+    grid-template-columns: 250px 1fr 300px;
+    /* 40px top toolbar, Canvas takes remaining height, 250px bottom timeline/panel */
+    grid-template-rows: 40px 1fr 250px;
+    height: 100vh;
+    width: 100vw;
+}
+
+.top-toolbar {
+    grid-column: 1 / 4; /* Spans all columns */
+    grid-row: 1;
+    background-color: var(--panel-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 10px;
+    z-index: 20;
+}
+
+.top-toolbar button {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.top-toolbar button:hover {
+    background-color: var(--border-color);
+}
+
+.left-panel {
+    grid-column: 1;
+    grid-row: 2 / 4; /* Spans height below toolbar */
+    background-color: var(--panel-bg);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5); /* Subtle depth */
+    z-index: 10;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Tree Menu Styles */
+.left-panel ul {
+    list-style-type: none;
+    padding-left: 15px;
+    margin: 5px 0;
+}
+.left-panel li {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+}
+.left-panel li:hover {
+    background-color: var(--border-color);
+}
+.left-panel li.active {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.editor.canvas.container {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+    /* The three.js canvas will be injected here and fill this space */
+}
+
+.right-panel {
+    grid-column: 3;
+    grid-row: 2 / 4; /* Spans height below toolbar */
+    background-color: var(--panel-bg);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+    z-index: 10;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Form Styles for Right Panel */
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 5px;
+    border-radius: 3px;
+}
+.form-group.flatvec-group {
+    display: flex;
+    gap: 10px;
+}
+.form-group.flatvec-group > div {
+    flex: 1;
+}
+
+.bottom-panel {
+    grid-column: 2;
+    grid-row: 3;
+    background-color: var(--panel-bg);
+    border-top: 1px solid var(--border-color);
+    z-index: 5;
+}

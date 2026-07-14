@@ -27,12 +27,19 @@ async function start() {
   if (fs.existsSync('index.html')) {
     fs.copyFileSync('index.html', path.join(PUBLIC_DIR, 'index.html'));
   }
+  if (fs.existsSync('characterEditor.html')) {
+    fs.copyFileSync('characterEditor.html', path.join(PUBLIC_DIR, 'characterEditor.html'));
+  }
+  if (fs.existsSync('editor.css')) {
+    fs.copyFileSync('editor.css', path.join(PUBLIC_DIR, 'editor.css'));
+  }
 
   // Setup ESBuild contexts for watch mode
   const mainCtx = await esbuild.context({
     entryPoints: [
       { in: 'game/index.ts', out: 'index' },
-      { in: 'game/workers/local-worker.ts', out: 'local-worker' }
+      { in: 'game/workers/local-worker.ts', out: 'local-worker' },
+      { in: 'characterEditor/core/characterEditor.ts', out: 'characterEditor' }
     ],
     bundle: true,
     outdir: 'public',
