@@ -11,7 +11,7 @@ export const LedgeGetUp: FSMState = {
   StateName: 'LedgeGetUp',
   StateId: STATE_IDS.LEDGE_GETUP_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.LEDGE_GETUP_S);
+    p.ECB.SetECBTrack(STATE_IDS.LEDGE_GETUP_S);
     p.Flags.FastFallOff();
     p.Flags.SetIntangabilityFrames(30);
 

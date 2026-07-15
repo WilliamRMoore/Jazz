@@ -57,7 +57,7 @@ export class ECBComponent {
   public readonly OriginalShape: ECBShape;
   private readonly curVerts = new Array<FlatVec>(4);
   public readonly ecbStateShapes: ECBShapes;
-  private currentShape: ECBShape;
+  private currentTrack: ECBShape;
 
   constructor(
     shapes: ECBShapesConfig,
@@ -79,7 +79,7 @@ export class ECBComponent {
         yOffset: new FixedPoint(val.yOffset)
       });
     }
-    this.currentShape = this.OriginalShape;
+    this.currentTrack = this.OriginalShape;
     FillArrayWithFlatVec(this.curVerts);
     this.playerPosRef = positionRef;
     this.Update();
@@ -89,8 +89,8 @@ export class ECBComponent {
     return this.curVerts;
   }
 
-  public SetECBShape(stateId: StateId): void {
-    this.currentShape = this.ecbStateShapes.get(stateId) || this.OriginalShape;
+  public SetECBTrack(stateId: StateId): void {
+    this.currentTrack = this.ecbStateShapes.get(stateId) || this.OriginalShape;
     this.Update();
   }
 
@@ -98,7 +98,7 @@ export class ECBComponent {
     const half = POINT_FIVE;
     const px = this.playerPosRef.X.Raw;
     const py = this.playerPosRef.Y.Raw;
-    const shape = this.currentShape;
+    const shape = this.currentTrack;
     const height = shape.height.Raw;
     const width = shape.width.Raw;
     const yOffset = shape.yOffset.Raw;
@@ -148,15 +148,15 @@ export class ECBComponent {
   }
 
   public get Height(): FixedPoint {
-    return this.currentShape.height;
+    return this.currentTrack.height;
   }
 
   public get Width(): FixedPoint {
-    return this.currentShape.width;
+    return this.currentTrack.width;
   }
 
   public get YOffset(): FixedPoint {
-    return this.currentShape.yOffset;
+    return this.currentTrack.yOffset;
   }
 
   public get _db_ecbShapes() {
@@ -164,12 +164,12 @@ export class ECBComponent {
   }
 
   public ResetECBShape(): void {
-    this.currentShape = this.OriginalShape;
+    this.currentTrack = this.OriginalShape;
     this.Update();
   }
 
   public set CompState(history: ECBHist) {
-    this.SetECBShape(history.stateId);
+    this.SetECBTrack(history.stateId);
   }
 }
 

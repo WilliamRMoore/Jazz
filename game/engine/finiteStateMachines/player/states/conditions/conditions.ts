@@ -491,11 +491,11 @@ export const ToDAir: condition = {
   StateId: STATE_IDS.D_AIR_S
 };
 
-export const SideTiltToWalk: condition = {
-  Name: 'SideTiltToWalk',
+export const DefaultToWalk: condition = {
+  Name: 'DefaultToWalk',
   ConditionFunc: (w: World, p: Player, ia: InputAction) => {
     if (
-      ia.Action !== GAME_EVENT_IDS.MOVE_GE ||
+      ia.Action !== GAME_EVENT_IDS.MOVE_GE &&
       ia.Action !== GAME_EVENT_IDS.MOVE_FAST_GE
     ) {
       return false;

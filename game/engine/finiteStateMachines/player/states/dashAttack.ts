@@ -25,5 +25,5 @@ export const DashAttackNode: FSMNode = {
     { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
   ],
   Conditions: [],
-  DefaultConditions: [Conditions.defaultIdle]
+  DefaultConditions: [Conditions.DefaultToWalk, Conditions.defaultIdle]
 };

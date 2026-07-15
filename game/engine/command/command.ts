@@ -2,9 +2,11 @@ import { Player } from '../entity/playerOrchestrator';
 import { World } from '../world/world';
 import { ActivatePlayerSensor } from './commands/activateSensor';
 import { DeactivatePlayerSensor } from './commands/deactivateSensor';
+import { SetInvincibility } from './commands/setInvencibility';
 import { SetJumpCount } from './commands/setJumpCount';
 import { SetPlayerSensorReactor } from './commands/setPlayerSensorReactor';
 import { SetPlayerVelocity } from './commands/setPlayerVelocity';
+import { SetSuperArmor } from './commands/setSuperArmor';
 import { SwitchPlayerState } from './commands/switchPlayerState';
 
 export type Command = {
@@ -19,6 +21,8 @@ class CommandNames {
   public readonly SET_SENSOR_REACT_COMMAND = 'PL_SET_SENSOR_DETECT_COMMAND';
   public readonly VELOCITY_SET = 'PL_SET_VELOCITY';
   public readonly SET_JUMP_COUNT = 'PL_SET_JUMP_COUNT';
+  public readonly SET_INVINCIBILITY_FRAMES = 'PL_SET_INVINCIBILITY_FRAMES';
+  public readonly SET_SUPER_ARMOR_FRAMES = 'PL_SET_SUPER_ARMOR_FRAMES';
 }
 
 export const COMMAND_NAMES = new CommandNames();
@@ -42,6 +46,12 @@ export function HandleCommand(w: World, p: Player, c: Command) {
       break;
     case COMMAND_NAMES.SET_JUMP_COUNT:
       SetJumpCount(p, c);
+      break;
+    case COMMAND_NAMES.SET_INVINCIBILITY_FRAMES:
+      SetInvincibility(p, c);
+      break;
+    case COMMAND_NAMES.SET_SUPER_ARMOR_FRAMES:
+      SetSuperArmor(p, c);
       break;
   }
 }

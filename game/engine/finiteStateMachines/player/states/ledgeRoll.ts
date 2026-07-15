@@ -12,7 +12,7 @@ export const LedgeRoll: FSMState = {
   StateName: 'LedgeRoll',
   StateId: STATE_IDS.LEDGE_ROLL_S,
   OnEnter: (p: Player, w: World) => {
-    p.ECB.SetECBShape(STATE_IDS.LEDGE_ROLL_S);
+    p.ECB.SetECBTrack(STATE_IDS.LEDGE_ROLL_S);
     p.Flags.FastFallOff();
 
     const getUpFrames = p.LedgeDetector.LedgeRollFrames.ledgeGetUpFrames; // By this frame player should be back on stage

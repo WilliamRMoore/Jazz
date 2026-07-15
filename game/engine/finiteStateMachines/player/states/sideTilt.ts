@@ -33,8 +33,9 @@ export const SideTilt: FSMState = {
 export const SideTiltNode: FSMNode = {
   State: SideTilt,
   DirectTransitions: [
-    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S }
+    { geId: GAME_EVENT_IDS.HIT_STOP_GE, sId: STATE_IDS.HIT_STOP_S },
+    { geId: GAME_EVENT_IDS.GRAB_HELD_GE, sId: STATE_IDS.GRAB_HELD_S }
   ],
-  Conditions: [Conditions.SideTiltToWalk],
-  DefaultConditions: [Conditions.defaultIdle]
+  Conditions: [],
+  DefaultConditions: [Conditions.DefaultToWalk, Conditions.defaultIdle]
 };

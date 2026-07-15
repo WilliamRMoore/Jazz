@@ -221,7 +221,7 @@ export class StateMachine {
     }
 
     fsmInfo.SetStateFrameToZero();
-    this.player.ECB.SetECBShape(fsmInfo.CurrentState.StateId);
+    this.player.ECB.SetECBTrack(fsmInfo.CurrentState.StateId);
     fsmInfo.CurrentState.OnEnter(this.player, this.world);
   }
 

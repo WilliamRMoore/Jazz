@@ -84,6 +84,8 @@ export function RecordIntoHistory(p: Player, r: PlayerStateHistory) {
   r.fasFalling = flags.IsFastFalling;
   r.hitPauseFrames = flags.HitPauseFrames;
   r.intangabilityFrames = flags.IntangabilityFrames;
+  r.invincibilityFrames = flags.InvincibilityFrames;
+  r.superArmorFrames = flags.SuperArmorFrames;
   r.disablePlatformDetectionFrames = flags.DisablePlatDetectionFrames;
   r.lastTechFrame = flags.LastTechFrame;
   r.velocityDecayActive = flags.IsVelocityDecayActive;
