@@ -16,48 +16,23 @@ export type EcbHistoryDTO = {
   Right: FlatVec;
 };
 
-export function CreateDiamondFromHistory(
-  ecbShape: ECBShape,
-  posXRaw: number,
-  posYRaw: number,
-  pool: Pool<DiamondDTO>
-): DiamondDTO {
-  const diamondDTO = pool.Rent();
-  const height = ecbShape.height.Raw;
-  const width = ecbShape.width.Raw;
-  const yOffset = ecbShape.yOffset.Raw;
-
-  const halfWidth = MultiplyRaw(width, POINT_FIVE);
-  const halfHeight = MultiplyRaw(height, POINT_FIVE);
-
-  diamondDTO.Bottom.X.SetFromRaw(posXRaw);
-  diamondDTO.Bottom.Y.SetFromRaw(posYRaw + yOffset);
-  diamondDTO.Left.X.SetFromRaw(posXRaw - halfWidth);
-  diamondDTO.Left.Y.SetFromRaw(posYRaw + yOffset - halfHeight);
-  diamondDTO.Top.X.SetFromRaw(posXRaw);
-  diamondDTO.Top.Y.SetFromRaw(posYRaw + yOffset - height);
-  diamondDTO.Right.X.SetFromRaw(posXRaw + halfWidth);
-  diamondDTO.Right.Y.SetFromRaw(posYRaw + yOffset - halfHeight);
-
-  return diamondDTO;
-}
-
 export type ECBShape = {
   readonly height: FixedPoint;
   readonly width: FixedPoint;
   readonly yOffset: FixedPoint;
 };
 
-export type ECBShapes = Map<StateId, ECBShape>;
+export type ECBShapes = Map<StateId, ECBShape[]>;
 
 export class ECBComponent {
   // this is a reference
   private playerPosRef: FlatVec;
   public readonly SensorDepth = new FixedPoint(1);
-  public readonly OriginalShape: ECBShape;
+  public readonly OriginalShape: ECBShape[];
   private readonly curVerts = new Array<FlatVec>(4);
   public readonly ecbStateShapes: ECBShapes;
-  private currentTrack: ECBShape;
+  private currentTrack: ECBShape[];
+  private currentShape: ECBShape;
 
   constructor(
     shapes: ECBShapesConfig,
@@ -66,20 +41,28 @@ export class ECBComponent {
     width = 100,
     yOffset = 0
   ) {
-    this.OriginalShape = {
-      height: new FixedPoint(height),
-      width: new FixedPoint(width),
-      yOffset: new FixedPoint(yOffset)
-    };
-    this.ecbStateShapes = new Map<StateId, ECBShape>();
+    this.OriginalShape = [
+      {
+        height: new FixedPoint(height),
+        width: new FixedPoint(width),
+        yOffset: new FixedPoint(yOffset)
+      }
+    ];
+    this.ecbStateShapes = new Map<StateId, ECBShape[]>();
     for (const [Key, val] of shapes) {
-      this.ecbStateShapes.set(Key, {
-        height: new FixedPoint(val.height),
-        width: new FixedPoint(val.width),
-        yOffset: new FixedPoint(val.yOffset)
-      });
+      for (let ecbFrame = 0; ecbFrame < val.length; ecbFrame++) {
+        const frameShape = val[ecbFrame];
+        this.ecbStateShapes.set(Key, [
+          {
+            height: new FixedPoint(frameShape.height),
+            width: new FixedPoint(frameShape.width),
+            yOffset: new FixedPoint(frameShape.yOffset)
+          }
+        ]);
+      }
     }
     this.currentTrack = this.OriginalShape;
+    this.currentShape = this.currentTrack[0];
     FillArrayWithFlatVec(this.curVerts);
     this.playerPosRef = positionRef;
     this.Update();
@@ -94,11 +77,13 @@ export class ECBComponent {
     this.Update();
   }
 
-  public Update(): void {
+  public Update(stateFrame = 0): void {
     const half = POINT_FIVE;
     const px = this.playerPosRef.X.Raw;
     const py = this.playerPosRef.Y.Raw;
-    const shape = this.currentTrack;
+    const index = stateFrame % this.currentTrack.length;
+    this.currentShape = this.currentTrack[index] ?? this.OriginalShape[0];
+    const shape = this.currentShape;
     const height = shape.height.Raw;
     const width = shape.width.Raw;
     const yOffset = shape.yOffset.Raw;
@@ -148,15 +133,15 @@ export class ECBComponent {
   }
 
   public get Height(): FixedPoint {
-    return this.currentTrack.height;
+    return this.currentShape.height;
   }
 
   public get Width(): FixedPoint {
-    return this.currentTrack.width;
+    return this.currentShape.width;
   }
 
   public get YOffset(): FixedPoint {
-    return this.currentTrack.yOffset;
+    return this.currentShape.yOffset;
   }
 
   public get _db_ecbShapes() {

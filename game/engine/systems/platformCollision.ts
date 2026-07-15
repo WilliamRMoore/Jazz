@@ -1,4 +1,4 @@
-import { CreateDiamondFromHistory } from '../entity/components/ecb';
+
 import {
   CanOnlyFallOffLedgeWhenFacingAwayFromIt,
   Player,
@@ -73,22 +73,18 @@ export function PlatformDetection(world: World): void {
         continue;
       }
 
-      const dPool = world.Pools.DiamondPool;
       const playerHist = histories.PlayerHistoryDB[playerIndex];
       const prevState = playerHist.get(prevFrame);
       const ecb = p.ECB;
-      const previousECBShape =
-        ecb.ecbStateShapes.get(prevState.stateId) ?? ecb.OriginalShape;
-      const preEcb = CreateDiamondFromHistory(
-        previousECBShape,
-        prevState.posXRaw,
-        prevState.posYRaw,
-        dPool
+      const prevBottomVec = world.Pools.VecPool.Rent();
+      prevBottomVec.SetXYRaw(
+        prevState.comp_ecbDiamond[0].xRaw,
+        prevState.comp_ecbDiamond[0].yRaw
       );
 
       const playerPlat = PlayerOnPlatsReturnsPlatform(
         stage,
-        preEcb.Bottom,
+        prevBottomVec,
         ecb.SensorDepth
       );
 
@@ -185,7 +181,7 @@ export function PlatformDetection(world: World): void {
         continue;
       }
 
-      const previousBottom = preEcb.Bottom;
+      const previousBottom = prevBottomVec;
       const currentBottom = ecb.Bottom;
 
       for (let platIndex = 0; platIndex < platCount; platIndex++) {

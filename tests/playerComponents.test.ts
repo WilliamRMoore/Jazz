@@ -82,11 +82,12 @@ describe('PlayerComponents ECB tests', () => {
     const originalYOffset = ecb.YOffset.AsNumber;
 
     ecb.SetECBTrack(STATE_IDS.CROUCH_S);
-    const crouchShape = ecb._db_ecbShapes.get(STATE_IDS.CROUCH_S);
+    const crouchShapeTrack = ecb._db_ecbShapes.get(STATE_IDS.CROUCH_S);
+    const crouchShape = crouchShapeTrack![0];
 
-    expect(ecb.Height.AsNumber).toBe(crouchShape!.height.AsNumber);
-    expect(ecb.Width.AsNumber).toBe(crouchShape!.width.AsNumber);
-    expect(ecb.YOffset.AsNumber).toBe(crouchShape!.yOffset.AsNumber);
+    expect(ecb.Height.AsNumber).toBe(crouchShape.height.AsNumber);
+    expect(ecb.Width.AsNumber).toBe(crouchShape.width.AsNumber);
+    expect(ecb.YOffset.AsNumber).toBe(crouchShape.yOffset.AsNumber);
 
     ecb.ResetECBShape();
     expect(ecb.Height.AsNumber).toBe(originalHeight);

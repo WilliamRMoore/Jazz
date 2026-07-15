@@ -35,7 +35,7 @@ export class DefaultCharacterConfig implements CharacterConfig {
   public ECBHeight = 0;
   public ECBWidth = 0;
   public ECBOffset = 0;
-  public ECBShapes: ECBShapesConfig = new Map<StateId, ECBShape>();
+  public ECBShapes: ECBShapesConfig = new Map<StateId, ECBShape[]>();
   public HurtCapsules: Array<HurtCapsuleConfig> = [];
   public JumpVelocity = 0;
   public WallKickVelocity = toCv(0, 0);
@@ -174,95 +174,53 @@ export class DefaultCharacterConfig implements CharacterConfig {
       .set(STATE_IDS.TECH_IN_PLACE_S, 25)
       .set(STATE_IDS.ROLL_TECH_S, 31);
 
-    this.ECBShapes.set(STATE_IDS.N_FALL_S, {
-      height: 70,
-      width: 70,
-      yOffset: -25
-    })
-      .set(STATE_IDS.JUMP_S, { height: 60, width: 70, yOffset: -15 })
-      .set(STATE_IDS.N_AIR_S, { height: 60, width: 70, yOffset: -25 })
-      .set(STATE_IDS.F_AIR_S, { height: 60, width: 70, yOffset: -25 })
-      .set(STATE_IDS.U_AIR_S, { height: 60, width: 60, yOffset: -25 })
-      .set(STATE_IDS.B_AIR_S, { height: 60, width: 60, yOffset: -25 })
-      .set(STATE_IDS.D_AIR_S, { height: 90, width: 60, yOffset: -10 })
-      .set(STATE_IDS.DOWN_CHARGE_S, { height: 110, width: 85, yOffset: 0 })
-      .set(STATE_IDS.DOWN_CHARGE_EX_S, { height: 65, width: 100, yOffset: 0 })
-      .set(STATE_IDS.AIR_DODGE_S, { height: 60, width: 70, yOffset: -5 })
-      .set(STATE_IDS.DOWN_TILT_S, { height: 50, width: 100, yOffset: 0 })
-      .set(STATE_IDS.DOWN_SPCL_S, { height: 65, width: 105, yOffset: 0 })
-      .set(STATE_IDS.DOWN_SPCL_AIR_S, { height: 65, width: 65, yOffset: 0 })
-      .set(STATE_IDS.JUMP_SQUAT_S, { height: 70, width: 80, yOffset: 0 })
-      .set(STATE_IDS.LAND_S, { height: 65, width: 90, yOffset: 0 })
-      .set(STATE_IDS.SOFT_LAND_S, { height: 85, width: 95, yOffset: 0 })
-      .set(STATE_IDS.LEDGE_GRAB_S, { height: 110, width: 55, yOffset: 0 })
-      .set(STATE_IDS.SIDE_SPCL_S, { height: 80, width: 100, yOffset: 0 })
-      .set(STATE_IDS.UP_CHARGE_S, { height: 90, width: 100, yOffset: 0 })
-      .set(STATE_IDS.UP_CHARGE_EX_S, { height: 110, width: 85, yOffset: 0 })
-      .set(STATE_IDS.SIDE_CHARGE_S, { height: 100, width: 85, yOffset: 0 })
-      .set(STATE_IDS.SIDE_CHARGE_EX_S, { height: 85, width: 100, yOffset: 0 })
-      .set(STATE_IDS.CROUCH_S, { height: 50, width: 100, yOffset: 0 })
-      .set(STATE_IDS.SHIELD_BREAK_S, { height: 90, width: 60, yOffset: 0 })
-      .set(STATE_IDS.WALL_KICK_S, { height: 70, width: 70, yOffset: -25 })
-      .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, {
-        height: 60,
-        width: 60,
-        yOffset: 0
-      })
-      .set(STATE_IDS.SHIELD_BREAK_LAND_S, {
-        height: 40,
-        width: 100,
-        yOffset: 0
-      })
-      .set(STATE_IDS.DIZZY_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      })
-      .set(STATE_IDS.WALL_SLAM_S, {
-        height: 100,
-        width: 40,
-        yOffset: 0
-      })
-      .set(STATE_IDS.GRND_SLAM_S, {
-        height: 40,
-        width: 100,
-        yOffset: 0
-      })
-      .set(STATE_IDS.DIRT_NAP_S, {
-        height: 40,
-        width: 100,
-        yOffset: 0
-      })
-      .set(STATE_IDS.GETUP_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      })
-      .set(STATE_IDS.LEDGE_GETUP_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      })
-      .set(STATE_IDS.LEDGE_ATTACK_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      })
-      .set(STATE_IDS.LEDGE_ROLL_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      })
-      .set(STATE_IDS.TECH_IN_PLACE_S, {
-        height: 70,
-        width: 85,
-        yOffset: 0
-      })
-      .set(STATE_IDS.ROLL_TECH_S, {
-        height: 70,
-        width: 70,
-        yOffset: 0
-      });
+    this.ECBShapes.set(STATE_IDS.N_FALL_S, [
+      { height: 70, width: 70, yOffset: -25 },
+      { height: 60, width: 70, yOffset: -25 }
+    ])
+      .set(STATE_IDS.JUMP_S, [{ height: 60, width: 70, yOffset: -15 }])
+      .set(STATE_IDS.N_AIR_S, [
+        { height: 60, width: 70, yOffset: -25 },
+        { height: 60, width: 70, yOffset: -25 }
+      ])
+      .set(STATE_IDS.F_AIR_S, [{ height: 60, width: 70, yOffset: -25 }])
+      .set(STATE_IDS.U_AIR_S, [{ height: 60, width: 60, yOffset: -25 }])
+      .set(STATE_IDS.B_AIR_S, [{ height: 60, width: 60, yOffset: -25 }])
+      .set(STATE_IDS.D_AIR_S, [{ height: 90, width: 60, yOffset: -10 }])
+      .set(STATE_IDS.DOWN_CHARGE_S, [{ height: 110, width: 85, yOffset: 0 }])
+      .set(STATE_IDS.DOWN_CHARGE_EX_S, [{ height: 65, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.AIR_DODGE_S, [{ height: 60, width: 70, yOffset: -5 }])
+      .set(STATE_IDS.DOWN_TILT_S, [{ height: 50, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.DOWN_SPCL_S, [{ height: 65, width: 105, yOffset: 0 }])
+      .set(STATE_IDS.DOWN_SPCL_AIR_S, [{ height: 65, width: 65, yOffset: 0 }])
+      .set(STATE_IDS.JUMP_SQUAT_S, [{ height: 70, width: 80, yOffset: 0 }])
+      .set(STATE_IDS.LAND_S, [{ height: 65, width: 90, yOffset: 0 }])
+      .set(STATE_IDS.SOFT_LAND_S, [{ height: 85, width: 95, yOffset: 0 }])
+      .set(STATE_IDS.LEDGE_GRAB_S, [{ height: 110, width: 55, yOffset: 0 }])
+      .set(STATE_IDS.SIDE_SPCL_S, [{ height: 80, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.UP_CHARGE_S, [{ height: 90, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.UP_CHARGE_EX_S, [{ height: 110, width: 85, yOffset: 0 }])
+      .set(STATE_IDS.SIDE_CHARGE_S, [{ height: 100, width: 85, yOffset: 0 }])
+      .set(STATE_IDS.SIDE_CHARGE_EX_S, [{ height: 85, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.CROUCH_S, [{ height: 50, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.SHIELD_BREAK_S, [{ height: 90, width: 60, yOffset: 0 }])
+      .set(STATE_IDS.WALL_KICK_S, [{ height: 70, width: 70, yOffset: -25 }])
+      .set(STATE_IDS.SHIELD_BREAK_TUMBLE_S, [
+        { height: 60, width: 60, yOffset: 0 }
+      ])
+      .set(STATE_IDS.SHIELD_BREAK_LAND_S, [
+        { height: 40, width: 100, yOffset: 0 }
+      ])
+      .set(STATE_IDS.DIZZY_S, [{ height: 70, width: 70, yOffset: 0 }])
+      .set(STATE_IDS.WALL_SLAM_S, [{ height: 100, width: 40, yOffset: 0 }])
+      .set(STATE_IDS.GRND_SLAM_S, [{ height: 40, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.DIRT_NAP_S, [{ height: 40, width: 100, yOffset: 0 }])
+      .set(STATE_IDS.GETUP_S, [{ height: 70, width: 70, yOffset: 0 }])
+      .set(STATE_IDS.LEDGE_GETUP_S, [{ height: 70, width: 70, yOffset: 0 }])
+      .set(STATE_IDS.LEDGE_ATTACK_S, [{ height: 70, width: 70, yOffset: 0 }])
+      .set(STATE_IDS.LEDGE_ROLL_S, [{ height: 70, width: 70, yOffset: 0 }])
+      .set(STATE_IDS.TECH_IN_PLACE_S, [{ height: 70, width: 85, yOffset: 0 }])
+      .set(STATE_IDS.ROLL_TECH_S, [{ height: 70, width: 70, yOffset: 0 }]);
 
     this.ShieldRadius = 75; //new FixedPoint(75);
     this.ShieldYOffset = -50; //new FixedPoint(-50);

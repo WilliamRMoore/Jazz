@@ -1,5 +1,4 @@
 import {
-  CreateDiamondFromHistory,
   ECBComponent,
   EcbHistoryDTO
 } from '../entity/components/ecb';
@@ -55,16 +54,15 @@ export function StageCollisionDetection(world: World): void {
 
     const pDb = playerHistories[playerIndex];
     const prevState = pDb.get(world.PreviousFrame);
-    const prevEcbShape =
-      ecb.ecbStateShapes.get(prevState.stateId) ?? ecb.OriginalShape;
-    const preXRaw = prevState.posXRaw;
-    const preYRaw = prevState.posYRaw;
-    const preEcb = CreateDiamondFromHistory(
-      prevEcbShape,
-      preXRaw,
-      preYRaw,
-      pools.DiamondPool
-    );
+    const preEcb = pools.DiamondPool.Rent();
+    preEcb.Bottom.X.SetFromRaw(prevState.comp_ecbDiamond[0].xRaw);
+    preEcb.Bottom.Y.SetFromRaw(prevState.comp_ecbDiamond[0].yRaw);
+    preEcb.Left.X.SetFromRaw(prevState.comp_ecbDiamond[1].xRaw);
+    preEcb.Left.Y.SetFromRaw(prevState.comp_ecbDiamond[1].yRaw);
+    preEcb.Top.X.SetFromRaw(prevState.comp_ecbDiamond[2].xRaw);
+    preEcb.Top.Y.SetFromRaw(prevState.comp_ecbDiamond[2].yRaw);
+    preEcb.Right.X.SetFromRaw(prevState.comp_ecbDiamond[3].xRaw);
+    preEcb.Right.Y.SetFromRaw(prevState.comp_ecbDiamond[3].yRaw);
     const sm = playerData.StateMachine(playerIndex);
     const fsmInfo = p.FSMInfo;
     const preResolutionStateId = fsmInfo.CurrentStateId;

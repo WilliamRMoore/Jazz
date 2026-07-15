@@ -18,7 +18,7 @@ export type ECBShape = {
   readonly yOffset: number;
 };
 
-export type ECBShapesConfig = Map<StateId, ECBShape>;
+export type ECBShapesConfig = Map<StateId, ECBShape[]>;
 
 export type HurtCapsuleConfig = {
   x1: number;

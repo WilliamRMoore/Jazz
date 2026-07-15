@@ -129,21 +129,21 @@ export function SetPlayerInitialPositionRaw(
 ): void {
   p.Position.X.SetFromRaw(xRaw);
   p.Position.Y.SetFromRaw(yRaw);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerYPositionRaw(p: Player, yRaw: number): void {
   const position = p.Position;
   position.Y.AddRaw(yRaw);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 
 export function AddToPlayerXPostionRaw(p: Player, xRaw: number): void {
   const position = p.Position;
   position.X.AddRaw(xRaw);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 
@@ -151,7 +151,7 @@ export function SetPlayerPosition(p: Player, x: FixedPoint, y: FixedPoint) {
   const position = p.Position;
   position.X.SetFromFp(x);
   position.Y.SetFromFp(y);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 
@@ -159,7 +159,7 @@ export function SetPlayerPositionRaw(p: Player, xRaw: number, yRaw: number) {
   const position = p.Position;
   position.X.SetFromRaw(xRaw);
   position.Y.SetFromRaw(yRaw);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 
@@ -183,7 +183,7 @@ export function AddToPlayerPositionRaw(
   const pos = p.Position;
   pos.X.AddRaw(xRaw);
   pos.Y.AddRaw(yRaw);
-  p.ECB.Update();
+  p.ECB.Update(p.FSMInfo.CurrentStateFrame);
   p.LedgeDetector.MoveToPos();
 }
 

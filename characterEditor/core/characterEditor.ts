@@ -118,7 +118,7 @@ function emptyCahrConfig(): CharacterConfig {
     ECBHeight: 100,
     ECBWidth: 100,
     ECBOffset: 0,
-    ECBShapes: new Map<StateId, ECBShape>(),
+    ECBShapes: new Map<StateId, ECBShape[]>(),
     HurtCapsules: new Array<HurtCapsuleConfig>(),
     JumpVelocity: 0,
     WallKickVelocity: { x: 0, y: 0 },
