@@ -1,4 +1,7 @@
-import { STATE_IDS, StateId } from '../finiteStateMachines/player/shared';
+import {
+  STATE_IDS,
+  StateId
+} from '../finiteStateMachines/player/states/shared';
 import { World } from '../world/world';
 
 export function Flags(world: World): void {
@@ -12,6 +15,12 @@ export function Flags(world: World): void {
     }
     if (flags.IsIntangible) {
       flags.DecrementIntangabilityFrames();
+    }
+    if (flags.IsInvincible) {
+      flags.DecrementInvincibilityFrames();
+    }
+    if (flags.HasSuperArmor) {
+      flags.DecrementSuperArmorFrames();
     }
     if (flags.IsPlatDetectDisabled) {
       flags.DecrementDisablePlatDetection();

@@ -3,7 +3,7 @@ import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
 import { PlayerCPU } from '../engine/finiteStateMachines/cpu/playerCPU';
-import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../engine/finiteStateMachines/player/states/shared';
 import { GetInput } from '../engine/input/Input';
 import { IJazzLocal } from '../engine/jazz/jazzLocal';
 import { FixedPoint } from '../engine/math/fixedPoint';

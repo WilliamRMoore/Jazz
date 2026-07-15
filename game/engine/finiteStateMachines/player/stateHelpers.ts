@@ -6,7 +6,7 @@ import { MultiplyRaw } from '../../math/fixedPoint';
 import { POINT_EIGHT } from '../../math/numberConstants';
 import { FlatVec } from '../../physics/vector';
 import { World } from '../../world/world';
-import { GameEventId, StateId } from './shared';
+import { GameEventId, StateId } from './states/shared';
 
 export function fastFallCheck(p: Player, w: World) {
   const inputStore = w.PlayerData.InputStore(p.ID);

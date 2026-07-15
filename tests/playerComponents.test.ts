@@ -1,7 +1,7 @@
 import { DefaultCharacterConfig } from '../game/character/default';
 import { ECBComponent } from '../game/engine/entity/components/ecb';
 import { Player } from '../game/engine/entity/playerOrchestrator';
-import { STATE_IDS } from '../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../game/engine/finiteStateMachines/player/states/shared';
 import { NumberToRaw } from '../game/engine/math/fixedPoint';
 import { ToFV } from '../game/engine/utils';
 import { World } from '../game/engine/world/world';
@@ -124,7 +124,7 @@ describe('PlayerComponents ECB tests', () => {
 import { AttackConfig, HitBubblesConifg } from '../game/character/shared';
 import { AttackComponment } from '../game/engine/entity/components/attack';
 import { HurtCapsulesComponent } from '../game/engine/entity/components/hurtCircles';
-import { ATTACK_IDS } from '../game/engine/finiteStateMachines/player/shared';
+import { ATTACK_IDS } from '../game/engine/finiteStateMachines/player/states/shared';
 import { RawToNumber } from '../game/engine/math/fixedPoint';
 
 describe('HurtCapsulesComponent AABB tests', () => {

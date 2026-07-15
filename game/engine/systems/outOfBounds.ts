@@ -3,7 +3,7 @@ import {
   SetPlayerInitialPositionRaw
 } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
-import { STATE_IDS } from '../finiteStateMachines/player/shared';
+import { STATE_IDS } from '../finiteStateMachines/player/states/shared';
 import { NumberToRaw } from '../math/fixedPoint';
 import { World } from '../world/world';
 

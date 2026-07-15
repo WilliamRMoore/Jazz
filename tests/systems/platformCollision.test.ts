@@ -4,7 +4,7 @@ import {
   Player,
   SetPlayerPosition
 } from '../../game/engine/entity/playerOrchestrator';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import {
   Idle,
   NeutralFall

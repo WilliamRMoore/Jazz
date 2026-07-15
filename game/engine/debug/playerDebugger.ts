@@ -1,7 +1,7 @@
 import { frameNumber } from '../entity/components/attack';
 import { Player, SetPlayerPositionRaw } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
-import { StateId } from '../finiteStateMachines/player/shared';
+import { StateId } from '../finiteStateMachines/player/states/shared';
 import { InputAction } from '../input/Input';
 import { IInputStore } from '../managers/inputManager';
 import { NumberToRaw } from '../math/fixedPoint';

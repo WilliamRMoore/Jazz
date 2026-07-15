@@ -11,7 +11,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../game/engine/finiteStateMachines/player/shared';
+} from '../game/engine/finiteStateMachines/player/states/shared';
 import { PlayerStateHistory } from '../game/engine/systems/history';
 
 describe('Player Orechstraotr Initialization', () => {

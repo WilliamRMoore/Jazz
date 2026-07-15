@@ -3,7 +3,7 @@ import { MultiplyRaw, NumberToRaw } from '../../../math/fixedPoint';
 import { World } from '../../../world/world';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 
 const POINT_SIX = NumberToRaw(0.6);
 

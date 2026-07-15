@@ -5,7 +5,7 @@ import {
   GetGrabName,
   GetStateName
 } from './engine/debug/debugUtils';
-import { STATE_IDS } from './engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from './engine/finiteStateMachines/player/states/shared';
 import { GetInput, NewInputAction } from './engine/input/Input';
 import { RawToNumber } from './engine/math/fixedPoint';
 import { Line } from './engine/physics/vector';

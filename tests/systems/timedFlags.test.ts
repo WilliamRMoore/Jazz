@@ -5,9 +5,7 @@ import {
   NeutralFall
 } from '../../game/engine/finiteStateMachines/player/states';
 import { NewInputAction } from '../../game/engine/input/Input';
-import {
-  IInputStore
-} from '../../game/engine/managers/inputManager';
+import { IInputStore } from '../../game/engine/managers/inputManager';
 import { Flags } from '../../game/engine/systems/flags';
 import { World } from '../../game/engine/world/world';
 
@@ -36,7 +34,7 @@ describe('TimedFlags system tests', () => {
     p.Flags.SetIntangabilityFrames(10);
     Flags(w);
     expect(p.Flags.IsIntangible).toBe(true);
-    expect(p.Flags.GetIntangabilityFrames()).toBe(9);
+    expect(p.Flags.IntangabilityFrames).toBe(9);
   });
 
   test('platform detection disabled frames are decremented', () => {

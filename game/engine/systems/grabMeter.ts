@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { MultiplyRaw } from '../math/fixedPoint';
 import {
   ONE_POINT_FIVE,

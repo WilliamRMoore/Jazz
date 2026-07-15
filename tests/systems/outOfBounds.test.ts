@@ -1,6 +1,6 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import { FixedPoint, NumberToRaw } from '../../game/engine/math/fixedPoint';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { OutOfBoundsCheck } from '../../game/engine/systems/outOfBounds';

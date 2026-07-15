@@ -3,7 +3,7 @@ import { Player } from '../../game/engine/entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 import { InputAction, NewInputAction } from '../../game/engine/input/Input';
 import { JazzNetwork } from '../../game/engine/jazz/jazzNetwork';
 import { RollBackManager } from '../../game/engine/managers/rollBack';

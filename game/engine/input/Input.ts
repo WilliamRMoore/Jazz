@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
   GameEventId
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { FixedPoint } from '../math/fixedPoint';
 import { ToFp } from '../utils';
 

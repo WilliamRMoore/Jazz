@@ -1,4 +1,4 @@
-import { StateId } from '../engine/finiteStateMachines/player/shared';
+import { StateId } from '../engine/finiteStateMachines/player/states/shared';
 import { InputAction, NetworkInput } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 

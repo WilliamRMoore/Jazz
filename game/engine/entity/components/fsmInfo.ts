@@ -1,6 +1,6 @@
 import { FSMStates } from '../../finiteStateMachines/player/PlayerStateCollections';
 import { FSMState } from '../../finiteStateMachines/player/PlayerStateMachine';
-import { StateId } from '../../finiteStateMachines/player/shared';
+import { StateId } from '../../finiteStateMachines/player/states/shared';
 import { Idle } from '../../finiteStateMachines/player/states';
 
 export type StateFrameRef = {

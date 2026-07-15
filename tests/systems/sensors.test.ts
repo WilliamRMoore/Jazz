@@ -3,7 +3,7 @@ import {
   Player,
   SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import { NumberToRaw } from '../../game/engine/math/fixedPoint';
 import { defaultStage } from '../../game/engine/stage/stageMain';

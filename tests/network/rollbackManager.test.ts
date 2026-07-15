@@ -1,4 +1,4 @@
-import { GAME_EVENT_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { GAME_EVENT_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import {
   InputStore,

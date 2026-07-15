@@ -1,9 +1,9 @@
 import { Player } from '../../../entity/playerOrchestrator';
 import { World } from '../../../world/world';
-import * as Conditions from '../conditions';
+import * as Conditions from './conditions/conditions';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { STATE_IDS } from '../shared';
+import { STATE_IDS } from './shared';
 
 export const HitStop: FSMState = {
   StateName: 'HitStop',

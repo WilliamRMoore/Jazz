@@ -1,4 +1,4 @@
-import { GAME_EVENT_IDS } from '../finiteStateMachines/player/shared';
+import { GAME_EVENT_IDS } from '../finiteStateMachines/player/states/shared';
 import { World } from '../world/world';
 
 export function ShieldRegen(w: World) {

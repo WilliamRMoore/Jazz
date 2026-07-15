@@ -6,7 +6,7 @@ import {
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 import {
   Launch,
   NeutralFall

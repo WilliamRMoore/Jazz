@@ -2,10 +2,10 @@ import { Player } from '../../../entity/playerOrchestrator';
 import { DivideRaw, NumberToRaw } from '../../../math/fixedPoint';
 import { TWO } from '../../../math/numberConstants';
 import { World } from '../../../world/world';
-import * as Conditions from '../conditions';
+import * as Conditions from './conditions/conditions';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 
 export const LedgeGetUp: FSMState = {
   StateName: 'LedgeGetUp',

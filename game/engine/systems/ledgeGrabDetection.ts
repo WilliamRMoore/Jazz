@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { DivideRaw } from '../math/fixedPoint';
 
 import {

@@ -51,8 +51,24 @@ export class PlayerFlagsComponent {
     this.intangabilityFrames--;
   }
 
+  public DecrementInvincibilityFrames(): void {
+    this.invincibilityFrames--;
+  }
+
+  public DecrementSuperArmorFrames(): void {
+    this.superArmorFrames--;
+  }
+
   public SetIntangabilityFrames(frames: number): void {
     this.intangabilityFrames = frames;
+  }
+
+  public SetInvincibilityFrames(frames: number): void {
+    this.invincibilityFrames = frames;
+  }
+
+  public SetSuperArmorFrames(frames: number): void {
+    this.superArmorFrames = frames;
   }
 
   public DecrementDisablePlatDetection(): void {
@@ -127,6 +143,14 @@ export class PlayerFlagsComponent {
     return this.intangabilityFrames > 0;
   }
 
+  public get IsInvincible(): boolean {
+    return this.invincibilityFrames > 0;
+  }
+
+  public get HasSuperArmor(): boolean {
+    return this.superArmorFrames > 0;
+  }
+
   public get IsPlatDetectDisabled(): boolean {
     return this.disablePlatformDetection > 0;
   }
@@ -147,8 +171,16 @@ export class PlayerFlagsComponent {
     return this.disablePlatformDetection;
   }
 
-  public GetIntangabilityFrames(): number {
+  public get IntangabilityFrames(): number {
     return this.intangabilityFrames;
+  }
+
+  public get InvincibilityFrames(): number {
+    return this.invincibilityFrames;
+  }
+
+  public get SuperArmorFrames(): number {
+    return this.superArmorFrames;
   }
 
   public get LastTechFrame(): number {
@@ -167,6 +199,8 @@ export class PlayerFlagsComponent {
     this.disablePlatformDetection = history.disablePlatformDetectionFrames;
     this.disableLedgeDetection = history.disableLedgeDetectionFrames;
     this.velocityDecayActive = history.velocityDecayActive;
+    this.invincibilityFrames = history.invincibilityFrames;
+    this.superArmorFrames = history.superArmorFrames;
     this.shieldJump = history.shieldJump;
     this.lastTechFrame = history.lastTechFrame;
   }

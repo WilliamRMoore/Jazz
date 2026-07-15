@@ -1,5 +1,5 @@
 import { ThrowConfig } from '../../../character/shared';
-import { StateId } from '../../finiteStateMachines/player/shared';
+import { StateId } from '../../finiteStateMachines/player/states/shared';
 import { NumberToRaw } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
 import { ToFV } from '../../utils';

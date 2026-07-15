@@ -12,7 +12,7 @@ import {
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { FixedPoint } from '../math/fixedPoint';
 import {
   CORRECTION_DEPTH_RAW,

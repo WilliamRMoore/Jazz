@@ -2,8 +2,8 @@ import { Player } from '../../../entity/playerOrchestrator';
 import { World } from '../../../world/world';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import * as Conditions from '../conditions';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import * as Conditions from './conditions/conditions';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 import {
   aerialInputOnUpdate,
   attackOnEnter,

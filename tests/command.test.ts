@@ -5,7 +5,7 @@ import { SwitchPlayerStateCommand } from '../game/engine/command/commands/switch
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../game/engine/finiteStateMachines/player/shared';
+} from '../game/engine/finiteStateMachines/player/states/shared';
 
 import { Player } from '../game/engine/entity/playerOrchestrator';
 import { World } from '../game/engine/world/world';

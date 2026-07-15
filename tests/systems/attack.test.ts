@@ -4,7 +4,7 @@ import {
   SetPlayerInitialPositionRaw
 } from '../../game/engine/entity/playerOrchestrator';
 import { StateMachine } from '../../game/engine/finiteStateMachines/player/PlayerStateMachine';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import {

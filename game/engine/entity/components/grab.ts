@@ -1,6 +1,6 @@
 import { GrabBubbleConfig, GrabConfig } from '../../../character/shared';
 import { GrabGameEventMappings } from '../../finiteStateMachines/player/PlayerStateCollections';
-import { GameEventId, GrabId } from '../../finiteStateMachines/player/shared';
+import { GameEventId, GrabId } from '../../finiteStateMachines/player/states/shared';
 import {
   FixedPoint,
   MAX_RAW_VALUE,

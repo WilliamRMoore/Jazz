@@ -1,4 +1,4 @@
-import { STATE_IDS, StateId } from '../../finiteStateMachines/player/shared';
+import { STATE_IDS, StateId } from '../../finiteStateMachines/player/states/shared';
 import { FixedPoint } from '../../math/fixedPoint';
 
 export class HitStunComponent {

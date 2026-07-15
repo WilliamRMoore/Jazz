@@ -1,6 +1,6 @@
 import {
   STATE_IDS
-} from '../../finiteStateMachines/player/shared';
+} from '../../finiteStateMachines/player/states/shared';
 import { FixedPoint, NumberToRaw } from '../../math/fixedPoint';
 import { JazzDebugger } from '../jazzDebugWrapper';
 

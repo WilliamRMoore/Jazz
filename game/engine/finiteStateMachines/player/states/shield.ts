@@ -2,10 +2,10 @@ import { Player } from '../../../entity/playerOrchestrator';
 import { DivideRaw, MultiplyRaw, SqrtRaw } from '../../../math/fixedPoint';
 import { ONE } from '../../../math/numberConstants';
 import { World } from '../../../world/world';
-import * as Conditions from '../conditions';
+import * as Conditions from './conditions/conditions';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { STATE_IDS, GAME_EVENT_IDS } from './shared';
 
 export const Shield: FSMState = {
   StateName: 'Shield',

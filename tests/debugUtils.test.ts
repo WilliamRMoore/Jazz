@@ -4,7 +4,7 @@ import {
   StructurePlayerSnapShotForPrinting
 } from '../game/engine/debug/debugUtils';
 import { JazzDebugger } from '../game/engine/debug/jazzDebugWrapper';
-import { STATE_IDS } from '../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../game/engine/finiteStateMachines/player/states/shared';
 import { RawToNumber } from '../game/engine/math/fixedPoint';
 import { RecordIntoHistory } from '../game/engine/systems/history';
 

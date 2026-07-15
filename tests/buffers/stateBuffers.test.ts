@@ -2,7 +2,7 @@ import {
   ATTACK_IDS,
   GRAB_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 import { PlayerStateHistory } from '../../game/engine/systems/history';
 
 jest.mock('../../game/engine/config/main-config', () => ({

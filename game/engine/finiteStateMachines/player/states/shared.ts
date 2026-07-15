@@ -1,4 +1,4 @@
-import { Sequencer } from '../../utils';
+import { Sequencer } from '../../../utils';
 
 // Aliases =========================================================================
 

@@ -1,14 +1,14 @@
-import { Player } from '../../entity/playerOrchestrator';
-import { InputAction } from '../../input/Input';
-import { IInputStore } from '../../managers/inputManager';
-import { NumberToRaw } from '../../math/fixedPoint';
+import { Player } from '../../../../entity/playerOrchestrator';
+import { InputAction } from '../../../../input/Input';
+import { IInputStore } from '../../../../managers/inputManager';
+import { NumberToRaw } from '../../../../math/fixedPoint';
 import {
   POINT_FIVE,
   POINT_FOUR,
   POINT_TWO_FIVE
-} from '../../math/numberConstants';
-import { World } from '../../world/world';
-import { GAME_EVENT_IDS, GameEventId, STATE_IDS, StateId } from './shared';
+} from '../../../../math/numberConstants';
+import { World } from '../../../../world/world';
+import { GAME_EVENT_IDS, GameEventId, STATE_IDS, StateId } from '../shared';
 
 // Constants for conditions
 const WALK_TO_DASH_STATE_FRAME_THRESHOLD = 2;

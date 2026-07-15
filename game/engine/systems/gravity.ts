@@ -1,5 +1,5 @@
 import { Player, PlayerOnStageOrPlats } from '../entity/playerOrchestrator';
-import { STATE_IDS } from '../finiteStateMachines/player/shared';
+import { STATE_IDS } from '../finiteStateMachines/player/states/shared';
 import { MultiplyRaw } from '../math/fixedPoint';
 import { ONE, TWO } from '../math/numberConstants';
 import { Stage } from '../stage/stageMain';

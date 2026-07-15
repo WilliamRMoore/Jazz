@@ -1,11 +1,14 @@
 import { DefaultCharacterConfig } from '../game/character/default';
-import { Player, SetPlayerPositionRaw } from '../game/engine/entity/playerOrchestrator';
+import {
+  Player,
+  SetPlayerPositionRaw
+} from '../game/engine/entity/playerOrchestrator';
 import {
   ATTACK_IDS,
   CanStateWalkOffLedge,
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../game/engine/finiteStateMachines/player/shared';
+} from '../game/engine/finiteStateMachines/player/states/shared';
 import {
   AirDodge,
   Dash,
@@ -74,12 +77,12 @@ describe('Player states tests', () => {
     expect(p.Velocity.Y.Raw).toBeGreaterThan(initialVelY);
 
     fsm.UpdateFromInput(NewInputAction(), w);
-    expect(p.Flags.GetIntangabilityFrames()).toBe(15);
+    expect(p.Flags.IntangabilityFrames).toBe(15);
 
     // OnExit
     AirDodge.OnExit(p, w);
     expect(p.Flags.HasNoVelocityDecay()).toBeFalsy();
-    expect(p.Flags.GetIntangabilityFrames()).toBe(0);
+    expect(p.Flags.IntangabilityFrames).toBe(0);
   });
 
   test('DownSpecialAerial state', () => {
@@ -302,7 +305,7 @@ describe('Player states tests', () => {
 
     // Verify state properties
     expect(p.Flags.HasNoVelocityDecay()).toBeTruthy();
-    expect(p.Flags.GetIntangabilityFrames()).toBe(30);
+    expect(p.Flags.IntangabilityFrames).toBe(30);
     expect(CanStateWalkOffLedge(STATE_IDS.LEDGE_GETUP_S)).toBe(false);
   });
 

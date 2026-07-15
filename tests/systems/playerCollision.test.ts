@@ -1,6 +1,6 @@
 import { DefaultCharacterConfig } from '../../game/character/default';
 import { Player } from '../../game/engine/entity/playerOrchestrator';
-import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../../game/engine/finiteStateMachines/player/states/shared';
 import { PlayerCollisionDetection } from '../../game/engine/systems/playerCollision';
 import { World } from '../../game/engine/world/world';
 

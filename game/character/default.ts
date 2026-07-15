@@ -14,7 +14,7 @@ import {
   GrabId,
   STATE_IDS,
   StateId
-} from '../engine/finiteStateMachines/player/shared';
+} from '../engine/finiteStateMachines/player/states/shared';
 
 import {
   AttackConfig,

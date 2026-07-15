@@ -1,6 +1,6 @@
 import { InputAction } from '../../../input/Input';
 import { World } from '../../../world/world';
-import { GAME_EVENT_IDS } from '../../player/shared';
+import { GAME_EVENT_IDS } from '../../player/states/shared';
 import { PlayerCPU } from '../playerCPU';
 import { CPUAction } from './shared';
 

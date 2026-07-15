@@ -3,7 +3,7 @@ import {
   GAME_EVENT_IDS,
   STATE_IDS,
   StateId
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import {
   DivideRaw,
   FixedPoint,

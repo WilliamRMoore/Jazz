@@ -1,7 +1,7 @@
-import * as Conditions from '../conditions';
+import * as Conditions from './conditions/conditions';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 import { attackOnEnter, attackOnExit, attackOnUpdate } from '../stateHelpers';
 
 export const DownChargeEx: FSMState = {

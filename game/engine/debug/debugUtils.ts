@@ -7,7 +7,7 @@ import {
   GrabIdToNameMap,
   StateId,
   StateIdToNameMap
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { RawToNumber } from '../math/fixedPoint';
 import { PlayerStateHistory } from '../systems/history';
 type node = sVal | aVal;

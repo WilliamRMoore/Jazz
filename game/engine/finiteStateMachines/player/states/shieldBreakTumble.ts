@@ -2,7 +2,7 @@ import { Player } from '../../../entity/playerOrchestrator';
 import { World } from '../../../world/world';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 
 export const ShieldBreakTumble: FSMState = {
   StateName: 'ShieldBreakTumble',

@@ -2,7 +2,7 @@ import { ActionMappings } from '../../game/engine/finiteStateMachines/player/Pla
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 
 describe('grab translation tests', () => {
   const heldTranslations = ActionMappings.get(STATE_IDS.GRAB_HELD_S);

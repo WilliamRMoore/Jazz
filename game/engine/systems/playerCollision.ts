@@ -1,5 +1,5 @@
 import { SetPlayerPositionRaw } from '../entity/playerOrchestrator';
-import { STATE_IDS } from '../finiteStateMachines/player/shared';
+import { STATE_IDS } from '../finiteStateMachines/player/states/shared';
 import { DivideRaw } from '../math/fixedPoint';
 import { ONE_POINT_FIVE, TWO } from '../math/numberConstants';
 import { AABBIntersect, IntersectsPolygons } from '../physics/collisions';

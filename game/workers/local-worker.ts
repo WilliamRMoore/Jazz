@@ -3,7 +3,7 @@ import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { LaunchPlayerDownward } from '../engine/debug/scenarios/launchPlayerDownward';
 import { SetPlayerToStateId } from '../engine/debug/scenarios/setPlayerStateId';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
-import { STATE_IDS } from '../engine/finiteStateMachines/player/shared';
+import { STATE_IDS } from '../engine/finiteStateMachines/player/states/shared';
 import { NewInputAction } from '../engine/input/Input';
 import { FlatVec } from '../engine/physics/vector';
 import { defaultStage, WallStage } from '../engine/stage/stageMain';

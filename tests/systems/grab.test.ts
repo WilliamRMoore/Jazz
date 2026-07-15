@@ -7,7 +7,7 @@ import { StateMachine } from '../../game/engine/finiteStateMachines/player/Playe
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 import { NewInputAction } from '../../game/engine/input/Input';
 import { IInputStore } from '../../game/engine/managers/inputManager';
 import { NumberToRaw } from '../../game/engine/math/fixedPoint';

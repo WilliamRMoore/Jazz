@@ -77,9 +77,17 @@ import { WalkNode } from './states/walk';
 import { WallKickNode } from './states/wallKick';
 import { WallSlamNode } from './states/wallSlam';
 
-import { condition } from './conditions';
+import { condition } from './states/conditions/conditions';
 import { FSMState } from './PlayerStateMachine';
-import { ATTACK_IDS, AttackId, GAME_EVENT_IDS, GameEventId, GRAB_IDS, GrabId, StateId } from './shared';
+import {
+  GameEventId,
+  StateId,
+  AttackId,
+  GAME_EVENT_IDS,
+  ATTACK_IDS,
+  GrabId,
+  GRAB_IDS
+} from './states/shared';
 
 export class ActionStateMappings {
   private readonly mappings = new Map<GameEventId, StateId>();
@@ -198,7 +206,7 @@ const AllNodes = [
   GetUpRollForwardNode,
   GetUpRollBackNode,
   TechInPlaceNode,
-  RollTechNode,
+  RollTechNode
 ];
 
 export const ActionMappings = new Map<StateId, ActionStateMappings>();
@@ -206,7 +214,7 @@ export const FSMStates = new Map<StateId, FSMState>();
 
 for (const node of AllNodes) {
   FSMStates.set(node.State.StateId, node.State);
-  
+
   const mappings = new ActionStateMappings();
   mappings.SetMappings(node.DirectTransitions);
   if (node.Conditions && node.Conditions.length > 0) {

@@ -1,7 +1,7 @@
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { POINT_FOUR } from '../math/numberConstants';
 import { LineSegmentIntersectionRaw } from '../physics/collisions';
 import { World } from '../world/world';

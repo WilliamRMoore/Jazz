@@ -1,6 +1,6 @@
 import { Player } from '../../../entity/playerOrchestrator';
 import { World } from '../../../world/world';
-import { STATE_IDS } from '../../player/shared';
+import { STATE_IDS } from '../../player/states/shared';
 import { IAstNode } from '../astNode';
 import { CPUAction } from '../sequences/shared';
 

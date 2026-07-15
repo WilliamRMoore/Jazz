@@ -3,7 +3,7 @@ import { Player } from '../entity/playerOrchestrator';
 import {
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { World } from '../world/world';
 import {
   CalculateHitStun,

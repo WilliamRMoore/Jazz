@@ -10,7 +10,7 @@ import {
   AttackId,
   GrabId,
   StateId
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 
 import { sections } from '../ui/panels/leftPanel';
 import { RightPanel } from '../ui/panels/rightPanel';

@@ -3,10 +3,10 @@ import { DivideRaw, MultiplyRaw, NumberToRaw } from '../../../math/fixedPoint';
 import { ONE } from '../../../math/numberConstants';
 import { EaseInRaw } from '../../../utils';
 import { World } from '../../../world/world';
-import * as Conditions from '../conditions';
+import * as Conditions from './conditions/conditions';
 import { FSMNode } from '../PlayerStateCollections';
 import { FSMState } from '../PlayerStateMachine';
-import { GAME_EVENT_IDS, STATE_IDS } from '../shared';
+import { GAME_EVENT_IDS, STATE_IDS } from './shared';
 
 export const GetUpRollBack: FSMState = {
   StateName: 'GetUpRollBack',

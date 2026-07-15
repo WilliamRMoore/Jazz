@@ -5,7 +5,7 @@ import {
   ATTACK_IDS,
   GAME_EVENT_IDS,
   STATE_IDS
-} from '../../game/engine/finiteStateMachines/player/shared';
+} from '../../game/engine/finiteStateMachines/player/states/shared';
 import { defaultStage } from '../../game/engine/stage/stageMain';
 import { Gravity } from '../../game/engine/systems/gravity';
 import { World } from '../../game/engine/world/world';

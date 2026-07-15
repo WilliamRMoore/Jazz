@@ -21,7 +21,7 @@ import {
   AttackId,
   GrabId,
   STATE_IDS
-} from '../finiteStateMachines/player/shared';
+} from '../finiteStateMachines/player/states/shared';
 import { FlatVec } from '../physics/vector';
 import { PlayerHistoryTable } from '../world/stateModules';
 import { World } from '../world/world';
@@ -83,7 +83,7 @@ export function RecordIntoHistory(p: Player, r: PlayerStateHistory) {
   r.facingRight = flags.IsFacingRight;
   r.fasFalling = flags.IsFastFalling;
   r.hitPauseFrames = flags.HitPauseFrames;
-  r.intangabilityFrames = flags.GetIntangabilityFrames();
+  r.intangabilityFrames = flags.IntangabilityFrames;
   r.disablePlatformDetectionFrames = flags.DisablePlatDetectionFrames;
   r.lastTechFrame = flags.LastTechFrame;
   r.velocityDecayActive = flags.IsVelocityDecayActive;
