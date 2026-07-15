@@ -11,7 +11,6 @@ export const NAttack: FSMState = {
   StateId: STATE_IDS.ATTACK_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.ATTACK_GE;
-    const stateId = STATE_IDS.ATTACK_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

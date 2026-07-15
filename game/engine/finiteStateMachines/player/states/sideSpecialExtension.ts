@@ -11,7 +11,6 @@ export const SideSpecialExtension: FSMState = {
   StateId: STATE_IDS.SIDE_SPCL_EX_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.SIDE_SPCL_EX_GE;
-    const stateId = STATE_IDS.SIDE_SPCL_EX_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

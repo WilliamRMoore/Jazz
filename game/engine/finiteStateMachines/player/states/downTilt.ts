@@ -11,7 +11,6 @@ export const DownTilt: FSMState = {
   StateId: STATE_IDS.DOWN_TILT_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.D_TILT_GE;
-    const stateId = STATE_IDS.DOWN_TILT_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

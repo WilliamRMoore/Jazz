@@ -16,7 +16,6 @@ export const FAerialAttack: FSMState = {
   StateId: STATE_IDS.F_AIR_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.F_AIR_GE;
-    const stateId = STATE_IDS.F_AIR_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: (p: Player, w: World) => {

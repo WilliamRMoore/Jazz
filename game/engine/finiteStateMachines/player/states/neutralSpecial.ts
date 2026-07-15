@@ -11,7 +11,6 @@ export const NeutralSpecial: FSMState = {
   StateId: STATE_IDS.SPCL_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.SPCL_GE;
-    const stateId = STATE_IDS.SPCL_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

@@ -20,7 +20,6 @@ export const SideSpecialAir: FSMState = {
       p.Flags.FaceRight();
     }
     const geId = GAME_EVENT_IDS.S_SPCL_AIR_GE;
-    const stateId = STATE_IDS.SIDE_SPCL_AIR_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

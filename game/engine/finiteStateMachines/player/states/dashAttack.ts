@@ -12,7 +12,6 @@ export const DashAttack: FSMState = {
   OnEnter: (p: Player, w: World) => {
     p.Attacks.SetCurrentAttack(GAME_EVENT_IDS.DASH_ATTACK_GE);
     const geId = GAME_EVENT_IDS.DASH_ATTACK_GE;
-    const stateId = STATE_IDS.DASH_ATTACK_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,

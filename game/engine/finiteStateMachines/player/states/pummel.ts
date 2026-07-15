@@ -16,7 +16,6 @@ export const Pummel: FSMState = {
   StateId: STATE_IDS.PUMMEL_S,
   OnEnter: (p: Player, w: World) => {
     const geId = GAME_EVENT_IDS.PUMMEL_GE;
-    const stateId = STATE_IDS.PUMMEL_S;
     attackOnEnter(p, w, geId);
   },
   OnUpdate: attackOnUpdate,
