@@ -120,35 +120,34 @@ export class World {
     histDat.RentedECBDtos[frame] = pools.DiamondPool.ActiveCount;
     histDat.RentedAABBDtos[frame] = pools.AABBDTOPool.ActiveCount;
   }
-}
 
-type NetworkPlayers = { pIndex: number; player: Player };
+  public AddNetworkedPlayers(
+    local: NetworkPlayers,
+    remote: NetworkPlayers
+  ) {
+    if (local.pIndex < remote.pIndex) {
+      this.SetPlayer(local.player);
+      return this.setRemotePlayer(remote.player);
+    } else {
+      const rb = this.setRemotePlayer(remote.player);
+      this.SetPlayer(local.player);
+      return rb;
+    }
+  }
 
-export function AddNetowrkedPlayers(
-  w: World,
-  local: NetworkPlayers,
-  remote: NetworkPlayers
-) {
-  if (local.pIndex < remote.pIndex) {
-    w.SetPlayer(local.player);
-    return setRemotePlayer(w, remote.player);
-  } else {
-    const rb = setRemotePlayer(w, remote.player);
-    w.SetPlayer(local.player);
+  private setRemotePlayer(remotePlayer: Player) {
+    this.PlayerData.AddPlayer(remotePlayer);
+    this.PlayerData.AddStateMachine(new StateMachine(remotePlayer, this));
+    const remoteInputStore = new InputStore();
+    const remoteInputManager = new RemoteInputManager(remoteInputStore);
+    const rb = new RollBackManager(this.LocalFrameGet, remoteInputManager);
+    this.PlayerData.AddInputStore(remoteInputManager, 0);
+    const pdb = createEmptyHistoryData();
+    this.HistoryData.PlayerHistoryDB.push(pdb);
+    InitPlayerHistory(remotePlayer, this);
+    this.DebugAdapters.push(new PlayerDebugAdapter(remotePlayer, this));
     return rb;
   }
 }
 
-function setRemotePlayer(world: World, remotePlayer: Player) {
-  world.PlayerData.AddPlayer(remotePlayer);
-  world.PlayerData.AddStateMachine(new StateMachine(remotePlayer, world));
-  const remoteInputStore = new InputStore();
-  const remoteInputManager = new RemoteInputManager(remoteInputStore);
-  const rb = new RollBackManager(world.LocalFrameGet, remoteInputManager);
-  world.PlayerData.AddInputStore(remoteInputManager, 0);
-  const pdb = createEmptyHistoryData();
-  world.HistoryData.PlayerHistoryDB.push(pdb);
-  InitPlayerHistory(remotePlayer, world);
-  world.DebugAdapters.push(new PlayerDebugAdapter(remotePlayer, world));
-  return rb;
-}
+export type NetworkPlayers = { pIndex: number; player: Player };

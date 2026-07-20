@@ -9,7 +9,7 @@ import { RollBackManager } from '../managers/rollBack';
 import { FlatVec } from '../physics/vector';
 import { Stage } from '../stage/stageMain';
 import { SetPlayerToFrame } from '../world/stateModules';
-import { AddNetowrkedPlayers, World } from '../world/world';
+import { World } from '../world/world';
 import { DefaultGameLoop } from './jazzGameLoops';
 import { GameLoop } from './jazzLocal';
 
@@ -56,8 +56,7 @@ export class JazzNetwork {
     if (this.localPlayer === undefined || this.remotePlayer === undefined) {
       console.error('Did not set players before initiliazing');
     }
-    const rb = AddNetowrkedPlayers(
-      this.World,
+    const rb = this.World.AddNetworkedPlayers(
       this.localPlayer!,
       this.remotePlayer!,
     );
