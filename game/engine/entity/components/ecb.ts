@@ -2,8 +2,6 @@ import { ECBShapesConfig } from '../../../character/shared';
 import { StateId } from '../../finiteStateMachines/player/states/shared';
 import { FixedPoint, MultiplyRaw, NumberToRaw } from '../../math/fixedPoint';
 import { FlatVec } from '../../physics/vector';
-import { DiamondDTO } from '../../pools/ECBDiamonDTO';
-import { Pool } from '../../pools/Pool';
 import { FillArrayWithFlatVec } from '../../utils';
 
 const POINT_FIVE = NumberToRaw(0.5);

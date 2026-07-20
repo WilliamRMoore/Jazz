@@ -9,7 +9,11 @@ import {
   SetPlayerPositionRaw
 } from '../entity/playerOrchestrator';
 import { TWO } from '../math/numberConstants';
-import { CreateConvexHull, IntersectsPolygons } from '../physics/collisions';
+import {
+  AABBIntersect,
+  CreateConvexHull,
+  IntersectsPolygons
+} from '../physics/collisions';
 import { FlatVec } from '../physics/vector';
 import { PlayerData, Pools, StageData } from '../world/stateModules';
 import { World } from '../world/world';
@@ -104,11 +108,39 @@ export function LedgeGrabDetection(world: World): void {
     }
 
     const hull = CreateConvexHull(combinedVerts);
+
+    let minX = combinedVerts[0].X.Raw;
+    let maxX = combinedVerts[0].X.Raw;
+    let minY = combinedVerts[0].Y.Raw;
+    let maxY = combinedVerts[0].Y.Raw;
+    
+    for (let i = 1; i < combinedVerts.length; i++) {
+      const v = combinedVerts[i];
+      if (v.X.Raw < minX) minX = v.X.Raw;
+      if (v.X.Raw > maxX) maxX = v.X.Raw;
+      if (v.Y.Raw < minY) minY = v.Y.Raw;
+      if (v.Y.Raw > maxY) maxY = v.Y.Raw;
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+
     const sm = playerData.StateMachine(playerIndex);
     const ecb = p.ECB;
 
     for (let stageIndex = 0; stageIndex < stageLength; stageIndex++) {
       const stage = stages[stageIndex];
+      const sMinX = stage.AabbMinXRaw;
+      const sMinY = stage.AabbMinYRaw;
+      const sWidth = stage.AabbMaxXRaw - stage.AabbMinXRaw;
+      const sHeight = stage.AabbMaxYRaw - stage.AabbMinYRaw;
+
+      if (
+        !AABBIntersect(sMinX, sMinY, sWidth, sHeight, minX, minY, width, height)
+      ) {
+        continue;
+      }
+
       const ledges = stage.Ledges;
       const leftLedge = ledges.GetLeftLedge();
       const rightLedge = ledges.GetRightLedge();
