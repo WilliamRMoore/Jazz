@@ -11,9 +11,9 @@ import { Stage } from '../stage/stageMain';
 import { SetPlayerToFrame } from '../world/stateModules';
 import { World } from '../world/world';
 import { DefaultGameLoop } from './jazzGameLoops';
-import { GameLoop } from './jazzLocal';
+import { IJazzEngine, GameLoop } from './IJazzEngine';
 
-export class JazzNetwork {
+export class JazzNetwork implements IJazzEngine {
   public readonly World: World;
   private localInputStore!: IInputStore;
   private rollBack!: RollBackManager;
@@ -107,18 +107,15 @@ export class JazzNetwork {
     SetPlayerToFrame(p, frameNumber, this.World);
   }
 
+  public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
+    if (this.localPlayer?.pIndex === pIndex) {
+      this.World.StorePlayerInput(pIndex, ia);
+      this.sendLocalInput(ia);
+    }
+  }
+
   private tickLoop() {
-    const world = this.World;
-    world.Pools.Zero();
-    let frameTimeStart = performance.now();
-
-    this.loop(this.World);
-
-    let frameTimeDelta = performance.now() - frameTimeStart;
-
-    world.SetFrameTimeForFrame(world.LocalFrame, frameTimeDelta);
-    world.SetFrameTimeStampForFrame(world.LocalFrame, frameTimeStart);
-    world.LocalFrame++;
+    this.World.Tick(this.loop);
   }
 
   public AddRemoteInputForFrame(

@@ -351,3 +351,24 @@ export class GrabConfigBuilder {
     return grabConf;
   }
 }
+
+export type AnimationLayerConfig = {
+  clipName: string;
+  startFrame: number;
+  endFrame: number;
+  playbackSpeed: number;
+  loopable: boolean;
+  mixWeight: number; // For blending multiple animations
+  lockRootMotion: boolean;
+};
+
+export type StateDisplayConfig = {
+  animations: AnimationLayerConfig[];
+  soundCue?: string; // Placeholder for sound
+};
+
+export type DisplayLayerConfig = {
+  simulationScale: number;
+  deadRightRotation: number;
+  states: Map<StateId, StateDisplayConfig>;
+};

@@ -7,10 +7,15 @@
 <body>
     <div class="main-editor-window">
         <div class="top-toolbar">
-            <button id="btn-new">New</button>
-            <button id="btn-open">Open</button>
-            <button id="btn-save">Save</button>
-            <button id="btn-export">Export Config</button>
+            <div class="dropdown">
+                <button class="dropbtn">File</button>
+                <div class="dropdown-content">
+                    <a href="#" id="menu-new">New Project</a>
+                    <a href="#" id="menu-open">Open Project</a>
+                    <a href="#" id="menu-save">Save Project</a>
+                    <a href="#" id="menu-export">Export Config</a>
+                </div>
+            </div>
         </div>
         <div class="left-panel" id="left-panel"></div>
         <div class="editor-canvas-container" id="editor-canvas-container">

@@ -47,8 +47,8 @@ self.onmessage = (event: MessageEvent) => {
     }
 
     // Initialize the engine with a default stage
-    jazz.jazz.SetStage(defaultStage());
-    jazz.jazz.SetStage(WallStage());
+    (jazz.engine as any).SetStage(defaultStage());
+    (jazz.engine as any).SetStage(WallStage());
 
     // Start greedy loop
     lastTime = performance.now();
@@ -73,8 +73,8 @@ self.onmessage = (event: MessageEvent) => {
     }
   }
   if (message.type == 'LOAD_STAGE') {
-    jazz.jazz.SetStage(defaultStage());
-    jazz.jazz.SetStage(WallStage());
+    (jazz.engine as any).SetStage(defaultStage());
+    (jazz.engine as any).SetStage(WallStage());
   }
   if (message.type == 'SPAWN_AND_ATTACK') {
     if (jazz.World.PlayerData.PlayerCount < 4) {

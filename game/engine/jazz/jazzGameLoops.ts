@@ -17,7 +17,7 @@ import { ApplyVelocity } from '../systems/velocity';
 import { ApplyVelocityDecay } from '../systems/velocityDecay';
 import { WallKick } from '../systems/wallKick';
 import { World } from '../world/world';
-import { GameLoop } from './jazzLocal';
+import { GameLoop } from './IJazzEngine';
 
 export const DefaultGameLoop: GameLoop = (w: World) => {
   Flags(w);

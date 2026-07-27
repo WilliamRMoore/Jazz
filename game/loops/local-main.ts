@@ -2,16 +2,13 @@ import { DefaultCharacterConfig } from '../character/default';
 import { CharacterConfig } from '../character/shared';
 import { JazzDebugger } from '../engine/debug/jazzDebugWrapper';
 import { SpawnAndAttackWithNSpecial } from '../engine/debug/scenarios/spawnPlayerAndAttack';
-import { PlayerCPU } from '../engine/finiteStateMachines/cpu/playerCPU';
 import { STATE_IDS } from '../engine/finiteStateMachines/player/states/shared';
-import { GetInput } from '../engine/input/Input';
-import { IJazzLocal } from '../engine/jazz/jazzLocal';
+import { GetInput, NewInputAction } from '../engine/input/Input';
 import { FixedPoint } from '../engine/math/fixedPoint';
 import { FlatVec } from '../engine/physics/vector';
 import { DebugRenderer, renderTarget } from '../render/debug-2d';
 import { RENDER_MONITOR_FRAME_RATE } from './animation-loop';
-
-const cpuPlayers = new Map<number, PlayerCPU>();
+import { IJazzEngine } from '../engine/jazz/IJazzEngine';
 
 const frameInterval = 1000 / 60;
 let accumulator = 0;
@@ -80,7 +77,7 @@ export function start(playerInfo: Array<playerControllerInfo>) {
   RENDER_LOOP(engine);
 }
 
-function LOGIC_LOOP(engine: IJazzLocal, gpInfo: Array<playerControllerInfo>) {
+function LOGIC_LOOP(engine: IJazzEngine, gpInfo: Array<playerControllerInfo>) {
   accumulator = 0;
   lastTime = performance.now();
   const logicLoopHandle = setInterval(() => {
@@ -111,7 +108,7 @@ function RENDER_LOOP(jazzDebugger: JazzDebugger) {
 
 const loopRate = 1000 / 60; //60 hrz
 function logicStep(
-  engine: IJazzLocal,
+  engine: IJazzEngine,
   gamePadInfo: Array<playerControllerInfo>
 ) {
   const now = performance.now();
@@ -128,11 +125,8 @@ function logicStep(
     for (let i = 0; i < playerCount; i++) {
       const info = gamePadInfo[i];
       if (info === undefined) {
-        if (!cpuPlayers.has(i)) {
-          cpuPlayers.set(i, new PlayerCPU(i, w));
-        }
-        const cpuInput = cpuPlayers.get(i)!.NextInput();
-        engine.UpdateInputForCurrentFrame(cpuInput, i);
+        // AI is disabled for now, just send empty input
+        engine.UpdateInputForCurrentFrame(NewInputAction(), i);
         continue;
       }
       const gpI = info.inputIndex;

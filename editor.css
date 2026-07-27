@@ -42,16 +42,52 @@ body, html {
     z-index: 20;
 }
 
-.top-toolbar button {
+.top-toolbar button, .dropbtn {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
-    padding: 5px 10px;
+    padding: 5px 15px;
     cursor: pointer;
     border-radius: 3px;
+    font-size: 14px;
 }
-.top-toolbar button:hover {
+.top-toolbar button:hover, .dropbtn:hover {
     background-color: var(--border-color);
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--panel-bg);
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    z-index: 100;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    top: 100%;
+    left: 0;
+}
+
+.dropdown-content a {
+    color: var(--text-primary);
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+}
+
+.dropdown-content a:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
 }
 
 .left-panel {
@@ -84,7 +120,7 @@ body, html {
     color: #fff;
 }
 
-.editor.canvas.container {
+.editor-canvas-container {
     grid-column: 2;
     grid-row: 2;
     position: relative;

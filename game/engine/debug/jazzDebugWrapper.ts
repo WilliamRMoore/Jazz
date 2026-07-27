@@ -4,28 +4,29 @@ import {
   SetPlayerInitialPositionRaw,
 } from '../entity/playerOrchestrator';
 import { InputAction } from '../input/Input';
-import { IJazzLocal, JazzLocal } from '../jazz/jazzLocal';
+import { IJazzEngine } from '../jazz/IJazzEngine';
+import { JazzLocal } from '../jazz/jazzLocal';
 import { FlatVec } from '../physics/vector';
 import { SetPlayerToFrame } from '../world/stateModules';
 import { World } from '../world/world';
 import { PlayerDebugAdapter } from './playerDebugger';
 
-export interface IJazzDebugger extends IJazzLocal {
+export interface IJazzDebugger extends IJazzEngine {
   readonly playerDebuggers: Array<PlayerDebugAdapter>;
   AddPlayerEntity(cc: CharacterConfig, pos: FlatVec | undefined): void;
 }
 
 export class JazzDebugger implements IJazzDebugger {
   readonly playerDebuggers = new Array<PlayerDebugAdapter>();
-  public readonly jazz: JazzLocal;
+  public readonly engine: IJazzEngine;
   private world: World;
   private paused: boolean = false;
   private previousInput: InputAction | undefined = undefined;
   private advanceFrame: boolean = false;
 
-  constructor() {
-    this.jazz = new JazzLocal();
-    this.world = this.jazz.World;
+  constructor(engine: IJazzEngine = new JazzLocal()) {
+    this.engine = engine;
+    this.world = this.engine.World;
   }
 
   public AddPlayerEntity(
@@ -36,7 +37,7 @@ export class JazzDebugger implements IJazzDebugger {
     if (pos !== undefined) {
       SetPlayerInitialPositionRaw(p, pos.X.Raw, pos.Y.Raw);
     }
-    this.jazz.World.SetPlayer(p);
+    this.engine.World.SetPlayer(p);
     const pd = new PlayerDebugAdapter(p, this.world);
     this.playerDebuggers.push(pd);
     return pd;
@@ -57,7 +58,7 @@ export class JazzDebugger implements IJazzDebugger {
           this.world.PlayerData.InputStore(pIndex).GetInputForFrame(frame) ===
           undefined
         ) {
-          this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
+          this.engine.UpdateInputForCurrentFrame(ia, pIndex);
         }
       }
       if (pIndex === 0) {
@@ -70,7 +71,7 @@ export class JazzDebugger implements IJazzDebugger {
       this.world.PlayerData.InputStore(pIndex).GetInputForFrame(frame) ===
       undefined
     ) {
-      this.jazz.UpdateInputForCurrentFrame(ia, pIndex);
+      this.engine.UpdateInputForCurrentFrame(ia, pIndex);
     }
 
     if (pIndex === 0) {
@@ -82,7 +83,9 @@ export class JazzDebugger implements IJazzDebugger {
     ccs: Array<CharacterConfig>,
     positions: Array<FlatVec> | undefined = undefined,
   ): void {
-    this.jazz.Init(ccs, positions);
+    if ('Init' in this.engine) {
+      (this.engine as any).Init(ccs, positions);
+    }
     const pl = this.world.PlayerData.PlayerCount;
     for (let i = 0; i < pl; i++) {
       const pd = new PlayerDebugAdapter(
@@ -96,12 +99,12 @@ export class JazzDebugger implements IJazzDebugger {
   public Tick(): void {
     if (this.paused && this.advanceFrame) {
       this.advanceFrame = false;
-      this.jazz.Tick();
+      this.engine.Tick();
       return;
     }
 
     if (!this.paused) {
-      this.jazz.Tick();
+      this.engine.Tick();
     }
   }
 
@@ -118,7 +121,7 @@ export class JazzDebugger implements IJazzDebugger {
   }
 
   public get World(): World {
-    return this.jazz.World;
+    return this.engine.World;
   }
 
   public get IsPaused(): boolean {

@@ -16,10 +16,10 @@ Instead of directly modifying backend config files in-place, the editor operates
   * **Open / Save**: Projects can be loaded from the toolbar or saved at any point. Saves capture incomplete work so the user never loses progress.
   * **Export Process**: A dedicated "Compile & Export" pipeline (detailed below) compresses the visual project data into the highly optimized `CharacterConfig` JSON that the backend actually uses.
 
-* **Project Structure**:
-  * `[model_name].glb`: The visual 3D asset.
-  * `project_config.json`: The **Frontend Editor Config**. This stores all the visual and editorial metadata that the backend engine doesn't care about. For example: mapping FSM states to animation clip names, storing which hitboxes are bound to which bones, and which bone acts as the ECB fulcrum.
-  * `character_config.json`: The **Backend Engine Config**. This is the raw numerical data (`ECBShape` dimensions, fixed hitbox offsets, dynamic hurt capsule coordinates) that the game engine consumes.
+* **Project Structure / Outputs**:
+  * `[model_name].glb`: The visual 3D asset exported for the game.
+  * `engine_config.json`: The **Backend Engine Config**. This is the raw numerical data (`ECBShape` dimensions, fixed hitbox offsets, dynamic hurt capsule coordinates) that the game engine consumes.
+  * `display_layer_config.json`: The **Display Layer Config**. This contains data for the frontend display, such as which model to load, which animations to play for which state (including any mixing or scaling instructions, as states may play multiple animations mixed together), and eventually what sounds to play during what state.
 
 ## 3. User Interface Layout
 

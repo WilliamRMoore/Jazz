@@ -8,17 +8,9 @@ import { FlatVec } from '../physics/vector';
 import { defaultStage, Stage, WallStage } from '../stage/stageMain';
 import { World } from '../world/world';
 import { DefaultGameLoop } from './jazzGameLoops';
+import { IJazzEngine, GameLoop } from './IJazzEngine';
 
-export interface IJazzLocal {
-  get World(): World | undefined;
-  Init(CharacterConfig: Array<CharacterConfig>): void;
-  UpdateInputForCurrentFrame(ia: InputAction, pIndex: number): void;
-  Tick(): void;
-}
-
-export type GameLoop = (w: World) => void;
-
-export class JazzLocal implements IJazzLocal {
+export class JazzLocal implements IJazzEngine {
   private readonly world: World;
   private loop: GameLoop;
 
@@ -64,23 +56,10 @@ export class JazzLocal implements IJazzLocal {
   }
 
   public UpdateInputForCurrentFrame(ia: InputAction, pIndex: number) {
-    this.world.PlayerData.InputStore(pIndex).StoreInputForFrame(
-      this.world.LocalFrame,
-      ia,
-    );
+    this.world.StorePlayerInput(pIndex, ia);
   }
 
   public Tick() {
-    const world = this.World;
-    world.Pools.Zero();
-    let frameTimeStart = performance.now();
-
-    this.loop(this.World);
-
-    let frameTimeDelta = performance.now() - frameTimeStart;
-
-    world.SetFrameTimeForFrame(world.LocalFrame, frameTimeDelta);
-    world.SetFrameTimeStampForFrame(world.LocalFrame, frameTimeStart);
-    world.LocalFrame++;
+    this.world.Tick(this.loop);
   }
 }

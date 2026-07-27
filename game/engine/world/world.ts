@@ -3,6 +3,8 @@ import { PlayerDebugAdapter } from '../debug/playerDebugger';
 import { Player } from '../entity/playerOrchestrator';
 import { StateMachine } from '../finiteStateMachines/player/PlayerStateMachine';
 import { InputStore, RemoteInputManager } from '../managers/inputManager';
+import { InputAction } from '../input/Input';
+import { GameLoop } from '../jazz/IJazzEngine';
 import { RollBackManager } from '../managers/rollBack';
 import { Stage } from '../stage/stageMain';
 import { InitPlayerHistory } from '../systems/history';
@@ -119,6 +121,23 @@ export class World {
     histDat.RentedClosestPoints[frame] = pools.ClstsPntsResPool.ActiveCount;
     histDat.RentedECBDtos[frame] = pools.DiamondPool.ActiveCount;
     histDat.RentedAABBDtos[frame] = pools.AABBDTOPool.ActiveCount;
+  }
+
+  public StorePlayerInput(pIndex: number, ia: InputAction, frame?: number) {
+    const f = frame ?? this.LocalFrame;
+    this.PlayerData.InputStore(pIndex).StoreInputForFrame(f, ia);
+  }
+
+  public Tick(loop: GameLoop) {
+    this.Pools.Zero();
+    const frameTimeStart = performance.now();
+    
+    loop(this);
+    
+    const frameTimeDelta = performance.now() - frameTimeStart;
+    this.SetFrameTimeForFrame(this.LocalFrame, frameTimeDelta);
+    this.SetFrameTimeStampForFrame(this.LocalFrame, frameTimeStart);
+    this.LocalFrame++;
   }
 
   public AddNetworkedPlayers(

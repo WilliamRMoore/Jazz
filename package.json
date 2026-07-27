@@ -35,6 +35,8 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@types/jszip": "^3.4.0",
+    "jszip": "^3.10.1",
     "three": "^0.185.1"
   }
 }
