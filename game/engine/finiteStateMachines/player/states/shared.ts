@@ -96,7 +96,6 @@ class STATES {
   public readonly DASH_TURN_S = seq.Next as StateId;
   public readonly STOP_RUN_S = seq.Next as StateId;
   public readonly RUN_TURN_S = seq.Next as StateId;
-  public readonly STOP_RUN_TURN_S = seq.Next as StateId;
   public readonly RUN_S = seq.Next as StateId;
   public readonly JUMP_SQUAT_S = seq.Next as StateId;
   public readonly JUMP_S = seq.Next as StateId;

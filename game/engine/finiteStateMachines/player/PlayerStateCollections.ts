@@ -128,7 +128,7 @@ export type FSMNode = {
   DefaultConditions: Array<condition>;
 };
 
-const AllNodes = [
+export const AllStateNodes = [
   IdleNode,
   WalkNode,
   TurnNode,
@@ -212,7 +212,7 @@ const AllNodes = [
 export const ActionMappings = new Map<StateId, ActionStateMappings>();
 export const FSMStates = new Map<StateId, FSMState>();
 
-for (const node of AllNodes) {
+for (const node of AllStateNodes) {
   FSMStates.set(node.State.StateId, node.State);
 
   const mappings = new ActionStateMappings();

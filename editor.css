@@ -22,16 +22,15 @@ body, html {
 /* CSS Grid Layout */
 .main-editor-window {
     display: grid;
-    /* 250px left panel, center takes remaining space, 300px right panel */
-    grid-template-columns: 250px 1fr 300px;
-    /* 40px top toolbar, Canvas takes remaining height, 250px bottom timeline/panel */
-    grid-template-rows: 40px 1fr 250px;
+    /* Resizable panels using CSS custom properties with fallbacks */
+    grid-template-columns: var(--left-panel-width, 250px) 5px 1fr 5px var(--right-panel-width, 300px);
+    grid-template-rows: 40px 1fr 5px var(--bottom-panel-height, 250px);
     height: 100vh;
     width: 100vw;
 }
 
 .top-toolbar {
-    grid-column: 1 / 4; /* Spans all columns */
+    grid-column: 1 / 8; /* Spans all columns */
     grid-row: 1;
     background-color: var(--panel-bg);
     border-bottom: 1px solid var(--border-color);
@@ -92,7 +91,7 @@ body, html {
 
 .left-panel {
     grid-column: 1;
-    grid-row: 2 / 4; /* Spans height below toolbar */
+    grid-row: 2 / 5; /* Spans height below toolbar */
     background-color: var(--panel-bg);
     border-right: 1px solid var(--border-color);
     box-shadow: 2px 0 10px rgba(0,0,0,0.5); /* Subtle depth */
@@ -121,15 +120,39 @@ body, html {
 }
 
 .editor-canvas-container {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 2;
     position: relative;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
     /* The three.js canvas will be injected here and fill this space */
 }
 
-.right-panel {
+/* Resizer Bars */
+.resizer {
+    background-color: var(--border-color);
+    z-index: 20;
+    transition: background-color 0.2s;
+}
+.resizer.col-resizer {
+    cursor: col-resize;
+    grid-row: 2 / 5;
+}
+.resizer.row-resizer {
+    cursor: row-resize;
     grid-column: 3;
-    grid-row: 2 / 4; /* Spans height below toolbar */
+}
+.resizer:hover, .resizer.active {
+    background-color: var(--accent);
+}
+#left-resizer { grid-column: 2; }
+#right-resizer { grid-column: 4; }
+#bottom-resizer { grid-row: 3; grid-column: 3; }
+
+.right-panel {
+    grid-column: 5;
+    grid-row: 2 / 5; /* Spans height below toolbar */
     background-color: var(--panel-bg);
     border-left: 1px solid var(--border-color);
     box-shadow: -2px 0 10px rgba(0,0,0,0.5);
@@ -166,8 +189,8 @@ body, html {
 }
 
 .bottom-panel {
-    grid-column: 2;
-    grid-row: 3;
+    grid-column: 3;
+    grid-row: 4;
     background-color: var(--panel-bg);
     border-top: 1px solid var(--border-color);
     z-index: 5;

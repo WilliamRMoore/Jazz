@@ -360,10 +360,17 @@ export type AnimationLayerConfig = {
   loopable: boolean;
   mixWeight: number; // For blending multiple animations
   lockRootMotion: boolean;
+  rootYOffset: number;
+  yLockAnchor?: string;
+  stateStartFrame?: number;
+  stateEndFrame?: number;
+  fadeInFrames?: number;
+  fadeOutFrames?: number;
 };
 
 export type StateDisplayConfig = {
   animations: AnimationLayerConfig[];
+  crossfadeFrames?: number;
   soundCue?: string; // Placeholder for sound
 };
 

@@ -18,10 +18,12 @@ import {
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import JSZip from 'jszip';
 
 import { sections } from '../ui/panels/leftPanel';
 import { RightPanel } from '../ui/panels/rightPanel';
+import { AllStateNodes } from '../../game/engine/finiteStateMachines/player/PlayerStateCollections';
 
 export type CharacterProject = {
   config: CharacterConfig;
@@ -43,11 +45,25 @@ export class CharacterEditor {
   private clock = new THREE.Clock();
   private loadedModel?: THREE.Group<THREE.Object3DEventMap>;
   private loadedAnimations: THREE.AnimationClip[] = [];
-  private currentActions: THREE.AnimationAction[] = [];
+  private currentActions: { action: THREE.AnimationAction, config: AnimationLayerConfig, mixerStartTime: number }[] = [];
+  private fadingOutActions: { action: THREE.AnimationAction, startWeight: number, fadeStartTime: number, duration: number }[] = [];
+  private stateStartTime: number = 0;
+  private globalCrossfadeDuration: number = 0;
+  private controls!: OrbitControls;
+  private fileHandle?: any;
+  private modelBaseX: number = 0;
+  private modelBaseY: number = 0;
+  private modelBaseZ: number = 0;
+  private cachedRootBone?: THREE.Bone;
+  private allBoneNames: string[] = [];
+  private skeletonHelper?: THREE.SkeletonHelper;
 
   constructor(cc: CharacterConfig | undefined = undefined) {
     if (cc === undefined) {
-      this.project = { config: emptyCahrConfig(), displayConfig: emptyDisplayConfig() };
+      this.project = {
+        config: emptyCahrConfig(),
+        displayConfig: emptyDisplayConfig()
+      };
     } else {
       this.project = { config: cc, displayConfig: emptyDisplayConfig() };
     }
@@ -64,6 +80,43 @@ export class CharacterEditor {
     this.initLeftPanel();
     this.initToolbar();
     this.initThreeJs();
+    this.initResizers();
+  }
+
+  private initResizers() {
+    const leftResizer = document.getElementById('left-resizer');
+    const rightResizer = document.getElementById('right-resizer');
+    const bottomResizer = document.getElementById('bottom-resizer');
+    const mainWindow = document.querySelector('.main-editor-window') as HTMLElement;
+
+    if (leftResizer && rightResizer && bottomResizer && mainWindow) {
+      let isResizingLeft = false;
+      let isResizingRight = false;
+      let isResizingBottom = false;
+
+      leftResizer.addEventListener('mousedown', (e) => { isResizingLeft = true; e.preventDefault(); leftResizer.classList.add('active'); });
+      rightResizer.addEventListener('mousedown', (e) => { isResizingRight = true; e.preventDefault(); rightResizer.classList.add('active'); });
+      bottomResizer.addEventListener('mousedown', (e) => { isResizingBottom = true; e.preventDefault(); bottomResizer.classList.add('active'); });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isResizingLeft) {
+          mainWindow.style.setProperty('--left-panel-width', `${Math.max(100, Math.min(e.clientX, window.innerWidth - 300))}px`);
+        } else if (isResizingRight) {
+          mainWindow.style.setProperty('--right-panel-width', `${Math.max(100, Math.min(window.innerWidth - e.clientX, window.innerWidth - 300))}px`);
+        } else if (isResizingBottom) {
+          mainWindow.style.setProperty('--bottom-panel-height', `${Math.max(100, Math.min(window.innerHeight - e.clientY, window.innerHeight - 200))}px`);
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        isResizingLeft = false;
+        isResizingRight = false;
+        isResizingBottom = false;
+        leftResizer.classList.remove('active');
+        rightResizer.classList.remove('active');
+        bottomResizer.classList.remove('active');
+      });
+    }
   }
 
   private initLeftPanel() {
@@ -73,7 +126,8 @@ export class CharacterEditor {
     const ul = document.createElement('ul');
 
     // Make a helper to clear active state
-    const clearActive = () => ul.querySelectorAll('li').forEach((el) => el.classList.remove('active'));
+    const clearActive = () =>
+      ul.querySelectorAll('li').forEach((el) => el.classList.remove('active'));
 
     // 1. Model Setup
     const liModel = document.createElement('li');
@@ -90,7 +144,7 @@ export class CharacterEditor {
     liStatesHeader.innerText = '▼ State Animations';
     liStatesHeader.style.fontWeight = 'bold';
     ul.appendChild(liStatesHeader);
-    
+
     const statesUl = document.createElement('ul');
     statesUl.style.display = 'block'; // Open by default
     liStatesHeader.addEventListener('click', () => {
@@ -136,7 +190,7 @@ export class CharacterEditor {
   private renderModelSetup() {
     const rightPanelEl = document.getElementById('right-panel');
     if (!rightPanelEl) return;
-    
+
     rightPanelEl.innerHTML = ''; // clear
 
     const title = document.createElement('h2');
@@ -167,7 +221,7 @@ export class CharacterEditor {
     rotDisplay.innerText = `${this.project.displayConfig.deadRightRotation}°`;
     rotDisplay.style.color = 'var(--accent)';
     rotLabel.appendChild(rotDisplay);
-    
+
     const rotInput = document.createElement('input');
     rotInput.type = 'range';
     rotInput.id = 'dead-right-rotation';
@@ -193,17 +247,20 @@ export class CharacterEditor {
     scaleGroup.className = 'form-group';
     const scaleLabel = document.createElement('label');
     scaleLabel.innerText = 'Simulation Scale:';
-    
+
     const scaleInput = document.createElement('input');
     scaleInput.type = 'number';
     scaleInput.id = 'simulation-scale';
     scaleInput.step = '0.1';
     scaleInput.value = this.project.displayConfig.simulationScale.toString();
-    
-    scaleInput.addEventListener('change', (e) => {
+
+    scaleInput.addEventListener('input', (e) => {
       const val = parseFloat((e.target as HTMLInputElement).value);
       if (!isNaN(val)) {
         this.project.displayConfig.simulationScale = val;
+        if (this.loadedModel) {
+          this.loadedModel.scale.set(val, val, val);
+        }
       }
     });
     scaleGroup.appendChild(scaleLabel);
@@ -214,7 +271,7 @@ export class CharacterEditor {
   private renderStateAnimationEditor(stateId: StateId, stateName: string) {
     const rightPanelEl = document.getElementById('right-panel');
     if (!rightPanelEl) return;
-    
+
     rightPanelEl.innerHTML = ''; // clear
 
     const title = document.createElement('h2');
@@ -228,11 +285,42 @@ export class CharacterEditor {
     }
     const stateConfig = this.project.displayConfig.states.get(stateId)!;
 
+    const xfadeGroup = document.createElement('div');
+    xfadeGroup.className = 'form-group';
+    xfadeGroup.style.marginBottom = '15px';
+    const xfadeLabel = document.createElement('label');
+    xfadeLabel.innerText = 'Crossfade from Previous State (Frames):';
+    const xfadeInp = document.createElement('input');
+    xfadeInp.type = 'number';
+    xfadeInp.value = (stateConfig.crossfadeFrames || 0).toString();
+    xfadeInp.addEventListener('change', (e) => {
+      stateConfig.crossfadeFrames = parseInt((e.target as HTMLInputElement).value, 10);
+    });
+    xfadeGroup.appendChild(xfadeLabel);
+    xfadeGroup.appendChild(xfadeInp);
+    rightPanelEl.appendChild(xfadeGroup);
+
     const layersContainer = document.createElement('div');
     layersContainer.id = 'layers-container';
 
     const renderLayers = () => {
       layersContainer.innerHTML = '';
+      
+      let maxStateFrame = 100;
+      if (stateConfig.animations.length > 0) {
+        maxStateFrame = Math.max(...stateConfig.animations.map(a => {
+          const trackEnd = (a.stateEndFrame && a.stateEndFrame > 0) ? a.stateEndFrame : ((a.stateStartFrame || 0) + (a.endFrame - a.startFrame));
+          return trackEnd;
+        }));
+        if (maxStateFrame <= 0) maxStateFrame = 100;
+      }
+      
+      const stateLengthDiv = document.createElement('div');
+      stateLengthDiv.style.marginBottom = '15px';
+      stateLengthDiv.style.fontSize = '1.1em';
+      stateLengthDiv.innerHTML = `<strong>Total State Length:</strong> ${maxStateFrame} frames`;
+      layersContainer.appendChild(stateLengthDiv);
+
       stateConfig.animations.forEach((anim, idx) => {
         const layerBox = document.createElement('div');
         layerBox.style.border = '1px solid var(--border-color)';
@@ -253,10 +341,143 @@ export class CharacterEditor {
         deleteBtn.style.top = '5px';
         deleteBtn.style.right = '5px';
         deleteBtn.addEventListener('click', () => {
-           stateConfig.animations.splice(idx, 1);
-           renderLayers();
+          stateConfig.animations.splice(idx, 1);
+          renderLayers();
         });
         layerBox.appendChild(deleteBtn);
+
+        // Track Start / End Frame
+        const trackFramesGroup = document.createElement('div');
+        trackFramesGroup.className = 'form-group flatvec-group';
+
+        const trackStartDiv = document.createElement('div');
+        trackStartDiv.innerHTML = '<label>Track Start (Frame):</label>';
+        const trackStartInp = document.createElement('input');
+        trackStartInp.type = 'number';
+        trackStartInp.value = (anim.stateStartFrame || 0).toString();
+        trackStartInp.addEventListener('change', (e) => {
+          anim.stateStartFrame = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        trackStartDiv.appendChild(trackStartInp);
+
+        const trackEndDiv = document.createElement('div');
+        trackEndDiv.innerHTML = '<label>Track End (0=clip len):</label>';
+        const trackEndInp = document.createElement('input');
+        trackEndInp.type = 'number';
+        trackEndInp.value = (anim.stateEndFrame || 0).toString();
+        trackEndInp.addEventListener('change', (e) => {
+          anim.stateEndFrame = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        trackEndDiv.appendChild(trackEndInp);
+
+        trackFramesGroup.appendChild(trackStartDiv);
+        trackFramesGroup.appendChild(trackEndDiv);
+        layerBox.appendChild(trackFramesGroup);
+
+        // Fades
+        const fadesGroup = document.createElement('div');
+        fadesGroup.className = 'form-group flatvec-group';
+
+        const fadeInDiv = document.createElement('div');
+        fadeInDiv.innerHTML = '<label>Fade In (Frames):</label>';
+        const fadeInInp = document.createElement('input');
+        fadeInInp.type = 'number';
+        fadeInInp.value = (anim.fadeInFrames || 0).toString();
+        fadeInInp.addEventListener('change', (e) => {
+          anim.fadeInFrames = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        fadeInDiv.appendChild(fadeInInp);
+
+        const fadeOutDiv = document.createElement('div');
+        fadeOutDiv.innerHTML = '<label>Fade Out (Frames):</label>';
+        const fadeOutInp = document.createElement('input');
+        fadeOutInp.type = 'number';
+        fadeOutInp.value = (anim.fadeOutFrames || 0).toString();
+        fadeOutInp.addEventListener('change', (e) => {
+          anim.fadeOutFrames = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        fadeOutDiv.appendChild(fadeOutInp);
+
+        fadesGroup.appendChild(fadeInDiv);
+        fadesGroup.appendChild(fadeOutDiv);
+        layerBox.appendChild(fadesGroup);
+
+        // Start / End Frame
+        const framesGroup = document.createElement('div');
+        framesGroup.className = 'form-group flatvec-group';
+
+        const startDiv = document.createElement('div');
+        startDiv.innerHTML = '<label>Clip Start Frame:</label>';
+        const startInp = document.createElement('input');
+        startInp.type = 'number';
+        startInp.value = anim.startFrame.toString();
+        startInp.addEventListener('change', (e) => {
+          anim.startFrame = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        startDiv.appendChild(startInp);
+
+        const endDiv = document.createElement('div');
+        endDiv.innerHTML = '<label>Clip End Frame:</label>';
+        const endInp = document.createElement('input');
+        endInp.type = 'number';
+        endInp.value = anim.endFrame.toString();
+        endInp.addEventListener('change', (e) => {
+          anim.endFrame = parseInt((e.target as HTMLInputElement).value, 10);
+          renderLayers();
+        });
+        endDiv.appendChild(endInp);
+
+        framesGroup.appendChild(startDiv);
+        framesGroup.appendChild(endDiv);
+        layerBox.appendChild(framesGroup);
+        
+        // Visual Timeline
+        const timelineTrack = document.createElement('div');
+        timelineTrack.style.width = '100%';
+        timelineTrack.style.height = '15px';
+        timelineTrack.style.backgroundColor = '#444';
+        timelineTrack.style.position = 'relative';
+        timelineTrack.style.marginTop = '10px';
+        timelineTrack.style.marginBottom = '10px';
+        timelineTrack.style.borderRadius = '3px';
+        
+        const timelineBlock = document.createElement('div');
+        timelineBlock.style.position = 'absolute';
+        timelineBlock.style.height = '100%';
+        timelineBlock.style.backgroundColor = 'var(--accent, #8a2be2)';
+        timelineBlock.style.borderRadius = '3px';
+        timelineBlock.style.opacity = '0.8';
+        
+        const delay = anim.stateStartFrame || 0;
+        const trackDuration = (anim.stateEndFrame && anim.stateEndFrame > 0) ? (anim.stateEndFrame - delay) : Math.max(0, anim.endFrame - anim.startFrame);
+        const duration = Math.max(0, trackDuration);
+        const fadeIn = anim.fadeInFrames || 0;
+        const fadeOut = anim.fadeOutFrames || 0;
+        
+        const leftPercent = (delay / maxStateFrame) * 100;
+        const widthPercent = (duration / maxStateFrame) * 100;
+        
+        timelineBlock.style.left = `${leftPercent}%`;
+        timelineBlock.style.width = `${widthPercent}%`;
+
+        if (duration > 0 && (fadeIn > 0 || fadeOut > 0)) {
+          const inStop = Math.min(100, (fadeIn / duration) * 100);
+          const outStop = Math.max(0, 100 - (fadeOut / duration) * 100);
+          timelineBlock.style.background = `linear-gradient(90deg, 
+            transparent 0%, 
+            var(--accent, #8a2be2) ${inStop}%, 
+            var(--accent, #8a2be2) ${outStop}%, 
+            transparent 100%)`;
+        }
+
+        timelineTrack.appendChild(timelineBlock);
+        
+        layerBox.appendChild(timelineTrack);
 
         // Clip Select
         const clipGroup = document.createElement('div');
@@ -270,42 +491,27 @@ export class CharacterEditor {
         emptyOpt.innerText = '-- Select --';
         clipSelect.appendChild(emptyOpt);
 
-        this.loadedAnimations.forEach(clip => {
-           const opt = document.createElement('option');
-           opt.value = clip.name;
-           opt.innerText = clip.name;
-           if (anim.clipName === clip.name) opt.selected = true;
-           clipSelect.appendChild(opt);
+        this.loadedAnimations.forEach((clip) => {
+          const opt = document.createElement('option');
+          opt.value = clip.name;
+          opt.innerText = clip.name;
+          if (anim.clipName === clip.name) opt.selected = true;
+          clipSelect.appendChild(opt);
         });
         clipSelect.addEventListener('change', (e) => {
-           anim.clipName = (e.target as HTMLSelectElement).value;
+          anim.clipName = (e.target as HTMLSelectElement).value;
+          const selectedClip = this.loadedAnimations.find(
+            (a) => a.name === anim.clipName
+          );
+          if (selectedClip) {
+            anim.startFrame = 0;
+            anim.endFrame = Math.round(selectedClip.duration * 60);
+            renderLayers();
+          }
         });
         clipGroup.appendChild(clipLabel);
         clipGroup.appendChild(clipSelect);
         layerBox.appendChild(clipGroup);
-
-        // Start / End Frame
-        const framesGroup = document.createElement('div');
-        framesGroup.className = 'form-group flatvec-group';
-        
-        const startDiv = document.createElement('div');
-        startDiv.innerHTML = '<label>Start Frame:</label>';
-        const startInp = document.createElement('input');
-        startInp.type = 'number';
-        startInp.value = anim.startFrame.toString();
-        startInp.addEventListener('change', (e) => { anim.startFrame = parseInt((e.target as HTMLInputElement).value, 10); });
-        startDiv.appendChild(startInp);
-        
-        const endDiv = document.createElement('div');
-        endDiv.innerHTML = '<label>End Frame:</label>';
-        const endInp = document.createElement('input');
-        endInp.type = 'number';
-        endInp.value = anim.endFrame.toString();
-        endInp.addEventListener('change', (e) => { anim.endFrame = parseInt((e.target as HTMLInputElement).value, 10); });
-        endDiv.appendChild(endInp);
-
-        framesGroup.appendChild(startDiv);
-        framesGroup.appendChild(endDiv);
         layerBox.appendChild(framesGroup);
 
         // Playback Speed
@@ -317,11 +523,13 @@ export class CharacterEditor {
         speedInp.type = 'number';
         speedInp.step = '0.1';
         speedInp.value = anim.playbackSpeed.toString();
-        speedInp.addEventListener('change', (e) => { anim.playbackSpeed = parseFloat((e.target as HTMLInputElement).value); });
+        speedInp.addEventListener('change', (e) => {
+          anim.playbackSpeed = parseFloat((e.target as HTMLInputElement).value);
+        });
         speedGroup.appendChild(speedLabel);
         speedGroup.appendChild(speedInp);
         layerBox.appendChild(speedGroup);
-        
+
         // Loopable
         const loopGroup = document.createElement('div');
         loopGroup.className = 'form-group';
@@ -330,7 +538,9 @@ export class CharacterEditor {
         const loopInp = document.createElement('input');
         loopInp.type = 'checkbox';
         loopInp.checked = anim.loopable;
-        loopInp.addEventListener('change', (e) => { anim.loopable = (e.target as HTMLInputElement).checked; });
+        loopInp.addEventListener('change', (e) => {
+          anim.loopable = (e.target as HTMLInputElement).checked;
+        });
         loopLabel.appendChild(loopInp);
         loopGroup.appendChild(loopLabel);
         layerBox.appendChild(loopGroup);
@@ -343,10 +553,69 @@ export class CharacterEditor {
         const lockInp = document.createElement('input');
         lockInp.type = 'checkbox';
         lockInp.checked = anim.lockRootMotion;
-        lockInp.addEventListener('change', (e) => { anim.lockRootMotion = (e.target as HTMLInputElement).checked; });
+        lockInp.addEventListener('change', (e) => {
+          anim.lockRootMotion = (e.target as HTMLInputElement).checked;
+          renderLayers();
+        });
         lockLabel.appendChild(lockInp);
         lockGroup.appendChild(lockLabel);
         layerBox.appendChild(lockGroup);
+
+        // Root Y Offset (only visible when lock root motion is on)
+        if (anim.lockRootMotion) {
+          const lockBoneGroup = document.createElement('div');
+          lockBoneGroup.className = 'form-group';
+          const lockBoneLabel = document.createElement('label');
+          lockBoneLabel.innerText = 'Y-Axis Lock Anchor:';
+          const lockBoneSelect = document.createElement('select');
+          lockBoneSelect.style.width = '100%';
+          
+          const addOpt = (val: string, text: string) => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.innerText = text;
+            if (anim.yLockAnchor === val || (!anim.yLockAnchor && val === 'none')) {
+              opt.selected = true;
+            }
+            lockBoneSelect.appendChild(opt);
+          };
+
+          addOpt('none', '-- None (Free Y) --');
+          addOpt('center_of_feet', '-- Center of Feet --');
+          addOpt('lowest_foot', '-- Lowest Foot --');
+          
+          this.allBoneNames.forEach(boneName => {
+            addOpt(boneName, boneName);
+          });
+          
+          lockBoneSelect.addEventListener('change', (e) => {
+            const val = (e.target as HTMLSelectElement).value;
+            anim.yLockAnchor = val === 'none' ? undefined : val;
+          });
+          
+          lockBoneGroup.appendChild(lockBoneLabel);
+          lockBoneGroup.appendChild(lockBoneSelect);
+          layerBox.appendChild(lockBoneGroup);
+
+          const yOffsetGroup = document.createElement('div');
+          yOffsetGroup.className = 'form-group';
+          const yOffsetLabel = document.createElement('label');
+          yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
+          const yOffsetInp = document.createElement('input');
+          yOffsetInp.type = 'range';
+          yOffsetInp.min = '-200';
+          yOffsetInp.max = '200';
+          yOffsetInp.step = '1';
+          yOffsetInp.value = anim.rootYOffset.toString();
+          yOffsetInp.style.width = '100%';
+          yOffsetInp.addEventListener('input', (e) => {
+            anim.rootYOffset = parseFloat((e.target as HTMLInputElement).value);
+            yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
+          });
+          yOffsetGroup.appendChild(yOffsetLabel);
+          yOffsetGroup.appendChild(yOffsetInp);
+          layerBox.appendChild(yOffsetGroup);
+        }
 
         // Mix Weight
         const weightGroup = document.createElement('div');
@@ -360,8 +629,8 @@ export class CharacterEditor {
         weightInp.step = '0.05';
         weightInp.value = anim.mixWeight.toString();
         weightInp.addEventListener('input', (e) => {
-           anim.mixWeight = parseFloat((e.target as HTMLInputElement).value);
-           weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
+          anim.mixWeight = parseFloat((e.target as HTMLInputElement).value);
+          weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
         });
         weightGroup.appendChild(weightLabel);
         weightGroup.appendChild(weightInp);
@@ -385,7 +654,10 @@ export class CharacterEditor {
         playbackSpeed: 1.0,
         loopable: true,
         mixWeight: 1.0,
-        lockRootMotion: false
+        lockRootMotion: false,
+        rootYOffset: 0,
+        stateStartFrame: 0,
+        stateEndFrame: 0
       });
       renderLayers();
     });
@@ -407,48 +679,99 @@ export class CharacterEditor {
 
   private playStatePreview(stateId: StateId) {
     if (!this.mixer) return;
-    
-    // Stop any existing actions
-    this.currentActions.forEach(action => action.stop());
-    this.currentActions = [];
 
     const stateConfig = this.project.displayConfig.states.get(stateId);
-    if (!stateConfig || stateConfig.animations.length === 0) return;
+    if (!stateConfig) {
+      this.currentActions.forEach((item) => item.action.stop());
+      this.currentActions = [];
+      return;
+    }
 
-    stateConfig.animations.forEach(animConfig => {
+    const crossfadeDuration = (stateConfig.crossfadeFrames || 0) / 60;
+    this.stateStartTime = this.mixer.time;
+    this.globalCrossfadeDuration = crossfadeDuration;
+
+    if (crossfadeDuration > 0) {
+      const now = this.mixer.time;
+      this.currentActions.forEach((item) => {
+        // The current weight is what it happens to be at this moment
+        const weight = item.action.getEffectiveWeight();
+        if (weight > 0) {
+          this.fadingOutActions.push({
+            action: item.action,
+            startWeight: weight,
+            fadeStartTime: now,
+            duration: crossfadeDuration
+          });
+        } else {
+          item.action.stop();
+        }
+      });
+    } else {
+      this.currentActions.forEach((item) => item.action.stop());
+      this.fadingOutActions.forEach((item) => item.action.stop());
+      this.fadingOutActions = [];
+    }
+    
+    this.currentActions = [];
+
+    if (stateConfig.animations.length === 0) return;
+
+    stateConfig.animations.forEach((animConfig) => {
       if (!animConfig.clipName) return;
-      
-      let clip = this.loadedAnimations.find(a => a.name === animConfig.clipName);
+
+      let clip = this.loadedAnimations.find(
+        (a) => a.name === animConfig.clipName
+      );
       if (!clip) return;
 
-      if (animConfig.lockRootMotion) {
+      const clipDurationFrames = Math.round(clip.duration * 60);
+      let startFrame = animConfig.startFrame || 0;
+      let endFrame = animConfig.endFrame || clipDurationFrames;
+
+      if (endFrame > clipDurationFrames) endFrame = clipDurationFrames;
+      if (startFrame >= endFrame) startFrame = 0;
+
+      if (startFrame > 0 || endFrame < clipDurationFrames) {
+        clip = THREE.AnimationUtils.subclip(
+          clip,
+          clip.name + '_sub',
+          startFrame,
+          endFrame,
+          60
+        );
+      } else {
         clip = clip.clone();
-        // Remove the position track of the root bone (usually the first position track)
-        const posTracks = clip.tracks.filter(t => t.name.endsWith('.position'));
-        if (posTracks.length > 0) {
-          const rootNodeName = posTracks[0].name.split('.')[0];
-          clip.tracks = clip.tracks.filter(t => !(t.name.startsWith(rootNodeName) && t.name.endsWith('.position')));
-        }
       }
+
+      // Root motion locking is handled in animate() via world-space position correction
+      // after the mixer update, so we don't modify animation tracks here.
 
       const action = this.mixer!.clipAction(clip);
-      
+
       // Calculate times based on frames (assume 60fps for editor purposes)
-      // Or we can let three.js handle time. The config uses frames for slicing.
-      // E.g. startFrame 10 means 10/60 seconds.
-      action.time = animConfig.startFrame / 60;
+      // Since we subclipped, we start at 0
+      action.time = 0;
       action.setEffectiveTimeScale(animConfig.playbackSpeed);
       action.setEffectiveWeight(animConfig.mixWeight);
-      
+
       if (!animConfig.loopable) {
-         action.setLoop(THREE.LoopOnce, 1);
-         action.clampWhenFinished = true;
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
       } else {
-         action.setLoop(THREE.LoopRepeat, Infinity);
+        action.setLoop(THREE.LoopRepeat, Infinity);
       }
 
+      const stateStartDelay = (animConfig.stateStartFrame || 0) / 60;
+      if (stateStartDelay > 0) {
+        action.startAt(this.mixer!.time + stateStartDelay);
+      }
       action.play();
-      this.currentActions.push(action);
+      this.currentActions.push({
+        action,
+        config: animConfig,
+        mixerStartTime: this.mixer!.time
+      });
     });
   }
 
@@ -458,16 +781,16 @@ export class CharacterEditor {
 
     const file = target.files[0];
     this.project.modelFilename = file.name;
-    
+
     // Read as ArrayBuffer for saving
     const reader = new FileReader();
     reader.onload = (ev) => {
-       if (ev.target && ev.target.result) {
-         this.project.modelData = ev.target.result as ArrayBuffer;
-       }
+      if (ev.target && ev.target.result) {
+        this.project.modelData = ev.target.result as ArrayBuffer;
+      }
     };
     reader.readAsArrayBuffer(file);
-    
+
     const url = URL.createObjectURL(file);
     this.loadModelFromUrl(url);
   }
@@ -479,16 +802,45 @@ export class CharacterEditor {
         this.scene.remove(this.loadedModel);
       }
       this.loadedModel = gltf.scene;
-      
+
       // Center the model
       const box = new THREE.Box3().setFromObject(this.loadedModel);
       const center = box.getCenter(new THREE.Vector3());
       this.loadedModel.position.sub(center);
+      this.modelBaseX = this.loadedModel.position.x;
+      this.modelBaseY = this.loadedModel.position.y;
+      this.modelBaseZ = this.loadedModel.position.z;
+
+      // Cache the root bone for lock root motion and gather all bone names
+      this.cachedRootBone = undefined;
+      this.allBoneNames = [];
+      this.loadedModel.traverse((child) => {
+        if ((child as THREE.Bone).isBone) {
+          if (!this.cachedRootBone) {
+            this.cachedRootBone = child as THREE.Bone;
+          }
+          this.allBoneNames.push(child.name);
+        }
+      });
 
       // Apply initial rotation from display config
-      this.loadedModel.rotation.y = this.project.displayConfig.deadRightRotation * (Math.PI / 180);
+      this.loadedModel.rotation.y =
+        this.project.displayConfig.deadRightRotation * (Math.PI / 180);
+
+      // Apply initial simulation scale
+      const scale = this.project.displayConfig.simulationScale;
+      this.loadedModel.scale.set(scale, scale, scale);
 
       this.scene.add(this.loadedModel);
+      
+      // Armature visualization
+      if (this.skeletonHelper) {
+        this.scene.remove(this.skeletonHelper);
+      }
+      this.skeletonHelper = new THREE.SkeletonHelper(this.loadedModel);
+      this.skeletonHelper.visible = false; // Hidden by default
+      // Note: SkeletonHelper uses a custom material. We can just add it to the scene.
+      this.scene.add(this.skeletonHelper);
 
       // Handle animations
       if (gltf.animations && gltf.animations.length > 0) {
@@ -500,7 +852,6 @@ export class CharacterEditor {
     });
   }
 
-
   private initToolbar() {
     const menuNew = document.getElementById('menu-new');
     const menuOpen = document.getElementById('menu-open');
@@ -509,13 +860,17 @@ export class CharacterEditor {
 
     menuNew?.addEventListener('click', (e) => {
       e.preventDefault();
-      this.project = { config: emptyCahrConfig(), displayConfig: emptyDisplayConfig() };
+      this.fileHandle = undefined;
+      this.project = {
+        config: emptyCahrConfig(),
+        displayConfig: emptyDisplayConfig()
+      };
       this.rightPanel.updateConfig(this.project.config);
       document.getElementById('right-panel')!.innerHTML = '';
       document
         .querySelectorAll('.left-panel li')
         .forEach((el) => el.classList.remove('active'));
-      
+
       // Clear model
       if (this.loadedModel) {
         this.scene.remove(this.loadedModel);
@@ -523,22 +878,49 @@ export class CharacterEditor {
       }
       this.mixer = undefined;
       this.loadedAnimations = [];
-      this.currentActions.forEach(a => a.stop());
+      this.currentActions.forEach((item) => item.action.stop());
       this.currentActions = [];
     });
 
-    menuOpen?.addEventListener('click', (e) => {
+    menuOpen?.addEventListener('click', async (e) => {
       e.preventDefault();
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.jproj';
-      fileInput.onchange = async (e) => this.openProject(e);
-      fileInput.click();
+      try {
+        if ('showOpenFilePicker' in window) {
+            const [fileHandle] = await (window as any).showOpenFilePicker({
+              types: [{
+                description: 'Jazz Project',
+                accept: { 'application/x-zip-compressed': ['.jproj'] }
+              }],
+              multiple: false
+            });
+            this.fileHandle = fileHandle;
+            const file = await fileHandle.getFile();
+            await this.openProjectFile(file);
+        } else {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.jproj';
+            fileInput.onchange = async (ev) => {
+                const target = ev.target as HTMLInputElement;
+                if (!target.files || target.files.length === 0) return;
+                await this.openProjectFile(target.files[0]);
+            };
+            fileInput.click();
+        }
+      } catch (err) {
+        console.error(err);
+      }
     });
 
     menuSave?.addEventListener('click', async (e) => {
       e.preventDefault();
-      await this.saveProject();
+      await this.saveProject(false);
+    });
+
+    const menuSaveAs = document.getElementById('menu-save-as');
+    menuSaveAs?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await this.saveProject(true);
     });
 
     menuExport?.addEventListener('click', (e) => {
@@ -559,60 +941,90 @@ export class CharacterEditor {
     });
   }
 
-  private async saveProject() {
+  private async saveProject(saveAs: boolean = false) {
     if (!this.project.modelData) {
       alert('No model loaded! Load a model before saving.');
       return;
     }
 
     const zip = new JSZip();
-    
+
     // Serialize CharacterConfig
-    const engineConfigStr = JSON.stringify(this.project.config, (key, value) => {
-      if (value instanceof Map) {
-        return { dataType: 'Map', value: Array.from(value.entries()) };
-      }
-      return value;
-    }, 2);
+    const engineConfigStr = JSON.stringify(
+      this.project.config,
+      (key, value) => {
+        if (value instanceof Map) {
+          return { dataType: 'Map', value: Array.from(value.entries()) };
+        }
+        return value;
+      },
+      2
+    );
     zip.file('engine_config.json', engineConfigStr);
 
     // Serialize DisplayLayerConfig
-    const displayConfigStr = JSON.stringify(this.project.displayConfig, (key, value) => {
-      if (value instanceof Map) {
-        return { dataType: 'Map', value: Array.from(value.entries()) };
-      }
-      return value;
-    }, 2);
+    const displayConfigStr = JSON.stringify(
+      this.project.displayConfig,
+      (key, value) => {
+        if (value instanceof Map) {
+          return { dataType: 'Map', value: Array.from(value.entries()) };
+        }
+        return value;
+      },
+      2
+    );
     zip.file('display_layer_config.json', displayConfigStr);
 
     zip.file(this.project.modelFilename || 'model.glb', this.project.modelData);
 
     const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
-    
-    // Trigger download
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${this.project.config.Name || 'Character'}.jproj`;
-    a.click();
-    
-    URL.revokeObjectURL(url);
+
+    if ('showSaveFilePicker' in window) {
+        if (!this.fileHandle || saveAs) {
+            try {
+                this.fileHandle = await (window as any).showSaveFilePicker({
+                    types: [{
+                        description: 'Jazz Project',
+                        accept: { 'application/x-zip-compressed': ['.jproj'] }
+                    }],
+                    suggestedName: `${this.project.config.Name || 'Character'}.jproj`
+                });
+            } catch (err) {
+                return; // User cancelled
+            }
+        }
+        const writable = await this.fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        console.log("Project quick saved!");
+    } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.project.config.Name || 'Character'}.jproj`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
   }
 
-  private async openProject(e: Event) {
-    const target = e.target as HTMLInputElement;
-    if (!target.files || target.files.length === 0) return;
-
-    const file = target.files[0];
+  private async openProjectFile(file: File) {
     const zip = await JSZip.loadAsync(file);
 
     // Load configs
-    const engineConfigStr = await zip.file('engine_config.json')?.async('string');
-    const displayConfigStr = await zip.file('display_layer_config.json')?.async('string');
-    
+    const engineConfigStr = await zip
+      .file('engine_config.json')
+      ?.async('string');
+    const displayConfigStr = await zip
+      .file('display_layer_config.json')
+      ?.async('string');
+
     if (engineConfigStr) {
       this.project.config = JSON.parse(engineConfigStr, (key, value) => {
-        if (typeof value === 'object' && value !== null && value.dataType === 'Map') {
+        if (
+          typeof value === 'object' &&
+          value !== null &&
+          value.dataType === 'Map'
+        ) {
           return new Map(value.value);
         }
         return value;
@@ -620,36 +1032,51 @@ export class CharacterEditor {
     }
 
     if (displayConfigStr) {
-      this.project.displayConfig = JSON.parse(displayConfigStr, (key, value) => {
-        if (typeof value === 'object' && value !== null && value.dataType === 'Map') {
-          return new Map(value.value);
+      this.project.displayConfig = JSON.parse(
+        displayConfigStr,
+        (key, value) => {
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            value.dataType === 'Map'
+          ) {
+            return new Map(value.value);
+          }
+          return value;
         }
-        return value;
-      });
+      );
 
-      const scaleInput = document.getElementById('simulation-scale') as HTMLInputElement;
+      const scaleInput = document.getElementById(
+        'simulation-scale'
+      ) as HTMLInputElement;
       if (scaleInput) {
-        scaleInput.value = this.project.displayConfig.simulationScale.toString();
+        scaleInput.value =
+          this.project.displayConfig.simulationScale.toString();
       }
 
-      const rotInput = document.getElementById('dead-right-rotation') as HTMLInputElement;
+      const rotInput = document.getElementById(
+        'dead-right-rotation'
+      ) as HTMLInputElement;
       if (rotInput) {
-        rotInput.value = this.project.displayConfig.deadRightRotation.toString();
+        rotInput.value =
+          this.project.displayConfig.deadRightRotation.toString();
         // Trigger input event to update display span and model rotation
         rotInput.dispatchEvent(new Event('input'));
       }
     }
 
     // Find and load the .glb
-    const glbFile = Object.values(zip.files).find(f => f.name.endsWith('.glb'));
+    const glbFile = Object.values(zip.files).find((f) =>
+      f.name.endsWith('.glb')
+    );
     if (glbFile) {
       this.project.modelFilename = glbFile.name;
       const modelArrayBuffer = await glbFile.async('arraybuffer');
       this.project.modelData = modelArrayBuffer;
-      
+
       const blob = new Blob([modelArrayBuffer], { type: 'model/gltf-binary' });
       const url = URL.createObjectURL(blob);
-      
+
       this.loadModelFromUrl(url);
     }
 
@@ -657,7 +1084,9 @@ export class CharacterEditor {
   }
 
   private initThreeJs() {
-    const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
+    const canvas = document.getElementById(
+      'editor-canvas'
+    ) as HTMLCanvasElement;
     const container = document.getElementById('editor-canvas-container');
     if (!canvas || !container) return;
 
@@ -669,7 +1098,7 @@ export class CharacterEditor {
     const width = container.clientWidth;
     const height = container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    this.camera.position.set(0, 1.5, 5);
+    this.camera.position.set(0, 50, 150);
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -679,20 +1108,83 @@ export class CharacterEditor {
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambientLight);
-    
+
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(5, 10, 7.5);
     this.scene.add(dirLight);
 
-    // Grid/Helpers
-    const gridHelper = new THREE.GridHelper(10, 10);
+    // Grid/Helpers (100x100 simulation units)
+    const gridHelper = new THREE.GridHelper(100, 100);
     this.scene.add(gridHelper);
 
     const axesHelper = new THREE.AxesHelper(5);
     this.scene.add(axesHelper);
 
+    // Reference Box (100 units tall)
+    const boxGeo = new THREE.BoxGeometry(40, 100, 40);
+    const boxMat = new THREE.MeshBasicMaterial({ 
+      color: 0x00ffff, 
+      wireframe: true,
+      transparent: true,
+      opacity: 0.15 
+    });
+    const refBox = new THREE.Mesh(boxGeo, boxMat);
+    refBox.position.y = 50; // shift up so bottom is at 0
+    this.scene.add(refBox);
+
+    // Controls
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.PAN,
+      RIGHT: THREE.MOUSE.PAN // Allow right click to also pan, or could be DOLLY. We'll leave it as PAN for consistency.
+    };
+    this.controls.target.set(0, 50, 0);
+    this.controls.update();
+
+    // Reset Camera Button
+    const resetBtn = document.createElement('button');
+    resetBtn.innerText = 'Reset Camera';
+    resetBtn.style.position = 'absolute';
+    resetBtn.style.bottom = '10px';
+    resetBtn.style.right = '10px';
+    resetBtn.style.padding = '5px 10px';
+    resetBtn.style.zIndex = '10';
+    resetBtn.style.backgroundColor = 'var(--accent, #8a2be2)';
+    resetBtn.style.color = '#fff';
+    resetBtn.style.border = 'none';
+    resetBtn.style.borderRadius = '3px';
+    resetBtn.style.cursor = 'pointer';
+    resetBtn.addEventListener('click', () => {
+      this.camera.position.set(0, 50, 150);
+      this.controls.target.set(0, 50, 0);
+      this.controls.update();
+    });
+    container.appendChild(resetBtn);
+
+    // Toggle Armature Button
+    const armatureBtn = document.createElement('button');
+    armatureBtn.innerText = 'Toggle Armature';
+    armatureBtn.style.position = 'absolute';
+    armatureBtn.style.bottom = '45px'; // Place it above Reset Camera
+    armatureBtn.style.right = '10px';
+    armatureBtn.style.padding = '5px 10px';
+    armatureBtn.style.zIndex = '10';
+    armatureBtn.style.backgroundColor = 'var(--accent, #8a2be2)';
+    armatureBtn.style.color = '#fff';
+    armatureBtn.style.border = 'none';
+    armatureBtn.style.borderRadius = '3px';
+    armatureBtn.style.cursor = 'pointer';
+    armatureBtn.addEventListener('click', () => {
+      if (this.skeletonHelper) {
+        this.skeletonHelper.visible = !this.skeletonHelper.visible;
+      }
+    });
+    container.appendChild(armatureBtn);
+
     // Resize handler
-    window.addEventListener('resize', this.onWindowResize.bind(this));
+    const resizeObserver = new ResizeObserver(() => this.onWindowResize());
+    resizeObserver.observe(container);
 
     // Start loop
     this.animate();
@@ -701,24 +1193,165 @@ export class CharacterEditor {
   private onWindowResize() {
     const container = document.getElementById('editor-canvas-container');
     if (!container || !this.camera || !this.renderer) return;
-    
+
     const width = container.clientWidth;
     const height = container.clientHeight;
-    
+
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    
+
     this.renderer.setSize(width, height);
   }
 
   private animate() {
     this.animationId = requestAnimationFrame(this.animate.bind(this));
-    
+
     const delta = this.clock.getDelta();
     if (this.mixer) {
       this.mixer.update(delta);
+      const currentTime = this.mixer.time;
+
+      // Lock root motion: cancel X/Z world-space drift after mixer update
+      // and optionally lock Y axis based on the user's anchor selection
+      if (this.loadedModel && this.cachedRootBone) {
+        let hasLock = false;
+        let yOffset = 0;
+        let yLockAnchor: string | undefined;
+        for (let i = 0; i < this.currentActions.length; i++) {
+          const cfg = this.currentActions[i].config;
+          if (cfg.lockRootMotion) {
+            hasLock = true;
+            yOffset = cfg.rootYOffset || 0;
+            yLockAnchor = cfg.yLockAnchor;
+            break;
+          }
+        }
+        if (hasLock) {
+          // Reset model to base position before reading world coords
+          this.loadedModel.position.set(this.modelBaseX, this.modelBaseY, this.modelBaseZ);
+          this.loadedModel.updateMatrixWorld(true);
+
+          // Always lock X/Z using the root bone to keep character centered horizontally
+          const rootWorld = new THREE.Vector3();
+          this.cachedRootBone.getWorldPosition(rootWorld);
+          this.loadedModel.position.x -= rootWorld.x;
+          this.loadedModel.position.z -= rootWorld.z;
+
+          // Y Locking logic
+          if (!yLockAnchor || yLockAnchor === 'none') {
+            // Free Y: let it drift naturally (good for run/turn), just apply user offset
+            this.loadedModel.position.y += yOffset;
+          } else if (yLockAnchor === 'center_of_feet' || yLockAnchor === 'lowest_foot') {
+            // Find foot bones heuristically
+            const feetBones: THREE.Bone[] = [];
+            this.loadedModel.traverse((child) => {
+              if ((child as THREE.Bone).isBone) {
+                const name = child.name.toLowerCase();
+                if (name.includes('foot') || name.includes('toe')) {
+                  feetBones.push(child as THREE.Bone);
+                }
+              }
+            });
+            
+            if (feetBones.length > 0) {
+              let targetY = 0;
+              const pos = new THREE.Vector3();
+              if (yLockAnchor === 'center_of_feet') {
+                for (const bone of feetBones) {
+                  bone.getWorldPosition(pos);
+                  targetY += pos.y;
+                }
+                targetY /= feetBones.length;
+              } else {
+                targetY = Infinity;
+                for (const bone of feetBones) {
+                  bone.getWorldPosition(pos);
+                  if (pos.y < targetY) targetY = pos.y;
+                }
+              }
+              // Move model to anchor targetY to modelBaseY + yOffset
+              this.loadedModel.position.y += ((this.modelBaseY + yOffset) - targetY);
+            } else {
+              this.loadedModel.position.y += yOffset;
+            }
+          } else {
+            // Specific bone
+            const anchorBone = this.loadedModel.getObjectByName(yLockAnchor);
+            if (anchorBone && (anchorBone as THREE.Bone).isBone) {
+              const pos = new THREE.Vector3();
+              anchorBone.getWorldPosition(pos);
+              this.loadedModel.position.y += ((this.modelBaseY + yOffset) - pos.y);
+            } else {
+              this.loadedModel.position.y += yOffset;
+            }
+          }
+        }
+      }
+
+      for (let i = this.fadingOutActions.length - 1; i >= 0; i--) {
+        const fade = this.fadingOutActions[i];
+        if (currentTime >= fade.fadeStartTime + fade.duration) {
+          fade.action.setEffectiveWeight(0);
+          fade.action.stop();
+          this.fadingOutActions.splice(i, 1);
+        } else {
+          const progress = 1.0 - ((currentTime - fade.fadeStartTime) / fade.duration);
+          fade.action.setEffectiveWeight(fade.startWeight * progress);
+        }
+      }
+
+      let globalMultiplier = 1.0;
+      if (this.globalCrossfadeDuration > 0) {
+        if (currentTime < this.stateStartTime + this.globalCrossfadeDuration) {
+          globalMultiplier = (currentTime - this.stateStartTime) / this.globalCrossfadeDuration;
+        }
+      }
+
+      this.currentActions.forEach((item) => {
+        const config = item.config;
+        
+        const startTime = item.mixerStartTime + ((config.stateStartFrame || 0) / 60);
+        
+        const clipDurationSeconds = Math.max(0, config.endFrame - config.startFrame) / 60;
+        const actualClipDuration = clipDurationSeconds / config.playbackSpeed;
+        
+        let trackDurationSeconds = actualClipDuration;
+        if (config.stateEndFrame && config.stateEndFrame > 0) {
+            trackDurationSeconds = Math.max(0, (config.stateEndFrame - (config.stateStartFrame || 0)) / 60);
+        }
+        const endTime = startTime + trackDurationSeconds;
+
+        const fadeInTime = (config.fadeInFrames || 0) / 60;
+        const fadeOutTime = (config.fadeOutFrames || 0) / 60;
+
+        let targetWeight = 0;
+
+        if (currentTime < startTime) {
+          targetWeight = 0;
+        } else if (currentTime >= endTime) {
+          targetWeight = 0;
+        } else {
+          targetWeight = config.mixWeight;
+
+          if (fadeInTime > 0 && currentTime < startTime + fadeInTime) {
+            const progress = (currentTime - startTime) / fadeInTime;
+            targetWeight = config.mixWeight * progress;
+          }
+
+          if (fadeOutTime > 0 && currentTime > endTime - fadeOutTime) {
+            const progress = (endTime - currentTime) / fadeOutTime;
+            targetWeight = config.mixWeight * Math.max(0, progress);
+          }
+        }
+
+        item.action.setEffectiveWeight(targetWeight * globalMultiplier);
+      });
     }
-    
+
+    if (this.controls) {
+      this.controls.update();
+    }
+
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
@@ -783,6 +1416,23 @@ function emptyDisplayConfig(): DisplayLayerConfig {
     deadRightRotation: 0,
     states: new Map()
   };
+}
+
+function getAllTransitionableStates(stateId: StateId): false | number[] {
+  const tranitionableIds = new Set<number>();
+  AllStateNodes.find((n) => {
+    if (n.State.StateId == stateId) {
+      n.DirectTransitions.forEach((d) => tranitionableIds.add(d.sId));
+      n.DefaultConditions.forEach((dc) => {
+        tranitionableIds.add(dc.StateId);
+      });
+      n.Conditions.forEach((c) => tranitionableIds.add(c.StateId));
+    }
+  });
+  if (tranitionableIds.size! > 0) {
+    return false;
+  }
+  return Array.from(tranitionableIds);
 }
 
 /**
