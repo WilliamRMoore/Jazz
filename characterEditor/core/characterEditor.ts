@@ -23,6 +23,7 @@ import JSZip from 'jszip';
 
 import { sections } from '../ui/panels/leftPanel';
 import { RightPanel } from '../ui/panels/rightPanel';
+import { BottomPanel } from '../ui/panels/bottomPanel';
 import { AllStateNodes } from '../../game/engine/finiteStateMachines/player/PlayerStateCollections';
 
 export type CharacterProject = {
@@ -35,6 +36,7 @@ export type CharacterProject = {
 export class CharacterEditor {
   private project: CharacterProject;
   private rightPanel: RightPanel;
+  private bottomPanel: BottomPanel;
 
   // Three.js
   private scene!: THREE.Scene;
@@ -76,6 +78,8 @@ export class CharacterEditor {
         console.log('Config updated:', this.project.config);
       }
     );
+
+    this.bottomPanel = new BottomPanel('bottom-panel');
 
     this.initLeftPanel();
     this.initToolbar();
@@ -299,6 +303,13 @@ export class CharacterEditor {
     xfadeGroup.appendChild(xfadeLabel);
     xfadeGroup.appendChild(xfadeInp);
     rightPanelEl.appendChild(xfadeGroup);
+    
+    // BottomPanel integration
+    this.bottomPanel.setState(stateId, stateConfig, this.loadedAnimations);
+    
+    this.bottomPanel.onPlayPreview = () => this.playStatePreview(stateId);
+    this.bottomPanel.onLayerSelect = (idx) => renderLayers();
+    this.bottomPanel.onTimelineChange = () => renderLayers();
 
     const layersContainer = document.createElement('div');
     layersContainer.id = 'layers-container';
@@ -306,339 +317,297 @@ export class CharacterEditor {
     const renderLayers = () => {
       layersContainer.innerHTML = '';
       
-      let maxStateFrame = 100;
-      if (stateConfig.animations.length > 0) {
-        maxStateFrame = Math.max(...stateConfig.animations.map(a => {
-          const trackEnd = (a.stateEndFrame && a.stateEndFrame > 0) ? a.stateEndFrame : ((a.stateStartFrame || 0) + (a.endFrame - a.startFrame));
-          return trackEnd;
-        }));
-        if (maxStateFrame <= 0) maxStateFrame = 100;
+      const activeIdx = this.bottomPanel.getActiveLayerIndex();
+      if (activeIdx < 0 || activeIdx >= stateConfig.animations.length) {
+          layersContainer.innerHTML = '<div style="color: #aaa; margin-top: 15px; font-style: italic;">No animation track selected. Click a track in the bottom panel.</div>';
+          return;
       }
       
-      const stateLengthDiv = document.createElement('div');
-      stateLengthDiv.style.marginBottom = '15px';
-      stateLengthDiv.style.fontSize = '1.1em';
-      stateLengthDiv.innerHTML = `<strong>Total State Length:</strong> ${maxStateFrame} frames`;
-      layersContainer.appendChild(stateLengthDiv);
+      const idx = activeIdx;
+      const anim = stateConfig.animations[idx];
 
-      stateConfig.animations.forEach((anim, idx) => {
-        const layerBox = document.createElement('div');
-        layerBox.style.border = '1px solid var(--border-color)';
-        layerBox.style.padding = '10px';
-        layerBox.style.marginBottom = '10px';
-        layerBox.style.borderRadius = '3px';
-        layerBox.style.position = 'relative';
+      const layerBox = document.createElement('div');
+      layerBox.style.border = '1px solid var(--border-color)';
+      layerBox.style.padding = '10px';
+      layerBox.style.marginBottom = '10px';
+      layerBox.style.borderRadius = '3px';
+      layerBox.style.position = 'relative';
 
-        const titleDiv = document.createElement('div');
-        titleDiv.innerText = `Layer ${idx + 1}`;
-        titleDiv.style.fontWeight = 'bold';
-        titleDiv.style.marginBottom = '10px';
-        layerBox.appendChild(titleDiv);
+      const titleDiv = document.createElement('div');
+      titleDiv.innerText = `Layer ${idx + 1}: ${anim.clipName || 'Empty'}`;
+      titleDiv.style.fontWeight = 'bold';
+      titleDiv.style.marginBottom = '10px';
+      layerBox.appendChild(titleDiv);
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = 'X';
-        deleteBtn.style.position = 'absolute';
-        deleteBtn.style.top = '5px';
-        deleteBtn.style.right = '5px';
-        deleteBtn.addEventListener('click', () => {
-          stateConfig.animations.splice(idx, 1);
-          renderLayers();
-        });
-        layerBox.appendChild(deleteBtn);
-
-        // Track Start / End Frame
-        const trackFramesGroup = document.createElement('div');
-        trackFramesGroup.className = 'form-group flatvec-group';
-
-        const trackStartDiv = document.createElement('div');
-        trackStartDiv.innerHTML = '<label>Track Start (Frame):</label>';
-        const trackStartInp = document.createElement('input');
-        trackStartInp.type = 'number';
-        trackStartInp.value = (anim.stateStartFrame || 0).toString();
-        trackStartInp.addEventListener('change', (e) => {
-          anim.stateStartFrame = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        trackStartDiv.appendChild(trackStartInp);
-
-        const trackEndDiv = document.createElement('div');
-        trackEndDiv.innerHTML = '<label>Track End (0=clip len):</label>';
-        const trackEndInp = document.createElement('input');
-        trackEndInp.type = 'number';
-        trackEndInp.value = (anim.stateEndFrame || 0).toString();
-        trackEndInp.addEventListener('change', (e) => {
-          anim.stateEndFrame = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        trackEndDiv.appendChild(trackEndInp);
-
-        trackFramesGroup.appendChild(trackStartDiv);
-        trackFramesGroup.appendChild(trackEndDiv);
-        layerBox.appendChild(trackFramesGroup);
-
-        // Fades
-        const fadesGroup = document.createElement('div');
-        fadesGroup.className = 'form-group flatvec-group';
-
-        const fadeInDiv = document.createElement('div');
-        fadeInDiv.innerHTML = '<label>Fade In (Frames):</label>';
-        const fadeInInp = document.createElement('input');
-        fadeInInp.type = 'number';
-        fadeInInp.value = (anim.fadeInFrames || 0).toString();
-        fadeInInp.addEventListener('change', (e) => {
-          anim.fadeInFrames = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        fadeInDiv.appendChild(fadeInInp);
-
-        const fadeOutDiv = document.createElement('div');
-        fadeOutDiv.innerHTML = '<label>Fade Out (Frames):</label>';
-        const fadeOutInp = document.createElement('input');
-        fadeOutInp.type = 'number';
-        fadeOutInp.value = (anim.fadeOutFrames || 0).toString();
-        fadeOutInp.addEventListener('change', (e) => {
-          anim.fadeOutFrames = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        fadeOutDiv.appendChild(fadeOutInp);
-
-        fadesGroup.appendChild(fadeInDiv);
-        fadesGroup.appendChild(fadeOutDiv);
-        layerBox.appendChild(fadesGroup);
-
-        // Start / End Frame
-        const framesGroup = document.createElement('div');
-        framesGroup.className = 'form-group flatvec-group';
-
-        const startDiv = document.createElement('div');
-        startDiv.innerHTML = '<label>Clip Start Frame:</label>';
-        const startInp = document.createElement('input');
-        startInp.type = 'number';
-        startInp.value = anim.startFrame.toString();
-        startInp.addEventListener('change', (e) => {
-          anim.startFrame = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        startDiv.appendChild(startInp);
-
-        const endDiv = document.createElement('div');
-        endDiv.innerHTML = '<label>Clip End Frame:</label>';
-        const endInp = document.createElement('input');
-        endInp.type = 'number';
-        endInp.value = anim.endFrame.toString();
-        endInp.addEventListener('change', (e) => {
-          anim.endFrame = parseInt((e.target as HTMLInputElement).value, 10);
-          renderLayers();
-        });
-        endDiv.appendChild(endInp);
-
-        framesGroup.appendChild(startDiv);
-        framesGroup.appendChild(endDiv);
-        layerBox.appendChild(framesGroup);
-        
-        // Visual Timeline
-        const timelineTrack = document.createElement('div');
-        timelineTrack.style.width = '100%';
-        timelineTrack.style.height = '15px';
-        timelineTrack.style.backgroundColor = '#444';
-        timelineTrack.style.position = 'relative';
-        timelineTrack.style.marginTop = '10px';
-        timelineTrack.style.marginBottom = '10px';
-        timelineTrack.style.borderRadius = '3px';
-        
-        const timelineBlock = document.createElement('div');
-        timelineBlock.style.position = 'absolute';
-        timelineBlock.style.height = '100%';
-        timelineBlock.style.backgroundColor = 'var(--accent, #8a2be2)';
-        timelineBlock.style.borderRadius = '3px';
-        timelineBlock.style.opacity = '0.8';
-        
-        const delay = anim.stateStartFrame || 0;
-        const trackDuration = (anim.stateEndFrame && anim.stateEndFrame > 0) ? (anim.stateEndFrame - delay) : Math.max(0, anim.endFrame - anim.startFrame);
-        const duration = Math.max(0, trackDuration);
-        const fadeIn = anim.fadeInFrames || 0;
-        const fadeOut = anim.fadeOutFrames || 0;
-        
-        const leftPercent = (delay / maxStateFrame) * 100;
-        const widthPercent = (duration / maxStateFrame) * 100;
-        
-        timelineBlock.style.left = `${leftPercent}%`;
-        timelineBlock.style.width = `${widthPercent}%`;
-
-        if (duration > 0 && (fadeIn > 0 || fadeOut > 0)) {
-          const inStop = Math.min(100, (fadeIn / duration) * 100);
-          const outStop = Math.max(0, 100 - (fadeOut / duration) * 100);
-          timelineBlock.style.background = `linear-gradient(90deg, 
-            transparent 0%, 
-            var(--accent, #8a2be2) ${inStop}%, 
-            var(--accent, #8a2be2) ${outStop}%, 
-            transparent 100%)`;
-        }
-
-        timelineTrack.appendChild(timelineBlock);
-        
-        layerBox.appendChild(timelineTrack);
-
-        // Clip Select
-        const clipGroup = document.createElement('div');
-        clipGroup.className = 'form-group';
-        const clipLabel = document.createElement('label');
-        clipLabel.innerText = 'Animation Clip:';
-        const clipSelect = document.createElement('select');
-        clipSelect.style.width = '100%';
-        const emptyOpt = document.createElement('option');
-        emptyOpt.value = '';
-        emptyOpt.innerText = '-- Select --';
-        clipSelect.appendChild(emptyOpt);
-
-        this.loadedAnimations.forEach((clip) => {
-          const opt = document.createElement('option');
-          opt.value = clip.name;
-          opt.innerText = clip.name;
-          if (anim.clipName === clip.name) opt.selected = true;
-          clipSelect.appendChild(opt);
-        });
-        clipSelect.addEventListener('change', (e) => {
-          anim.clipName = (e.target as HTMLSelectElement).value;
-          const selectedClip = this.loadedAnimations.find(
-            (a) => a.name === anim.clipName
-          );
-          if (selectedClip) {
-            anim.startFrame = 0;
-            anim.endFrame = Math.round(selectedClip.duration * 60);
-            renderLayers();
-          }
-        });
-        clipGroup.appendChild(clipLabel);
-        clipGroup.appendChild(clipSelect);
-        layerBox.appendChild(clipGroup);
-        layerBox.appendChild(framesGroup);
-
-        // Playback Speed
-        const speedGroup = document.createElement('div');
-        speedGroup.className = 'form-group';
-        const speedLabel = document.createElement('label');
-        speedLabel.innerText = 'Playback Speed (Multiplier):';
-        const speedInp = document.createElement('input');
-        speedInp.type = 'number';
-        speedInp.step = '0.1';
-        speedInp.value = anim.playbackSpeed.toString();
-        speedInp.addEventListener('change', (e) => {
-          anim.playbackSpeed = parseFloat((e.target as HTMLInputElement).value);
-        });
-        speedGroup.appendChild(speedLabel);
-        speedGroup.appendChild(speedInp);
-        layerBox.appendChild(speedGroup);
-
-        // Loopable
-        const loopGroup = document.createElement('div');
-        loopGroup.className = 'form-group';
-        const loopLabel = document.createElement('label');
-        loopLabel.innerText = 'Loopable: ';
-        const loopInp = document.createElement('input');
-        loopInp.type = 'checkbox';
-        loopInp.checked = anim.loopable;
-        loopInp.addEventListener('change', (e) => {
-          anim.loopable = (e.target as HTMLInputElement).checked;
-        });
-        loopLabel.appendChild(loopInp);
-        loopGroup.appendChild(loopLabel);
-        layerBox.appendChild(loopGroup);
-
-        // Lock Root Motion
-        const lockGroup = document.createElement('div');
-        lockGroup.className = 'form-group';
-        const lockLabel = document.createElement('label');
-        lockLabel.innerText = 'Lock Root Motion: ';
-        const lockInp = document.createElement('input');
-        lockInp.type = 'checkbox';
-        lockInp.checked = anim.lockRootMotion;
-        lockInp.addEventListener('change', (e) => {
-          anim.lockRootMotion = (e.target as HTMLInputElement).checked;
-          renderLayers();
-        });
-        lockLabel.appendChild(lockInp);
-        lockGroup.appendChild(lockLabel);
-        layerBox.appendChild(lockGroup);
-
-        // Root Y Offset (only visible when lock root motion is on)
-        if (anim.lockRootMotion) {
-          const lockBoneGroup = document.createElement('div');
-          lockBoneGroup.className = 'form-group';
-          const lockBoneLabel = document.createElement('label');
-          lockBoneLabel.innerText = 'Y-Axis Lock Anchor:';
-          const lockBoneSelect = document.createElement('select');
-          lockBoneSelect.style.width = '100%';
-          
-          const addOpt = (val: string, text: string) => {
-            const opt = document.createElement('option');
-            opt.value = val;
-            opt.innerText = text;
-            if (anim.yLockAnchor === val || (!anim.yLockAnchor && val === 'none')) {
-              opt.selected = true;
-            }
-            lockBoneSelect.appendChild(opt);
-          };
-
-          addOpt('none', '-- None (Free Y) --');
-          addOpt('center_of_feet', '-- Center of Feet --');
-          addOpt('lowest_foot', '-- Lowest Foot --');
-          
-          this.allBoneNames.forEach(boneName => {
-            addOpt(boneName, boneName);
-          });
-          
-          lockBoneSelect.addEventListener('change', (e) => {
-            const val = (e.target as HTMLSelectElement).value;
-            anim.yLockAnchor = val === 'none' ? undefined : val;
-          });
-          
-          lockBoneGroup.appendChild(lockBoneLabel);
-          lockBoneGroup.appendChild(lockBoneSelect);
-          layerBox.appendChild(lockBoneGroup);
-
-          const yOffsetGroup = document.createElement('div');
-          yOffsetGroup.className = 'form-group';
-          const yOffsetLabel = document.createElement('label');
-          yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
-          const yOffsetInp = document.createElement('input');
-          yOffsetInp.type = 'range';
-          yOffsetInp.min = '-200';
-          yOffsetInp.max = '200';
-          yOffsetInp.step = '1';
-          yOffsetInp.value = anim.rootYOffset.toString();
-          yOffsetInp.style.width = '100%';
-          yOffsetInp.addEventListener('input', (e) => {
-            anim.rootYOffset = parseFloat((e.target as HTMLInputElement).value);
-            yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
-          });
-          yOffsetGroup.appendChild(yOffsetLabel);
-          yOffsetGroup.appendChild(yOffsetInp);
-          layerBox.appendChild(yOffsetGroup);
-        }
-
-        // Mix Weight
-        const weightGroup = document.createElement('div');
-        weightGroup.className = 'form-group';
-        const weightLabel = document.createElement('label');
-        weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
-        const weightInp = document.createElement('input');
-        weightInp.type = 'range';
-        weightInp.min = '0';
-        weightInp.max = '1';
-        weightInp.step = '0.05';
-        weightInp.value = anim.mixWeight.toString();
-        weightInp.addEventListener('input', (e) => {
-          anim.mixWeight = parseFloat((e.target as HTMLInputElement).value);
-          weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
-        });
-        weightGroup.appendChild(weightLabel);
-        weightGroup.appendChild(weightInp);
-        layerBox.appendChild(weightGroup);
-
-        layersContainer.appendChild(layerBox);
+      const deleteBtn = document.createElement('button');
+      deleteBtn.innerText = 'X';
+      deleteBtn.style.position = 'absolute';
+      deleteBtn.style.top = '5px';
+      deleteBtn.style.right = '5px';
+      deleteBtn.addEventListener('click', () => {
+        this.bottomPanel.deleteLayer(idx);
       });
+      layerBox.appendChild(deleteBtn);
+
+      // Track Start / End Frame
+      const trackFramesGroup = document.createElement('div');
+      trackFramesGroup.className = 'form-group flatvec-group';
+
+      const trackStartDiv = document.createElement('div');
+      trackStartDiv.innerHTML = '<label>Track Start (Frame):</label>';
+      const trackStartInp = document.createElement('input');
+      trackStartInp.type = 'number';
+      trackStartInp.value = (anim.stateStartFrame || 0).toString();
+      trackStartInp.addEventListener('change', (e) => {
+        anim.stateStartFrame = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      trackStartDiv.appendChild(trackStartInp);
+
+      const trackEndDiv = document.createElement('div');
+      trackEndDiv.innerHTML = '<label>Track End (0=clip len):</label>';
+      const trackEndInp = document.createElement('input');
+      trackEndInp.type = 'number';
+      trackEndInp.value = (anim.stateEndFrame || 0).toString();
+      trackEndInp.addEventListener('change', (e) => {
+        anim.stateEndFrame = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      trackEndDiv.appendChild(trackEndInp);
+
+      trackFramesGroup.appendChild(trackStartDiv);
+      trackFramesGroup.appendChild(trackEndDiv);
+      layerBox.appendChild(trackFramesGroup);
+
+      // Fades
+      const fadesGroup = document.createElement('div');
+      fadesGroup.className = 'form-group flatvec-group';
+
+      const fadeInDiv = document.createElement('div');
+      fadeInDiv.innerHTML = '<label>Fade In (Frames):</label>';
+      const fadeInInp = document.createElement('input');
+      fadeInInp.type = 'number';
+      fadeInInp.value = (anim.fadeInFrames || 0).toString();
+      fadeInInp.addEventListener('change', (e) => {
+        anim.fadeInFrames = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      fadeInDiv.appendChild(fadeInInp);
+
+      const fadeOutDiv = document.createElement('div');
+      fadeOutDiv.innerHTML = '<label>Fade Out (Frames):</label>';
+      const fadeOutInp = document.createElement('input');
+      fadeOutInp.type = 'number';
+      fadeOutInp.value = (anim.fadeOutFrames || 0).toString();
+      fadeOutInp.addEventListener('change', (e) => {
+        anim.fadeOutFrames = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      fadeOutDiv.appendChild(fadeOutInp);
+
+      fadesGroup.appendChild(fadeInDiv);
+      fadesGroup.appendChild(fadeOutDiv);
+      layerBox.appendChild(fadesGroup);
+
+      // Start / End Frame
+      const framesGroup = document.createElement('div');
+      framesGroup.className = 'form-group flatvec-group';
+
+      const startDiv = document.createElement('div');
+      startDiv.innerHTML = '<label>Clip Start Frame:</label>';
+      const startInp = document.createElement('input');
+      startInp.type = 'number';
+      startInp.value = anim.startFrame.toString();
+      startInp.addEventListener('change', (e) => {
+        anim.startFrame = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      startDiv.appendChild(startInp);
+
+      const endDiv = document.createElement('div');
+      endDiv.innerHTML = '<label>Clip End Frame:</label>';
+      const endInp = document.createElement('input');
+      endInp.type = 'number';
+      endInp.value = anim.endFrame.toString();
+      endInp.addEventListener('change', (e) => {
+        anim.endFrame = parseInt((e.target as HTMLInputElement).value, 10);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      endDiv.appendChild(endInp);
+
+      framesGroup.appendChild(startDiv);
+      framesGroup.appendChild(endDiv);
+      layerBox.appendChild(framesGroup);
+
+      // Clip Select
+      const clipGroup = document.createElement('div');
+      clipGroup.className = 'form-group';
+      const clipLabel = document.createElement('label');
+      clipLabel.innerText = 'Animation Clip:';
+      const clipSelect = document.createElement('select');
+      clipSelect.style.width = '100%';
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.innerText = '-- Select --';
+      clipSelect.appendChild(emptyOpt);
+
+      this.loadedAnimations.forEach((clip) => {
+        const opt = document.createElement('option');
+        opt.value = clip.name;
+        opt.innerText = clip.name;
+        if (anim.clipName === clip.name) opt.selected = true;
+        clipSelect.appendChild(opt);
+      });
+      clipSelect.addEventListener('change', (e) => {
+        anim.clipName = (e.target as HTMLSelectElement).value;
+        const selectedClip = this.loadedAnimations.find(
+          (a) => a.name === anim.clipName
+        );
+        if (selectedClip) {
+          anim.startFrame = 0;
+          anim.endFrame = Math.round(selectedClip.duration * 60);
+          this.bottomPanel.forceRender();
+          renderLayers();
+        }
+      });
+      clipGroup.appendChild(clipLabel);
+      clipGroup.appendChild(clipSelect);
+      layerBox.appendChild(clipGroup);
+      layerBox.appendChild(framesGroup);
+
+      // Playback Speed
+      const speedGroup = document.createElement('div');
+      speedGroup.className = 'form-group';
+      const speedLabel = document.createElement('label');
+      speedLabel.innerText = 'Playback Speed (Multiplier):';
+      const speedInp = document.createElement('input');
+      speedInp.type = 'number';
+      speedInp.step = '0.1';
+      speedInp.value = anim.playbackSpeed.toString();
+      speedInp.addEventListener('change', (e) => {
+        anim.playbackSpeed = parseFloat((e.target as HTMLInputElement).value);
+        this.bottomPanel.forceRender();
+        renderLayers();
+      });
+      speedGroup.appendChild(speedLabel);
+      speedGroup.appendChild(speedInp);
+      layerBox.appendChild(speedGroup);
+
+      // Loopable
+      const loopGroup = document.createElement('div');
+      loopGroup.className = 'form-group';
+      const loopLabel = document.createElement('label');
+      loopLabel.innerText = 'Loopable: ';
+      const loopInp = document.createElement('input');
+      loopInp.type = 'checkbox';
+      loopInp.checked = anim.loopable;
+      loopInp.addEventListener('change', (e) => {
+        anim.loopable = (e.target as HTMLInputElement).checked;
+      });
+      loopLabel.appendChild(loopInp);
+      loopGroup.appendChild(loopLabel);
+      layerBox.appendChild(loopGroup);
+
+      // Lock Root Motion
+      const lockGroup = document.createElement('div');
+      lockGroup.className = 'form-group';
+      const lockLabel = document.createElement('label');
+      lockLabel.innerText = 'Lock Root Motion: ';
+      const lockInp = document.createElement('input');
+      lockInp.type = 'checkbox';
+      lockInp.checked = anim.lockRootMotion;
+      lockInp.addEventListener('change', (e) => {
+        anim.lockRootMotion = (e.target as HTMLInputElement).checked;
+        renderLayers();
+      });
+      lockLabel.appendChild(lockInp);
+      lockGroup.appendChild(lockLabel);
+      layerBox.appendChild(lockGroup);
+
+      // Root Y Offset (only visible when lock root motion is on)
+      if (anim.lockRootMotion) {
+        const lockBoneGroup = document.createElement('div');
+        lockBoneGroup.className = 'form-group';
+        const lockBoneLabel = document.createElement('label');
+        lockBoneLabel.innerText = 'Y-Axis Lock Anchor:';
+        const lockBoneSelect = document.createElement('select');
+        lockBoneSelect.style.width = '100%';
+        
+        const addOpt = (val: string, text: string) => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.innerText = text;
+          if (anim.yLockAnchor === val || (!anim.yLockAnchor && val === 'none')) {
+            opt.selected = true;
+          }
+          lockBoneSelect.appendChild(opt);
+        };
+
+        addOpt('none', '-- None (Free Y) --');
+        addOpt('center_of_feet', '-- Center of Feet --');
+        addOpt('lowest_foot', '-- Lowest Foot --');
+        
+        this.allBoneNames.forEach(boneName => {
+          addOpt(boneName, boneName);
+        });
+        
+        lockBoneSelect.addEventListener('change', (e) => {
+          const val = (e.target as HTMLSelectElement).value;
+          anim.yLockAnchor = val === 'none' ? undefined : val;
+        });
+        
+        lockBoneGroup.appendChild(lockBoneLabel);
+        lockBoneGroup.appendChild(lockBoneSelect);
+        layerBox.appendChild(lockBoneGroup);
+
+        const yOffsetGroup = document.createElement('div');
+        yOffsetGroup.className = 'form-group';
+        const yOffsetLabel = document.createElement('label');
+        yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
+        const yOffsetInp = document.createElement('input');
+        yOffsetInp.type = 'range';
+        yOffsetInp.min = '-200';
+        yOffsetInp.max = '200';
+        yOffsetInp.step = '1';
+        yOffsetInp.value = anim.rootYOffset.toString();
+        yOffsetInp.style.width = '100%';
+        yOffsetInp.addEventListener('input', (e) => {
+          anim.rootYOffset = parseFloat((e.target as HTMLInputElement).value);
+          yOffsetLabel.innerText = `Root Y Offset: ${anim.rootYOffset}`;
+        });
+        yOffsetGroup.appendChild(yOffsetLabel);
+        yOffsetGroup.appendChild(yOffsetInp);
+        layerBox.appendChild(yOffsetGroup);
+      }
+
+      // Mix Weight
+      const weightGroup = document.createElement('div');
+      weightGroup.className = 'form-group';
+      const weightLabel = document.createElement('label');
+      weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
+      const weightInp = document.createElement('input');
+      weightInp.type = 'range';
+      weightInp.min = '0';
+      weightInp.max = '1';
+      weightInp.step = '0.05';
+      weightInp.value = anim.mixWeight.toString();
+      weightInp.addEventListener('input', (e) => {
+        anim.mixWeight = parseFloat((e.target as HTMLInputElement).value);
+        weightLabel.innerText = `Mix Weight (${anim.mixWeight}):`;
+      });
+      weightGroup.appendChild(weightLabel);
+      weightGroup.appendChild(weightInp);
+      layerBox.appendChild(weightGroup);
+
+      layersContainer.appendChild(layerBox);
     };
+    
     renderLayers();
     rightPanelEl.appendChild(layersContainer);
 
@@ -647,7 +616,7 @@ export class CharacterEditor {
     btnAddLayer.style.padding = '5px 10px';
     btnAddLayer.style.marginTop = '10px';
     btnAddLayer.addEventListener('click', () => {
-      stateConfig.animations.push({
+      this.bottomPanel.addLayer({
         clipName: '',
         startFrame: 0,
         endFrame: 100,
@@ -662,19 +631,6 @@ export class CharacterEditor {
       renderLayers();
     });
     rightPanelEl.appendChild(btnAddLayer);
-
-    const btnPlay = document.createElement('button');
-    btnPlay.innerText = 'Play State Preview';
-    btnPlay.style.marginTop = '15px';
-    btnPlay.style.display = 'block';
-    btnPlay.style.padding = '10px 20px';
-    btnPlay.style.backgroundColor = 'var(--accent)';
-    btnPlay.style.color = '#fff';
-    btnPlay.style.border = 'none';
-    btnPlay.style.borderRadius = '3px';
-    btnPlay.style.cursor = 'pointer';
-    btnPlay.addEventListener('click', () => this.playStatePreview(stateId));
-    rightPanelEl.appendChild(btnPlay);
   }
 
   private playStatePreview(stateId: StateId) {
@@ -1210,6 +1166,10 @@ export class CharacterEditor {
     if (this.mixer) {
       this.mixer.update(delta);
       const currentTime = this.mixer.time;
+      
+      if (this.bottomPanel) {
+        this.bottomPanel.updatePlayhead(Math.max(0, (currentTime - this.stateStartTime) * 60));
+      }
 
       // Lock root motion: cancel X/Z world-space drift after mixer update
       // and optionally lock Y axis based on the user's anchor selection

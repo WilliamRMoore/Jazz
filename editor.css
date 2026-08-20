@@ -194,4 +194,140 @@ body, html {
     background-color: var(--panel-bg);
     border-top: 1px solid var(--border-color);
     z-index: 5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Timeline Styles */
+.timeline-header {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-dark);
+    border-bottom: 1px solid var(--border-color);
+    padding: 5px 10px;
+    height: 30px;
+}
+
+.timeline-play-btn {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 15px;
+}
+
+.timeline-play-btn:hover {
+    background-color: #9d4edd;
+}
+
+.timeline-ruler {
+    flex-grow: 1;
+    position: relative;
+    height: 100%;
+    margin-left: 120px; /* offset for track names */
+}
+
+.timeline-ruler-tick {
+    position: absolute;
+    bottom: 0;
+    width: 1px;
+    background-color: #666;
+}
+
+.timeline-ruler-label {
+    position: absolute;
+    top: 2px;
+    font-size: 10px;
+    color: #999;
+    transform: translateX(-50%);
+}
+
+.timeline-track-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.timeline-track {
+    display: flex;
+    height: 40px;
+    border-bottom: 1px solid var(--border-color);
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.timeline-track.active {
+    background-color: rgba(138, 43, 226, 0.1);
+}
+
+.timeline-track-name {
+    width: 120px;
+    min-width: 120px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: bold;
+    box-sizing: border-box;
+    background-color: var(--panel-bg);
+    z-index: 2;
+}
+
+.timeline-track-body {
+    flex-grow: 1;
+    position: relative;
+    background-color: #222;
+}
+
+.timeline-clip-full {
+    position: absolute;
+    height: 20px;
+    top: 10px;
+    background-color: rgba(76, 175, 80, 0.3); /* Green */
+    border-radius: 3px;
+}
+
+.timeline-clip-selected {
+    position: absolute;
+    height: 20px;
+    top: 10px;
+    background-color: rgba(255, 235, 59, 0.7); /* Yellow */
+    border-radius: 3px;
+    border: 1px solid rgba(255, 235, 59, 1);
+    box-sizing: border-box;
+    cursor: move;
+}
+
+.timeline-handle {
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    cursor: ew-resize;
+    z-index: 10;
+}
+
+.timeline-handle.left {
+    left: -3px;
+}
+
+.timeline-handle.right {
+    right: -3px;
+}
+
+.timeline-playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: red;
+    z-index: 100;
+    pointer-events: none;
 }

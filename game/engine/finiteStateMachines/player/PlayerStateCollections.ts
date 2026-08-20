@@ -76,7 +76,6 @@ import { UpTiltNode } from './states/upTilt';
 import { WalkNode } from './states/walk';
 import { WallKickNode } from './states/wallKick';
 import { WallSlamNode } from './states/wallSlam';
-
 import { condition } from './states/conditions/conditions';
 import { FSMState } from './PlayerStateMachine';
 import {
