@@ -60,6 +60,11 @@ export class CharacterEditor {
   private allBoneNames: string[] = [];
   private skeletonHelper?: THREE.SkeletonHelper;
 
+  private isPlaying: boolean = false;
+  private isPaused: boolean = false;
+  private isLoopMode: boolean = true;
+  private currentStateId?: StateId;
+
   constructor(cc: CharacterConfig | undefined = undefined) {
     if (cc === undefined) {
       this.project = {
@@ -305,9 +310,13 @@ export class CharacterEditor {
     rightPanelEl.appendChild(xfadeGroup);
     
     // BottomPanel integration
+    this.currentStateId = stateId;
+    this.stopPreview();
     this.bottomPanel.setState(stateId, stateConfig, this.loadedAnimations);
     
-    this.bottomPanel.onPlayPreview = () => this.playStatePreview(stateId);
+    this.bottomPanel.onPlay = () => this.startPreview(stateId, true);
+    this.bottomPanel.onPlayOnce = () => this.startPreview(stateId, false);
+    this.bottomPanel.onTogglePause = () => this.togglePause();
     this.bottomPanel.onLayerSelect = (idx) => renderLayers();
     this.bottomPanel.onTimelineChange = () => renderLayers();
 
@@ -491,7 +500,12 @@ export class CharacterEditor {
       speedInp.step = '0.1';
       speedInp.value = anim.playbackSpeed.toString();
       speedInp.addEventListener('change', (e) => {
-        anim.playbackSpeed = parseFloat((e.target as HTMLInputElement).value);
+        const val = parseFloat((e.target as HTMLInputElement).value);
+        anim.playbackSpeed = isNaN(val) || val <= 0 ? 1.0 : val;
+        const matching = this.currentActions.find((a) => a.config === anim);
+        if (matching) {
+          matching.action.setEffectiveTimeScale(anim.playbackSpeed);
+        }
         this.bottomPanel.forceRender();
         renderLayers();
       });
@@ -633,8 +647,50 @@ export class CharacterEditor {
     rightPanelEl.appendChild(btnAddLayer);
   }
 
-  private playStatePreview(stateId: StateId) {
+  private startPreview(stateId: StateId, loop: boolean) {
+    this.currentStateId = stateId;
+    this.isLoopMode = loop;
+    this.isPlaying = true;
+    this.isPaused = false;
+    this.playStatePreview(stateId, loop);
+    this.bottomPanel.setPlaying(true, false);
+  }
+
+  private togglePause() {
+    if (!this.isPlaying) {
+      if (this.currentStateId !== undefined) {
+        this.startPreview(this.currentStateId, this.isLoopMode);
+      }
+      return;
+    }
+    this.isPaused = !this.isPaused;
+    this.bottomPanel.setPlaying(this.isPlaying, this.isPaused);
+  }
+
+  private stopPreview() {
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.currentActions.forEach((item) => item.action.stop());
+    this.fadingOutActions.forEach((item) => item.action.stop());
+    this.currentActions = [];
+    this.fadingOutActions = [];
+    this.bottomPanel.setPlaying(false);
+    if (this.mixer) {
+      this.mixer.stopAllAction();
+      this.mixer.update(0);
+    }
+    if (this.loadedModel) {
+      this.loadedModel.position.set(this.modelBaseX, this.modelBaseY, this.modelBaseZ);
+      this.loadedModel.updateMatrixWorld(true);
+    }
+  }
+
+  private playStatePreview(stateId: StateId, loop: boolean = true) {
     if (!this.mixer) return;
+
+    this.isLoopMode = loop;
+    this.isPlaying = true;
+    this.isPaused = false;
 
     const stateConfig = this.project.displayConfig.states.get(stateId);
     if (!stateConfig) {
@@ -711,7 +767,7 @@ export class CharacterEditor {
       action.setEffectiveTimeScale(animConfig.playbackSpeed);
       action.setEffectiveWeight(animConfig.mixWeight);
 
-      if (!animConfig.loopable) {
+      if (!loop) {
         action.setLoop(THREE.LoopOnce, 1);
         action.clampWhenFinished = true;
       } else {
@@ -1164,11 +1220,49 @@ export class CharacterEditor {
 
     const delta = this.clock.getDelta();
     if (this.mixer) {
-      this.mixer.update(delta);
+      if (this.isPlaying && !this.isPaused) {
+        this.mixer.update(delta);
+      }
       const currentTime = this.mixer.time;
       
       if (this.bottomPanel) {
-        this.bottomPanel.updatePlayhead(Math.max(0, (currentTime - this.stateStartTime) * 60));
+        let currentFrame = Math.max(0, (currentTime - this.stateStartTime) * 60);
+
+        const activeIdx = this.bottomPanel.getActiveLayerIndex();
+        const activeItem = (activeIdx >= 0 && activeIdx < this.currentActions.length)
+          ? this.currentActions[activeIdx]
+          : (this.currentActions.length > 0 ? this.currentActions[0] : undefined);
+
+        if (activeItem) {
+          const config = activeItem.config;
+          const speed = (config.playbackSpeed !== undefined && config.playbackSpeed > 0)
+            ? config.playbackSpeed
+            : 1.0;
+          const delay = config.stateStartFrame || 0;
+          const startTime = activeItem.mixerStartTime + (delay / 60);
+
+          if (currentTime < startTime) {
+            currentFrame = Math.max(0, (currentTime - activeItem.mixerStartTime) * 60);
+          } else {
+            const animElapsed = currentTime - startTime;
+            const clipFramesElapsed = animElapsed * 60 * speed;
+            const trackDuration = (config.stateEndFrame && config.stateEndFrame > 0)
+              ? (config.stateEndFrame - delay)
+              : Math.max(0, (config.endFrame || 100) - (config.startFrame || 0));
+
+            if (this.isLoopMode && trackDuration > 0) {
+              currentFrame = delay + (clipFramesElapsed % trackDuration);
+            } else {
+              currentFrame = delay + Math.min(trackDuration, clipFramesElapsed);
+              if (this.isPlaying && clipFramesElapsed >= trackDuration) {
+                this.isPlaying = false;
+                this.bottomPanel.setPlaying(false);
+              }
+            }
+          }
+        }
+
+        this.bottomPanel.updatePlayhead(currentFrame);
       }
 
       // Lock root motion: cancel X/Z world-space drift after mixer update
@@ -1245,6 +1339,8 @@ export class CharacterEditor {
               this.loadedModel.position.y += yOffset;
             }
           }
+        } else {
+          this.loadedModel.position.set(this.modelBaseX, this.modelBaseY, this.modelBaseZ);
         }
       }
 
@@ -1284,11 +1380,15 @@ export class CharacterEditor {
         const fadeInTime = (config.fadeInFrames || 0) / 60;
         const fadeOutTime = (config.fadeOutFrames || 0) / 60;
 
+        const hasExplicitEnd = !!(config.stateEndFrame && config.stateEndFrame > 0);
+
         let targetWeight = 0;
 
         if (currentTime < startTime) {
           targetWeight = 0;
-        } else if (currentTime >= endTime) {
+        } else if (hasExplicitEnd && currentTime >= endTime) {
+          targetWeight = 0;
+        } else if (!this.isLoopMode && !hasExplicitEnd && fadeOutTime > 0 && currentTime >= endTime) {
           targetWeight = 0;
         } else {
           targetWeight = config.mixWeight;
@@ -1298,7 +1398,7 @@ export class CharacterEditor {
             targetWeight = config.mixWeight * progress;
           }
 
-          if (fadeOutTime > 0 && currentTime > endTime - fadeOutTime) {
+          if (fadeOutTime > 0 && (hasExplicitEnd || !this.isLoopMode) && currentTime > endTime - fadeOutTime) {
             const progress = (endTime - currentTime) / fadeOutTime;
             targetWeight = config.mixWeight * Math.max(0, progress);
           }

@@ -18,12 +18,18 @@ export class BottomPanel {
   
   // Callbacks
   public onLayerSelect?: (layerIndex: number) => void;
-  public onPlayPreview?: () => void;
+  public onPlay?: () => void;
+  public onPlayOnce?: () => void;
+  public onTogglePause?: () => void;
   public onTimelineChange?: () => void; // Called when drag changes a value
   
   // UI Elements
   private playheadEl!: HTMLElement;
   private tracksContainer!: HTMLElement;
+  private playBtn!: HTMLButtonElement;
+  private playOnceBtn!: HTMLButtonElement;
+  private isPlaying: boolean = false;
+  private isPaused: boolean = false;
 
   constructor(containerId: string) {
     const el = document.getElementById(containerId);
@@ -37,11 +43,25 @@ export class BottomPanel {
     this.stateConfig = config;
     this.loadedAnimations = animations;
     this.activeLayerIndex = config.animations.length > 0 ? 0 : -1;
+    this.setPlaying(false);
     this.render();
   }
 
   public getActiveLayerIndex(): number {
     return this.activeLayerIndex;
+  }
+
+  public setPlaying(playing: boolean, paused: boolean = false) {
+    this.isPlaying = playing;
+    this.isPaused = paused;
+    if (!this.playBtn) return;
+    if (playing && !paused) {
+      this.playBtn.innerText = '⏸ Pause';
+      this.playBtn.title = 'Pause playback';
+    } else {
+      this.playBtn.innerText = '▶ Play';
+      this.playBtn.title = paused ? 'Resume playback' : 'Play animation (looping)';
+    }
   }
   
   public addLayer(layer: AnimationLayerConfig) {
@@ -85,11 +105,38 @@ export class BottomPanel {
     const header = document.createElement('div');
     header.className = 'timeline-header';
     
-    const playBtn = document.createElement('button');
-    playBtn.className = 'timeline-play-btn';
-    playBtn.innerText = '▶ Play';
-    playBtn.onclick = () => this.onPlayPreview?.();
-    header.appendChild(playBtn);
+    const controls = document.createElement('div');
+    controls.className = 'timeline-controls';
+
+    this.playBtn = document.createElement('button');
+    this.playBtn.className = 'timeline-play-btn';
+    this.playBtn.innerText = '▶ Play';
+    this.playBtn.title = 'Play animation (looping)';
+    this.playBtn.onclick = () => {
+      if (this.isPlaying && !this.isPaused) {
+        this.onTogglePause?.();
+        this.setPlaying(true, true);
+      } else if (this.isPlaying && this.isPaused) {
+        this.onTogglePause?.();
+        this.setPlaying(true, false);
+      } else {
+        this.onPlay?.();
+        this.setPlaying(true, false);
+      }
+    };
+    controls.appendChild(this.playBtn);
+
+    this.playOnceBtn = document.createElement('button');
+    this.playOnceBtn.className = 'timeline-play-btn secondary';
+    this.playOnceBtn.innerText = 'Play Once';
+    this.playOnceBtn.title = 'Play animation once without looping';
+    this.playOnceBtn.onclick = () => {
+      this.onPlayOnce?.();
+      this.setPlaying(true, false);
+    };
+    controls.appendChild(this.playOnceBtn);
+
+    header.appendChild(controls);
     
     const ruler = document.createElement('div');
     ruler.className = 'timeline-ruler';
@@ -123,7 +170,7 @@ export class BottomPanel {
     playheadContainer.style.position = 'absolute';
     playheadContainer.style.top = '0';
     playheadContainer.style.bottom = '0';
-    playheadContainer.style.left = '120px';
+    playheadContainer.style.left = '170px';
     playheadContainer.style.right = '0';
     playheadContainer.style.pointerEvents = 'none';
     playheadContainer.style.zIndex = '100';

@@ -207,6 +207,15 @@ body, html {
     border-bottom: 1px solid var(--border-color);
     padding: 5px 10px;
     height: 30px;
+    box-sizing: border-box;
+}
+
+.timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 160px;
+    min-width: 160px;
 }
 
 .timeline-play-btn {
@@ -214,21 +223,33 @@ body, html {
     color: white;
     border: none;
     border-radius: 3px;
-    padding: 4px 12px;
+    padding: 4px 8px;
     cursor: pointer;
-    font-size: 12px;
-    margin-right: 15px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .timeline-play-btn:hover {
     background-color: #9d4edd;
 }
 
+.timeline-play-btn.secondary {
+    background-color: #3a3a4c;
+    color: #e0e0e0;
+    border: 1px solid var(--border-color);
+}
+
+.timeline-play-btn.secondary:hover {
+    background-color: #4a4a5e;
+    color: white;
+}
+
 .timeline-ruler {
     flex-grow: 1;
     position: relative;
     height: 100%;
-    margin-left: 120px; /* offset for track names */
+    margin-left: 0;
 }
 
 .timeline-ruler-tick {
@@ -266,8 +287,8 @@ body, html {
 }
 
 .timeline-track-name {
-    width: 120px;
-    min-width: 120px;
+    width: 170px;
+    min-width: 170px;
     border-right: 1px solid var(--border-color);
     display: flex;
     align-items: center;
