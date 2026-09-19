@@ -5,6 +5,7 @@ import {
   ECBShape,
   GrabConfig,
   HurtCapsuleConfig,
+  HurtCapsuleAttachment,
   ThrowConfig,
   AnimationLayerConfig
 } from '../../game/character/shared';
@@ -25,6 +26,16 @@ import { sections } from '../ui/panels/leftPanel';
 import { RightPanel } from '../ui/panels/rightPanel';
 import { BottomPanel } from '../ui/panels/bottomPanel';
 import { AllStateNodes } from '../../game/engine/finiteStateMachines/player/PlayerStateCollections';
+import { mirrorHurtCapsule } from './mirroring';
+
+// Zero-allocation scratch objects for render loop & 3D bone picking
+const _vA = new THREE.Vector3();
+const _vB = new THREE.Vector3();
+const _vMid = new THREE.Vector3();
+const _vDir = new THREE.Vector3();
+const _yAxis = new THREE.Vector3(0, 1, 0);
+const _scratchRaycaster = new THREE.Raycaster();
+const _scratchMouse = new THREE.Vector2();
 
 export type CharacterProject = {
   config: CharacterConfig;
@@ -60,6 +71,56 @@ export class CharacterEditor {
   private cachedRootBone?: THREE.Bone;
   private allBoneNames: string[] = [];
   private skeletonHelper?: THREE.SkeletonHelper;
+
+  // Hurtbox capsules & 3D visualization
+  private showHurtCapsules: boolean = false;
+  private hurtCapsuleVisualGroup = new THREE.Group();
+  private capsuleMeshes: Map<
+    string,
+    {
+      group: THREE.Group;
+      sphereA: THREE.Mesh;
+      sphereB: THREE.Mesh;
+      cylinder: THREE.Mesh;
+    }
+  > = new Map();
+  private unitSphereGeo = new THREE.SphereGeometry(1, 14, 14);
+  private unitCylinderGeo = new THREE.CylinderGeometry(1, 1, 1, 14);
+  private hurtCapsuleMat = new THREE.MeshBasicMaterial({
+    color: 0xffeb3b,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false
+  });
+
+  // Interactive 3D Armature Bone Picking
+  private jointPickers: Array<{ mesh: THREE.Mesh; bone: THREE.Bone }> = [];
+  private jointPickerGeo = new THREE.SphereGeometry(1.5, 8, 8);
+  private jointPickerNormalMat = new THREE.MeshBasicMaterial({
+    color: 0x8a2be2,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.7
+  });
+  private jointPickerHoverMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.9
+  });
+  private jointPickerSelectedMat = new THREE.MeshBasicMaterial({
+    color: 0x00ff88,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.95
+  });
+
+  private isPickingBone: boolean = false;
+  private pickingState: 'PICK_BONE_A' | 'PICK_BONE_B' | 'REPICK_A' | 'REPICK_B' = 'PICK_BONE_A';
+  private repickCapsuleId?: string;
+  private tempPickedBoneA?: string;
+  private hoveredJointPicker?: THREE.Mesh;
+  private selectedJointPicker?: THREE.Mesh;
 
   private isPlaying: boolean = false;
   private isPaused: boolean = false;
@@ -150,6 +211,16 @@ export class CharacterEditor {
     });
     ul.appendChild(liModel);
 
+    // 1.5 Hurtbox Setup (Attaching capsules to armature)
+    const liHurt = document.createElement('li');
+    liHurt.innerText = 'Hurtbox Setup';
+    liHurt.addEventListener('click', () => {
+      clearActive();
+      liHurt.classList.add('active');
+      this.renderHurtboxSetup();
+    });
+    ul.appendChild(liHurt);
+
     // 2. State Animations Accordion
     const liStatesHeader = document.createElement('li');
     liStatesHeader.innerText = '▼ State Animations';
@@ -190,7 +261,11 @@ export class CharacterEditor {
       li.addEventListener('click', () => {
         clearActive();
         li.classList.add('active');
-        this.rightPanel.renderSection(sectionName);
+        if (sectionName === 'HurtCapsule') {
+          this.renderHurtboxSetup();
+        } else {
+          this.rightPanel.renderSection(sectionName);
+        }
       });
       ul.appendChild(li);
     });
@@ -279,6 +354,508 @@ export class CharacterEditor {
     rightPanelEl.appendChild(scaleGroup);
   }
 
+  private renderHurtboxSetup() {
+    const rightPanelEl = document.getElementById('right-panel');
+    if (!rightPanelEl) return;
+
+    // Show hurtboxes in 3D automatically while in Hurtbox Setup
+    this.showHurtCapsules = true;
+    this.setArmaturePickersVisible(true);
+    if (this.skeletonHelper) {
+      this.skeletonHelper.visible = true;
+    }
+    this.syncAllCapsuleMeshes();
+
+    rightPanelEl.innerHTML = ''; // clear
+
+    const MAX_CAPS = 25;
+    if (!this.project.displayConfig.hurtCapsules) {
+      this.project.displayConfig.hurtCapsules = [];
+    }
+    const capsules = this.project.displayConfig.hurtCapsules;
+    const isMaxReached = capsules.length >= MAX_CAPS;
+
+    // Header with counter
+    const header = document.createElement('div');
+    header.className = 'hurtbox-header';
+
+    const title = document.createElement('h2');
+    title.innerText = 'Hurtbox Setup';
+    title.style.margin = '0';
+    header.appendChild(title);
+
+    const badge = document.createElement('span');
+    badge.className = `capsule-count-badge ${isMaxReached ? 'limit-reached' : ''}`;
+    badge.innerText = `${capsules.length} / ${MAX_CAPS}${isMaxReached ? ' (MAX)' : ''}`;
+    header.appendChild(badge);
+
+    rightPanelEl.appendChild(header);
+
+    // Primary action button: 3D picking
+    const btnGroup = document.createElement('div');
+    btnGroup.style.display = 'flex';
+    btnGroup.style.gap = '8px';
+    btnGroup.style.marginBottom = '15px';
+
+    const btnPick = document.createElement('button');
+    btnPick.innerText = '+ New Hurt Capsule (Click Bones in 3D)';
+    btnPick.className = 'top-toolbar button';
+    btnPick.style.flex = '1';
+    btnPick.style.backgroundColor = isMaxReached ? '#444' : 'var(--accent, #8a2be2)';
+    btnPick.style.color = '#fff';
+    btnPick.style.fontWeight = 'bold';
+    btnPick.style.padding = '8px 12px';
+    btnPick.style.cursor = isMaxReached ? 'not-allowed' : 'pointer';
+    btnPick.disabled = isMaxReached;
+    btnPick.title = isMaxReached
+      ? 'Maximum 25 hurt capsules reached'
+      : 'Click bones in 3D to attach capsule';
+    btnPick.addEventListener('click', () => {
+      this.startPickingMode('PICK_BONE_A');
+    });
+    btnGroup.appendChild(btnPick);
+
+    const btnManual = document.createElement('button');
+    btnManual.innerText = '+ Manual';
+    btnManual.className = 'capsule-btn';
+    btnManual.disabled = isMaxReached;
+    btnManual.style.cursor = isMaxReached ? 'not-allowed' : 'pointer';
+    btnManual.title = 'Add capsule with default bones';
+    btnManual.addEventListener('click', () => {
+      const defaultBoneA = this.allBoneNames[0] || 'Root';
+      const defaultBoneB = this.allBoneNames[1] || defaultBoneA;
+      this.addHurtCapsuleFromBones(defaultBoneA, defaultBoneB);
+      this.renderHurtboxSetup();
+    });
+    btnGroup.appendChild(btnManual);
+
+    rightPanelEl.appendChild(btnGroup);
+
+    // Instructions note
+    const tip = document.createElement('div');
+    tip.style.fontSize = '12px';
+    tip.style.color = '#888';
+    tip.style.marginBottom = '15px';
+    tip.innerHTML =
+      'Attach hurt capsules to armature bones. They track automatically during animation playback. Max <b>25</b> capsules allowed.';
+    rightPanelEl.appendChild(tip);
+
+    // Capsule Cards List
+    const listContainer = document.createElement('div');
+    listContainer.id = 'capsules-list';
+
+    if (capsules.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.style.padding = '20px';
+      emptyState.style.textAlign = 'center';
+      emptyState.style.color = '#666';
+      emptyState.style.border = '1px dashed var(--border-color)';
+      emptyState.style.borderRadius = '4px';
+      emptyState.innerHTML =
+        'No hurt capsules yet.<br>Click <b>+ New Hurt Capsule</b> to begin attaching to armature in 3D.';
+      listContainer.appendChild(emptyState);
+    } else {
+      capsules.forEach((cap, idx) => {
+        const card = document.createElement('div');
+        card.className = 'capsule-card';
+
+        // Card Header
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'capsule-card-header';
+
+        const cardTitle = document.createElement('span');
+        cardTitle.className = 'capsule-card-title';
+        cardTitle.innerText = `#${idx + 1}: ${cap.name || 'Capsule'}`;
+        cardHeader.appendChild(cardTitle);
+
+        const actions = document.createElement('div');
+        actions.className = 'capsule-actions';
+
+        // Mirror Button
+        const mirrorBtn = document.createElement('button');
+        mirrorBtn.className = 'capsule-btn';
+        mirrorBtn.innerText = '🪞 Mirror';
+        mirrorBtn.title = 'Mirror capsule to opposite side (e.g. Left -> Right)';
+        mirrorBtn.disabled = isMaxReached;
+        mirrorBtn.addEventListener('click', () => {
+          if (capsules.length >= MAX_CAPS) {
+            alert('Cannot mirror: maximum 25 hurt capsules reached.');
+            return;
+          }
+          const mirrored = mirrorHurtCapsule(cap, this.allBoneNames);
+          if (!mirrored) {
+            alert(`Could not find mirrored bone names for "${cap.boneA}" or "${cap.boneB}".`);
+            return;
+          }
+          capsules.push(mirrored);
+          this.createCapsuleMesh(mirrored);
+          this.renderHurtboxSetup();
+        });
+        actions.appendChild(mirrorBtn);
+
+        // Delete Button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'capsule-btn delete-btn';
+        delBtn.innerText = '✕';
+        delBtn.title = 'Delete this hurt capsule';
+        delBtn.addEventListener('click', () => {
+          const cIdx = capsules.findIndex((c) => c.id === cap.id);
+          if (cIdx !== -1) {
+            capsules.splice(cIdx, 1);
+            this.removeCapsuleMesh(cap.id);
+            this.renderHurtboxSetup();
+          }
+        });
+        actions.appendChild(delBtn);
+
+        cardHeader.appendChild(actions);
+        card.appendChild(cardHeader);
+
+        // Name input
+        const nameGroup = document.createElement('div');
+        nameGroup.className = 'form-group';
+        nameGroup.style.marginBottom = '8px';
+        const nameLabel = document.createElement('label');
+        nameLabel.innerText = 'Label:';
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = cap.name;
+        nameInput.style.width = '100%';
+        nameInput.addEventListener('input', (e) => {
+          cap.name = (e.target as HTMLInputElement).value;
+          cardTitle.innerText = `#${idx + 1}: ${cap.name || 'Capsule'}`;
+        });
+        nameGroup.appendChild(nameLabel);
+        nameGroup.appendChild(nameInput);
+        card.appendChild(nameGroup);
+
+        // Bone A selector row
+        const boneAGroup = document.createElement('div');
+        boneAGroup.className = 'form-group';
+        boneAGroup.style.marginBottom = '8px';
+        const boneALabel = document.createElement('label');
+        boneALabel.innerText = 'Start Joint (Bone A):';
+        boneAGroup.appendChild(boneALabel);
+
+        const boneARow = document.createElement('div');
+        boneARow.className = 'bone-select-row';
+
+        const selectA = document.createElement('select');
+        this.allBoneNames.forEach((b) => {
+          const opt = document.createElement('option');
+          opt.value = b;
+          opt.innerText = b;
+          if (b === cap.boneA) opt.selected = true;
+          selectA.appendChild(opt);
+        });
+        selectA.addEventListener('change', (e) => {
+          cap.boneA = (e.target as HTMLInputElement).value;
+        });
+        boneARow.appendChild(selectA);
+
+        const pickABtn = document.createElement('button');
+        pickABtn.className = 'capsule-btn';
+        pickABtn.innerText = '🎯 3D';
+        pickABtn.title = 'Pick Bone A in 3D viewport';
+        pickABtn.addEventListener('click', () => {
+          this.startPickingMode('REPICK_A', cap.id);
+        });
+        boneARow.appendChild(pickABtn);
+        boneAGroup.appendChild(boneARow);
+        card.appendChild(boneAGroup);
+
+        // Bone B selector row
+        const boneBGroup = document.createElement('div');
+        boneBGroup.className = 'form-group';
+        boneBGroup.style.marginBottom = '8px';
+        const boneBLabel = document.createElement('label');
+        boneBLabel.innerText = 'End Joint (Bone B):';
+        boneBGroup.appendChild(boneBLabel);
+
+        const boneBRow = document.createElement('div');
+        boneBRow.className = 'bone-select-row';
+
+        const selectB = document.createElement('select');
+        this.allBoneNames.forEach((b) => {
+          const opt = document.createElement('option');
+          opt.value = b;
+          opt.innerText = b;
+          if (b === cap.boneB) opt.selected = true;
+          selectB.appendChild(opt);
+        });
+        selectB.addEventListener('change', (e) => {
+          cap.boneB = (e.target as HTMLInputElement).value;
+        });
+        boneBRow.appendChild(selectB);
+
+        const pickBBtn = document.createElement('button');
+        pickBBtn.className = 'capsule-btn';
+        pickBBtn.innerText = '🎯 3D';
+        pickBBtn.title = 'Pick Bone B in 3D viewport';
+        pickBBtn.addEventListener('click', () => {
+          this.startPickingMode('REPICK_B', cap.id);
+        });
+        boneBRow.appendChild(pickBBtn);
+        boneBGroup.appendChild(boneBRow);
+        card.appendChild(boneBGroup);
+
+        // Radius Slider
+        const radiusGroup = document.createElement('div');
+        radiusGroup.className = 'form-group';
+        const radiusLabel = document.createElement('label');
+        radiusLabel.innerText = `Radius: ${cap.radius}`;
+        const radiusInp = document.createElement('input');
+        radiusInp.type = 'range';
+        radiusInp.min = '1';
+        radiusInp.max = '60';
+        radiusInp.step = '0.5';
+        radiusInp.value = cap.radius.toString();
+        radiusInp.style.width = '100%';
+        radiusInp.addEventListener('input', (e) => {
+          cap.radius = parseFloat((e.target as HTMLInputElement).value) || 1;
+          radiusLabel.innerText = `Radius: ${cap.radius}`;
+        });
+        radiusGroup.appendChild(radiusLabel);
+        radiusGroup.appendChild(radiusInp);
+        card.appendChild(radiusGroup);
+
+        listContainer.appendChild(card);
+      });
+    }
+
+    rightPanelEl.appendChild(listContainer);
+  }
+
+  private startPickingMode(
+    state: 'PICK_BONE_A' | 'REPICK_A' | 'REPICK_B',
+    repickId?: string
+  ) {
+    if (!this.loadedModel || this.allBoneNames.length === 0) {
+      alert('Please load a .glb character model first in Model Setup!');
+      return;
+    }
+
+    this.isPickingBone = true;
+    this.pickingState = state;
+    this.repickCapsuleId = repickId;
+    this.tempPickedBoneA = undefined;
+    if (this.selectedJointPicker) {
+      this.resetJointPickerHighlight(this.selectedJointPicker);
+      this.selectedJointPicker = undefined;
+    }
+
+    // Ensure armature & pickers are visible
+    this.setArmaturePickersVisible(true);
+    if (this.skeletonHelper) {
+      this.skeletonHelper.visible = true;
+    }
+
+    const hud = document.getElementById('bone-pick-hud');
+    if (hud) {
+      hud.style.display = 'flex';
+      if (state === 'PICK_BONE_A') {
+        this.updatePickHudText('🎯 Click <b>Start Joint (Bone A)</b> in 3D view...');
+      } else if (state === 'REPICK_A') {
+        this.updatePickHudText('🎯 Click new <b>Start Joint (Bone A)</b> in 3D view...');
+      } else if (state === 'REPICK_B') {
+        this.updatePickHudText('🎯 Click new <b>End Joint (Bone B)</b> in 3D view...');
+      }
+    }
+  }
+
+  private endPickingMode() {
+    this.isPickingBone = false;
+    this.repickCapsuleId = undefined;
+    this.tempPickedBoneA = undefined;
+
+    if (this.hoveredJointPicker) {
+      this.resetJointPickerHighlight(this.hoveredJointPicker);
+      this.hoveredJointPicker = undefined;
+    }
+    if (this.selectedJointPicker) {
+      this.resetJointPickerHighlight(this.selectedJointPicker);
+      this.selectedJointPicker = undefined;
+    }
+
+    const hud = document.getElementById('bone-pick-hud');
+    if (hud) hud.style.display = 'none';
+
+    const tooltip = document.getElementById('bone-tooltip');
+    if (tooltip) tooltip.style.display = 'none';
+
+    this.renderer.domElement.style.cursor = 'default';
+  }
+
+  private updatePickHudText(html: string) {
+    const hud = document.getElementById('bone-pick-hud');
+    if (!hud) return;
+    hud.innerHTML = `<span>${html}</span><button class="bone-pick-hud-cancel" id="bone-pick-cancel-btn">Cancel (Esc)</button>`;
+    const cancelBtn = document.getElementById('bone-pick-cancel-btn');
+    cancelBtn?.addEventListener('click', () => this.endPickingMode());
+  }
+
+  private resetJointPickerHighlight(mesh: THREE.Mesh) {
+    mesh.material = this.jointPickerNormalMat;
+    mesh.scale.set(1.0, 1.0, 1.0);
+  }
+
+  private setArmaturePickersVisible(visible: boolean) {
+    for (let i = 0; i < this.jointPickers.length; i++) {
+      this.jointPickers[i].mesh.visible = visible;
+    }
+  }
+
+  private handleBonePicked(boneName: string, mesh: THREE.Mesh) {
+    if (this.pickingState === 'PICK_BONE_A') {
+      this.tempPickedBoneA = boneName;
+      this.selectedJointPicker = mesh;
+      mesh.material = this.jointPickerSelectedMat;
+      mesh.scale.set(1.8, 1.8, 1.8);
+      this.pickingState = 'PICK_BONE_B';
+      this.updatePickHudText(
+        `Start Joint: <b>${boneName}</b>. Now click <b>End Joint</b> in 3D (or same bone for sphere)...`
+      );
+    } else if (this.pickingState === 'PICK_BONE_B') {
+      const boneA = this.tempPickedBoneA || boneName;
+      const boneB = boneName;
+      this.addHurtCapsuleFromBones(boneA, boneB);
+      this.endPickingMode();
+      this.renderHurtboxSetup();
+    } else if (this.pickingState === 'REPICK_A' && this.repickCapsuleId) {
+      const cap = (this.project.displayConfig.hurtCapsules || []).find(
+        (c) => c.id === this.repickCapsuleId
+      );
+      if (cap) {
+        cap.boneA = boneName;
+      }
+      this.endPickingMode();
+      this.renderHurtboxSetup();
+    } else if (this.pickingState === 'REPICK_B' && this.repickCapsuleId) {
+      const cap = (this.project.displayConfig.hurtCapsules || []).find(
+        (c) => c.id === this.repickCapsuleId
+      );
+      if (cap) {
+        cap.boneB = boneName;
+      }
+      this.endPickingMode();
+      this.renderHurtboxSetup();
+    }
+  }
+
+  private addHurtCapsuleFromBones(boneA: string, boneB: string) {
+    if (!this.project.displayConfig.hurtCapsules) {
+      this.project.displayConfig.hurtCapsules = [];
+    }
+    if (this.project.displayConfig.hurtCapsules.length >= 25) {
+      alert('Maximum capacity of 25 hurt capsules reached!');
+      return;
+    }
+
+    let capName = boneA === boneB ? boneA : `${boneA} - ${boneB}`;
+    capName = capName.replace(/mixamorig/g, '');
+
+    const newCap: HurtCapsuleAttachment = {
+      id:
+        'capsule_' +
+        Math.random().toString(36).substring(2, 9) +
+        '_' +
+        Date.now(),
+      name: capName,
+      boneA,
+      boneB,
+      radius: 10
+    };
+
+    this.project.displayConfig.hurtCapsules.push(newCap);
+    this.createCapsuleMesh(newCap);
+  }
+
+  private createCapsuleMesh(cap: HurtCapsuleAttachment) {
+    if (this.capsuleMeshes.has(cap.id)) return;
+
+    const group = new THREE.Group();
+    group.name = `__hurtCapsuleGroup__${cap.id}`;
+
+    const sphereA = new THREE.Mesh(this.unitSphereGeo, this.hurtCapsuleMat);
+    const sphereB = new THREE.Mesh(this.unitSphereGeo, this.hurtCapsuleMat);
+    const cylinder = new THREE.Mesh(this.unitCylinderGeo, this.hurtCapsuleMat);
+
+    group.add(sphereA);
+    group.add(sphereB);
+    group.add(cylinder);
+
+    this.hurtCapsuleVisualGroup.add(group);
+    this.capsuleMeshes.set(cap.id, { group, sphereA, sphereB, cylinder });
+  }
+
+  private removeCapsuleMesh(capId: string) {
+    const meshData = this.capsuleMeshes.get(capId);
+    if (!meshData) return;
+
+    this.hurtCapsuleVisualGroup.remove(meshData.group);
+    this.capsuleMeshes.delete(capId);
+  }
+
+  private syncAllCapsuleMeshes() {
+    const currentIds = new Set(
+      (this.project.displayConfig.hurtCapsules || []).map((c) => c.id)
+    );
+    for (const [id] of this.capsuleMeshes.entries()) {
+      if (!currentIds.has(id)) {
+        this.removeCapsuleMesh(id);
+      }
+    }
+    const caps = this.project.displayConfig.hurtCapsules || [];
+    for (let i = 0; i < caps.length; i++) {
+      this.createCapsuleMesh(caps[i]);
+    }
+  }
+
+  private projectHurtCapsulesToEngineConfig() {
+    const attachments = this.project.displayConfig.hurtCapsules || [];
+    if (!this.loadedModel || attachments.length === 0) {
+      return;
+    }
+
+    const compiled: HurtCapsuleConfig[] = [];
+    const scale = this.project.displayConfig.simulationScale || 1.0;
+    const facingRad =
+      (this.project.displayConfig.deadRightRotation || 0) * (Math.PI / 180);
+
+    for (let i = 0; i < attachments.length; i++) {
+      const att = attachments[i];
+      const boneAObj = this.loadedModel.getObjectByName(att.boneA);
+      const boneBObj = this.loadedModel.getObjectByName(att.boneB);
+
+      if (!boneAObj) continue;
+
+      boneAObj.getWorldPosition(_vA);
+      if (boneBObj && att.boneB !== att.boneA) {
+        boneBObj.getWorldPosition(_vB);
+      } else {
+        _vB.copy(_vA);
+      }
+
+      // Project into 2D plane: X is horizontal facing direction, Y is vertical height
+      const x1 =
+        (_vA.x * Math.cos(-facingRad) - _vA.z * Math.sin(-facingRad)) * scale;
+      const y1 = (_vA.y - this.modelBaseY) * scale;
+      const x2 =
+        (_vB.x * Math.cos(-facingRad) - _vB.z * Math.sin(-facingRad)) * scale;
+      const y2 = (_vB.y - this.modelBaseY) * scale;
+
+      compiled.push({
+        x1: Math.round(x1 * 100) / 100,
+        y1: Math.round(y1 * 100) / 100,
+        x2: Math.round(x2 * 100) / 100,
+        y2: Math.round(y2 * 100) / 100,
+        radius: Math.round(att.radius * scale * 100) / 100
+      });
+    }
+
+    this.project.config.HurtCapsules = compiled;
+  }
+
   private renderStateAnimationEditor(stateId: StateId, stateName: string) {
     const rightPanelEl = document.getElementById('right-panel');
     if (!rightPanelEl) return;
@@ -295,6 +872,37 @@ export class CharacterEditor {
       this.project.displayConfig.states.set(stateId, { animations: [] });
     }
     const stateConfig = this.project.displayConfig.states.get(stateId)!;
+
+    // Real-Time Hurt Capsule Tracking Toggle
+    const hurtToggleGroup = document.createElement('div');
+    hurtToggleGroup.className = 'form-group';
+    hurtToggleGroup.style.marginBottom = '12px';
+    hurtToggleGroup.style.display = 'flex';
+    hurtToggleGroup.style.alignItems = 'center';
+    hurtToggleGroup.style.gap = '8px';
+
+    const hurtCheckbox = document.createElement('input');
+    hurtCheckbox.type = 'checkbox';
+    hurtCheckbox.id = 'anim-toggle-hurtboxes';
+    hurtCheckbox.checked = this.showHurtCapsules;
+    hurtCheckbox.addEventListener('change', (e) => {
+      this.showHurtCapsules = (e.target as HTMLInputElement).checked;
+      const btn = document.getElementById('canvas-toggle-hurtboxes');
+      if (btn) {
+        btn.style.backgroundColor = this.showHurtCapsules ? '#ffd700' : 'var(--accent, #8a2be2)';
+        btn.style.color = this.showHurtCapsules ? '#000' : '#fff';
+      }
+    });
+
+    const hurtLabel = document.createElement('label');
+    hurtLabel.htmlFor = 'anim-toggle-hurtboxes';
+    hurtLabel.style.cursor = 'pointer';
+    hurtLabel.style.fontWeight = 'bold';
+    hurtLabel.innerText = 'Show Hurt Capsules (Real-Time Tracking)';
+
+    hurtToggleGroup.appendChild(hurtCheckbox);
+    hurtToggleGroup.appendChild(hurtLabel);
+    rightPanelEl.appendChild(hurtToggleGroup);
 
     const xfadeGroup = document.createElement('div');
     xfadeGroup.className = 'form-group';
@@ -1009,6 +1617,40 @@ export class CharacterEditor {
       // Note: SkeletonHelper uses a custom material. We can just add it to the scene.
       this.scene.add(this.skeletonHelper);
 
+      // Clean up previous joint pickers
+      this.jointPickers.forEach((p) => {
+        p.bone.remove(p.mesh);
+      });
+      this.jointPickers = [];
+
+      // Create interactive joint picker nodes on all bones for 3D picking
+      const targetBones: THREE.Bone[] = [];
+      if (activeSkeleton && activeSkeleton.bones.length > 0) {
+        targetBones.push(...activeSkeleton.bones);
+      } else {
+        this.loadedModel.traverse((child) => {
+          if ((child as THREE.Bone).isBone) {
+            targetBones.push(child as THREE.Bone);
+          }
+        });
+      }
+
+      const uniqueBones = Array.from(new Set(targetBones));
+      for (const bone of uniqueBones) {
+        const pickerMesh = new THREE.Mesh(
+          this.jointPickerGeo,
+          this.jointPickerNormalMat
+        );
+        pickerMesh.name = '__picker__' + bone.name;
+        pickerMesh.userData = { boneName: bone.name, boneRef: bone };
+        pickerMesh.visible = false;
+        bone.add(pickerMesh);
+        this.jointPickers.push({ mesh: pickerMesh, bone });
+      }
+
+      // Sync 3D capsule meshes for any existing hurtbox attachments
+      this.syncAllCapsuleMeshes();
+
       // Handle animations
       if (gltf.animations && gltf.animations.length > 0) {
         this.mixer = new THREE.AnimationMixer(this.loadedModel);
@@ -1032,6 +1674,7 @@ export class CharacterEditor {
         config: emptyCahrConfig(),
         displayConfig: emptyDisplayConfig()
       };
+      this.syncAllCapsuleMeshes();
       this.rightPanel.updateConfig(this.project.config);
       document.getElementById('right-panel')!.innerHTML = '';
       document
@@ -1092,6 +1735,9 @@ export class CharacterEditor {
 
     menuExport?.addEventListener('click', (e) => {
       e.preventDefault();
+      // Deferred 3D-to-2D projection: compile hurt capsules to 2D only upon export
+      this.projectHurtCapsulesToEngineConfig();
+
       // Stub for exporting character config
       const json = JSON.stringify(
         this.project.config,
@@ -1213,6 +1859,11 @@ export class CharacterEditor {
         }
       );
 
+      if (!this.project.displayConfig.hurtCapsules) {
+        this.project.displayConfig.hurtCapsules = [];
+      }
+      this.syncAllCapsuleMeshes();
+
       const scaleInput = document.getElementById(
         'simulation-scale'
       ) as HTMLInputElement;
@@ -1329,6 +1980,9 @@ export class CharacterEditor {
     });
     container.appendChild(resetBtn);
 
+    // Add Hurt Capsule Visual Group to scene
+    this.scene.add(this.hurtCapsuleVisualGroup);
+
     // Toggle Armature Button
     const armatureBtn = document.createElement('button');
     armatureBtn.innerText = 'Toggle Armature';
@@ -1345,13 +1999,126 @@ export class CharacterEditor {
     armatureBtn.addEventListener('click', () => {
       if (this.skeletonHelper) {
         this.skeletonHelper.visible = !this.skeletonHelper.visible;
+        this.setArmaturePickersVisible(this.skeletonHelper.visible);
       }
     });
     container.appendChild(armatureBtn);
 
+    // Toggle Hurtboxes Button
+    const hurtboxBtn = document.createElement('button');
+    hurtboxBtn.id = 'canvas-toggle-hurtboxes';
+    hurtboxBtn.innerText = 'Toggle Hurtboxes';
+    hurtboxBtn.style.position = 'absolute';
+    hurtboxBtn.style.bottom = '80px'; // Place it above Toggle Armature
+    hurtboxBtn.style.right = '10px';
+    hurtboxBtn.style.padding = '5px 10px';
+    hurtboxBtn.style.zIndex = '10';
+    hurtboxBtn.style.backgroundColor = this.showHurtCapsules ? '#ffd700' : 'var(--accent, #8a2be2)';
+    hurtboxBtn.style.color = this.showHurtCapsules ? '#000' : '#fff';
+    hurtboxBtn.style.border = 'none';
+    hurtboxBtn.style.borderRadius = '3px';
+    hurtboxBtn.style.cursor = 'pointer';
+    hurtboxBtn.addEventListener('click', () => {
+      this.showHurtCapsules = !this.showHurtCapsules;
+      hurtboxBtn.style.backgroundColor = this.showHurtCapsules ? '#ffd700' : 'var(--accent, #8a2be2)';
+      hurtboxBtn.style.color = this.showHurtCapsules ? '#000' : '#fff';
+      const chk = document.getElementById('anim-toggle-hurtboxes') as HTMLInputElement;
+      if (chk) chk.checked = this.showHurtCapsules;
+    });
+    container.appendChild(hurtboxBtn);
+
+    // Floating HUD for 3D Bone Picking Mode
+    const pickHud = document.createElement('div');
+    pickHud.id = 'bone-pick-hud';
+    pickHud.className = 'bone-pick-hud';
+    pickHud.style.display = 'none';
+    container.appendChild(pickHud);
+
+    // Floating Tooltip for Bone Hover
+    const tooltip = document.createElement('div');
+    tooltip.id = 'bone-tooltip';
+    tooltip.className = 'bone-tooltip';
+    container.appendChild(tooltip);
+
+    // 3D Bone Picking Pointer Event Listeners
+    let downX = 0;
+    let downY = 0;
+
+    const onPointerMove = (e: MouseEvent) => {
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      _scratchMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      _scratchMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (!this.camera || !this.loadedModel) return;
+
+      const pickMeshes = this.jointPickers.map((p) => p.mesh);
+      if (pickMeshes.length === 0) return;
+
+      _scratchRaycaster.setFromCamera(_scratchMouse, this.camera);
+      const hits = _scratchRaycaster.intersectObjects(pickMeshes, false);
+
+      if (hits.length > 0) {
+        const hitMesh = hits[0].object as THREE.Mesh;
+        const boneName = hitMesh.userData.boneName as string;
+
+        if (this.hoveredJointPicker && this.hoveredJointPicker !== hitMesh) {
+          if (this.hoveredJointPicker !== this.selectedJointPicker) {
+            this.resetJointPickerHighlight(this.hoveredJointPicker);
+          }
+        }
+
+        this.hoveredJointPicker = hitMesh;
+        if (hitMesh !== this.selectedJointPicker) {
+          hitMesh.material = this.jointPickerHoverMat;
+          hitMesh.scale.set(1.6, 1.6, 1.6);
+        }
+
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${e.clientX - rect.left + 14}px`;
+        tooltip.style.top = `${e.clientY - rect.top + 14}px`;
+        tooltip.innerText = `Bone: ${boneName}`;
+        this.renderer.domElement.style.cursor = 'pointer';
+      } else {
+        if (this.hoveredJointPicker) {
+          if (this.hoveredJointPicker !== this.selectedJointPicker) {
+            this.resetJointPickerHighlight(this.hoveredJointPicker);
+          }
+          this.hoveredJointPicker = undefined;
+        }
+        tooltip.style.display = 'none';
+        this.renderer.domElement.style.cursor = 'default';
+      }
+    };
+
+    const onPointerDown = (e: MouseEvent) => {
+      downX = e.clientX;
+      downY = e.clientY;
+    };
+
+    const onPointerUp = (e: MouseEvent) => {
+      // Ignore if user was dragging to rotate/pan camera
+      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return;
+      if (!this.isPickingBone || e.button !== 0) return;
+      if (!this.hoveredJointPicker) return;
+
+      const boneName = this.hoveredJointPicker.userData.boneName as string;
+      this.handleBonePicked(boneName, this.hoveredJointPicker);
+    };
+
+    this.renderer.domElement.addEventListener('mousemove', onPointerMove);
+    this.renderer.domElement.addEventListener('mousedown', onPointerDown);
+    this.renderer.domElement.addEventListener('mouseup', onPointerUp);
+
     // Resize handler
     const resizeObserver = new ResizeObserver(() => this.onWindowResize());
     resizeObserver.observe(container);
+
+    // Escape key cancels bone picking
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.isPickingBone) {
+        this.endPickingMode();
+      }
+    });
 
     // Start loop
     this.animate();
@@ -1554,6 +2321,63 @@ export class CharacterEditor {
       }
     }
 
+    // Real-time tracking of hurt capsules to armature anchor points
+    if (this.showHurtCapsules && this.loadedModel) {
+      this.hurtCapsuleVisualGroup.visible = true;
+      const hurtCaps = this.project.displayConfig.hurtCapsules;
+      if (hurtCaps && hurtCaps.length > 0) {
+        for (let i = 0; i < hurtCaps.length; i++) {
+          const cap = hurtCaps[i];
+          const meshData = this.capsuleMeshes.get(cap.id);
+          if (!meshData) continue;
+
+          const boneAObj = this.loadedModel.getObjectByName(cap.boneA);
+          const boneBObj = this.loadedModel.getObjectByName(cap.boneB);
+
+          if (!boneAObj) {
+            meshData.group.visible = false;
+            continue;
+          }
+          meshData.group.visible = true;
+
+          boneAObj.getWorldPosition(_vA);
+          if (boneBObj && cap.boneB !== cap.boneA) {
+            boneBObj.getWorldPosition(_vB);
+            _vDir.subVectors(_vB, _vA);
+            const len = _vDir.length();
+            _vMid.addVectors(_vA, _vB).multiplyScalar(0.5);
+
+            meshData.sphereA.visible = true;
+            meshData.sphereB.visible = true;
+            meshData.cylinder.visible = true;
+
+            meshData.sphereA.position.copy(_vA);
+            meshData.sphereA.scale.set(cap.radius, cap.radius, cap.radius);
+
+            meshData.sphereB.position.copy(_vB);
+            meshData.sphereB.scale.set(cap.radius, cap.radius, cap.radius);
+
+            meshData.cylinder.position.copy(_vMid);
+            meshData.cylinder.scale.set(cap.radius, Math.max(0.001, len), cap.radius);
+            if (len > 0.0001) {
+              _vDir.divideScalar(len);
+              meshData.cylinder.quaternion.setFromUnitVectors(_yAxis, _vDir);
+            }
+          } else {
+            // Spherical joint capsule (single bone or boneA === boneB)
+            meshData.sphereA.visible = true;
+            meshData.sphereB.visible = false;
+            meshData.cylinder.visible = false;
+
+            meshData.sphereA.position.copy(_vA);
+            meshData.sphereA.scale.set(cap.radius, cap.radius, cap.radius);
+          }
+        }
+      }
+    } else {
+      this.hurtCapsuleVisualGroup.visible = false;
+    }
+
     if (this.controls) {
       this.controls.update();
     }
@@ -1620,7 +2444,8 @@ function emptyDisplayConfig(): DisplayLayerConfig {
   return {
     simulationScale: 1.0,
     deadRightRotation: 0,
-    states: new Map()
+    states: new Map(),
+    hurtCapsules: []
   };
 }
 

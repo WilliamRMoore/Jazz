@@ -438,3 +438,135 @@ body, html {
     left: -8px;
     width: 18px;
 }
+
+/* Hurtbox Setup Styles */
+.hurtbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.capsule-count-badge {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.capsule-count-badge.limit-reached {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.capsule-card {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+}
+
+.capsule-card:hover {
+    border-color: #555;
+}
+
+.capsule-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.capsule-card-title {
+    font-weight: bold;
+    font-size: 14px;
+    color: #ffd700; /* Hurtbox yellow accent */
+}
+
+.capsule-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.capsule-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.capsule-btn:hover {
+    background-color: var(--border-color);
+}
+
+.capsule-btn.delete-btn:hover {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.bone-select-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.bone-select-row select {
+    flex: 1;
+}
+
+/* 3D Bone Picking HUD & Tooltip */
+.bone-pick-hud {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(15, 15, 25, 0.92);
+    border: 1px solid var(--accent);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 13px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+}
+
+.bone-pick-hud-cancel {
+    background: transparent;
+    border: 1px solid #666;
+    color: #bbb;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.bone-pick-hud-cancel:hover {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.bone-tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.88);
+    border: 1px solid #ffd700;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 55;
+    white-space: nowrap;
+    display: none;
+}

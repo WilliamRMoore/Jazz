@@ -368,6 +368,14 @@ export type AnimationLayerConfig = {
   fadeOutFrames?: number;
 };
 
+export type HurtCapsuleAttachment = {
+  id: string;
+  name: string;
+  boneA: string;
+  boneB: string;
+  radius: number;
+};
+
 export type StateDisplayConfig = {
   animations: AnimationLayerConfig[];
   crossfadeFrames?: number;
@@ -378,4 +386,5 @@ export type DisplayLayerConfig = {
   simulationScale: number;
   deadRightRotation: number;
   states: Map<StateId, StateDisplayConfig>;
+  hurtCapsules?: HurtCapsuleAttachment[];
 };
