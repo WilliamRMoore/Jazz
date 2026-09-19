@@ -47,9 +47,10 @@ export class CharacterEditor {
   private clock = new THREE.Clock();
   private loadedModel?: THREE.Group<THREE.Object3DEventMap>;
   private loadedAnimations: THREE.AnimationClip[] = [];
-  private currentActions: { action: THREE.AnimationAction, config: AnimationLayerConfig, mixerStartTime: number }[] = [];
+  private currentActions: { action: THREE.AnimationAction, config: AnimationLayerConfig, clipDurationSeconds: number }[] = [];
   private fadingOutActions: { action: THREE.AnimationAction, startWeight: number, fadeStartTime: number, duration: number }[] = [];
-  private stateStartTime: number = 0;
+  private statePreviewTime: number = 0;
+  private stateRealStartTime: number = 0;
   private globalCrossfadeDuration: number = 0;
   private controls!: OrbitControls;
   private fileHandle?: any;
@@ -90,6 +91,7 @@ export class CharacterEditor {
     this.initToolbar();
     this.initThreeJs();
     this.initResizers();
+    this.initKeyboardShortcuts();
   }
 
   private initResizers() {
@@ -314,11 +316,51 @@ export class CharacterEditor {
     this.stopPreview();
     this.bottomPanel.setState(stateId, stateConfig, this.loadedAnimations);
     
+    const refreshPreviewActions = () => {
+      if (this.currentStateId !== undefined && this.currentActions.length > 0) {
+        const wasPaused = this.isPaused;
+        const curTime = this.statePreviewTime;
+        this.playStatePreview(this.currentStateId, this.isLoopMode);
+        this.isPaused = wasPaused;
+        this.statePreviewTime = curTime;
+      }
+    };
+
     this.bottomPanel.onPlay = () => this.startPreview(stateId, true);
     this.bottomPanel.onPlayOnce = () => this.startPreview(stateId, false);
+    this.bottomPanel.onPause = () => {
+      this.isPaused = true;
+    };
+    this.bottomPanel.onStepFrame = (delta) => this.stepFrame(delta);
     this.bottomPanel.onTogglePause = () => this.togglePause();
     this.bottomPanel.onLayerSelect = (idx) => renderLayers();
-    this.bottomPanel.onTimelineChange = () => renderLayers();
+    this.bottomPanel.onTimelineChange = () => {
+      renderLayers();
+      if (stateConfig.animations.length === 0) {
+        this.stopPreview();
+      } else {
+        refreshPreviewActions();
+      }
+    };
+    this.bottomPanel.onScrub = (frame) => {
+      if (this.currentActions.length === 0 && this.currentStateId !== undefined) {
+        this.playStatePreview(this.currentStateId, this.isLoopMode);
+      }
+      this.isPlaying = true;
+      this.isPaused = true;
+      this.bottomPanel.setPlaying(true, true);
+      this.statePreviewTime = frame / 60;
+    };
+
+    // Preview initial pose at frame 0
+    if (stateConfig.animations.length > 0) {
+      this.playStatePreview(stateId, this.isLoopMode);
+      this.isPlaying = true;
+      this.isPaused = true;
+      this.statePreviewTime = 0;
+      this.bottomPanel.setPlaying(true, true);
+      this.bottomPanel.updatePlayhead(0);
+    }
 
     const layersContainer = document.createElement('div');
     layersContainer.id = 'layers-container';
@@ -343,20 +385,25 @@ export class CharacterEditor {
       layerBox.style.position = 'relative';
 
       const titleDiv = document.createElement('div');
-      titleDiv.innerText = `Layer ${idx + 1}: ${anim.clipName || 'Empty'}`;
       titleDiv.style.fontWeight = 'bold';
       titleDiv.style.marginBottom = '10px';
-      layerBox.appendChild(titleDiv);
+      titleDiv.style.display = 'flex';
+      titleDiv.style.justifyContent = 'space-between';
+      titleDiv.style.alignItems = 'center';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.innerText = `Layer ${idx + 1}: ${anim.clipName || 'Empty'}`;
+      titleDiv.appendChild(titleSpan);
 
       const deleteBtn = document.createElement('button');
-      deleteBtn.innerText = 'X';
-      deleteBtn.style.position = 'absolute';
-      deleteBtn.style.top = '5px';
-      deleteBtn.style.right = '5px';
+      deleteBtn.className = 'layer-delete-btn';
+      deleteBtn.innerText = '✕ Remove Layer';
+      deleteBtn.title = 'Remove this animation layer';
       deleteBtn.addEventListener('click', () => {
         this.bottomPanel.deleteLayer(idx);
       });
-      layerBox.appendChild(deleteBtn);
+      titleDiv.appendChild(deleteBtn);
+      layerBox.appendChild(titleDiv);
 
       // Track Start / End Frame
       const trackFramesGroup = document.createElement('div');
@@ -371,6 +418,7 @@ export class CharacterEditor {
         anim.stateStartFrame = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       trackStartDiv.appendChild(trackStartInp);
 
@@ -383,6 +431,7 @@ export class CharacterEditor {
         anim.stateEndFrame = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       trackEndDiv.appendChild(trackEndInp);
 
@@ -403,6 +452,7 @@ export class CharacterEditor {
         anim.fadeInFrames = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       fadeInDiv.appendChild(fadeInInp);
 
@@ -415,6 +465,7 @@ export class CharacterEditor {
         anim.fadeOutFrames = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       fadeOutDiv.appendChild(fadeOutInp);
 
@@ -435,6 +486,7 @@ export class CharacterEditor {
         anim.startFrame = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       startDiv.appendChild(startInp);
 
@@ -447,6 +499,7 @@ export class CharacterEditor {
         anim.endFrame = parseInt((e.target as HTMLInputElement).value, 10);
         this.bottomPanel.forceRender();
         renderLayers();
+        refreshPreviewActions();
       });
       endDiv.appendChild(endInp);
 
@@ -481,9 +534,13 @@ export class CharacterEditor {
         if (selectedClip) {
           anim.startFrame = 0;
           anim.endFrame = Math.round(selectedClip.duration * 60);
-          this.bottomPanel.forceRender();
-          renderLayers();
+        } else {
+          anim.startFrame = 0;
+          anim.endFrame = 0;
         }
+        this.bottomPanel.forceRender();
+        renderLayers();
+        refreshPreviewActions();
       });
       clipGroup.appendChild(clipLabel);
       clipGroup.appendChild(clipSelect);
@@ -652,6 +709,7 @@ export class CharacterEditor {
     this.isLoopMode = loop;
     this.isPlaying = true;
     this.isPaused = false;
+    this.statePreviewTime = 0;
     this.playStatePreview(stateId, loop);
     this.bottomPanel.setPlaying(true, false);
   }
@@ -667,9 +725,82 @@ export class CharacterEditor {
     this.bottomPanel.setPlaying(this.isPlaying, this.isPaused);
   }
 
+  private getTotalStateFrames(stateId?: StateId): number {
+    if (stateId === undefined) return 100;
+    const stateConfig = this.project.displayConfig.states.get(stateId);
+    if (!stateConfig || stateConfig.animations.length === 0) return 100;
+
+    const max = Math.max(...stateConfig.animations.map((a) => {
+      const start = a.stateStartFrame || 0;
+      let end = a.endFrame;
+      if (end === undefined || end === 0) {
+        const clip = this.loadedAnimations.find(c => c.name === a.clipName);
+        end = clip ? Math.round(clip.duration * 60) : 100;
+      }
+      const speed = (a.playbackSpeed !== undefined && a.playbackSpeed > 0) ? a.playbackSpeed : 1.0;
+      const clipLen = Math.max(1, Math.round((end - (a.startFrame || 0)) / speed));
+      return (a.stateEndFrame && a.stateEndFrame > 0) ? a.stateEndFrame : (start + clipLen);
+    }));
+
+    return max > 0 ? max : 100;
+  }
+
+  private stepFrame(deltaFrames: number) {
+    if (this.currentStateId === undefined) return;
+
+    if (this.currentActions.length === 0) {
+      this.playStatePreview(this.currentStateId, this.isLoopMode);
+    }
+
+    const totalStateFrames = this.getTotalStateFrames(this.currentStateId);
+
+    this.isPlaying = true;
+    this.isPaused = true;
+    this.bottomPanel.setPlaying(true, true);
+
+    const currentFrame = Math.round(this.statePreviewTime * 60);
+    let nextFrame = currentFrame + deltaFrames;
+
+    if (this.isLoopMode) {
+      nextFrame = ((nextFrame % totalStateFrames) + totalStateFrames) % totalStateFrames;
+    } else {
+      nextFrame = Math.max(0, Math.min(totalStateFrames, nextFrame));
+    }
+
+    this.statePreviewTime = nextFrame / 60;
+    this.bottomPanel.updatePlayhead(nextFrame);
+  }
+
+  private initKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+      const activeTag = (document.activeElement?.tagName || '').toUpperCase();
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || e.key === '.') {
+        e.preventDefault();
+        this.stepFrame(1);
+      } else if (e.key === 'ArrowLeft' || e.key === ',') {
+        e.preventDefault();
+        this.stepFrame(-1);
+      } else if (e.code === 'Space') {
+        e.preventDefault();
+        this.togglePause();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeIdx = this.bottomPanel.getActiveLayerIndex();
+        if (activeIdx >= 0) {
+          e.preventDefault();
+          this.bottomPanel.deleteLayer(activeIdx);
+        }
+      }
+    });
+  }
+
   private stopPreview() {
     this.isPlaying = false;
     this.isPaused = false;
+    this.statePreviewTime = 0;
     this.currentActions.forEach((item) => item.action.stop());
     this.fadingOutActions.forEach((item) => item.action.stop());
     this.currentActions = [];
@@ -691,6 +822,8 @@ export class CharacterEditor {
     this.isLoopMode = loop;
     this.isPlaying = true;
     this.isPaused = false;
+    this.statePreviewTime = 0;
+    this.stateRealStartTime = this.clock.getElapsedTime();
 
     const stateConfig = this.project.displayConfig.states.get(stateId);
     if (!stateConfig) {
@@ -700,13 +833,11 @@ export class CharacterEditor {
     }
 
     const crossfadeDuration = (stateConfig.crossfadeFrames || 0) / 60;
-    this.stateStartTime = this.mixer.time;
     this.globalCrossfadeDuration = crossfadeDuration;
 
     if (crossfadeDuration > 0) {
-      const now = this.mixer.time;
+      const now = this.clock.getElapsedTime();
       this.currentActions.forEach((item) => {
-        // The current weight is what it happens to be at this moment
         const weight = item.action.getEffectiveWeight();
         if (weight > 0) {
           this.fadingOutActions.push({
@@ -727,7 +858,17 @@ export class CharacterEditor {
     
     this.currentActions = [];
 
-    if (stateConfig.animations.length === 0) return;
+    if (stateConfig.animations.length === 0) {
+      if (this.mixer) {
+        this.mixer.stopAllAction();
+        this.mixer.update(0);
+      }
+      if (this.loadedModel) {
+        this.loadedModel.position.set(this.modelBaseX, this.modelBaseY, this.modelBaseZ);
+        this.loadedModel.updateMatrixWorld(true);
+      }
+      return;
+    }
 
     stateConfig.animations.forEach((animConfig) => {
       if (!animConfig.clipName) return;
@@ -744,45 +885,35 @@ export class CharacterEditor {
       if (endFrame > clipDurationFrames) endFrame = clipDurationFrames;
       if (startFrame >= endFrame) startFrame = 0;
 
+      const configuredFrames = Math.max(1, endFrame - startFrame);
+      const configuredDuration = configuredFrames / 60;
+
       if (startFrame > 0 || endFrame < clipDurationFrames) {
         clip = THREE.AnimationUtils.subclip(
           clip,
           clip.name + '_sub',
           startFrame,
-          endFrame,
+          endFrame + 0.001,
           60
         );
+        clip.duration = configuredDuration;
       } else {
         clip = clip.clone();
+        clip.duration = configuredDuration;
       }
 
       // Root motion locking is handled in animate() via world-space position correction
       // after the mixer update, so we don't modify animation tracks here.
-
       const action = this.mixer!.clipAction(clip);
-
-      // Calculate times based on frames (assume 60fps for editor purposes)
-      // Since we subclipped, we start at 0
       action.time = 0;
-      action.setEffectiveTimeScale(animConfig.playbackSpeed);
-      action.setEffectiveWeight(animConfig.mixWeight);
-
-      if (!loop) {
-        action.setLoop(THREE.LoopOnce, 1);
-        action.clampWhenFinished = true;
-      } else {
-        action.setLoop(THREE.LoopRepeat, Infinity);
-      }
-
-      const stateStartDelay = (animConfig.stateStartFrame || 0) / 60;
-      if (stateStartDelay > 0) {
-        action.startAt(this.mixer!.time + stateStartDelay);
-      }
+      action.setEffectiveTimeScale(1.0);
+      action.setEffectiveWeight(0);
       action.play();
+
       this.currentActions.push({
         action,
         config: animConfig,
-        mixerStartTime: this.mixer!.time
+        clipDurationSeconds: configuredDuration
       });
     });
   }
@@ -823,17 +954,40 @@ export class CharacterEditor {
       this.modelBaseY = this.loadedModel.position.y;
       this.modelBaseZ = this.loadedModel.position.z;
 
-      // Cache the root bone for lock root motion and gather all bone names
-      this.cachedRootBone = undefined;
-      this.allBoneNames = [];
+      // Find the active skinned mesh and skeleton root
+      let activeSkeleton: THREE.Skeleton | undefined;
       this.loadedModel.traverse((child) => {
-        if ((child as THREE.Bone).isBone) {
-          if (!this.cachedRootBone) {
-            this.cachedRootBone = child as THREE.Bone;
-          }
-          this.allBoneNames.push(child.name);
+        if ((child as THREE.SkinnedMesh).isSkinnedMesh && !activeSkeleton) {
+          activeSkeleton = (child as THREE.SkinnedMesh).skeleton;
         }
       });
+
+      this.cachedRootBone = undefined;
+      if (activeSkeleton && activeSkeleton.bones.length > 0) {
+        let curr: THREE.Object3D = activeSkeleton.bones[0];
+        while (curr.parent && (curr.parent as THREE.Bone).isBone) {
+          curr = curr.parent;
+        }
+        this.cachedRootBone = curr as THREE.Bone;
+      } else {
+        this.loadedModel.traverse((child) => {
+          if ((child as THREE.Bone).isBone && !this.cachedRootBone) {
+            this.cachedRootBone = child as THREE.Bone;
+          }
+        });
+      }
+
+      if (activeSkeleton && activeSkeleton.bones.length > 0) {
+        this.allBoneNames = Array.from(new Set(activeSkeleton.bones.map((b) => b.name)));
+      } else {
+        const boneNames: string[] = [];
+        this.loadedModel.traverse((child) => {
+          if ((child as THREE.Bone).isBone) {
+            boneNames.push(child.name);
+          }
+        });
+        this.allBoneNames = Array.from(new Set(boneNames));
+      }
 
       // Apply initial rotation from display config
       this.loadedModel.rotation.y =
@@ -845,11 +999,12 @@ export class CharacterEditor {
 
       this.scene.add(this.loadedModel);
       
-      // Armature visualization
+      // Armature visualization: target the active skeleton root so ghost/orphan armatures are ignored
       if (this.skeletonHelper) {
         this.scene.remove(this.skeletonHelper);
       }
-      this.skeletonHelper = new THREE.SkeletonHelper(this.loadedModel);
+      const skeletonTarget = this.cachedRootBone || this.loadedModel;
+      this.skeletonHelper = new THREE.SkeletonHelper(skeletonTarget);
       this.skeletonHelper.visible = false; // Hidden by default
       // Note: SkeletonHelper uses a custom material. We can just add it to the scene.
       this.scene.add(this.skeletonHelper);
@@ -1220,52 +1375,105 @@ export class CharacterEditor {
 
     const delta = this.clock.getDelta();
     if (this.mixer) {
+      // 1. Calculate total state duration
+      const totalStateFrames = this.getTotalStateFrames(this.currentStateId);
+      const totalStateDuration = totalStateFrames / 60;
+
+      // 2. Advance state preview playback clock
       if (this.isPlaying && !this.isPaused) {
-        this.mixer.update(delta);
-      }
-      const currentTime = this.mixer.time;
-      
-      if (this.bottomPanel) {
-        let currentFrame = Math.max(0, (currentTime - this.stateStartTime) * 60);
-
-        const activeIdx = this.bottomPanel.getActiveLayerIndex();
-        const activeItem = (activeIdx >= 0 && activeIdx < this.currentActions.length)
-          ? this.currentActions[activeIdx]
-          : (this.currentActions.length > 0 ? this.currentActions[0] : undefined);
-
-        if (activeItem) {
-          const config = activeItem.config;
-          const speed = (config.playbackSpeed !== undefined && config.playbackSpeed > 0)
-            ? config.playbackSpeed
-            : 1.0;
-          const delay = config.stateStartFrame || 0;
-          const startTime = activeItem.mixerStartTime + (delay / 60);
-
-          if (currentTime < startTime) {
-            currentFrame = Math.max(0, (currentTime - activeItem.mixerStartTime) * 60);
-          } else {
-            const animElapsed = currentTime - startTime;
-            const clipFramesElapsed = animElapsed * 60 * speed;
-            const trackDuration = (config.stateEndFrame && config.stateEndFrame > 0)
-              ? (config.stateEndFrame - delay)
-              : Math.max(0, (config.endFrame || 100) - (config.startFrame || 0));
-
-            if (this.isLoopMode && trackDuration > 0) {
-              currentFrame = delay + (clipFramesElapsed % trackDuration);
-            } else {
-              currentFrame = delay + Math.min(trackDuration, clipFramesElapsed);
-              if (this.isPlaying && clipFramesElapsed >= trackDuration) {
-                this.isPlaying = false;
-                this.bottomPanel.setPlaying(false);
-              }
-            }
+        this.statePreviewTime += delta;
+        if (this.isLoopMode) {
+          if (this.statePreviewTime >= totalStateDuration) {
+            this.statePreviewTime = this.statePreviewTime % totalStateDuration;
+          }
+        } else {
+          if (this.statePreviewTime >= totalStateDuration) {
+            this.statePreviewTime = totalStateDuration;
+            this.isPlaying = false;
+            this.bottomPanel.setPlaying(false);
           }
         }
+      }
 
+      // 3. Update timeline playhead
+      if (this.bottomPanel) {
+        const currentFrame = Math.max(0, Math.min(totalStateFrames, this.statePreviewTime * 60));
         this.bottomPanel.updatePlayhead(currentFrame);
       }
 
-      // Lock root motion: cancel X/Z world-space drift after mixer update
+      // 4. Handle fading out actions from previous state
+      const now = this.clock.getElapsedTime();
+      for (let i = this.fadingOutActions.length - 1; i >= 0; i--) {
+        const fade = this.fadingOutActions[i];
+        const elapsed = now - fade.fadeStartTime;
+        if (elapsed >= fade.duration) {
+          fade.action.setEffectiveWeight(0);
+          fade.action.stop();
+          this.fadingOutActions.splice(i, 1);
+        } else {
+          const progress = 1.0 - (elapsed / fade.duration);
+          fade.action.setEffectiveWeight(fade.startWeight * progress);
+        }
+      }
+
+      // 5. Global crossfade multiplier for entering state
+      let globalMultiplier = 1.0;
+      if (this.globalCrossfadeDuration > 0) {
+        const elapsed = now - this.stateRealStartTime;
+        if (elapsed < this.globalCrossfadeDuration) {
+          globalMultiplier = elapsed / this.globalCrossfadeDuration;
+        }
+      }
+
+      // 6. Update current actions at this.statePreviewTime
+      this.currentActions.forEach((item) => {
+        const config = item.config;
+        const trackStart = (config.stateStartFrame || 0) / 60;
+        const clipDuration = item.clipDurationSeconds;
+        const speed = (config.playbackSpeed !== undefined && config.playbackSpeed > 0) ? config.playbackSpeed : 1.0;
+        const trackEnd = (config.stateEndFrame && config.stateEndFrame > 0)
+          ? (config.stateEndFrame / 60)
+          : (trackStart + (clipDuration / speed));
+        const trackDuration = Math.max(1 / 60, trackEnd - trackStart);
+
+        const fadeInTime = (config.fadeInFrames || 0) / 60;
+        const fadeOutTime = (config.fadeOutFrames || 0) / 60;
+
+        let targetWeight = 0;
+        let actionTime = 0;
+
+        if (this.statePreviewTime >= trackStart - 0.0001 && this.statePreviewTime <= trackEnd + 0.0001) {
+          const trackElapsed = Math.max(0, this.statePreviewTime - trackStart);
+
+          targetWeight = config.mixWeight;
+          if (fadeInTime > 0 && trackElapsed < fadeInTime) {
+            targetWeight = config.mixWeight * (trackElapsed / fadeInTime);
+          }
+          if (fadeOutTime > 0 && trackElapsed > trackDuration - fadeOutTime) {
+            const fadeProgress = (trackDuration - trackElapsed) / fadeOutTime;
+            targetWeight = config.mixWeight * Math.max(0, fadeProgress);
+          }
+
+          const animElapsed = trackElapsed * speed;
+          if (config.loopable && clipDuration > 0) {
+            actionTime = animElapsed >= clipDuration ? clipDuration : (animElapsed % clipDuration);
+          } else {
+            // Non-loopable or static pose: clamp at end of clip and HOLD IT
+            actionTime = Math.min(clipDuration, animElapsed);
+          }
+        } else {
+          targetWeight = 0;
+          actionTime = 0;
+        }
+
+        item.action.time = actionTime;
+        item.action.setEffectiveWeight(targetWeight * globalMultiplier);
+      });
+
+      // 7. Evaluate mixer
+      this.mixer.update(0);
+
+      // 8. Lock root motion: cancel X/Z world-space drift after mixer update
       // and optionally lock Y axis based on the user's anchor selection
       if (this.loadedModel && this.cachedRootBone) {
         let hasLock = false;
@@ -1296,9 +1504,10 @@ export class CharacterEditor {
             // Free Y: let it drift naturally (good for run/turn), just apply user offset
             this.loadedModel.position.y += yOffset;
           } else if (yLockAnchor === 'center_of_feet' || yLockAnchor === 'lowest_foot') {
-            // Find foot bones heuristically
+            // Find foot bones heuristically under active skeleton
             const feetBones: THREE.Bone[] = [];
-            this.loadedModel.traverse((child) => {
+            const searchTarget = this.cachedRootBone || this.loadedModel;
+            searchTarget.traverse((child) => {
               if ((child as THREE.Bone).isBone) {
                 const name = child.name.toLowerCase();
                 if (name.includes('foot') || name.includes('toe')) {
@@ -1343,69 +1552,6 @@ export class CharacterEditor {
           this.loadedModel.position.set(this.modelBaseX, this.modelBaseY, this.modelBaseZ);
         }
       }
-
-      for (let i = this.fadingOutActions.length - 1; i >= 0; i--) {
-        const fade = this.fadingOutActions[i];
-        if (currentTime >= fade.fadeStartTime + fade.duration) {
-          fade.action.setEffectiveWeight(0);
-          fade.action.stop();
-          this.fadingOutActions.splice(i, 1);
-        } else {
-          const progress = 1.0 - ((currentTime - fade.fadeStartTime) / fade.duration);
-          fade.action.setEffectiveWeight(fade.startWeight * progress);
-        }
-      }
-
-      let globalMultiplier = 1.0;
-      if (this.globalCrossfadeDuration > 0) {
-        if (currentTime < this.stateStartTime + this.globalCrossfadeDuration) {
-          globalMultiplier = (currentTime - this.stateStartTime) / this.globalCrossfadeDuration;
-        }
-      }
-
-      this.currentActions.forEach((item) => {
-        const config = item.config;
-        
-        const startTime = item.mixerStartTime + ((config.stateStartFrame || 0) / 60);
-        
-        const clipDurationSeconds = Math.max(0, config.endFrame - config.startFrame) / 60;
-        const actualClipDuration = clipDurationSeconds / config.playbackSpeed;
-        
-        let trackDurationSeconds = actualClipDuration;
-        if (config.stateEndFrame && config.stateEndFrame > 0) {
-            trackDurationSeconds = Math.max(0, (config.stateEndFrame - (config.stateStartFrame || 0)) / 60);
-        }
-        const endTime = startTime + trackDurationSeconds;
-
-        const fadeInTime = (config.fadeInFrames || 0) / 60;
-        const fadeOutTime = (config.fadeOutFrames || 0) / 60;
-
-        const hasExplicitEnd = !!(config.stateEndFrame && config.stateEndFrame > 0);
-
-        let targetWeight = 0;
-
-        if (currentTime < startTime) {
-          targetWeight = 0;
-        } else if (hasExplicitEnd && currentTime >= endTime) {
-          targetWeight = 0;
-        } else if (!this.isLoopMode && !hasExplicitEnd && fadeOutTime > 0 && currentTime >= endTime) {
-          targetWeight = 0;
-        } else {
-          targetWeight = config.mixWeight;
-
-          if (fadeInTime > 0 && currentTime < startTime + fadeInTime) {
-            const progress = (currentTime - startTime) / fadeInTime;
-            targetWeight = config.mixWeight * progress;
-          }
-
-          if (fadeOutTime > 0 && (hasExplicitEnd || !this.isLoopMode) && currentTime > endTime - fadeOutTime) {
-            const progress = (endTime - currentTime) / fadeOutTime;
-            targetWeight = config.mixWeight * Math.max(0, progress);
-          }
-        }
-
-        item.action.setEffectiveWeight(targetWeight * globalMultiplier);
-      });
     }
 
     if (this.controls) {

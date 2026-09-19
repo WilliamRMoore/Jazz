@@ -213,9 +213,34 @@ body, html {
 .timeline-controls {
     display: flex;
     align-items: center;
-    gap: 6px;
-    width: 160px;
-    min-width: 160px;
+    gap: 4px;
+    width: 240px;
+    min-width: 240px;
+}
+
+.timeline-step-btn {
+    background-color: #3a3a4c;
+    color: #e0e0e0;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.timeline-step-btn:hover {
+    background-color: #4a4a5e;
+    color: white;
+}
+
+.timeline-frame-display {
+    font-size: 11px;
+    color: #aaa;
+    margin-left: 2px;
+    font-family: monospace;
+    white-space: nowrap;
 }
 
 .timeline-play-btn {
@@ -287,17 +312,56 @@ body, html {
 }
 
 .timeline-track-name {
-    width: 170px;
-    min-width: 170px;
+    width: 240px;
+    min-width: 240px;
     border-right: 1px solid var(--border-color);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 10px;
     font-size: 12px;
     font-weight: bold;
     box-sizing: border-box;
     background-color: var(--panel-bg);
     z-index: 2;
+}
+
+.timeline-track-delete-btn {
+    background: transparent;
+    border: none;
+    color: #777;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1;
+    margin-left: 6px;
+    opacity: 0.6;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.timeline-track-delete-btn:hover {
+    color: #fff;
+    background-color: #e63946;
+    opacity: 1;
+}
+
+.layer-delete-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    background-color: #4a2020;
+    color: #ff6b6b;
+    border: 1px solid #702828;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+}
+
+.layer-delete-btn:hover {
+    background-color: #e63946;
+    color: #fff;
+    border-color: #e63946;
 }
 
 .timeline-track-body {
@@ -348,7 +412,29 @@ body, html {
     top: 0;
     bottom: 0;
     width: 2px;
-    background-color: red;
+    background-color: #ff3366;
     z-index: 100;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: ew-resize;
+}
+
+.timeline-playhead::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -5px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #ff3366;
+}
+
+.timeline-playhead::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -8px;
+    width: 18px;
 }
