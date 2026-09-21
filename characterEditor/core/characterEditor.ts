@@ -26,9 +26,12 @@ import { sections } from '../ui/panels/leftPanel';
 import { RightPanel } from '../ui/panels/rightPanel';
 import { BottomPanel } from '../ui/panels/bottomPanel';
 import { AllStateNodes } from '../../game/engine/finiteStateMachines/player/PlayerStateCollections';
-import { mirrorHurtCapsule } from './mirroring';
-
-// Zero-allocation scratch objects for render loop & 3D bone picking
+import {
+  mirrorHurtCapsule,
+  mirrorBoneName,
+  mirrorCapsuleName,
+  findMirroredPartner
+} from './mirroring';
 const _vA = new THREE.Vector3();
 const _vB = new THREE.Vector3();
 const _vMid = new THREE.Vector3();
@@ -92,6 +95,7 @@ export class CharacterEditor {
     opacity: 0.35,
     depthWrite: false
   });
+  private selectedHurtCapsuleId?: string;
 
   // Interactive 3D Armature Bone Picking
   private jointPickers: Array<{ mesh: THREE.Mesh; bone: THREE.Bone }> = [];
@@ -264,6 +268,12 @@ export class CharacterEditor {
         if (sectionName === 'HurtCapsule') {
           this.renderHurtboxSetup();
         } else {
+          this.endPickingMode();
+          this.setArmaturePickersVisible(false);
+          if (this.skeletonHelper) {
+            this.skeletonHelper.visible = false;
+          }
+          this.bottomPanel.clear();
           this.rightPanel.renderSection(sectionName);
         }
       });
@@ -274,6 +284,12 @@ export class CharacterEditor {
   }
 
   private renderModelSetup() {
+    this.endPickingMode();
+    this.setArmaturePickersVisible(false);
+    if (this.skeletonHelper) {
+      this.skeletonHelper.visible = false;
+    }
+    this.bottomPanel.clear();
     const rightPanelEl = document.getElementById('right-panel');
     if (!rightPanelEl) return;
 
@@ -375,6 +391,18 @@ export class CharacterEditor {
     const capsules = this.project.displayConfig.hurtCapsules;
     const isMaxReached = capsules.length >= MAX_CAPS;
 
+    // Validate selected capsule
+    if (capsules.length > 0) {
+      if (
+        !this.selectedHurtCapsuleId ||
+        !capsules.some((c) => c.id === this.selectedHurtCapsuleId)
+      ) {
+        this.selectedHurtCapsuleId = capsules[0].id;
+      }
+    } else {
+      this.selectedHurtCapsuleId = undefined;
+    }
+
     // Header with counter
     const header = document.createElement('div');
     header.className = 'hurtbox-header';
@@ -391,30 +419,195 @@ export class CharacterEditor {
 
     rightPanelEl.appendChild(header);
 
-    // Primary action button: 3D picking
-    const btnGroup = document.createElement('div');
-    btnGroup.style.display = 'flex';
-    btnGroup.style.gap = '8px';
-    btnGroup.style.marginBottom = '15px';
+    // Tip
+    const tip = document.createElement('div');
+    tip.style.fontSize = '12px';
+    tip.style.color = '#888';
+    tip.style.marginBottom = '12px';
+    tip.innerHTML =
+      'Select a hurt capsule below to edit in the bottom panel. Add new capsules using the bottom panel toolbar.';
+    rightPanelEl.appendChild(tip);
 
+    // List Container
+    const listContainer = document.createElement('div');
+    listContainer.id = 'capsules-list';
+
+    if (capsules.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.style.padding = '20px';
+      emptyState.style.textAlign = 'center';
+      emptyState.style.color = '#666';
+      emptyState.style.border = '1px dashed var(--border-color)';
+      emptyState.style.borderRadius = '4px';
+      emptyState.innerHTML =
+        'No hurt capsules yet.<br>Use the controls in the bottom panel to create one.';
+      listContainer.appendChild(emptyState);
+    } else {
+      capsules.forEach((cap, idx) => {
+        const isSelected = cap.id === this.selectedHurtCapsuleId;
+        const card = document.createElement('div');
+        card.className = `capsule-list-card ${isSelected ? 'active' : ''}`;
+        card.dataset.capsuleId = cap.id;
+
+        // Header
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'capsule-card-header';
+        cardHeader.style.marginBottom = '4px';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.style.display = 'flex';
+        titleDiv.style.alignItems = 'center';
+        titleDiv.style.gap = '8px';
+
+        const cardTitle = document.createElement('span');
+        cardTitle.className = 'capsule-card-title';
+        cardTitle.innerText = `#${idx + 1}: ${cap.name || 'Capsule'}`;
+        titleDiv.appendChild(cardTitle);
+
+        const partnerInfo = findMirroredPartner(cap, capsules);
+        if (partnerInfo.partner) {
+          const partnerIdx = capsules.indexOf(partnerInfo.partner);
+          const linkBadge = document.createElement('span');
+          if (partnerInfo.isMain) {
+            linkBadge.className = 'capsule-badge-main';
+            linkBadge.innerText = '🔗 Main';
+            linkBadge.title = `Mirrored to #${partnerIdx + 1}: ${partnerInfo.partner.name}`;
+          } else {
+            linkBadge.className = 'capsule-badge-mirrored';
+            linkBadge.innerText = '🪞 Mirrored';
+            linkBadge.title = `Mirrored from #${partnerIdx + 1}: ${partnerInfo.partner.name}`;
+          }
+          titleDiv.appendChild(linkBadge);
+        }
+
+        if (isSelected) {
+          const activeBadge = document.createElement('span');
+          activeBadge.style.fontSize = '10px';
+          activeBadge.style.backgroundColor = 'var(--accent, #8a2be2)';
+          activeBadge.style.color = '#fff';
+          activeBadge.style.padding = '1px 5px';
+          activeBadge.style.borderRadius = '2px';
+          activeBadge.innerText = 'Active';
+          titleDiv.appendChild(activeBadge);
+        }
+        cardHeader.appendChild(titleDiv);
+
+        // Quick delete button on list card
+        const delBtn = document.createElement('button');
+        delBtn.className = 'capsule-btn delete-btn';
+        delBtn.innerText = '✕';
+        delBtn.title = 'Delete this hurt capsule';
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation(); // prevent card selection trigger
+          this.handleDeleteHurtCapsule(cap);
+        });
+        cardHeader.appendChild(delBtn);
+        card.appendChild(cardHeader);
+
+        // Details summary chips
+        const chipsRow = document.createElement('div');
+        chipsRow.className = 'capsule-chips-row';
+
+        const boneChip = document.createElement('span');
+        boneChip.className = 'capsule-chip capsule-chip-bone';
+        boneChip.innerText =
+          cap.boneA === cap.boneB
+            ? `🦴 ${cap.boneA} (Sphere)`
+            : `🦴 ${cap.boneA} → ${cap.boneB}`;
+        chipsRow.appendChild(boneChip);
+
+        const radiusChip = document.createElement('span');
+        radiusChip.className = 'capsule-chip accent capsule-chip-radius';
+        radiusChip.innerText = `Radius: ${cap.radius}`;
+        chipsRow.appendChild(radiusChip);
+
+        card.appendChild(chipsRow);
+
+        // Click to select
+        card.addEventListener('click', () => {
+          if (this.selectedHurtCapsuleId !== cap.id) {
+            this.selectedHurtCapsuleId = cap.id;
+            this.renderHurtboxSetup();
+          }
+        });
+
+        listContainer.appendChild(card);
+      });
+    }
+
+    rightPanelEl.appendChild(listContainer);
+
+    // Render controls in bottom panel
+    this.renderHurtboxBottomPanel();
+  }
+
+  private renderHurtboxBottomPanel() {
+    const container = this.bottomPanel.getContainer();
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const capsules = this.project.displayConfig.hurtCapsules || [];
+    const MAX_CAPS = 25;
+    const isMaxReached = capsules.length >= MAX_CAPS;
+    const selectedCap = capsules.find(
+      (c) => c.id === this.selectedHurtCapsuleId
+    );
+    const selectedIdx = selectedCap ? capsules.indexOf(selectedCap) : -1;
+    const partnerInfo = selectedCap
+      ? findMirroredPartner(selectedCap, capsules)
+      : { partner: undefined, isMain: false };
+    const partner = partnerInfo.partner;
+    const partnerIdx = partner ? capsules.indexOf(partner) : -1;
+    const isMirroredSlave = !!partner && !partnerInfo.isMain;
+    const isMirroredMain = !!partner && partnerInfo.isMain;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hurtbox-bottom-container';
+
+    // Toolbar Header
+    const toolbar = document.createElement('div');
+    toolbar.className = 'hurtbox-bottom-toolbar';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'hurtbox-bottom-title';
+    if (selectedCap) {
+      if (isMirroredMain && partner) {
+        titleDiv.innerHTML = `Editing Hurt Capsule #${selectedIdx + 1}: <span style="color: #ffd700;">${selectedCap.name || 'Capsule'}</span> <span class="capsule-badge-main">🔗 Main (Mirrored to #${partnerIdx + 1})</span>`;
+      } else if (isMirroredSlave && partner) {
+        titleDiv.innerHTML = `Hurt Capsule #${selectedIdx + 1}: <span style="color: #ffd700;">${selectedCap.name || 'Capsule'}</span> <span class="capsule-badge-mirrored">🪞 Mirrored (Linked to #${partnerIdx + 1})</span>`;
+      } else {
+        titleDiv.innerHTML = `Editing Hurt Capsule #${selectedIdx + 1}: <span style="color: #ffd700;">${selectedCap.name || 'Capsule'}</span>`;
+      }
+    } else {
+      titleDiv.innerHTML = `Hurt Capsule Editor: <span style="color: #888;">No Capsule Selected</span>`;
+    }
+    toolbar.appendChild(titleDiv);
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'hurtbox-bottom-actions';
+
+    // + New Hurt Capsule (Click in 3D)
     const btnPick = document.createElement('button');
     btnPick.innerText = '+ New Hurt Capsule (Click Bones in 3D)';
-    btnPick.className = 'top-toolbar button';
-    btnPick.style.flex = '1';
-    btnPick.style.backgroundColor = isMaxReached ? '#444' : 'var(--accent, #8a2be2)';
+    btnPick.className = 'capsule-btn';
+    btnPick.style.backgroundColor = isMaxReached
+      ? '#444'
+      : 'var(--accent, #8a2be2)';
     btnPick.style.color = '#fff';
     btnPick.style.fontWeight = 'bold';
-    btnPick.style.padding = '8px 12px';
     btnPick.style.cursor = isMaxReached ? 'not-allowed' : 'pointer';
     btnPick.disabled = isMaxReached;
     btnPick.title = isMaxReached
       ? 'Maximum 25 hurt capsules reached'
-      : 'Click bones in 3D to attach capsule';
+      : 'Click bones in 3D to create capsule';
     btnPick.addEventListener('click', () => {
       this.startPickingMode('PICK_BONE_A');
     });
-    btnGroup.appendChild(btnPick);
+    actions.appendChild(btnPick);
 
+    // + Manual
     const btnManual = document.createElement('button');
     btnManual.innerText = '+ Manual';
     btnManual.className = 'capsule-btn';
@@ -427,203 +620,455 @@ export class CharacterEditor {
       this.addHurtCapsuleFromBones(defaultBoneA, defaultBoneB);
       this.renderHurtboxSetup();
     });
-    btnGroup.appendChild(btnManual);
+    actions.appendChild(btnManual);
 
-    rightPanelEl.appendChild(btnGroup);
+    // Context actions if selectedCap exists
+    if (selectedCap) {
+      // Mirror Button
+      const mirrorBtn = document.createElement('button');
+      mirrorBtn.className = 'capsule-btn';
+      mirrorBtn.innerText = '🪞 Mirror';
 
-    // Instructions note
-    const tip = document.createElement('div');
-    tip.style.fontSize = '12px';
-    tip.style.color = '#888';
-    tip.style.marginBottom = '15px';
-    tip.innerHTML =
-      'Attach hurt capsules to armature bones. They track automatically during animation playback. Max <b>25</b> capsules allowed.';
-    rightPanelEl.appendChild(tip);
-
-    // Capsule Cards List
-    const listContainer = document.createElement('div');
-    listContainer.id = 'capsules-list';
-
-    if (capsules.length === 0) {
-      const emptyState = document.createElement('div');
-      emptyState.style.padding = '20px';
-      emptyState.style.textAlign = 'center';
-      emptyState.style.color = '#666';
-      emptyState.style.border = '1px dashed var(--border-color)';
-      emptyState.style.borderRadius = '4px';
-      emptyState.innerHTML =
-        'No hurt capsules yet.<br>Click <b>+ New Hurt Capsule</b> to begin attaching to armature in 3D.';
-      listContainer.appendChild(emptyState);
-    } else {
-      capsules.forEach((cap, idx) => {
-        const card = document.createElement('div');
-        card.className = 'capsule-card';
-
-        // Card Header
-        const cardHeader = document.createElement('div');
-        cardHeader.className = 'capsule-card-header';
-
-        const cardTitle = document.createElement('span');
-        cardTitle.className = 'capsule-card-title';
-        cardTitle.innerText = `#${idx + 1}: ${cap.name || 'Capsule'}`;
-        cardHeader.appendChild(cardTitle);
-
-        const actions = document.createElement('div');
-        actions.className = 'capsule-actions';
-
-        // Mirror Button
-        const mirrorBtn = document.createElement('button');
-        mirrorBtn.className = 'capsule-btn';
-        mirrorBtn.innerText = '🪞 Mirror';
-        mirrorBtn.title = 'Mirror capsule to opposite side (e.g. Left -> Right)';
-        mirrorBtn.disabled = isMaxReached;
+      if (isMirroredSlave) {
+        mirrorBtn.disabled = true;
+        mirrorBtn.title =
+          'Mirrored capsule cannot be mirrored again. Disconnect first.';
+      } else if (isMirroredMain) {
+        mirrorBtn.disabled = true;
+        mirrorBtn.title =
+          'Capsule already has a mirrored partner. Disconnect first.';
+      } else if (isMaxReached) {
+        mirrorBtn.disabled = true;
+        mirrorBtn.title = 'Cannot mirror: maximum 25 hurt capsules reached.';
+      } else {
+        mirrorBtn.title =
+          'Mirror selected capsule to opposite side (e.g. Left -> Right)';
         mirrorBtn.addEventListener('click', () => {
           if (capsules.length >= MAX_CAPS) {
             alert('Cannot mirror: maximum 25 hurt capsules reached.');
             return;
           }
-          const mirrored = mirrorHurtCapsule(cap, this.allBoneNames);
+          const mirrored = mirrorHurtCapsule(selectedCap, this.allBoneNames);
           if (!mirrored) {
-            alert(`Could not find mirrored bone names for "${cap.boneA}" or "${cap.boneB}".`);
+            alert(
+              `Could not find mirrored bone names for "${selectedCap.boneA}" or "${selectedCap.boneB}".`
+            );
             return;
           }
           capsules.push(mirrored);
           this.createCapsuleMesh(mirrored);
+          // Keep selectedCap active so user continues editing main capsule
           this.renderHurtboxSetup();
         });
-        actions.appendChild(mirrorBtn);
+      }
+      actions.appendChild(mirrorBtn);
 
-        // Delete Button
-        const delBtn = document.createElement('button');
-        delBtn.className = 'capsule-btn delete-btn';
-        delBtn.innerText = '✕';
-        delBtn.title = 'Delete this hurt capsule';
-        delBtn.addEventListener('click', () => {
-          const cIdx = capsules.findIndex((c) => c.id === cap.id);
-          if (cIdx !== -1) {
-            capsules.splice(cIdx, 1);
-            this.removeCapsuleMesh(cap.id);
-            this.renderHurtboxSetup();
-          }
+      // Disconnect Button (if linked to a partner)
+      if (partner) {
+        const disconnectBtn = document.createElement('button');
+        disconnectBtn.className = 'capsule-btn';
+        disconnectBtn.innerText = '🔗 Disconnect';
+        disconnectBtn.title =
+          'Disconnect mirror link between this capsule and its partner';
+        disconnectBtn.addEventListener('click', () => {
+          this.showDisconnectModal(selectedCap);
         });
-        actions.appendChild(delBtn);
+        actions.appendChild(disconnectBtn);
+      }
 
-        cardHeader.appendChild(actions);
-        card.appendChild(cardHeader);
-
-        // Name input
-        const nameGroup = document.createElement('div');
-        nameGroup.className = 'form-group';
-        nameGroup.style.marginBottom = '8px';
-        const nameLabel = document.createElement('label');
-        nameLabel.innerText = 'Label:';
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.value = cap.name;
-        nameInput.style.width = '100%';
-        nameInput.addEventListener('input', (e) => {
-          cap.name = (e.target as HTMLInputElement).value;
-          cardTitle.innerText = `#${idx + 1}: ${cap.name || 'Capsule'}`;
-        });
-        nameGroup.appendChild(nameLabel);
-        nameGroup.appendChild(nameInput);
-        card.appendChild(nameGroup);
-
-        // Bone A selector row
-        const boneAGroup = document.createElement('div');
-        boneAGroup.className = 'form-group';
-        boneAGroup.style.marginBottom = '8px';
-        const boneALabel = document.createElement('label');
-        boneALabel.innerText = 'Start Joint (Bone A):';
-        boneAGroup.appendChild(boneALabel);
-
-        const boneARow = document.createElement('div');
-        boneARow.className = 'bone-select-row';
-
-        const selectA = document.createElement('select');
-        this.allBoneNames.forEach((b) => {
-          const opt = document.createElement('option');
-          opt.value = b;
-          opt.innerText = b;
-          if (b === cap.boneA) opt.selected = true;
-          selectA.appendChild(opt);
-        });
-        selectA.addEventListener('change', (e) => {
-          cap.boneA = (e.target as HTMLInputElement).value;
-        });
-        boneARow.appendChild(selectA);
-
-        const pickABtn = document.createElement('button');
-        pickABtn.className = 'capsule-btn';
-        pickABtn.innerText = '🎯 3D';
-        pickABtn.title = 'Pick Bone A in 3D viewport';
-        pickABtn.addEventListener('click', () => {
-          this.startPickingMode('REPICK_A', cap.id);
-        });
-        boneARow.appendChild(pickABtn);
-        boneAGroup.appendChild(boneARow);
-        card.appendChild(boneAGroup);
-
-        // Bone B selector row
-        const boneBGroup = document.createElement('div');
-        boneBGroup.className = 'form-group';
-        boneBGroup.style.marginBottom = '8px';
-        const boneBLabel = document.createElement('label');
-        boneBLabel.innerText = 'End Joint (Bone B):';
-        boneBGroup.appendChild(boneBLabel);
-
-        const boneBRow = document.createElement('div');
-        boneBRow.className = 'bone-select-row';
-
-        const selectB = document.createElement('select');
-        this.allBoneNames.forEach((b) => {
-          const opt = document.createElement('option');
-          opt.value = b;
-          opt.innerText = b;
-          if (b === cap.boneB) opt.selected = true;
-          selectB.appendChild(opt);
-        });
-        selectB.addEventListener('change', (e) => {
-          cap.boneB = (e.target as HTMLInputElement).value;
-        });
-        boneBRow.appendChild(selectB);
-
-        const pickBBtn = document.createElement('button');
-        pickBBtn.className = 'capsule-btn';
-        pickBBtn.innerText = '🎯 3D';
-        pickBBtn.title = 'Pick Bone B in 3D viewport';
-        pickBBtn.addEventListener('click', () => {
-          this.startPickingMode('REPICK_B', cap.id);
-        });
-        boneBRow.appendChild(pickBBtn);
-        boneBGroup.appendChild(boneBRow);
-        card.appendChild(boneBGroup);
-
-        // Radius Slider
-        const radiusGroup = document.createElement('div');
-        radiusGroup.className = 'form-group';
-        const radiusLabel = document.createElement('label');
-        radiusLabel.innerText = `Radius: ${cap.radius}`;
-        const radiusInp = document.createElement('input');
-        radiusInp.type = 'range';
-        radiusInp.min = '1';
-        radiusInp.max = '60';
-        radiusInp.step = '0.5';
-        radiusInp.value = cap.radius.toString();
-        radiusInp.style.width = '100%';
-        radiusInp.addEventListener('input', (e) => {
-          cap.radius = parseFloat((e.target as HTMLInputElement).value) || 1;
-          radiusLabel.innerText = `Radius: ${cap.radius}`;
-        });
-        radiusGroup.appendChild(radiusLabel);
-        radiusGroup.appendChild(radiusInp);
-        card.appendChild(radiusGroup);
-
-        listContainer.appendChild(card);
+      // Delete Button
+      const delBtn = document.createElement('button');
+      delBtn.className = 'capsule-btn delete-btn';
+      delBtn.innerText = '✕ Delete';
+      delBtn.title = 'Delete this hurt capsule';
+      delBtn.addEventListener('click', () => {
+        this.handleDeleteHurtCapsule(selectedCap);
       });
+      actions.appendChild(delBtn);
     }
 
-    rightPanelEl.appendChild(listContainer);
+    toolbar.appendChild(actions);
+    wrapper.appendChild(toolbar);
+
+    // Form Grid or Empty State
+    if (selectedCap) {
+      if (isMirroredSlave && partner) {
+        const banner = document.createElement('div');
+        banner.className = 'hurtbox-mirrored-banner';
+        banner.innerHTML = `<span>🪞</span> <span><b>Mirrored from #${partnerIdx + 1} (${partner.name}):</b> Form inputs are locked. Edits made to #${partnerIdx + 1} mirror here automatically. To edit independently, click <b>🔗 Disconnect</b> above.</span>`;
+        wrapper.appendChild(banner);
+      }
+
+      const formGrid = document.createElement('div');
+      formGrid.className = 'hurtbox-bottom-form-grid';
+
+      // Helper to update list card in right panel without full re-render
+      const updateListCard = (c: HurtCapsuleAttachment) => {
+        const cardEl = document.querySelector(
+          `.capsule-list-card[data-capsule-id="${c.id}"]`
+        );
+        if (!cardEl) return;
+        const cIdx = capsules.indexOf(c);
+        const cardTitle = cardEl.querySelector(
+          '.capsule-card-title'
+        ) as HTMLElement;
+        if (cardTitle) cardTitle.innerText = `#${cIdx + 1}: ${c.name || 'Capsule'}`;
+        const boneChip = cardEl.querySelector(
+          '.capsule-chip-bone'
+        ) as HTMLElement;
+        if (boneChip) {
+          boneChip.innerText =
+            c.boneA === c.boneB
+              ? `🦴 ${c.boneA} (Sphere)`
+              : `🦴 ${c.boneA} → ${c.boneB}`;
+        }
+        const radiusChip = cardEl.querySelector(
+          '.capsule-chip-radius'
+        ) as HTMLElement;
+        if (radiusChip) radiusChip.innerText = `Radius: ${c.radius}`;
+      };
+
+      // 1. Label Input
+      const nameGroup = document.createElement('div');
+      nameGroup.className =
+        'form-group' + (isMirroredSlave ? ' form-group-disabled' : '');
+      const nameLabel = document.createElement('label');
+      nameLabel.innerText = 'Capsule Name / Label:';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = selectedCap.name;
+      nameInput.style.width = '100%';
+      nameInput.disabled = isMirroredSlave;
+      nameInput.addEventListener('input', (e) => {
+        selectedCap.name = (e.target as HTMLInputElement).value;
+        this.syncMirroredPartner(selectedCap);
+        updateListCard(selectedCap);
+        if (partner && isMirroredMain) {
+          updateListCard(partner);
+        }
+        if (isMirroredMain && partner) {
+          titleDiv.innerHTML = `Editing Hurt Capsule #${selectedIdx + 1}: <span style="color: #ffd700;">${selectedCap.name || 'Capsule'}</span> <span class="capsule-badge-main">🔗 Main (Mirrored to #${partnerIdx + 1})</span>`;
+        } else {
+          titleDiv.innerHTML = `Editing Hurt Capsule #${selectedIdx + 1}: <span style="color: #ffd700;">${selectedCap.name || 'Capsule'}</span>`;
+        }
+      });
+      nameGroup.appendChild(nameLabel);
+      nameGroup.appendChild(nameInput);
+      formGrid.appendChild(nameGroup);
+
+      // 2. Bone A Selector
+      const boneAGroup = document.createElement('div');
+      boneAGroup.className =
+        'form-group' + (isMirroredSlave ? ' form-group-disabled' : '');
+      const boneALabel = document.createElement('label');
+      boneALabel.innerText = 'Start Joint (Bone A):';
+      boneAGroup.appendChild(boneALabel);
+
+      const boneARow = document.createElement('div');
+      boneARow.className = 'bone-select-row';
+
+      const selectA = document.createElement('select');
+      selectA.disabled = isMirroredSlave;
+      this.allBoneNames.forEach((b) => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.innerText = b;
+        if (b === selectedCap.boneA) opt.selected = true;
+        selectA.appendChild(opt);
+      });
+      selectA.addEventListener('change', (e) => {
+        selectedCap.boneA = (e.target as HTMLInputElement).value;
+        this.syncMirroredPartner(selectedCap);
+        this.renderHurtboxSetup();
+      });
+      boneARow.appendChild(selectA);
+
+      const pickABtn = document.createElement('button');
+      pickABtn.className = 'capsule-btn';
+      pickABtn.innerText = '🎯 3D';
+      pickABtn.disabled = isMirroredSlave;
+      pickABtn.title = 'Pick Start Joint (Bone A) in 3D viewport';
+      pickABtn.addEventListener('click', () => {
+        this.startPickingMode('REPICK_A', selectedCap.id);
+      });
+      boneARow.appendChild(pickABtn);
+      boneAGroup.appendChild(boneARow);
+      formGrid.appendChild(boneAGroup);
+
+      // 3. Bone B Selector
+      const boneBGroup = document.createElement('div');
+      boneBGroup.className =
+        'form-group' + (isMirroredSlave ? ' form-group-disabled' : '');
+      const boneBLabel = document.createElement('label');
+      boneBLabel.innerText = 'End Joint (Bone B):';
+      boneBGroup.appendChild(boneBLabel);
+
+      const boneBRow = document.createElement('div');
+      boneBRow.className = 'bone-select-row';
+
+      const selectB = document.createElement('select');
+      selectB.disabled = isMirroredSlave;
+      this.allBoneNames.forEach((b) => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.innerText = b;
+        if (b === selectedCap.boneB) opt.selected = true;
+        selectB.appendChild(opt);
+      });
+      selectB.addEventListener('change', (e) => {
+        selectedCap.boneB = (e.target as HTMLInputElement).value;
+        this.syncMirroredPartner(selectedCap);
+        this.renderHurtboxSetup();
+      });
+      boneBRow.appendChild(selectB);
+
+      const pickBBtn = document.createElement('button');
+      pickBBtn.className = 'capsule-btn';
+      pickBBtn.innerText = '🎯 3D';
+      pickBBtn.disabled = isMirroredSlave;
+      pickBBtn.title = 'Pick End Joint (Bone B) in 3D viewport';
+      pickBBtn.addEventListener('click', () => {
+        this.startPickingMode('REPICK_B', selectedCap.id);
+      });
+      boneBRow.appendChild(pickBBtn);
+      boneBGroup.appendChild(boneBRow);
+      formGrid.appendChild(boneBGroup);
+
+      // 4. Radius Control
+      const radiusGroup = document.createElement('div');
+      radiusGroup.className =
+        'form-group' + (isMirroredSlave ? ' form-group-disabled' : '');
+      const radiusLabel = document.createElement('label');
+      radiusLabel.innerText = `Radius: ${selectedCap.radius}`;
+      const radiusInp = document.createElement('input');
+      radiusInp.type = 'range';
+      radiusInp.min = '1';
+      radiusInp.max = '60';
+      radiusInp.step = '0.5';
+      radiusInp.value = selectedCap.radius.toString();
+      radiusInp.disabled = isMirroredSlave;
+      radiusInp.style.width = '100%';
+      radiusInp.addEventListener('input', (e) => {
+        selectedCap.radius =
+          parseFloat((e.target as HTMLInputElement).value) || 1;
+        radiusLabel.innerText = `Radius: ${selectedCap.radius}`;
+        this.syncMirroredPartner(selectedCap);
+        updateListCard(selectedCap);
+        if (partner && isMirroredMain) {
+          updateListCard(partner);
+        }
+      });
+      radiusGroup.appendChild(radiusLabel);
+      radiusGroup.appendChild(radiusInp);
+      formGrid.appendChild(radiusGroup);
+
+      wrapper.appendChild(formGrid);
+    } else {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.className = 'hurtbox-bottom-empty';
+      emptyMsg.innerHTML =
+        'No hurt capsule selected. Select an existing capsule from the right panel to edit it, or click <b>+ New Hurt Capsule</b> above to attach to bones in 3D.';
+      wrapper.appendChild(emptyMsg);
+    }
+
+    container.appendChild(wrapper);
+  }
+
+  private syncMirroredPartner(mainCap: HurtCapsuleAttachment) {
+    const capsules = this.project.displayConfig.hurtCapsules || [];
+    const partnerInfo = findMirroredPartner(mainCap, capsules);
+    if (!partnerInfo.partner || !partnerInfo.isMain) return;
+
+    const partner = partnerInfo.partner;
+    partner.radius = mainCap.radius;
+    partner.boneA =
+      mirrorBoneName(mainCap.boneA, this.allBoneNames) || mainCap.boneA;
+    partner.boneB =
+      mirrorBoneName(mainCap.boneB, this.allBoneNames) || mainCap.boneB;
+    partner.name = mirrorCapsuleName(mainCap.name);
+  }
+
+  private showDisconnectModal(selectedCap: HurtCapsuleAttachment) {
+    const capsules = this.project.displayConfig.hurtCapsules || [];
+    const partnerInfo = findMirroredPartner(selectedCap, capsules);
+    if (!partnerInfo.partner) return;
+
+    const otherCap = partnerInfo.partner;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'hurtbox-modal-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'hurtbox-modal-card';
+
+    const title = document.createElement('div');
+    title.className = 'hurtbox-modal-title';
+    title.innerHTML = '<span>🔗</span> Disconnect Mirrored Capsules';
+
+    const body = document.createElement('div');
+    body.className = 'hurtbox-modal-body';
+    body.innerHTML = `
+      <p><b>"${selectedCap.name}"</b> is linked with <b>"${otherCap.name}"</b>.</p>
+      <p style="margin-top: 8px;">Disconnecting removes their mirror link so edits are no longer shared.</p>
+      <p style="margin-top: 8px;">Would you like to keep <b>"${otherCap.name}"</b> as an independent editable capsule, or delete it?</p>
+    `;
+
+    const actions = document.createElement('div');
+    actions.className = 'hurtbox-modal-actions';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'hurtbox-modal-btn';
+    btnCancel.innerText = 'Cancel';
+    btnCancel.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+
+    const btnKeep = document.createElement('button');
+    btnKeep.className = 'hurtbox-modal-btn primary';
+    btnKeep.innerText = `Keep "${otherCap.name}"`;
+    btnKeep.title = 'Keep both capsules as independent, editable capsules';
+    btnKeep.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      if (selectedCap.mirroredFromId) {
+        selectedCap.mirroredFromId = undefined;
+      }
+      if (otherCap.mirroredFromId) {
+        otherCap.mirroredFromId = undefined;
+      }
+      this.renderHurtboxSetup();
+    });
+
+    const btnDelete = document.createElement('button');
+    btnDelete.className = 'hurtbox-modal-btn danger';
+    btnDelete.innerText = `Delete "${otherCap.name}"`;
+    btnDelete.title = `Delete "${otherCap.name}" and keep "${selectedCap.name}"`;
+    btnDelete.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+      const otherIdx = capsules.findIndex((c) => c.id === otherCap.id);
+      if (otherIdx !== -1) {
+        capsules.splice(otherIdx, 1);
+        this.removeCapsuleMesh(otherCap.id);
+      }
+      if (selectedCap.mirroredFromId) {
+        selectedCap.mirroredFromId = undefined;
+      }
+      this.selectedHurtCapsuleId = selectedCap.id;
+      this.renderHurtboxSetup();
+    });
+
+    actions.appendChild(btnCancel);
+    actions.appendChild(btnKeep);
+    actions.appendChild(btnDelete);
+
+    card.appendChild(title);
+    card.appendChild(body);
+    card.appendChild(actions);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  }
+
+  private handleDeleteHurtCapsule(cap: HurtCapsuleAttachment) {
+    const capsules = this.project.displayConfig.hurtCapsules || [];
+    const partnerInfo = findMirroredPartner(cap, capsules);
+
+    // If cap is Main and has a linked Mirrored slave, prompt user (Option B)
+    if (partnerInfo.partner && partnerInfo.isMain) {
+      const mirrorCap = partnerInfo.partner;
+      const overlay = document.createElement('div');
+      overlay.className = 'hurtbox-modal-overlay';
+
+      const card = document.createElement('div');
+      card.className = 'hurtbox-modal-card';
+
+      const title = document.createElement('div');
+      title.className = 'hurtbox-modal-title';
+      title.innerHTML = '<span>⚠️</span> Delete Main Hurt Capsule';
+
+      const body = document.createElement('div');
+      body.className = 'hurtbox-modal-body';
+      body.innerHTML = `
+        <p><b>"${cap.name}"</b> is the main source for mirrored capsule <b>"${mirrorCap.name}"</b>.</p>
+        <p style="margin-top: 8px;">Would you like to delete both capsules, or keep <b>"${mirrorCap.name}"</b> as an independent editable capsule?</p>
+      `;
+
+      const actions = document.createElement('div');
+      actions.className = 'hurtbox-modal-actions';
+
+      const btnCancel = document.createElement('button');
+      btnCancel.className = 'hurtbox-modal-btn';
+      btnCancel.innerText = 'Cancel';
+      btnCancel.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+      });
+
+      const btnKeepMirror = document.createElement('button');
+      btnKeepMirror.className = 'hurtbox-modal-btn primary';
+      btnKeepMirror.innerText = `Keep "${mirrorCap.name}"`;
+      btnKeepMirror.title = `Delete "${cap.name}" and make "${mirrorCap.name}" independent`;
+      btnKeepMirror.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        mirrorCap.mirroredFromId = undefined;
+        const cIdx = capsules.findIndex((c) => c.id === cap.id);
+        if (cIdx !== -1) {
+          capsules.splice(cIdx, 1);
+          this.removeCapsuleMesh(cap.id);
+        }
+        this.selectedHurtCapsuleId = mirrorCap.id;
+        this.renderHurtboxSetup();
+      });
+
+      const btnDeleteBoth = document.createElement('button');
+      btnDeleteBoth.className = 'hurtbox-modal-btn danger';
+      btnDeleteBoth.innerText = 'Delete Both Capsules';
+      btnDeleteBoth.title = 'Delete both the main and mirrored capsules';
+      btnDeleteBoth.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        const mIdx = capsules.findIndex((c) => c.id === mirrorCap.id);
+        if (mIdx !== -1) {
+          capsules.splice(mIdx, 1);
+          this.removeCapsuleMesh(mirrorCap.id);
+        }
+        const cIdx = capsules.findIndex((c) => c.id === cap.id);
+        if (cIdx !== -1) {
+          capsules.splice(cIdx, 1);
+          this.removeCapsuleMesh(cap.id);
+        }
+        this.selectedHurtCapsuleId = capsules[0]?.id;
+        this.renderHurtboxSetup();
+      });
+
+      actions.appendChild(btnCancel);
+      actions.appendChild(btnKeepMirror);
+      actions.appendChild(btnDeleteBoth);
+
+      card.appendChild(title);
+      card.appendChild(body);
+      card.appendChild(actions);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+      return;
+    }
+
+    // If cap is Mirrored slave, deleting it simply unlinks the Main
+    if (partnerInfo.partner && !partnerInfo.isMain) {
+      const cIdx = capsules.findIndex((c) => c.id === cap.id);
+      if (cIdx !== -1) {
+        capsules.splice(cIdx, 1);
+        this.removeCapsuleMesh(cap.id);
+        this.selectedHurtCapsuleId = partnerInfo.partner.id;
+        this.renderHurtboxSetup();
+      }
+      return;
+    }
+
+    // Normal capsule with no partner
+    const cIdx = capsules.findIndex((c) => c.id === cap.id);
+    if (cIdx !== -1) {
+      capsules.splice(cIdx, 1);
+      this.removeCapsuleMesh(cap.id);
+      this.selectedHurtCapsuleId = capsules[cIdx]?.id || capsules[cIdx - 1]?.id;
+      this.renderHurtboxSetup();
+    }
   }
 
   private startPickingMode(
@@ -727,6 +1172,7 @@ export class CharacterEditor {
       );
       if (cap) {
         cap.boneA = boneName;
+        this.syncMirroredPartner(cap);
       }
       this.endPickingMode();
       this.renderHurtboxSetup();
@@ -736,6 +1182,7 @@ export class CharacterEditor {
       );
       if (cap) {
         cap.boneB = boneName;
+        this.syncMirroredPartner(cap);
       }
       this.endPickingMode();
       this.renderHurtboxSetup();
@@ -768,6 +1215,7 @@ export class CharacterEditor {
 
     this.project.displayConfig.hurtCapsules.push(newCap);
     this.createCapsuleMesh(newCap);
+    this.selectedHurtCapsuleId = newCap.id;
   }
 
   private createCapsuleMesh(cap: HurtCapsuleAttachment) {
@@ -859,6 +1307,12 @@ export class CharacterEditor {
   private renderStateAnimationEditor(stateId: StateId, stateName: string) {
     const rightPanelEl = document.getElementById('right-panel');
     if (!rightPanelEl) return;
+
+    this.endPickingMode();
+    this.setArmaturePickersVisible(false);
+    if (this.skeletonHelper) {
+      this.skeletonHelper.visible = false;
+    }
 
     rightPanelEl.innerHTML = ''; // clear
 

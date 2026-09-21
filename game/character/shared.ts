@@ -374,6 +374,7 @@ export type HurtCapsuleAttachment = {
   boneA: string;
   boneB: string;
   radius: number;
+  mirroredFromId?: string;
 };
 
 export type StateDisplayConfig = {

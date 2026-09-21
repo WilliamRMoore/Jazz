@@ -67,6 +67,57 @@ export function mirrorBoneName(boneName: string, allBoneNames: string[]): string
 }
 
 /**
+ * Mirrors a capsule name string (Left <-> Right, or appends/removes '(Mirrored)').
+ */
+export function mirrorCapsuleName(name: string): string {
+  if (!name) return name;
+
+  // Check for Left / left variants
+  let res = name;
+  res = res.replace(/(^|[\s_\-.])Left($|[\s_\-.])/g, '$1Right$2');
+  res = res.replace(/(^|[\s_\-.])left($|[\s_\-.])/g, '$1right$2');
+  res = res.replace(/Left([A-Z0-9_])/g, 'Right$1');
+  res = res.replace(/left([A-Z0-9_])/g, 'right$1');
+  if (res !== name) return res;
+
+  // Check for Right / right variants
+  res = res.replace(/(^|[\s_\-.])Right($|[\s_\-.])/g, '$1Left$2');
+  res = res.replace(/(^|[\s_\-.])right($|[\s_\-.])/g, '$1left$2');
+  res = res.replace(/Right([A-Z0-9_])/g, 'Left$1');
+  res = res.replace(/right([A-Z0-9_])/g, 'left$1');
+  if (res !== name) return res;
+
+  if (name.endsWith(' (Mirrored)')) {
+    return name.replace(' (Mirrored)', '');
+  }
+
+  return `${name} (Mirrored)`;
+}
+
+/**
+ * Finds the linked mirrored partner for a given hurt capsule,
+ * indicating whether the given capsule is the Main (source) or Mirrored (slave) capsule.
+ */
+export function findMirroredPartner(
+  cap: HurtCapsuleAttachment,
+  allCapsules: HurtCapsuleAttachment[]
+): { partner?: HurtCapsuleAttachment; isMain: boolean } {
+  if (cap.mirroredFromId) {
+    // This capsule is a mirrored slave pointing to its parent
+    const partner = allCapsules.find((c) => c.id === cap.mirroredFromId);
+    return { partner, isMain: false };
+  }
+
+  // Check if this capsule is the source/main for any slave capsule
+  const partner = allCapsules.find((c) => c.mirroredFromId === cap.id);
+  if (partner) {
+    return { partner, isMain: true };
+  }
+
+  return { partner: undefined, isMain: false };
+}
+
+/**
  * Mirrors a hurt capsule attachment (flipping Bone A, Bone B, and label name).
  * Returns null if the bones cannot be mirrored (e.g. center bones without reciprocal).
  */
@@ -86,21 +137,14 @@ export function mirrorHurtCapsule(
     return null;
   }
 
-  // Mirror the name string if it contains left/right indicators
-  let mirroredName = capsule.name;
-  if (/\bLeft\b/i.test(mirroredName)) {
-    mirroredName = mirroredName.replace(/\bLeft\b/g, 'Right').replace(/\bleft\b/g, 'right');
-  } else if (/\bRight\b/i.test(mirroredName)) {
-    mirroredName = mirroredName.replace(/\bRight\b/g, 'Left').replace(/\bright\b/g, 'left');
-  } else {
-    mirroredName = `${capsule.name} (Mirrored)`;
-  }
+  const mirroredName = mirrorCapsuleName(capsule.name);
 
   return {
     id: 'capsule_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now(),
     name: mirroredName,
     boneA: targetBoneA,
     boneB: targetBoneB,
-    radius: capsule.radius
+    radius: capsule.radius,
+    mirroredFromId: capsule.id
   };
 }

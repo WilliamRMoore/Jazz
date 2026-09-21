@@ -12,10 +12,10 @@ export class BottomPanel {
   private stateId?: StateId;
   private stateConfig?: StateDisplayConfig;
   private loadedAnimations: THREE.AnimationClip[] = [];
-  
+
   private activeLayerIndex: number = -1;
   private maxStateFrame: number = 100;
-  
+
   // Callbacks
   public onLayerSelect?: (layerIndex: number) => void;
   public onPlay?: () => void;
@@ -25,7 +25,7 @@ export class BottomPanel {
   public onStepFrame?: (deltaFrames: number) => void;
   public onTimelineChange?: () => void; // Called when drag changes a value
   public onScrub?: (frame: number) => void; // Called when scrubbing timeline playhead
-  
+
   // UI Elements
   private playheadEl!: HTMLElement;
   private tracksContainer!: HTMLElement;
@@ -43,12 +43,13 @@ export class BottomPanel {
     this.container = el;
     this.renderBaseUI();
   }
-  
+
   public setState(stateId: StateId, config: StateDisplayConfig, animations: THREE.AnimationClip[]) {
     this.stateId = stateId;
     this.stateConfig = config;
     this.loadedAnimations = animations;
     this.activeLayerIndex = config.animations.length > 0 ? 0 : -1;
+    this.renderBaseUI();
     this.setPlaying(false);
     this.render();
   }
@@ -73,7 +74,7 @@ export class BottomPanel {
       this.playBtn.title = paused ? 'Resume playback' : 'Play animation (looping)';
     }
   }
-  
+
   public addLayer(layer: AnimationLayerConfig) {
     if (!this.stateConfig) return;
     this.stateConfig.animations.push(layer);
@@ -92,9 +93,9 @@ export class BottomPanel {
     this.render();
     this.onTimelineChange?.();
     if (this.activeLayerIndex >= 0) {
-        this.onLayerSelect?.(this.activeLayerIndex);
+      this.onLayerSelect?.(this.activeLayerIndex);
     } else {
-        this.onLayerSelect?.(-1);
+      this.onLayerSelect?.(-1);
     }
   }
 
@@ -107,18 +108,26 @@ export class BottomPanel {
       this.frameDisplayEl.innerText = `${Math.round(clamped)}/${this.maxStateFrame}`;
     }
   }
-  
+
   public forceRender() {
-      this.render();
+    this.render();
+  }
+
+  public getContainer(): HTMLElement {
+    return this.container;
+  }
+
+  public clear() {
+    this.container.innerHTML = '';
   }
 
   private renderBaseUI() {
     this.container.innerHTML = '';
-    
+
     // Header
     const header = document.createElement('div');
     header.className = 'timeline-header';
-    
+
     const controls = document.createElement('div');
     controls.className = 'timeline-controls';
 
@@ -174,7 +183,7 @@ export class BottomPanel {
     controls.appendChild(this.frameDisplayEl);
 
     header.appendChild(controls);
-    
+
     const ruler = document.createElement('div');
     ruler.className = 'timeline-ruler';
     ruler.id = 'timeline-ruler';
@@ -206,27 +215,31 @@ export class BottomPanel {
     });
 
     header.appendChild(ruler);
-    
+
     this.container.appendChild(header);
-    
+
     // Tracks Container
     this.tracksContainer = document.createElement('div');
     this.tracksContainer.className = 'timeline-track-container';
-    
+
     this.container.appendChild(this.tracksContainer);
   }
 
   private render() {
+    if (!this.tracksContainer || !this.container.contains(this.tracksContainer)) {
+      this.renderBaseUI();
+    }
+
     if (!this.stateConfig) {
       this.tracksContainer.innerHTML = '';
       return;
     }
-    
+
     this.calculateMaxFrames();
     this.renderRuler();
-    
+
     this.tracksContainer.innerHTML = '';
-    
+
     // Global playhead inside tracks container (absolute to body width minus name)
     const playheadContainer = document.createElement('div');
     playheadContainer.style.position = 'absolute';
@@ -236,7 +249,7 @@ export class BottomPanel {
     playheadContainer.style.right = '0';
     playheadContainer.style.pointerEvents = 'none';
     playheadContainer.style.zIndex = '100';
-    
+
     this.playheadEl = document.createElement('div');
     this.playheadEl.className = 'timeline-playhead';
     this.playheadEl.style.left = '0%';
@@ -266,7 +279,7 @@ export class BottomPanel {
     });
 
     playheadContainer.appendChild(this.playheadEl);
-    
+
     this.tracksContainer.appendChild(playheadContainer);
 
     this.stateConfig.animations.forEach((anim, idx) => {
@@ -275,7 +288,7 @@ export class BottomPanel {
       if (idx === this.activeLayerIndex) {
         trackEl.classList.add('active');
       }
-      
+
       trackEl.onclick = (e) => {
         // Prevent click if we just finished dragging
         if ((e as any)._wasDragging) return;
@@ -309,14 +322,14 @@ export class BottomPanel {
 
       const bodyEl = document.createElement('div');
       bodyEl.className = 'timeline-track-body';
-      
+
       this.renderClip(anim, bodyEl);
-      
+
       trackEl.appendChild(bodyEl);
       this.tracksContainer.appendChild(trackEl);
     });
   }
-  
+
   private calculateMaxFrames() {
     if (!this.stateConfig) return;
     let max = 100;
@@ -339,22 +352,22 @@ export class BottomPanel {
       this.frameDisplayEl.innerText = `0/${this.maxStateFrame}`;
     }
   }
-  
+
   private renderRuler() {
     const ruler = document.getElementById('timeline-ruler');
     if (!ruler) return;
     ruler.innerHTML = '';
-    
+
     const step = this.maxStateFrame > 200 ? 50 : (this.maxStateFrame > 50 ? 10 : 5);
     for (let i = 0; i <= this.maxStateFrame; i += step) {
       const percent = (i / this.maxStateFrame) * 100;
-      
+
       const tick = document.createElement('div');
       tick.className = 'timeline-ruler-tick';
       tick.style.left = `${percent}%`;
       tick.style.height = i % (step * 2) === 0 ? '8px' : '4px';
       ruler.appendChild(tick);
-      
+
       if (i % (step * 2) === 0) {
         const label = document.createElement('div');
         label.className = 'timeline-ruler-label';
@@ -364,14 +377,14 @@ export class BottomPanel {
       }
     }
   }
-  
+
   private renderClip(anim: AnimationLayerConfig, container: HTMLElement) {
     let clipDurationFrames = 100; // default for empty clips
     const clip = this.loadedAnimations.find((a) => a.name === anim.clipName);
     if (clip) {
-        clipDurationFrames = Math.round(clip.duration * 60);
+      clipDurationFrames = Math.round(clip.duration * 60);
     }
-    
+
     // Background green bar (Full clip relative to stateStartFrame)
     const fullClipEl = document.createElement('div');
     fullClipEl.className = 'timeline-clip-full';
@@ -379,31 +392,31 @@ export class BottomPanel {
     // The full clip duration mapped to timeline space
     // If we scrub through the full clip, its length on the timeline depends on playbackSpeed.
     // For simplicity, we assume 1:1 frame mapping here.
-    const fullDuration = clipDurationFrames; 
-    
+    const fullDuration = clipDurationFrames;
+
     fullClipEl.style.left = `${(delay / this.maxStateFrame) * 100}%`;
     fullClipEl.style.width = `${(fullDuration / this.maxStateFrame) * 100}%`;
     container.appendChild(fullClipEl);
-    
+
     // Yellow selected slice
     const selectedEl = document.createElement('div');
     selectedEl.className = 'timeline-clip-selected';
-    
+
     // Offset is delay + the startFrame of the clip (assuming 1:1 speed for timeline visual)
     const start = anim.startFrame || 0;
     const end = anim.endFrame || 100;
     const trackDuration = (anim.stateEndFrame && anim.stateEndFrame > 0) ? (anim.stateEndFrame - delay) : Math.max(0, end - start);
-    
+
     selectedEl.style.left = `${(delay / this.maxStateFrame) * 100}%`;
     selectedEl.style.width = `${(trackDuration / this.maxStateFrame) * 100}%`;
-    
+
     // Fades indicators
     const fadeIn = anim.fadeInFrames || 0;
     const fadeOut = anim.fadeOutFrames || 0;
     if (trackDuration > 0 && (fadeIn > 0 || fadeOut > 0)) {
-        const inStop = Math.min(100, (fadeIn / trackDuration) * 100);
-        const outStop = Math.max(0, 100 - (fadeOut / trackDuration) * 100);
-        selectedEl.style.background = `linear-gradient(90deg, 
+      const inStop = Math.min(100, (fadeIn / trackDuration) * 100);
+      const outStop = Math.max(0, 100 - (fadeOut / trackDuration) * 100);
+      selectedEl.style.background = `linear-gradient(90deg, 
           transparent 0%, 
           var(--accent, #8a2be2) ${inStop}%, 
           var(--accent, #8a2be2) ${outStop}%, 
@@ -411,98 +424,98 @@ export class BottomPanel {
     }
 
     container.appendChild(selectedEl);
-    
+
     // Handles
     const leftHandle = document.createElement('div');
     leftHandle.className = 'timeline-handle left';
     selectedEl.appendChild(leftHandle);
-    
+
     const rightHandle = document.createElement('div');
     rightHandle.className = 'timeline-handle right';
     selectedEl.appendChild(rightHandle);
-    
+
     // Dragging logic
     this.attachDragLogic(selectedEl, leftHandle, rightHandle, anim, container, fullDuration);
   }
-  
-  private attachDragLogic(selectedEl: HTMLElement, leftHandle: HTMLElement, rightHandle: HTMLElement, anim: AnimationLayerConfig, container: HTMLElement, fullDuration: number) {
-      let isDragging = false;
-      let dragMode = ''; // 'left', 'right', 'center'
-      let startX = 0;
-      let initialStartFrame = 0;
-      let initialEndFrame = 0;
-      let initialStateStartFrame = 0;
-      let containerWidth = 1;
-      
-      const onMouseDown = (mode: string, e: MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          isDragging = true;
-          dragMode = mode;
-          startX = e.clientX;
-          
-          initialStartFrame = anim.startFrame || 0;
-          initialEndFrame = anim.endFrame || 100;
-          initialStateStartFrame = anim.stateStartFrame || 0;
-          containerWidth = container.clientWidth;
-          
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-      };
-      
-      leftHandle.onmousedown = (e) => onMouseDown('left', e);
-      rightHandle.onmousedown = (e) => onMouseDown('right', e);
-      selectedEl.onmousedown = (e) => onMouseDown('center', e);
-      
-      const onMouseMove = (e: MouseEvent) => {
-          if (!isDragging) return;
-          const dx = e.clientX - startX;
-          const framesDelta = Math.round((dx / containerWidth) * this.maxStateFrame);
-          
-          if (dragMode === 'left') {
-              let newStart = initialStartFrame + framesDelta;
-              newStart = Math.max(0, Math.min(newStart, (anim.endFrame || 100) - 1));
-              anim.startFrame = newStart;
-              // Adjust stateStartFrame so the clip stays in place relative to the end?
-              // Actually, standard NLE behaviour: dragging left bound trims clip, moves start time.
-              anim.stateStartFrame = Math.max(0, initialStateStartFrame + framesDelta);
-          } else if (dragMode === 'right') {
-              const currentStart = anim.stateStartFrame || 0;
-              const currentTrackEnd = (anim.stateEndFrame && anim.stateEndFrame > 0)
-                  ? anim.stateEndFrame
-                  : (currentStart + Math.max(1, initialEndFrame - initialStartFrame));
-              anim.stateEndFrame = Math.max(currentStart + 1, currentTrackEnd + framesDelta);
 
-              let newEnd = initialEndFrame + framesDelta;
-              anim.endFrame = Math.max((anim.startFrame || 0) + 1, Math.min(newEnd, fullDuration));
-          } else if (dragMode === 'center') {
-              let newStart = initialStateStartFrame + framesDelta;
-              newStart = Math.max(0, newStart);
-              anim.stateStartFrame = newStart;
-              
-              const trackDuration = (anim.stateEndFrame && anim.stateEndFrame > 0) ? (initialEndFrame - initialStartFrame) : (anim.endFrame - anim.startFrame);
-              if (anim.stateEndFrame && anim.stateEndFrame > 0) {
-                  anim.stateEndFrame = newStart + trackDuration;
-              }
-          }
-          
-          this.render(); // Fast enough for immediate re-render
-      };
-      
-      const onMouseUp = (e: MouseEvent) => {
-          if (!isDragging) return;
-          isDragging = false;
-          
-          // Flag to prevent the click event from firing on the track body
-          (e as any)._wasDragging = true;
-          setTimeout(() => { (e as any)._wasDragging = false; }, 0);
-          
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-          
-          this.calculateMaxFrames();
-          this.render();
-          this.onTimelineChange?.();
-      };
+  private attachDragLogic(selectedEl: HTMLElement, leftHandle: HTMLElement, rightHandle: HTMLElement, anim: AnimationLayerConfig, container: HTMLElement, fullDuration: number) {
+    let isDragging = false;
+    let dragMode = ''; // 'left', 'right', 'center'
+    let startX = 0;
+    let initialStartFrame = 0;
+    let initialEndFrame = 0;
+    let initialStateStartFrame = 0;
+    let containerWidth = 1;
+
+    const onMouseDown = (mode: string, e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = true;
+      dragMode = mode;
+      startX = e.clientX;
+
+      initialStartFrame = anim.startFrame || 0;
+      initialEndFrame = anim.endFrame || 100;
+      initialStateStartFrame = anim.stateStartFrame || 0;
+      containerWidth = container.clientWidth;
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    };
+
+    leftHandle.onmousedown = (e) => onMouseDown('left', e);
+    rightHandle.onmousedown = (e) => onMouseDown('right', e);
+    selectedEl.onmousedown = (e) => onMouseDown('center', e);
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const framesDelta = Math.round((dx / containerWidth) * this.maxStateFrame);
+
+      if (dragMode === 'left') {
+        let newStart = initialStartFrame + framesDelta;
+        newStart = Math.max(0, Math.min(newStart, (anim.endFrame || 100) - 1));
+        anim.startFrame = newStart;
+        // Adjust stateStartFrame so the clip stays in place relative to the end?
+        // Actually, standard NLE behaviour: dragging left bound trims clip, moves start time.
+        anim.stateStartFrame = Math.max(0, initialStateStartFrame + framesDelta);
+      } else if (dragMode === 'right') {
+        const currentStart = anim.stateStartFrame || 0;
+        const currentTrackEnd = (anim.stateEndFrame && anim.stateEndFrame > 0)
+          ? anim.stateEndFrame
+          : (currentStart + Math.max(1, initialEndFrame - initialStartFrame));
+        anim.stateEndFrame = Math.max(currentStart + 1, currentTrackEnd + framesDelta);
+
+        let newEnd = initialEndFrame + framesDelta;
+        anim.endFrame = Math.max((anim.startFrame || 0) + 1, Math.min(newEnd, fullDuration));
+      } else if (dragMode === 'center') {
+        let newStart = initialStateStartFrame + framesDelta;
+        newStart = Math.max(0, newStart);
+        anim.stateStartFrame = newStart;
+
+        const trackDuration = (anim.stateEndFrame && anim.stateEndFrame > 0) ? (initialEndFrame - initialStartFrame) : (anim.endFrame - anim.startFrame);
+        if (anim.stateEndFrame && anim.stateEndFrame > 0) {
+          anim.stateEndFrame = newStart + trackDuration;
+        }
+      }
+
+      this.render(); // Fast enough for immediate re-render
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      // Flag to prevent the click event from firing on the track body
+      (e as any)._wasDragging = true;
+      setTimeout(() => { (e as any)._wasDragging = false; }, 0);
+
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+
+      this.calculateMaxFrames();
+      this.render();
+      this.onTimelineChange?.();
+    };
   }
 }

@@ -522,6 +522,103 @@ body, html {
     flex: 1;
 }
 
+/* Selectable Capsule List in Right Panel */
+.capsule-list-card {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.capsule-list-card:hover {
+    border-color: #666;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.capsule-list-card.active {
+    border-color: var(--accent, #8a2be2);
+    background-color: rgba(138, 43, 226, 0.12);
+    box-shadow: 0 0 8px rgba(138, 43, 226, 0.3);
+}
+
+.capsule-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.capsule-chip {
+    font-size: 11px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 2px 6px;
+    color: #bbb;
+}
+
+.capsule-chip.accent {
+    border-color: rgba(255, 215, 0, 0.4);
+    color: #ffd700;
+}
+
+/* Bottom Panel Hurtbox Editor Styles */
+.hurtbox-bottom-container {
+    height: 100%;
+    padding: 10px 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    background-color: var(--panel-bg);
+}
+
+.hurtbox-bottom-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.hurtbox-bottom-title {
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hurtbox-bottom-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.hurtbox-bottom-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.hurtbox-bottom-form-grid .form-group {
+    margin-bottom: 0;
+}
+
+.hurtbox-bottom-empty {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+}
+
 /* 3D Bone Picking HUD & Tooltip */
 .bone-pick-hud {
     position: absolute;
@@ -569,4 +666,142 @@ body, html {
     z-index: 55;
     white-space: nowrap;
     display: none;
+}
+
+/* Mirrored Hurtbox Link Badges & Banner */
+.capsule-badge-main {
+    font-size: 10px;
+    background-color: rgba(58, 134, 255, 0.2);
+    border: 1px solid rgba(58, 134, 255, 0.5);
+    color: #60a5fa;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.capsule-badge-mirrored {
+    font-size: 10px;
+    background-color: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+.hurtbox-mirrored-banner {
+    background-color: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: #fbbf24;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Disabled Form Group in Bottom Panel */
+.form-group-disabled {
+    opacity: 0.65;
+}
+
+.form-group-disabled input,
+.form-group-disabled select,
+.form-group-disabled button {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hurtbox Modal Dialog */
+.hurtbox-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.hurtbox-modal-card {
+    background-color: var(--panel-bg, #1a1a24);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    padding: 20px 24px;
+    max-width: 460px;
+    width: 90%;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.hurtbox-modal-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-color, #333);
+    padding-bottom: 10px;
+}
+
+.hurtbox-modal-body {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #ccc;
+}
+
+.hurtbox-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.hurtbox-modal-btn {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    border: 1px solid var(--border-color, #444);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #eee;
+    transition: all 0.15s ease;
+}
+
+.hurtbox-modal-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.hurtbox-modal-btn.primary {
+    background-color: var(--accent, #8a2be2);
+    border-color: var(--accent, #8a2be2);
+    color: #fff;
+}
+
+.hurtbox-modal-btn.primary:hover {
+    filter: brightness(1.15);
+}
+
+.hurtbox-modal-btn.danger {
+    background-color: rgba(220, 38, 38, 0.85);
+    border-color: #dc2626;
+    color: #fff;
+}
+
+.hurtbox-modal-btn.danger:hover {
+    background-color: #dc2626;
 }
